@@ -2,7 +2,8 @@ import os,sys
 
 data_path=os.environ["HOME"]+"/.local/clitheme/theme-data"
 class FetchDescriptor(self):
-    def __init__(self, domain_name, app_name, debug_mode=False):
+    def __init__(self, domain_name="", app_name="", debug_mode=False):
+        # Leave domain and app names blank for global reference
         self.domain_name=domain_name
         self.app_name=app_name
         self.debug_mode=debug_mode
@@ -30,6 +31,6 @@ class FetchDescriptor(self):
                 dat=f.read().strip()
                 if self.debug_mode: print("Success:\n"+dat)
                 return dat
-            except FileNotFoundError:
+            except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string

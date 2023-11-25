@@ -1,0 +1,92 @@
+../clithemeinfo_locales
+en_US zh_CN
+../clithemeinfo_version
+1.0
+../clithemeinfo_name
+Example theme
+
+com.example/example-app/text-one
+Some example text one
+com.example/example-app/text-one__en_US
+Some example text one
+com.example/example-app/text-one__zh_CN
+一些样例文字（一）
+com.example/example-app/text-two
+Some example text two
+com.example/example-app/text-two__en_US
+Some example text two
+com.example/example-app/text-two__zh_CN
+一些样例文字（二）
+
+com.example/example-app-two/text_one
+Some text
+com.example/example-app-two/text_one__en_US
+Some text
+com.example/example-app-two/text_one__zh_CN
+一些文本
+com.example/example-app-two/text_two
+Some text two
+com.example/example-app-two/text_two__en_US
+Some text two
+com.example/example-app-two/text_two__zh_CN
+一些文本（二）
+
+com.example/example-app-two/subsection-one/text_one
+Some text
+com.example/example-app-two/subsection-one/text_one__en_US
+Some text
+com.example/example-app-two/subsection-one/text_one__zh_CN
+一些文本
+com.example/example-app-two/subsection-one/text_two
+Some text two
+com.example/example-app-two/subsection-one/text_two__en_US
+Some text two
+com.example/example-app-two/subsection-one/text_two__zh_CN
+一些文本（二）
+
+com.example/example-app-two/subsection-two/text_one
+Some text
+com.example/example-app-two/subsection-two/text_one__en_US
+Some text
+com.example/example-app-two/subsection-two/text_one__zh_CN
+一些文本
+com.example/example-app-two/subsection-two/text_two
+Some text two
+com.example/example-app-two/subsection-two/text_two__en_US
+Some text two
+com.example/example-app-two/subsection-two/text_two__zh_CN
+一些文本（二）
+
+com.example-two/another-example/repeat_test_text_one
+Some other text
+com.example-two/another-example/repeat_test_text_one__en_US
+Some other text
+com.example-two/another-example/repeat_test_text_one__zh_CN
+一些其他文本
+com.example-two/another-example/repeat_test_text_two
+Some other text two
+com.example-two/another-example/repeat_test_text_two__en_US
+Some other text two
+com.example-two/another-example/repeat_test_text_two__zh_CN
+一些其他文本（二）
+
+should_unset.example/should_unset-app/text
+Should have reset
+should_unset.example/should_unset-app/text__en_US
+Should have reset
+should_unset.example/should_unset-app/text__zh_CN
+应该已经重置
+
+sample_global_entry
+Some text
+sample_global_entry__en_US
+Some text
+sample_global_entry__zh_CN
+一些文本
+
+global.example/global_entry
+Global entry in app
+global.example/global_entry__en_US
+Global entry in app
+global.example/global_entry__zh_CN
+app内的通用实例

@@ -17,7 +17,7 @@ def handle_warning(message):
 def recursive_mkdir(path, entry_name, line_number_debug): # recursively generate directories (excluding file itself)
     current_path=path
     current_entry="" # for error output
-    for x in entry_name.split()[:1]:
+    for x in entry_name.split()[:-1]:
         current_entry+=x+" "
         current_path+="/"+x
         if os.path.isfile(current_path): # conflict with entry file
@@ -32,8 +32,8 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
         handle_error("Line "+str(line_number_debug)+": cannot create entry \""+entry_name+"\" because a subsection with the same name already exists")
     elif os.path.isfile(target_path):
         handle_warning("Line "+str(line_number_debug)+": repeated entry \""+entry_name+"\", overwriting")
-    f=open(target_path,'x')
-    f.write(entry_content)
+    f=open(target_path,'w')
+    f.write(entry_content+"\n")
 def splitarray_to_string(string_content):
     final=""
     for phrase in string_content:
@@ -43,9 +43,9 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     target_path=path+"/"+filename
     if os.path.isfile(target_path):
         handle_warning("Line "+str(line_number_debug)+": repeated header info \""+header_name_debug+"\", overwriting")
-    f=open(target_path,'x')
-    f.write(content)
-# Returns 0 for success or error message
+    f=open(target_path,'w')
+    f.write(content+'\n')
+# Returns true for success or error message
 def generate_data_hierarchy(file_content):
     # Generate a temporary path
     global path
@@ -94,6 +94,8 @@ def generate_data_hierarchy(file_content):
             else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
         elif current_status=="main": # expect entry, in_domainapp, unset_domainapp, end_main
             if phrases[0]=="entry":
+                # if len(phrases)<3:
+                #     handle_error("Not enough arguments for "+phrases[0]+" line at line "+str(linenumber))
                 entry_name=splitarray_to_string(phrases[1:]) # generate entry name
                 if current_domainapp!="": entry_name=current_domainapp+" "+entry_name
                 recursive_mkdir(datapath, entry_name, linenumber)
@@ -119,9 +121,12 @@ def generate_data_hierarchy(file_content):
                 target_entry=current_entry_name
                 if phrases[1]!="default":
                     target_entry+="__"+phrases[1]
-                add_entry(datapath,current_entry_name,content,linenumber)
+                add_entry(datapath,target_entry,content,linenumber)
             elif phrases[0]=="end_entry":
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \""+phrases[0]+"\" on line "+str(linenumber))
-                current_status=""
+                current_status="main"
             else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
+    if not headerparsed or not mainparsed:
+        handle_error("Missing or incomplete header or main block")
+    return True # Everything is successul! :)
