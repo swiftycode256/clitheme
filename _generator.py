@@ -46,13 +46,16 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     f=open(target_path,'w')
     f.write(content+'\n')
 # Returns true for success or error message
-def generate_data_hierarchy(file_content):
+def generate_data_hierarchy(file_content, custom_path=""):
     """Generate the data hierarchy in a temperory directory from a definition file (accessible with _generator.path)"""
     # Generate a temporary path
     global path
-    path="/tmp/clitheme-temp-"
-    for x in range(8):
-        path+=random.choice(string.ascii_letters)
+    if custom_path.strip()!="":
+        path=custom_path
+    else:
+        path="/tmp/clitheme-temp-"
+        for x in range(8):
+            path+=random.choice(string.ascii_letters)
     os.mkdir(path)
     datapath=path+"/theme-data"
     os.mkdir(datapath)

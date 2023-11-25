@@ -1,6 +1,8 @@
 import os,sys
+import _globalvar
 
-data_path=os.environ["HOME"]+"/.local/clitheme/theme-data"
+data_path=_globalvar.clitheme_root_data_path+"/theme-data"
+global_lang="" # Override locale
 class FetchDescriptor():
     def __init__(self, domain_name="", app_name="", debug_mode=False):
         # Leave domain and app names blank for global reference
@@ -11,7 +13,9 @@ class FetchDescriptor():
         # entry_path e.g. "class-a sample_text"
         lang=""
         lang_without_encoding=""
-        if os.environ.__contains__("LANG"):
+        if global_lang!="":
+            lang=global_lang
+        elif os.environ.__contains__("LANG"):
             lang=os.environ["LANG"]
         if lang.strip()!="": # not empty
             for char in lang:

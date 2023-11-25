@@ -33,12 +33,12 @@ for line in expected_data.splitlines():
 # Test frontend
 print("Testing frontend...")
 import frontend
+frontend.global_lang="en_US.UTF-8"
 frontend.data_path=_generator.path+"/theme-data"
 expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r').read()
 current_path_frontend=""
 errorcount_frontend=0
 for line in expected_data_frontend.splitlines():
-    
     if line.strip()=='' or line.strip()[0]=='#':
         continue
     if current_path_frontend=="": # on path line
