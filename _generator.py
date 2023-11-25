@@ -34,9 +34,9 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
         handle_warning("Line "+str(line_number_debug)+": repeated entry \""+entry_name+"\", overwriting")
     f=open(target_path,'w')
     f.write(entry_content+"\n")
-def splitarray_to_string(string_content):
+def splitarray_to_string(split_content):
     final=""
-    for phrase in string_content:
+    for phrase in split_content:
         final+=phrase+" "
     return final.strip()
 def write_infofile(path,filename,content,line_number_debug, header_name_debug):
@@ -47,6 +47,7 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     f.write(content+'\n')
 # Returns true for success or error message
 def generate_data_hierarchy(file_content):
+    """Generate the data hierarchy in a temperory directory from a definition file (accessible with _generator.path)"""
     # Generate a temporary path
     global path
     path="/tmp/clitheme-temp-"

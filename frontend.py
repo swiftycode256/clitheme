@@ -1,7 +1,7 @@
 import os,sys
 
 data_path=os.environ["HOME"]+"/.local/clitheme/theme-data"
-class FetchDescriptor(self):
+class FetchDescriptor():
     def __init__(self, domain_name="", app_name="", debug_mode=False):
         # Leave domain and app names blank for global reference
         self.domain_name=domain_name
@@ -18,7 +18,7 @@ class FetchDescriptor(self):
                 if char=='.': # if reaches e.g. ".UTF-8" section
                     break
                 lang_without_encoding+=char 
-        if self.debug_mode: print(lang, lang_without_encoding)
+        if self.debug_mode: print("[Debug]", lang, lang_without_encoding, entry_path)
         path=data_path+"/"+self.domain_name+"/"+self.app_name
         for section in entry_path.split():
             path+="/"+section
@@ -29,7 +29,7 @@ class FetchDescriptor(self):
             try:
                 f=open(p,'r')
                 dat=f.read().strip()
-                if self.debug_mode: print("Success:\n"+dat)
+                if self.debug_mode: print("Success:\n> "+dat)
                 return dat
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
