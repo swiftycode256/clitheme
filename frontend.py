@@ -18,7 +18,7 @@ class FetchDescriptor():
         Create a new instance of the object.
         
         - Provide domain_name and app_name to automatically append them for retrival functions.
-        - Set debug_mode=true to output underlying operations when retriving entries.
+        - Set debug_mode=True to output underlying operations when retriving entries.
         """
         # Leave domain and app names blank for global reference
         self.domain_name=domain_name
