@@ -1,6 +1,8 @@
 import os,sys
-import _globalvar
-
+try:
+    from . import _globalvar
+except ImportError: # for test program
+    import _globalvar
 data_path=_globalvar.clitheme_root_data_path+"/theme-data"
 global_lang="" # Override locale
 class FetchDescriptor():

@@ -2,6 +2,10 @@ import os,sys
 import string
 import random
 import warnings
+try:
+    from . import _globalvar
+except ImportError: # for test program
+    import _globalvar
 
 header_begin=\
     """# clitheme theme info header
@@ -53,7 +57,7 @@ def generate_data_hierarchy(file_content, custom_path=""):
     if custom_path.strip()!="":
         path=custom_path
     else:
-        path="/tmp/clitheme-temp-"
+        path=_globalvar.clitheme_temp_root+"/clitheme-temp-"
         for x in range(8):
             path+=random.choice(string.ascii_letters)
     os.mkdir(path)
