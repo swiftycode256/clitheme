@@ -1,1 +1,1 @@
-__all__=["frontend",] 
+__all__=["frontend", "cli"] 

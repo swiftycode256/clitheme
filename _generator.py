@@ -1,3 +1,6 @@
+"""
+Generator function used in applying themes (should not be invoked directly)
+"""
 import os,sys
 import string
 import random
@@ -51,7 +54,11 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     f.write(content+'\n')
 # Returns true for success or error message
 def generate_data_hierarchy(file_content, custom_path=""):
-    """Generate the data hierarchy in a temperory directory from a definition file (accessible with _generator.path)"""
+    """
+    Generate the data hierarchy in a temporary directory from a definition file (accessible with _generator.path)
+
+    This function should not be invoked directly unless absolutely necessary.
+    """
     # Generate a temporary path
     global path
     if custom_path.strip()!="":

@@ -1,3 +1,7 @@
+"""
+clitheme front-end interface for accessing entries
+"""
+
 import os,sys
 try:
     from . import _globalvar
@@ -6,12 +10,25 @@ except ImportError: # for test program
 data_path=_globalvar.clitheme_root_data_path+"/theme-data"
 global_lang="" # Override locale
 class FetchDescriptor():
+    """
+    Object containing domain and app information used for fetching entries
+    """
     def __init__(self, domain_name="", app_name="", debug_mode=False):
+        """
+        Create a new instance of the object.
+        
+        - Provide domain_name and app_name to automatically append them for retrival functions.
+        - Set debug_mode=true to output underlying operations when retriving entries.
+        """
         # Leave domain and app names blank for global reference
         self.domain_name=domain_name
         self.app_name=app_name
         self.debug_mode=debug_mode
     def retrive_entry_or_fallback(self, entry_path, fallback_string):
+        """
+        Attempt to retrieve the entry based on given entry path. 
+        If the entry does not exist, use the provided fallback string instead.
+        """
         # entry_path e.g. "class-a sample_text"
         lang=""
         lang_without_encoding=""
