@@ -29,7 +29,8 @@ def recursive_mkdir(path, entry_name, line_number_debug): # recursively generate
         current_entry+=x+" "
         current_path+="/"+x
         if os.path.isfile(current_path): # conflict with entry file
-            handle_error("Line "+str(line_number_debug)+": cannot create subsection \""+current_entry+"\" because an entry with the same name already exists")
+            handle_error("Line {}: cannot create subsection \"{}\" because an entry with the same name already exists"\
+                .format(str(line_number_debug), current_entry))
         elif os.path.isdir(str(current_path))==False: # directory does not exist
            os.mkdir(current_path) 
 def add_entry(path, entry_name, entry_content, line_number_debug): # add entry to where it belongs (assuming recursive_mkdir already completed)
@@ -37,9 +38,11 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
     for x in entry_name.split():
         target_path+="/"+x
     if os.path.isdir(target_path):
-        handle_error("Line "+str(line_number_debug)+": cannot create entry \""+entry_name+"\" because a subsection with the same name already exists")
+        handle_error("Line {}: cannot create entry \"{}\" because a subsection with the same name already exists"\
+            .format(str(line_number_debug),entry_name))
     elif os.path.isfile(target_path):
-        handle_warning("Line "+str(line_number_debug)+": repeated entry \""+entry_name+"\", overwriting")
+        handle_warning("Line {}: repeated entry \"{}\", overwriting"\
+            .format(str(line_number_debug),entry_name))
     f=open(target_path,'w')
     f.write(entry_content+"\n")
 def splitarray_to_string(split_content):
@@ -50,7 +53,8 @@ def splitarray_to_string(split_content):
 def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     target_path=path+"/"+filename
     if os.path.isfile(target_path):
-        handle_warning("Line "+str(line_number_debug)+": repeated header info \""+header_name_debug+"\", overwriting")
+        handle_warning("Line {}: repeated header info \"{}\", overwriting"\
+            .format(str(line_number_debug), header_name_debug))
     f=open(target_path,'w')
     f.write(content+'\n')
 # Returns true for success or error message
@@ -88,15 +92,15 @@ def generate_data_hierarchy(file_content, custom_path=""):
         if current_status=="": # expect begin_header or begin_main
             if line.strip()=="begin_header": 
                 if headerparsed:
-                    handle_error("Repeated header block at line "+str(linenumber))
+                    handle_error("Repeated header block at line {}".format(str(linenumber)))
                 current_status="header"
             elif line.strip()=="begin_main": 
                 if mainparsed:
-                    handle_error("Repeated main block at line "+str(linenumber))
+                    handle_error("Repeated main block at line {}".format(str(linenumber)))
                 current_status="main"
             elif (phrases[0]=="begin_header" or phrases[0]=="begin_main") and len(phrases)>1: # extra arguments
-                handle_error("Unexpected arguments after \""+phrases[0]+"\" on line "+str(linenumber))
-            else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
+                handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
+            else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="header": # expect name, version, locales, or end_header
             if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="locales":
                 # headerinfo_file.write(line.strip()+"\n")                
@@ -106,8 +110,8 @@ def generate_data_hierarchy(file_content, custom_path=""):
                 current_status=""
                 headerparsed=True
             elif (phrases[0]=="end_header") and len(phrases)>1: # extra arguments
-                handle_error("Extra arguments after \""+phrases[0]+"\" on line "+str(linenumber))
-            else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
+                handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
+            else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="main": # expect entry, in_domainapp, unset_domainapp, end_main
             if phrases[0]=="entry":
                 # if len(phrases)<3:
@@ -119,18 +123,18 @@ def generate_data_hierarchy(file_content, custom_path=""):
                 current_entry_name=entry_name
             elif phrases[0]=="in_domainapp": 
                 if len(phrases)!=3:
-                    handle_error("Format error in "+phrases[0]+" at line "+linenumber)
+                    handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
                 current_domainapp=phrases[1]+" "+phrases[2]
             elif phrases[0]=="unset_domainapp":
                 if len(phrases)!=1:
-                    handle_error("Extra arguments after \""+phrases[0]+"\" on line "+str(linenumber))
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_domainapp=""
             elif phrases[0]=="end_main":
                 if len(phrases)!=1:
-                    handle_error("Extra arguments after \""+phrases[0]+"\" on line "+str(linenumber))
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_status=""
                 mainparsed=True
-            else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
+            else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="entry": # expect locale, end_entry
             if phrases[0]=="locale":
                 content=splitarray_to_string(phrases[2:])
@@ -140,9 +144,9 @@ def generate_data_hierarchy(file_content, custom_path=""):
                 add_entry(datapath,target_entry,content,linenumber)
             elif phrases[0]=="end_entry":
                 if len(phrases)!=1:
-                    handle_error("Extra arguments after \""+phrases[0]+"\" on line "+str(linenumber))
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_status="main"
-            else: handle_error("Unexpected \""+phrases[0]+"\" on line "+str(linenumber))
+            else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
     if not headerparsed or not mainparsed:
         handle_error("Missing or incomplete header or main block")
     return True # Everything is successul! :)
