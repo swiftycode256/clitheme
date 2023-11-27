@@ -116,6 +116,14 @@ def generate_data_hierarchy(file_content, custom_path=""):
             if phrases[0]=="entry":
                 # if len(phrases)<3:
                 #     handle_error("Not enough arguments for "+phrases[0]+" line at line "+str(linenumber))
+                
+                # Prevent leading . & prevent /,\ in entry name
+                for p in phrases[1:]:
+                    if p.startswith('.'):
+                        handle_error("Line {}: entry subsections/names cannot start with '.'".format(str(linenumber)))
+                    for b in _globalvar.entry_banphrases:
+                        if p.find(b)!=-1:
+                            handle_error("Line {}: entry subsections/names cannot contain '{}'".format(str(linenumber),b))
                 entry_name=splitarray_to_string(phrases[1:]) # generate entry name
                 if current_domainapp!="": entry_name=current_domainapp+" "+entry_name
                 recursive_mkdir(datapath, entry_name, linenumber)

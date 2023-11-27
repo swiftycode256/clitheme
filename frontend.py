@@ -30,6 +30,18 @@ class FetchDescriptor():
         If the entry does not exist, use the provided fallback string instead.
         """
         # entry_path e.g. "class-a sample_text"
+
+        # Prevent leading . & prevent /,\ in entry name
+        for p in entry_path.split():
+            if p.startswith('.'):
+                if self.debug_mode: 
+                    print("Error: entry subsections/names cannot start with '.'")
+                    return fallback_string
+            for b in _globalvar.entry_banphrases:
+                if p.find(b)!=-1:
+                    if self.debug_mode: 
+                        print("Error: entry subsections/names cannot contain '{}'".format(b))
+                        return fallback_string
         lang=""
         lang_without_encoding=""
         if global_lang!="":
