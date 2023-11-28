@@ -3,6 +3,8 @@ clitheme front-end interface for accessing entries
 """
 
 import os,sys
+import random
+import string
 try:
     from . import _globalvar
 except ImportError: # for test program
@@ -72,3 +74,15 @@ class FetchDescriptor():
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string
+    def entry_exists(self, entry_path):
+        """
+        Check if the entry at the given entry path exists.
+        Returns true if exists and false if does not exist
+        """
+        # just being lazy here I don't want to rewrite this all over this again ಥ_ಥ
+        fallback_string=""
+        for x in range(30): 
+            fallback_string+=random.choice(string.ascii_letters)
+        recieved_content=self.retrive_entry_or_fallback(entry_path, fallback_string)
+        if recieved_content.strip()==fallback_string: return False
+        else: return True
