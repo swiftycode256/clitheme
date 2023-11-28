@@ -5,8 +5,6 @@ clitheme front-end interface for accessing entries
 import os,sys
 import random
 import string
-import random
-import string
 try:
     from . import _globalvar
 except ImportError: # for test program
