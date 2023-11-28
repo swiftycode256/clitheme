@@ -43,7 +43,7 @@ def apply_theme(file_content, override=True, preserve_temp=False):
     try:
         _generator.generate_data_hierarchy(file_content)
     except SyntaxError:
-        print("Error\nAn error occurred while generating the data:\n\n{}".format(str(repr(sys.exception()))))
+        print("Error\nAn error occurred while generating the data:\n\n{}".format(str(sys.exc_info()[1])))
         return 1
     print("Successfully generated data\n==> Applying theme...",end='')
     # remove the current data, ignoring directory not found
@@ -52,7 +52,7 @@ def apply_theme(file_content, override=True, preserve_temp=False):
     try:
         shutil.copytree(_generator.path, _globalvar.clitheme_root_data_path) 
     except Exception:
-        print("Error\nAn error occurred while applying the theme:\n\n{}".format(str(repr(sys.exception()))))
+        print("Error\nAn error occurred while applying the theme:\n\n{}".format(str(sys.exc_info()[1])))
         return 1
     print("Success\nTheme applied successfully")
     if not preserve_temp:
