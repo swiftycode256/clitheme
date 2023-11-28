@@ -16,7 +16,6 @@ Command line utility functions:
 import os
 import sys
 import shutil
-from tkinter import W
 try:
     from . import _globalvar
     from . import _generator
