@@ -57,7 +57,7 @@ for line in expected_data_frontend.splitlines():
         fallback_string=""
         for x in range(30): # reduce inaccuracies
             fallback_string+=random.choice(string.ascii_letters)
-        recieved_content=descriptor.retrive_entry_or_fallback(entry_path, fallback_string)
+        recieved_content=descriptor.retrieve_entry_or_fallback(entry_path, fallback_string)
         if expected_content.strip()!=recieved_content.strip():
             if recieved_content.strip()==fallback_string:
                 print("[Error] Failed to retrieve entry for \""+current_path_frontend+"\"")

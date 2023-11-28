@@ -28,7 +28,7 @@ class FetchDescriptor():
         self.app_name=app_name
         self.debug_mode=debug_mode
         self.disable_lang=disable_lang
-    def retrive_entry_or_fallback(self, entry_path, fallback_string):
+    def retrieve_entry_or_fallback(self, entry_path, fallback_string):
         """
         Attempt to retrieve the entry based on given entry path. 
         If the entry does not exist, use the provided fallback string instead.
@@ -83,6 +83,6 @@ class FetchDescriptor():
         fallback_string=""
         for x in range(30): 
             fallback_string+=random.choice(string.ascii_letters)
-        recieved_content=self.retrive_entry_or_fallback(entry_path, fallback_string)
+        recieved_content=self.retrieve_entry_or_fallback(entry_path, fallback_string)
         if recieved_content.strip()==fallback_string: return False
         else: return True
