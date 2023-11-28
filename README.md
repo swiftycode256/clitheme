@@ -97,6 +97,7 @@ begin_main
         entry install-success
             locale default o(≧v≦)o 已成功安装{}个文件！
             locale zh_CN o(≧v≦)o 已成功安装{}个文件！
+        end_entry
 end_main
 ```
 
