@@ -91,32 +91,37 @@ def generate_data_hierarchy(file_content, custom_path=""):
             continue
         if current_status=="": # expect begin_header or begin_main
             if line.strip()=="begin_header": 
+                if len(phrases)!=1:
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 if headerparsed:
                     handle_error("Repeated header block at line {}".format(str(linenumber)))
                 current_status="header"
             elif line.strip()=="begin_main": 
+                if len(phrases)!=1:
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 if mainparsed:
                     handle_error("Repeated main block at line {}".format(str(linenumber)))
                 current_status="main"
-            elif (phrases[0]=="begin_header" or phrases[0]=="begin_main") and len(phrases)>1: # extra arguments
-                handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="header": # expect name, version, locales, or end_header
             if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="locales":
+                if len(phrases)<2:
+                    handle_error("Not enough arguments for {} line at line {}"\
+                                 .format(phrases[0],str(linenumber)))
                 # headerinfo_file.write(line.strip()+"\n")                
                 content=splitarray_to_string(phrases[1:])
                 write_infofile(path, "clithemeinfo_"+phrases[0],content,linenumber,phrases[0])
             elif line.strip()=="end_header": 
+                if len(phrases)!=1:
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_status=""
                 headerparsed=True
-            elif (phrases[0]=="end_header") and len(phrases)>1: # extra arguments
-                handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="main": # expect entry, in_domainapp, unset_domainapp, end_main
             if phrases[0]=="entry":
-                # if len(phrases)<3:
-                #     handle_error("Not enough arguments for "+phrases[0]+" line at line "+str(linenumber))
-                
+                if len(phrases)<2:
+                    handle_error("Not enough arguments for {} line at line {}"\
+                                 .format(phrases[0],str(linenumber)))
                 # Prevent leading . & prevent /,\ in entry name
                 for p in phrases[1:]:
                     if p.startswith('.'):
@@ -145,6 +150,9 @@ def generate_data_hierarchy(file_content, custom_path=""):
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="entry": # expect locale, end_entry
             if phrases[0]=="locale":
+                if len(phrases)<3:
+                    handle_error("Not enough arguments for {} line at line {}"\
+                                 .format(phrases[0],str(linenumber)))
                 content=splitarray_to_string(phrases[2:])
                 target_entry=current_entry_name
                 if phrases[1]!="default":
