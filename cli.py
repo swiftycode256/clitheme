@@ -16,6 +16,7 @@ Command line utility functions:
 import os
 import sys
 import shutil
+from tkinter import W
 try:
     from . import _globalvar
     from . import _generator
@@ -64,9 +65,23 @@ def unset_current_theme():
     """
     Delete the current theme data hierarchy from the data path
     """
-    print("==> ")
+    print("==> Removing data...", end='')
+    try: shutil.rmtree(_globalvar.clitheme_root_data_path)
+    except FileNotFoundError:
+        print("Error\nNo theme data present (no theme was set)")
+        return 1
+    except Exception:
+        print("Error\nAn error occurred while removing the data:\n\n{}".format(str(sys.exc_info()[1])))
+        return 1
+    print("Success\nSuccessfully removed the current theme data")
+    return 0
+
 def is_option(arg):
     return arg.strip()[0:1]=="-"
+def handle_usage_error(message, cli_args_first):
+    print(message)
+    print("Run {0} --help for usage information".format(cli_args_first))
+    return 1
 def main(cli_args):
     """
     Use this function for indirect invocation of the interface (e.g. from another function)
@@ -79,8 +94,7 @@ def main(cli_args):
 
     if cli_args[1]=="apply-theme":
         if len(cli_args)<3:
-            print("Not enough arguments")
-            return 1
+            return handle_usage_error("Error: not enough arguments", cli_args[0])
         path=""
         override=True # not yet implemented
         preserve_temp=False
@@ -88,25 +102,27 @@ def main(cli_args):
             if is_option(arg):
                 if arg.strip()=="--override": override=True
                 elif arg.strip()=="--preserve-temp": preserve_temp=True
-                else: print("Unknown option \"{}\"".format(arg)); return 1
+                else: return handle_usage_error("Unknown option \"{}\"".format(arg), cli_args[0])
             else:
                 if path!="": # already specified path
-                    print("Error: too many arguments"); return 1
+                    return handle_usage_error("Error: too many arguments", cli_args[0])
                 path=arg
         return apply_theme(open(path, 'r').read(), override=override, preserve_temp=preserve_temp)
     elif cli_args[1]=="get-theme-info":
         print("Not yet implemented")
     elif cli_args[1]=="unset-current-theme":
-        print("Not yet implemented")
+        if len(cli_args)>2:
+            return handle_usage_error("Error: too many arguments", cli_args[0])
+        return unset_current_theme()
     elif cli_args[1]=="generate-data-hierarchy":
         print("Not yet implemented")
     elif cli_args[1]=="--version":
         print("clitheme version {0}".format(_globalvar.clitheme_version))
     else:
-        print(usage_description.format(cli_args[0]))
-        if cli_args[1]!="--help":
-            print("Error: unknown command \"{0}\"".format(cli_args[1]))
-            return 1
+        if cli_args[1]=="--help":
+            print(usage_description.format(cli_args[0]))
+        else:
+            return handle_usage_error("Error: unknown command \"{0}\"".format(cli_args[1]), cli_args[0])
     return 0
 if __name__=="__main__":
     exit(main(sys.argv))
