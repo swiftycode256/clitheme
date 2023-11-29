@@ -187,7 +187,30 @@ todo
 
 ### 构建Arch Linux软件包
 
-todo
+构建Arch Linux软件包前，请确保`base-devel`软件包已安装。如需安装，请使用以下命令：
+
+    $ sudo pacman -S base-devel
+
+构建软件包的方法如下：
+
+- 创建一个临时文件夹（如`build`）并切换当前路径
+- 给当前仓库创建一个名为`repo-src.tar.gz`的归档，存储在临时目录（必须在临时目录或仓库目录内完成）
+- 把`PKGBUILD`文件拷贝到临时文件夹里
+- 使用`makepkg`构建软件包
+
+你可以通过以下一系列命令来完成这些操作。确保当前目录为仓库目录，并且执行以下命令：
+```
+mkdir build; cd build
+tar cf repo-src.tar.gz ..
+cp ../PKGBUILD .
+makepkg -sci
+# -s：自动安装需要的软件包
+# -c：构建完后删除临时生成的数据和文件夹
+# -i：构建完后自动安装软件包
+
+# 完成后，你可以删除临时文件夹
+cd ..; rm -rf build
+```
 
 ## 更多信息
 
