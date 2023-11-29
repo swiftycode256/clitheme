@@ -1,6 +1,6 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
-pkgver=VERSION # to be filled out by pkgver()
+pkgver=UNKNOWN # to be filled out by pkgver()
 pkgrel=1
 pkgdesc="A text theming library for command line applications"
 arch=('any')
@@ -10,8 +10,8 @@ depends=('python>=3.7')
 makedepends=('python-hatch' 'python-installer' 'python-wheel')
 checkdepends=()
 optdepends=()
-provides=('clitheme')
-conflicts=('clitheme')
+provides=($pkgname)
+conflicts=($pkgname 'clitheme')
 replaces=()
 backup=()
 options=()
@@ -23,24 +23,18 @@ md5sums=('SKIP')
 validpgpkeys=()
 
 pkgver(){
-	cd $pkgname-src/src/clitheme
+	cd src/clitheme
 	python3 -c "from _version import __version__; print(__version__)"
 }
 
 build() {
-	echo $PWD
-	# rm $pkgname-src.tar.gz # prevent conflicts
-	echo $pkgname-src
-	cd $pkgname-src
 	hatch build -t wheel
 }
 
 check() {
-	cd $pkgname-src
 	test -f dist/*.whl
 }
 
 package() {
-	cd $pkgname-src
 	python3 -m installer --destdir="$pkgdir" dist/*.whl
 }

@@ -5,4 +5,7 @@ dist
 dist/*
 .vscode
 .vscode/*
+# for building Arch Linux package
+build
+build/*
 .DS_Store
