@@ -2,9 +2,12 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "src/clitheme/_version.py"
+
 [project]
 name = "clitheme"
-version = "1.0-dev"
+dynamic = ["version"]
 authors = [
   { name="swiftycode", email="3291929745@qq.com" },
 ]
