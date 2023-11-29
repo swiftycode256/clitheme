@@ -152,5 +152,7 @@ def main(cli_args):
         else:
             return handle_usage_error("Error: unknown command \"{0}\"".format(cli_args[1]), cli_args[0])
     return 0
+def script_main(): # for script
+    exit(main(sys.argv))
 if __name__=="__main__":
     exit(main(sys.argv))
