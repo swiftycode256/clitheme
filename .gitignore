@@ -1,6 +1,8 @@
 # Sample gitignore file to make your life easier (>^ω^<)
 __pycache__
 __pycache__/*
+dist
+dist/*
 .vscode
 .vscode/*
 .DS_Store
