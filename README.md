@@ -40,7 +40,7 @@ $ example-app install-file foo-nonexist
 - 为应用添加多语言支持
 - 支持图形化应用
 
-**注意：**`clitheme`当前仅支持Linux和macOS系统，暂不支持Windows系统。
+**注意：**`clitheme`当前仅支持拥有Python 3的Linux和macOS系统，暂不支持Windows系统。
 
 # 基本用法
 
@@ -151,7 +151,7 @@ begin_main
 end_main
 ```
 
-编写好主题文件后，使用 `python3 -m clitheme apply-theme <file>`来应用主题。应用程序会直接采用主题中适配的字符串。
+编写好主题文件后，使用 `clitheme apply-theme <file>`来应用主题。应用程序会直接采用主题中适配的字符串。
 
 # 安装
 
