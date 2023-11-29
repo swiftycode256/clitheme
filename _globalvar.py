@@ -17,4 +17,6 @@ except KeyError:
     exit(1)
 clitheme_temp_root="/tmp"
 clitheme_version="1.0-dev"
+generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
+generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 entry_banphrases=['/','\\']

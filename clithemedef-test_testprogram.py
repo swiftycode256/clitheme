@@ -1,5 +1,6 @@
 import shutil
 import _generator
+import _globalvar
 import random
 import string
 
@@ -9,7 +10,7 @@ expected_data=open("tests/clithemedef-test_expected.txt",'r').read()
 funcresult=_generator.generate_data_hierarchy(mainfile_data)
 
 errorcount=0
-rootpath=_generator.path+"/theme-data"
+rootpath=_generator.path+"/"+_globalvar.generator_data_pathname
 current_path=""
 for line in expected_data.splitlines():
     if line.strip()=='' or line.strip()[0]=='#':
@@ -21,6 +22,7 @@ for line in expected_data.splitlines():
         contents=""
         try:
             contents=open(rootpath+"/"+current_path).read()
+            print("File "+rootpath+"/"+current_path+" OK")
         except FileNotFoundError:
             print("[File] file "+rootpath+"/"+current_path+" does not exist")
             errorcount+=1
@@ -34,7 +36,7 @@ for line in expected_data.splitlines():
 print("Testing frontend...")
 import frontend
 frontend.global_lang="en_US.UTF-8"
-frontend.data_path=_generator.path+"/theme-data"
+frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r').read()
 current_path_frontend=""
 errorcount_frontend=0

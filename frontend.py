@@ -9,7 +9,7 @@ try:
     from . import _globalvar
 except ImportError: # for test program
     import _globalvar
-data_path=_globalvar.clitheme_root_data_path+"/theme-data"
+data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 global_lang="" # Override locale
 class FetchDescriptor():
     """

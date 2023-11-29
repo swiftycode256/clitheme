@@ -51,6 +51,8 @@ def splitarray_to_string(split_content):
         final+=phrase+" "
     return final.strip()
 def write_infofile(path,filename,content,line_number_debug, header_name_debug):
+    if not os.path.isdir(path):
+        os.makedirs(path)
     target_path=path+"/"+filename
     if os.path.isfile(target_path):
         handle_warning("Line {}: repeated header info \"{}\", overwriting"\
@@ -58,7 +60,7 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     f=open(target_path,'w')
     f.write(content+'\n')
 # Returns true for success or error message
-def generate_data_hierarchy(file_content, custom_path=""):
+def generate_data_hierarchy(file_content, custom_path="", custom_infofile_name="1"):
     """
     Generate the data hierarchy in a temporary directory from a definition file (accessible with _generator.path)
 
@@ -73,7 +75,7 @@ def generate_data_hierarchy(file_content, custom_path=""):
         for x in range(8):
             path+=random.choice(string.ascii_letters)
     os.mkdir(path)
-    datapath=path+"/theme-data"
+    datapath=path+"/"+_globalvar.generator_data_pathname
     os.mkdir(datapath)
     # headerinfo_file=open(path+"/current-theme.clithemeheader",'x')
     # headerinfo_file.write(header_begin)
@@ -110,7 +112,10 @@ def generate_data_hierarchy(file_content, custom_path=""):
                                  .format(phrases[0],str(linenumber)))
                 # headerinfo_file.write(line.strip()+"\n")                
                 content=splitarray_to_string(phrases[1:])
-                write_infofile(path, "clithemeinfo_"+phrases[0],content,linenumber,phrases[0])
+                write_infofile( \
+                    path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
+                    "clithemeinfo_"+phrases[0],\
+                    content,linenumber,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
             elif line.strip()=="end_header": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))

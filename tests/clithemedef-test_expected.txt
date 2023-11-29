@@ -1,8 +1,8 @@
-../clithemeinfo_locales
+../theme-info/1/clithemeinfo_locales
 en_US zh_CN
-../clithemeinfo_version
+../theme-info/1/clithemeinfo_version
 1.0
-../clithemeinfo_name
+../theme-info/1/clithemeinfo_name
 Example theme
 
 com.example/example-app/text-one
