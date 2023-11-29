@@ -1,7 +1,7 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
 pkgver=UNKNOWN # to be filled out by pkgver()
-pkgrel=1
+pkgrel=1 # to be filled out by pkgver()
 pkgdesc="A text theming library for command line applications"
 arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
@@ -24,7 +24,8 @@ validpgpkeys=()
 
 pkgver(){
 	cd src/clitheme
-	python3 -c "from _version import __version__; print(__version__)"
+	pkgrel=$(python3 -c "from _version import version_relnumber; print(version_relnumber)")
+	python3 -c "from _version import version_major; print(version_major)"
 }
 
 build() {
