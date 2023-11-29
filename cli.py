@@ -2,15 +2,6 @@
 
 """
 clitheme command line utility interface
-Command line utility functions:
-    - Apply theme with data hierarchy generator (overlay or overwrite)
-    cli apply-theme [themedef-file] [--override (default)]
-    - Query theme information
-    cli get-theme-info [name|version|locales|all]
-    - Delete/unset current theme
-    cli unset-current-theme
-    - Generate data hierarchy (debug purpose)
-    cli generate-data-hierarchy [themedef-file] [--parent-dir [parent directory]]
 """
 
 import os
@@ -25,7 +16,7 @@ except ImportError:
 
 usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--override (default)] [--preserve-temp]
-       {0} get-theme-info [name|version|locales|all]
+       {0} get-current-theme-info
        {0} unset-current-theme
        {0} generate-data-hierarchy [themedef-file] [--parent-dir [parent directory]]
        {0} --help
@@ -75,6 +66,37 @@ def unset_current_theme():
     print("Success\nSuccessfully removed the current theme data")
     return 0
 
+def get_current_theme_info(type):
+    """
+    Get the current theme info of the specified type (name,version,locales, or all)
+    """
+    search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
+    if not os.path.isdir(search_path):
+        print("No theme currently set")
+        return 1
+    lsdir_result=os.listdir(search_path)
+    lsdir_result.sort(reverse=True) # sort by latest installed
+    print("Currently installed themes (sorted by latest installed):")
+    for theme_pathname in lsdir_result:
+        target_path=search_path+"/"+theme_pathname
+        # name
+        name="(Unknown)"
+        if os.path.isfile(target_path+"/"+"clithemeinfo_name"):
+            name=open(target_path+"/"+"clithemeinfo_name", 'r').read().strip()
+        print("[{}]: {}".format(theme_pathname, name))
+        # version
+        version="(Unknown)"
+        if os.path.isfile(target_path+"/"+"clithemeinfo_version"):
+            version=open(target_path+"/"+"clithemeinfo_version", 'r').read().strip()
+            print("Version: {}".format(version))
+        # locales
+        locales="(Unknown)"
+        if os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
+            locales=open(target_path+"/"+"clithemeinfo_locales", 'r').read().strip()
+            print("Supported locales: {}".format(locales))
+        print() # newline 
+    return 0
+
 def is_option(arg):
     return arg.strip()[0:1]=="-"
 def handle_usage_error(message, cli_args_first):
@@ -89,6 +111,7 @@ def main(cli_args):
     """
     if len(cli_args)<=1: # no arguments passed
         print(usage_description.format(cli_args[0]))
+        print("Error: no command or option specified")
         return 1
 
     if cli_args[1]=="apply-theme":
@@ -107,8 +130,14 @@ def main(cli_args):
                     return handle_usage_error("Error: too many arguments", cli_args[0])
                 path=arg
         return apply_theme(open(path, 'r').read(), override=override, preserve_temp=preserve_temp)
-    elif cli_args[1]=="get-theme-info":
-        print("Not yet implemented")
+    elif cli_args[1]=="get-current-theme-info":
+        if len(cli_args)>2: # disabled additional options
+            return handle_usage_error("Error: too many arguments", cli_args[0])
+        elif len(cli_args)<3:
+            return get_current_theme_info("")
+        elif cli_args[2]!="name" and cli_args[2]!="version" and cli_args[2]!="locales" and cli_args[2]!="all":
+            return handle_usage_error("Error: invaild option \"{}\"".format(cli_args[2]), cli_args[0])
+        return get_current_theme_info(cli_args[2])
     elif cli_args[1]=="unset-current-theme":
         if len(cli_args)>2:
             return handle_usage_error("Error: too many arguments", cli_args[0])
