@@ -1,6 +1,6 @@
 import shutil
-import _generator
-import _globalvar
+from src.clitheme import _generator
+from src.clitheme import _globalvar
 import random
 import string
 
@@ -34,7 +34,7 @@ for line in expected_data.splitlines():
 
 # Test frontend
 print("Testing frontend...")
-import frontend
+from src.clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
 frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r').read()
