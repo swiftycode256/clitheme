@@ -19,9 +19,9 @@ class FetchDescriptor():
         """
         Create a new instance of the object.
         
-        - Provide domain_name and app_name to automatically append them for retrival functions.
-        - Set debug_mode=True to output underlying operations when retriving entries.
-        - Set disable_lang=True to disable localization detection and use "default" entry for all retrival operations
+        - Provide domain_name and app_name to automatically append them for retrieval functions.
+        - Set debug_mode=True to output underlying operations when retrieving entries.
+        - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
         self.domain_name=domain_name
@@ -79,7 +79,7 @@ class FetchDescriptor():
         Check if the entry at the given entry path exists.
         Returns true if exists and false if does not exist
         """
-        # just being lazy here I don't want to rewrite this all over this again ಥ_ಥ
+        # just being lazy here I don't want to rewrite this all over again ಥ_ಥ
         fallback_string=""
         for x in range(30): 
             fallback_string+=random.choice(string.ascii_letters)
