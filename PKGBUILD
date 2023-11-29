@@ -16,30 +16,30 @@ backup=()
 options=()
 install=
 changelog=
-source=("file://$PWD/$pkgname-src.tar.gz") # needs refinement
+source=("file://$PWD/$pkgname-src.tar.gz")
 noextract=()
 md5sums=('SKIP')
 validpgpkeys=()
 
 pkgver(){
-	cd $pkgname*/src/clitheme
+	cd $pkgname-src/src/clitheme
 	python3 -c "from _version import __version__; print(__version__)"
 }
 
 build() {
 	echo $PWD
-	rm $pkgname*.tar.gz # prevent conflicts
-	echo $pkgname*
-	cd $pkgname*
+	# rm $pkgname-src.tar.gz # prevent conflicts
+	echo $pkgname-src
+	cd $pkgname-src
 	hatch build -t wheel
 }
 
 check() {
-	cd $pkgname*
-	test -f dist/$pkgname*.whl
+	cd $pkgname-src
+	test -f dist/*.whl
 }
 
 package() {
-	cd $pkgname*
+	cd $pkgname-src
 	python3 -m installer --destdir="$pkgdir" dist/*.whl
 }
