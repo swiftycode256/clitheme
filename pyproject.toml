@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clitheme"
+version = "1.0-dev"
+authors = [
+  { name="swiftycode", email="3291929745@qq.com" },
+]
+description = "A text theming library for command line applications"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Private :: Do Not Upload",
+]
+
+[project.scripts]
+clitheme = "clitheme:cli.script_main"
+
+[project.urls]
+Homepage = "https://gitee.com/swiftycode/clitheme"
+Documentation = "https://gitee.com/swiftycode/clitheme/wikis"
+Issues = "https://gitee.com/swiftycode/clitheme/issues"
