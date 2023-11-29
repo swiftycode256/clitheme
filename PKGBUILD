@@ -1,3 +1,4 @@
+# Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
 pkgver=VERSION # to be filled out by pkgver()
 pkgrel=1
