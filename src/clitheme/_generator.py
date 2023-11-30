@@ -2,6 +2,7 @@
 Generator function used in applying themes (should not be invoked directly)
 """
 import os,sys
+from re import split
 import string
 import random
 import warnings
@@ -88,6 +89,7 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     mainparsed=False
     current_domainapp="" # for in_domainapp and unset_domainapp in main block
     current_entry_name="" # for entry
+    current_subsection="" # for in_subsection
     for line in file_content.splitlines():
         linenumber+=1
         phrases=line.split()
@@ -137,6 +139,7 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                         if p.find(b)!=-1:
                             handle_error("Line {}: entry subsections/names cannot contain '{}'".format(str(linenumber),b))
                 entry_name=splitarray_to_string(phrases[1:]) # generate entry name
+                if current_subsection!="": entry_name=current_subsection+" "+entry_name
                 if current_domainapp!="": entry_name=current_domainapp+" "+entry_name
                 recursive_mkdir(datapath, entry_name, linenumber)
                 current_status="entry"
@@ -145,10 +148,23 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 if len(phrases)!=3:
                     handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
                 current_domainapp=phrases[1]+" "+phrases[2]
+                current_subsection=""
+            elif phrases[0]=="in_subsection":
+                if len(phrases)<2:
+                    handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
+                # check if in_domainapp is set
+                if current_domainapp=="":
+                    handle_error("Line {}: in_subsection used before in_domainapp".format(linenumber))
+                current_subsection=splitarray_to_string(phrases[1:])
             elif phrases[0]=="unset_domainapp":
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_domainapp=""
+                current_subsection=""
+            elif phrases[0]=="unset_subsection":
+                if len(phrases)!=1:
+                    handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
+                current_subsection=""
             elif phrases[0]=="end_main":
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))

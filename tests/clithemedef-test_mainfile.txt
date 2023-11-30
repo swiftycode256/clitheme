@@ -32,11 +32,6 @@ begin_main
             locale en_US Some text
             locale zh_CN 一些文本
         end_entry
-        entry text_two
-            locale default Some text two
-            locale en_US Some text two
-            locale zh_CN 一些文本（二）
-        end_entry
 
         # Testing subsections
         entry subsection-one text_one
@@ -50,17 +45,26 @@ begin_main
             locale zh_CN 一些文本（二）
         end_entry
         
-        # subsection two
-        entry subsection-two text_one
-            locale default Some text
-            locale en_US Some text
-            locale zh_CN 一些文本
-        end_entry
-        entry subsection-two text_two
+        # Testing in_subsection
+        in_subsection subsection-two
+            entry text_one
+                locale default Some text
+                locale en_US Some text
+                locale zh_CN 一些文本
+            end_entry
+            entry text_two
+                locale default Some text two
+                locale en_US Some text two
+                locale zh_CN 一些文本（二）
+            end_entry
+        # Testing unset_subsection
+        unset_subsection
+        entry text_two
             locale default Some text two
             locale en_US Some text two
             locale zh_CN 一些文本（二）
         end_entry
+        
     in_domainapp com.example-two another-example
         # Ignore entries in here
         entry repeat_test_text_one
