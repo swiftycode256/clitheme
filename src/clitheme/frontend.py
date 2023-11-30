@@ -15,17 +15,19 @@ class FetchDescriptor():
     """
     Object containing domain and app information used for fetching entries
     """
-    def __init__(self, domain_name="", app_name="", debug_mode=False, disable_lang=False):
+    def __init__(self, domain_name="", app_name="", subsections="", debug_mode=False, disable_lang=False):
         """
         Create a new instance of the object.
         
         - Provide domain_name and app_name to automatically append them for retrieval functions.
+        - Provide subsections to automatically append them after domain_name+app_name
         - Set debug_mode=True to output underlying operations when retrieving entries.
         - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
         self.domain_name=domain_name
         self.app_name=app_name
+        self.subsections=subsections
         self.debug_mode=debug_mode
         self.disable_lang=disable_lang
     def retrieve_entry_or_fallback(self, entry_path, fallback_string):
@@ -59,7 +61,7 @@ class FetchDescriptor():
                         break
                     lang_without_encoding+=char 
         if self.debug_mode: print("[Debug]", lang, lang_without_encoding, entry_path)
-        path=data_path+"/"+self.domain_name+"/"+self.app_name
+        path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
         for section in entry_path.split():
             path+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path wth no lang
