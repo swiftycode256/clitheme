@@ -28,6 +28,7 @@ entry_banphrases=['/','\\']
 # - cannot contain banphrases
 sanity_check_error_message=""
 def sanity_check(path):
+    global sanity_check_error_message
     for p in path.split():
         if p.startswith('.'):
             sanity_check_error_message="cannot start with '.'"
