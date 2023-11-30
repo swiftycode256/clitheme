@@ -3,6 +3,7 @@ clitheme front-end interface for accessing entries
 """
 
 import os,sys
+from re import sub
 import random
 import string
 try:
@@ -25,6 +26,11 @@ class FetchDescriptor():
         - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
+
+        # sanity check the domain, app, and subsections
+        if _globalvar.sanity_check(domain_name+" "+app_name+" "+subsections)==False:
+            raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
+
         self.domain_name=domain_name
         self.app_name=app_name
         self.subsections=subsections
@@ -37,17 +43,10 @@ class FetchDescriptor():
         """
         # entry_path e.g. "class-a sample_text"
 
-        # Prevent leading . & prevent /,\ in entry name
-        for p in entry_path.split():
-            if p.startswith('.'):
-                if self.debug_mode: 
-                    print("Error: entry subsections/names cannot start with '.'")
-                    return fallback_string
-            for b in _globalvar.entry_banphrases:
-                if p.find(b)!=-1:
-                    if self.debug_mode: 
-                        print("Error: entry subsections/names cannot contain '{}'".format(b))
-                        return fallback_string
+        # Sanity check the path
+        if _globalvar.sanity_check(entry_path)==False:
+            if self.debug_mode: print("Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
+            return fallback_string
         lang=""
         lang_without_encoding=""
         if not self.disable_lang:
