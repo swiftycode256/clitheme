@@ -3,7 +3,6 @@ clitheme front-end interface for accessing entries
 """
 
 import os,sys
-from re import sub
 import random
 import string
 try:

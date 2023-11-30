@@ -1,9 +1,7 @@
 """
 Generator function used in applying themes (should not be invoked directly)
 """
-from multiprocessing.util import ForkAwareThreadLock
 import os,sys
-from re import split
 import string
 import random
 import warnings
