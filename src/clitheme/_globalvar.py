@@ -21,4 +21,5 @@ clitheme_temp_root="/tmp"
 clitheme_version=_version.__version__
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
+generator_index_filename="current_theme_index"
 entry_banphrases=['/','\\']

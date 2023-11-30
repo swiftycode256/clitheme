@@ -15,29 +15,48 @@ except ImportError:
     import _generator
 
 usage_description=\
-"""Usage: {0} apply-theme [themedef-file] [--override (default)] [--preserve-temp]
+"""Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
        {0} get-current-theme-info
        {0} unset-current-theme
        {0} generate-data-hierarchy [themedef-file] [--parent-dir [parent directory]]
        {0} --help
        {0} --version"""
 
-def apply_theme(file_content, override=True, preserve_temp=False):
+def apply_theme(file_content, overlay=True, preserve_temp=False):
     """
     Apply the theme using the provided definition file content.
 
-    - Set override=False to overlay the theme on top of existing theme[s] (not implemented)
+    - Set overlay=Talse to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
     """
+    if overlay: print("Overlay specified")
     print("==> Generating data...")
-    # Generator data hierarchy, erase current data, copy it to data path
+    index=1
+    generate_path=True
+    if overlay:
+        # Check if current data exists
+        if not os.path.isfile(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename):
+            print("Error: no theme set or the current data is corrupt")
+            print("Try setting a theme first")
+            return 1
+        # update index
+        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r').read().strip())+1
+        except ValueError:
+            print("Error: the current data is corrupt")
+            print("Remove the current theme, set the theme, and try again")
+            return 1
+        # copy the current data into the temp directory
+        _generator.generate_custom_path()
+        shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
+        generate_path=False
+    # Generate data hierarchy, erase current data, copy it to data path
     try:
-        _generator.generate_data_hierarchy(file_content)
+        _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
     except SyntaxError:
         print("Error\nAn error occurred while generating the data:\n\n{}".format(str(sys.exc_info()[1])))
         return 1
     print("Successfully generated data\n==> Applying theme...",end='')
-    # remove the current data, ignoring directory not found
+    # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError: None
     try:
@@ -76,9 +95,11 @@ def get_current_theme_info(type):
         return 1
     lsdir_result=os.listdir(search_path)
     lsdir_result.sort(reverse=True) # sort by latest installed
-    print("Currently installed themes (sorted by latest installed):")
+    if len(lsdir_result)<=1: print("Currently installed theme: ")
+    else: print("Overlay history (sorted by latest installed):")
     for theme_pathname in lsdir_result:
         target_path=search_path+"/"+theme_pathname
+        if not os.path.isdir(target_path): continue # skip current_theme_index file
         # name
         name="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_name"):
@@ -118,18 +139,18 @@ def main(cli_args):
         if len(cli_args)<3:
             return handle_usage_error("Error: not enough arguments", cli_args[0])
         path=""
-        override=True # not yet implemented
+        overlay=False
         preserve_temp=False
         for arg in cli_args[2:]:
             if is_option(arg):
-                if arg.strip()=="--override": override=True
+                if arg.strip()=="--overlay": overlay=True
                 elif arg.strip()=="--preserve-temp": preserve_temp=True
                 else: return handle_usage_error("Unknown option \"{}\"".format(arg), cli_args[0])
             else:
                 if path!="": # already specified path
                     return handle_usage_error("Error: too many arguments", cli_args[0])
                 path=arg
-        return apply_theme(open(path, 'r').read(), override=override, preserve_temp=preserve_temp)
+        return apply_theme(open(path, 'r').read(), overlay=overlay, preserve_temp=preserve_temp)
     elif cli_args[1]=="get-current-theme-info":
         if len(cli_args)>2: # disabled additional options
             return handle_usage_error("Error: too many arguments", cli_args[0])

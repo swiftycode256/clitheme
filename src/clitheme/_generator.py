@@ -59,24 +59,26 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
             .format(str(line_number_debug), header_name_debug))
     f=open(target_path,'w')
     f.write(content+'\n')
+
+def generate_custom_path():
+    # Generate a temporary path
+    global path
+    path=_globalvar.clitheme_temp_root+"/clitheme-temp-"
+    for x in range(8):
+        path+=random.choice(string.ascii_letters)
+
 # Returns true for success or error message
-def generate_data_hierarchy(file_content, custom_path="", custom_infofile_name="1"):
+def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_name="1"):
     """
     Generate the data hierarchy in a temporary directory from a definition file (accessible with _generator.path)
 
     This function should not be invoked directly unless absolutely necessary.
     """
-    # Generate a temporary path
-    global path
-    if custom_path.strip()!="":
-        path=custom_path
-    else:
-        path=_globalvar.clitheme_temp_root+"/clitheme-temp-"
-        for x in range(8):
-            path+=random.choice(string.ascii_letters)
-    os.mkdir(path)
+    if custom_path_gen:
+        generate_custom_path()
+    if not os.path.exists(path): os.mkdir(path)
     datapath=path+"/"+_globalvar.generator_data_pathname
-    os.mkdir(datapath)
+    if not os.path.exists(datapath): os.mkdir(datapath)
     # headerinfo_file=open(path+"/current-theme.clithemeheader",'x')
     # headerinfo_file.write(header_begin)
     current_status="" # header, main, entry
@@ -170,4 +172,7 @@ def generate_data_hierarchy(file_content, custom_path="", custom_infofile_name="
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
     if not headerparsed or not mainparsed:
         handle_error("Missing or incomplete header or main block")
+    # Update current theme index
+    theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w')
+    theme_index.write(custom_infofile_name+"\n")
     return True # Everything is successul! :)
