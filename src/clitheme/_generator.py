@@ -1,6 +1,7 @@
 """
 Generator function used in applying themes (should not be invoked directly)
 """
+from multiprocessing.util import ForkAwareThreadLock
 import os,sys
 from re import split
 import string
@@ -132,12 +133,8 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                     handle_error("Not enough arguments for {} line at line {}"\
                                  .format(phrases[0],str(linenumber)))
                 # Prevent leading . & prevent /,\ in entry name
-                for p in phrases[1:]:
-                    if p.startswith('.'):
-                        handle_error("Line {}: entry subsections/names cannot start with '.'".format(str(linenumber)))
-                    for b in _globalvar.entry_banphrases:
-                        if p.find(b)!=-1:
-                            handle_error("Line {}: entry subsections/names cannot contain '{}'".format(str(linenumber),b))
+                if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
+                    handle_error("Line {}: entry subsections/names {}".format(str(linenumber),_globalvar.sanity_check_error_message))
                 entry_name=splitarray_to_string(phrases[1:]) # generate entry name
                 if current_subsection!="": entry_name=current_subsection+" "+entry_name
                 if current_domainapp!="": entry_name=current_domainapp+" "+entry_name
@@ -147,6 +144,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
             elif phrases[0]=="in_domainapp": 
                 if len(phrases)!=3:
                     handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
+                # sanity check
+                if _globalvar.sanity_check(phrases[1]+" "+phrases[2])==False:
+                    handle_error("Line {}: domain and app names {}".format(str(linenumber), _globalvar.sanity_check_error_message))
                 current_domainapp=phrases[1]+" "+phrases[2]
                 current_subsection=""
             elif phrases[0]=="in_subsection":
@@ -155,6 +155,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 # check if in_domainapp is set
                 if current_domainapp=="":
                     handle_error("Line {}: in_subsection used before in_domainapp".format(linenumber))
+                # sanity check
+                if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
+                    handle_error("Line {}: subsection names {}".format(str(linenumber), _globalvar.sanity_check_error_message))
                 current_subsection=splitarray_to_string(phrases[1:])
             elif phrases[0]=="unset_domainapp":
                 if len(phrases)!=1:
