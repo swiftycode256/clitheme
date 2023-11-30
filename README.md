@@ -46,7 +46,7 @@ $ example-app install-file foo-nonexist
 
 ## 数据结构和路径名称
 
-应用程序是主要通过**路径名称**来指定所需的字符串。这个路径由空格来区别子路径。大部分时候路径的前两个名称是用来指定开发者和应用名称的。
+应用程序是主要通过**路径名称**来指定所需的字符串。这个路径由空格来区别子路径（`subsections`）。大部分时候路径的前两个名称是用来指定开发者和应用名称的。主题文件会通过该路径名称来适配对应的字符串，从而达到自定义输出的效果。
 
 比如`com.example example-app example-text`指的是`com.example`开发的`example-app`中的`example-text`字符串。
 
@@ -72,7 +72,7 @@ $ example-app install-file foo-nonexist
 
 该函数需要提供路径名称和默认字符串。如果当前主题设定没有适配该字符串，则函数会返回提供的默认字符串。
 
-如果新建`FetchDescriptor`时提供了`domain_name`和`app-name`，则调用函数时会自动把它添加到路径名称前。
+如果新建`FetchDescriptor`时提供了`domain_name`，`app-name`，或`subsections`，则调用函数时会自动把它添加到路径名称前。
 
 我们拿上面的样例来示范：
 
@@ -98,6 +98,16 @@ filename_err=[...]
 f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
 ```
 
+### 使用前端wrapper文件（todo）
+
+应用程序还可以在src中内置本项目提供的wrapper文件，以便更好的处理`clitheme`模块不存在时的情况。该wrapper文件包括了前端API中的所有定义和功能，并且当模块不存在时会自动返回失败时的默认值（fallback）。
+
+如需使用，请在你的项目文件中导入`clitheme-frontend-wrapper.py`文件，并且在你的程序中包括以下代码：
+
+    import clitheme-frontend-wrapper as frontend
+
+本项目提供的wrapper文件会随版本更新而更改，所以请定期往你的项目里导入最新的wrapper文件以获得最新的功能。
+
 ### 应用程序应该提供的信息
 
 为了让用户更容易编写主题文件，应用程序应该加入输出字符串定义的功能。该输出信息应该包含路径名称和默认字符串。
@@ -118,6 +128,8 @@ com.example example-app install-success
 com.example example-app file-not-found
 错误：找不到文件 "{}"
 ```
+
+应用程序还可以在对应的官方文档中包括此信息。
 
 ### 编写主题文件
 
@@ -165,7 +177,11 @@ end_main
 
 ### 通过Arch Linux软件包安装
 
-todo
+因为Arch Linux上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Arch Linux软件包。
+
+如需安装，从最新发行版页面下载`.pkg.tar.zst`文件，使用`pacman`安装即可：
+
+    $ sudo pacman -U clitheme-<version>.pkg.tar.zst
 
 ## 构建安装包
 
@@ -193,7 +209,7 @@ todo
 
 构建软件包的方法如下：
 
-- 创建一个临时文件夹（如`build`）并切换当前路径
+- 在仓库目录下创建一个临时文件夹（如`build`）并切换当前路径
 - 给当前仓库创建一个名为`repo-src.tar.gz`的归档，存储在临时目录（必须在临时目录或仓库目录内完成）
 - 把`PKGBUILD`文件拷贝到临时文件夹里
 - 使用`makepkg`构建软件包
@@ -214,4 +230,4 @@ cd ..; rm -rf build
 
 ## 更多信息
 
-具体的详细信息和文档请看本项目Wiki页面
+更多的详细信息和文档请参考本项目Wiki页面。
