@@ -95,7 +95,11 @@ def get_current_theme_info():
         return 1
     lsdir_result=os.listdir(search_path)
     lsdir_result.sort(reverse=True) # sort by latest installed
-    if len(lsdir_result)<=1: print("Currently installed theme: ")
+    lsdir_num=0
+    for x in lsdir_result: 
+        if os.path.isdir(search_path+"/"+x):
+            lsdir_num+=1
+    if lsdir_num<=1: print("Currently installed theme: ")
     else: print("Overlay history (sorted by latest installed):")
     for theme_pathname in lsdir_result:
         target_path=search_path+"/"+theme_pathname
@@ -114,7 +118,9 @@ def get_current_theme_info():
         locales="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
             locales=open(target_path+"/"+"clithemeinfo_locales", 'r').read().strip()
-            print("Supported locales: {}".format(locales))
+            print("Supported locales: ")
+            for locale in locales.split():
+                print("• {}".format(locale))
         print() # newline 
     return 0
 
