@@ -121,6 +121,13 @@ def get_current_theme_info():
             print("Supported locales: ")
             for locale in locales.split():
                 print("• {}".format(locale))
+        # supported_apps
+        supported_apps="(Unknown)"
+        if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
+            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r').read().strip()
+            print("Supported apps: ")
+            for app in supported_apps.split():
+                print("• {}".format(app))
         print() # newline 
     return 0
 

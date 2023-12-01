@@ -10,6 +10,7 @@ begin_header
     locales en_US zh_CN
     version 1.0
     name Example theme
+    supported_apps example-app example-app-two another-example shound_unset-app
 end_header
 
 # Main block

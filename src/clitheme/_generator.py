@@ -109,7 +109,7 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 current_status="main"
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="header": # expect name, version, locales, or end_header
-            if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="locales":
+            if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="locales" or phrases[0]=="supported_apps":
                 if len(phrases)<2:
                     handle_error("Not enough arguments for {} line at line {}"\
                                  .format(phrases[0],str(linenumber)))

@@ -4,6 +4,8 @@ en_US zh_CN
 1.0
 ../theme-info/1/clithemeinfo_name
 Example theme
+../theme-info/1/clithemeinfo_supported_apps
+example-app example-app-two another-example shound_unset-app
 
 com.example/example-app/text-one
 Some example text one
