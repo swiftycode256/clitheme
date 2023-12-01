@@ -95,13 +95,13 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
         if line.strip()=="" or line.strip()[0]=="#": # if empty line or comment
             continue
         if current_status=="": # expect begin_header or begin_main
-            if line.strip()=="begin_header": 
+            if phrases[0]=="begin_header": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 if headerparsed:
                     handle_error("Repeated header block at line {}".format(str(linenumber)))
                 current_status="header"
-            elif line.strip()=="begin_main": 
+            elif phrases[0]=="begin_main": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 if mainparsed:
@@ -119,7 +119,7 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                     path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                     "clithemeinfo_"+phrases[0],\
                     content,linenumber,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
-            elif line.strip()=="end_header": 
+            elif phrases[0]=="end_header": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_status=""
