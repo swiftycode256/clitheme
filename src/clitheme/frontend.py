@@ -30,9 +30,9 @@ class FetchDescriptor():
         if _globalvar.sanity_check(domain_name+" "+app_name+" "+subsections)==False:
             raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
 
-        self.domain_name=domain_name
-        self.app_name=app_name
-        self.subsections=subsections
+        self.domain_name=domain_name.strip()
+        self.app_name=app_name.strip()
+        self.subsections=subsections.strip()
         self.debug_mode=debug_mode
         self.disable_lang=disable_lang
     def retrieve_entry_or_fallback(self, entry_path, fallback_string):
