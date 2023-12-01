@@ -85,9 +85,9 @@ def unset_current_theme():
     print("Success\nSuccessfully removed the current theme data")
     return 0
 
-def get_current_theme_info(type):
+def get_current_theme_info():
     """
-    Get the current theme info of the specified type (name,version,locales, or all)
+    Get the current theme info
     """
     search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
     if not os.path.isdir(search_path):
@@ -154,11 +154,7 @@ def main(cli_args):
     elif cli_args[1]=="get-current-theme-info":
         if len(cli_args)>2: # disabled additional options
             return handle_usage_error("Error: too many arguments", cli_args[0])
-        elif len(cli_args)<3:
-            return get_current_theme_info("")
-        elif cli_args[2]!="name" and cli_args[2]!="version" and cli_args[2]!="locales" and cli_args[2]!="all":
-            return handle_usage_error("Error: invaild option \"{}\"".format(cli_args[2]), cli_args[0])
-        return get_current_theme_info(cli_args[2])
+        return get_current_theme_info()
     elif cli_args[1]=="unset-current-theme":
         if len(cli_args)>2:
             return handle_usage_error("Error: too many arguments", cli_args[0])
