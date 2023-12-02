@@ -24,8 +24,8 @@ validpgpkeys=()
 
 pkgver(){
 	cd src/clitheme
-	pkgrel=$(python3 -c "from _version import version_relnumber; print(version_relnumber)")
-	python3 -c "from _version import version_major; print(version_major)"
+	pkgrel=$(python3 -c "from _version import version_buildnumber; print(version_buildnumber)")
+	python3 -c "from _version import version_main; print(version_main)"
 }
 
 build() {
