@@ -1,0 +1,51 @@
+begin_header
+    name 样例主题
+    version 1.0
+    locales zh_CN
+end_header
+
+begin_main
+    in_domainapp com.example example-app
+        entry found-file
+            locale default o(≧v≦)o 太好了，在当前目录找到了{}个文件！
+            locale zh_CN o(≧v≦)o 太好了，在当前目录找到了{}个文件！
+        end_entry
+        entry installing-file
+            locale default (>^ω^<) 正在安装 "{}"... (>^ω^<)
+            locale zh_CN (>^ω^<) 正在安装 "{}"... (>^ω^<)
+        end_entry
+        entry install-success
+            locale default o(≧v≦)o 已成功安装{}个文件！
+            locale zh_CN o(≧v≦)o 已成功安装{}个文件！
+        end_entry
+        entry install-success-file
+            locale default o(≧v≦)o 已成功安装"{}"!
+            locale zh_CN o(≧v≦)o 已成功安装"{}"!
+        end_entry
+        entry file-not-found
+            locale default ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"！呜呜呜～
+            locale zh_CN ಥ_ಥ 糟糕，出错啦！找不到文件 "{}" ！呜呜呜～
+        end_entry
+        entry format-error
+            locale default ಥ_ಥ 糟糕，命令语法不正确！(ToT)/~~~
+            locale zh_CN ಥ_ಥ 糟糕，命令语法不正确！(ToT)/~~~
+        end_entry
+        entry directory-empty
+            locale default ಥ_ಥ 糟糕，当前目录里没有任何文件！呜呜呜～
+            locale zh_CN ಥ_ಥ 糟糕，当前目录里没有任何文件！呜呜呜～
+        end_entry
+
+        in_subsection helpmessage
+            entry description-general
+                locale default (⊙ω⊙) 文件安装程序样例（不会修改系统中的文件哦～）
+                locale zh_CN (⊙ω⊙) 文件安装程序样例（不会修改系统中的文件哦～）
+            end_entry
+            entry description-usageprompt
+                locale default (>﹏<) 使用方法：(◐‿◑)
+                locale zh_CN (>﹏<) 使用方法：(◐‿◑)
+            end_entry
+            entry unknown-command
+                locale default ಥ_ಥ 找不到指令"{}"！呜呜呜～
+                locale zh_CN ಥ_ಥ 找不到指令"{}"！呜呜呜～
+            end_entry
+end_main
