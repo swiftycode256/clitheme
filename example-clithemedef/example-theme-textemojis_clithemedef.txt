@@ -1,7 +1,8 @@
 begin_header
-    name 样例主题
+    name 颜文字样例主题
     version 1.0
     locales zh_CN
+    supported_apps clitheme_example
 end_header
 
 begin_main
