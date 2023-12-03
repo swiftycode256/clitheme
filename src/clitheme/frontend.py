@@ -15,7 +15,7 @@ class FetchDescriptor():
     """
     Object containing domain and app information used for fetching entries
     """
-    def __init__(self, domain_name="", app_name="", subsections="", debug_mode=False, disable_lang=False):
+    def __init__(self, domain_name: str = "", app_name: str = "", subsections: str = "", debug_mode: bool = False, disable_lang: bool = False):
         """
         Create a new instance of the object.
         
@@ -35,7 +35,7 @@ class FetchDescriptor():
         self.subsections=subsections.strip()
         self.debug_mode=debug_mode
         self.disable_lang=disable_lang
-    def retrieve_entry_or_fallback(self, entry_path, fallback_string):
+    def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str):
         """
         Attempt to retrieve the entry based on given entry path. 
         If the entry does not exist, use the provided fallback string instead.
@@ -74,7 +74,7 @@ class FetchDescriptor():
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string
-    def entry_exists(self, entry_path):
+    def entry_exists(self, entry_path: str):
         """
         Check if the entry at the given entry path exists.
         Returns true if exists and false if does not exist
