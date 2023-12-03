@@ -74,6 +74,9 @@ class FetchDescriptor():
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string
+    
+    reof=retrieve_entry_or_fallback # a shorter alias of the function
+
     def entry_exists(self, entry_path: str):
         """
         Check if the entry at the given entry path exists.
