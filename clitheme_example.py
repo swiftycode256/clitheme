@@ -14,7 +14,9 @@ help_usage=\
 {0} --clitheme-output-defs
 """
 
-f=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app")
+frontend.global_domain="com.example"
+frontend.global_appname="example-app"
+f=frontend.FetchDescriptor()
 
 if len(sys.argv)>1 and sys.argv[1]=="install-files":
     if len(sys.argv)!=2:
@@ -41,7 +43,7 @@ elif len(sys.argv)>1 and sys.argv[1]=="install-file":
         print(f.retrieve_entry_or_fallback("file-not-found","错误：找不到文件\"{}\"").format(item))
         exit(1)
 else:
-    f2=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app", subsections="helpmessage")
+    f2=frontend.FetchDescriptor(subsections="helpmessage")
     print(f2.retrieve_entry_or_fallback("description-general","文件安装程序样例（不会修改系统中的文件）"))
     print(f2.retrieve_entry_or_fallback("description-usageprompt","使用方法："))
     print(help_usage.format(sys.argv[0]))

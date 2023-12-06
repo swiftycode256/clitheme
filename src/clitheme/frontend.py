@@ -5,36 +5,69 @@ clitheme front-end interface for accessing entries
 import os,sys
 import random
 import string
+from typing import Optional
 try:
     from . import _globalvar
 except ImportError: # for test program
     import _globalvar
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
+
+global_domain=""
+global_appname=""
+global_subsections=""
+global_debugmode=False
 global_lang="" # Override locale
+global_disablelang=False
+
 class FetchDescriptor():
     """
     Object containing domain and app information used for fetching entries
     """
-    def __init__(self, domain_name: str = "", app_name: str = "", subsections: str = "", debug_mode: bool = False, disable_lang: bool = False):
+    def __init__(self, domain_name: Optional[str] = None, app_name: Optional[str] = None, subsections: Optional[str] = None, lang: Optional[str] = None, debug_mode: Optional[bool] = None, disable_lang: Optional[bool] = None):
         """
         Create a new instance of the object.
         
         - Provide domain_name and app_name to automatically append them for retrieval functions.
         - Provide subsections to automatically append them after domain_name+app_name
+        - Provide lang to override the automatically detected system locale information
         - Set debug_mode=True to output underlying operations when retrieving entries.
         - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
 
-        # sanity check the domain, app, and subsections
-        if _globalvar.sanity_check(domain_name+" "+app_name+" "+subsections)==False:
-            raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
+        if domain_name==None:
+            self.domain_name=global_domain
+        else:
+            self.domain_name=domain_name.strip()
 
-        self.domain_name=domain_name.strip()
-        self.app_name=app_name.strip()
-        self.subsections=subsections.strip()
-        self.debug_mode=debug_mode
-        self.disable_lang=disable_lang
+        if app_name==None:
+            self.app_name=global_appname
+        else:
+            self.app_name=app_name.strip()
+
+        if subsections==None:
+            self.subsections=global_subsections
+        else:
+            self.subsections=subsections.strip()
+
+        if lang==None:
+            self.lang=global_lang
+        else:
+            self.lang=lang
+        
+        if debug_mode==None:
+            self.debug_mode=global_debugmode
+        else:
+            self.debug_mode=debug_mode
+
+        if disable_lang==None:
+            self.disable_lang=global_disablelang
+        else:
+            self.disable_lang=disable_lang
+
+        # sanity check the domain, app, and subsections
+        if _globalvar.sanity_check(self.domain_name+" "+self.app_name+" "+self.subsections)==False:
+            raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
     def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str):
         """
         Attempt to retrieve the entry based on given entry path. 
@@ -49,8 +82,8 @@ class FetchDescriptor():
         lang=""
         lang_without_encoding=""
         if not self.disable_lang:
-            if global_lang!="":
-                lang=global_lang
+            if self.lang!="":
+                lang=self.lang
             elif os.environ.__contains__("LANG"):
                 lang=os.environ["LANG"]
             if lang.strip()!="": # not empty

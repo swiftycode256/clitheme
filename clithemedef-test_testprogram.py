@@ -36,6 +36,7 @@ for line in expected_data.splitlines():
 print("Testing frontend...")
 from src.clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
+frontend.global_debugmode=True
 frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r').read()
 current_path_frontend=""
@@ -50,10 +51,10 @@ for line in expected_data_frontend.splitlines():
         descriptor=None
         entry_path=None
         if len(phrases)>2:
-            descriptor=frontend.FetchDescriptor(domain_name=phrases[0],app_name=phrases[1],debug_mode=True)
+            descriptor=frontend.FetchDescriptor(domain_name=phrases[0],app_name=phrases[1])
             entry_path=_generator.splitarray_to_string(phrases[2:]) # just being lazy here
         else:
-            descriptor=frontend.FetchDescriptor(debug_mode=True)
+            descriptor=frontend.FetchDescriptor()
             entry_path=current_path_frontend
         expected_content=line.strip()
         fallback_string=""
