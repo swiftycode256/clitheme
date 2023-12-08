@@ -14,6 +14,39 @@ help_usage=\
 {0} --clitheme-output-defs
 """
 
+outputdefs_string=\
+"""
+com.example example-app found-file
+在当前目录找到了{}个文件
+
+com.example example-app installing-file
+-> 正在安装 "{}"...
+
+com.example example-app install-success
+已成功安装{}个文件
+
+com.example example-app install-success-file
+已成功安装"{}"
+
+com.example example-app file-not-found
+错误：找不到文件"{}"
+
+com.example example-app format-error
+错误：命令语法不正确
+
+com.example example-app directory-empty
+错误：当前目录里没有任何文件
+
+com.example example-app helpmessage description-general
+文件安装程序样例（不会修改系统中的文件）
+
+com.example example-app helpmessage description-usageprompt
+使用方法：
+
+com.example example-app helpmessage unknown-command
+错误：未知命令"{}"
+"""
+
 frontend.global_domain="com.example"
 frontend.global_appname="example-app"
 f=frontend.FetchDescriptor()
@@ -42,6 +75,8 @@ elif len(sys.argv)>1 and sys.argv[1]=="install-file":
     else:
         print(f.retrieve_entry_or_fallback("file-not-found","错误：找不到文件\"{}\"").format(item))
         exit(1)
+elif len(sys.argv)>1 and sys.argv[1]=="--clitheme-output-defs":
+    print(outputdefs_string)
 else:
     f2=frontend.FetchDescriptor(subsections="helpmessage")
     print(f2.retrieve_entry_or_fallback("description-general","文件安装程序样例（不会修改系统中的文件）"))
