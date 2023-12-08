@@ -5,7 +5,7 @@ import random
 import string
 
 print("Testing generator function...")
-mainfile_data=open("tests/clithemedef-test_mainfile.txt",'r').read()
+mainfile_data=open("tests/clithemedef-test_mainfile.clithemedef.txt",'r').read()
 expected_data=open("tests/clithemedef-test_expected.txt",'r').read()
 funcresult=_generator.generate_data_hierarchy(mainfile_data)
 
