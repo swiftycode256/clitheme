@@ -68,7 +68,7 @@ class FetchDescriptor():
         # sanity check the domain, app, and subsections
         if _globalvar.sanity_check(self.domain_name+" "+self.app_name+" "+self.subsections)==False:
             raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
-    def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str):
+    def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str) -> str:
         """
         Attempt to retrieve the entry based on given entry path. 
         If the entry does not exist, use the provided fallback string instead.
@@ -110,7 +110,7 @@ class FetchDescriptor():
     
     reof=retrieve_entry_or_fallback # a shorter alias of the function
 
-    def entry_exists(self, entry_path: str):
+    def entry_exists(self, entry_path: str) -> bool:
         """
         Check if the entry at the given entry path exists.
         Returns true if exists and false if does not exist
