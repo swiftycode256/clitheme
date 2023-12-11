@@ -76,7 +76,7 @@ $ example-app install-file foo-nonexist
 
 我们拿上面的样例来示范：
 
-```
+```py
 from clitheme import frontend
 
 # 新建FetchDescriptor实例
@@ -98,15 +98,20 @@ filename_err=[...]
 f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
 ```
 
-### 使用前端wrapper文件（todo）
+### 使用前端fallback模块
 
-应用程序还可以在src中内置本项目提供的wrapper文件，以便更好的处理`clitheme`模块不存在时的情况。该wrapper文件包括了前端API中的所有定义和功能，并且当模块不存在时会自动返回失败时的默认值（fallback）。
+应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理`clitheme`模块不存在时的情况。该fallback模块包括了前端API中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
 
-如需使用，请在你的项目文件中导入`clitheme-frontend-wrapper.py`文件，并且在你的程序中包括以下代码：
+如需使用，请在你的项目文件中导入`clitheme_fallback.py`文件，并且在你的程序中包括以下代码：
 
-    import clitheme-frontend-wrapper as frontend
+```py
+try:
+    from clitheme import frontend
+except (ModuleNotFoundError, ImportError):
+    import clitheme_fallback as frontend
+```
 
-本项目提供的wrapper文件会随版本更新而更改，所以请定期往你的项目里导入最新的wrapper文件以获得最新的功能。
+本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以获得最新的功能。
 
 ### 应用程序应该提供的信息
 
@@ -215,14 +220,14 @@ end_main
 - 使用`makepkg`构建软件包
 
 你可以通过以下一系列命令来完成这些操作。确保当前目录为仓库目录，并且执行以下命令：
-```
+```sh
 mkdir build; cd build
 tar cf repo-src.tar.gz ..
 cp ../PKGBUILD .
 makepkg -sci
-# -s：自动安装需要的软件包
+# -s：自动安装构建时需要的软件包
 # -c：构建完后删除临时生成的数据和文件夹
-# -i：构建完后自动安装软件包
+# -i：构建完后自动安装生成的软件包
 
 # 完成后，你可以删除临时文件夹
 cd ..; rm -rf build
