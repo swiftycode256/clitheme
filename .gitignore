@@ -5,6 +5,8 @@ dist
 dist/*
 .vscode
 .vscode/*
+debian
+debian/*
 # for building Arch Linux package
 build
 build/*
