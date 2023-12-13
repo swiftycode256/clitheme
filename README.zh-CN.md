@@ -32,7 +32,7 @@ $ example-app install-file foo-nonexist
 ## 功能
 
 - 多语言支持
-- 支持同时应用多个主题（待办）
+- 支持同时应用多个主题
 - 简洁易懂的主题信息文件（`clithemedef`）语法
 - 无需前端API也可访问当前主题数据（易懂的数据结构）
 
@@ -134,7 +134,7 @@ com.example example-app file-not-found
 错误：找不到文件 "{}"
 ```
 
-应用程序还可以在对应的官方文档中包括此信息。
+应用程序还可以在对应的官方文档中包括此信息。如需样例，请参考本仓库中`example-clithemedef`文件夹的README文件。
 
 ### 编写主题文件
 
