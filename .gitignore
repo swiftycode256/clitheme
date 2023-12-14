@@ -7,6 +7,8 @@ dist/*
 .vscode/*
 debian
 debian/*
+.pybuild
+.pybuild/*
 # for building Arch Linux package
 build
 build/*
