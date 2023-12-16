@@ -1,0 +1,57 @@
+.TH clitheme 1 2023-12-16
+.SH NAME 
+clitheme \- frontend to customize output of applications
+.SH SYNOPSIS 
+.B clitheme [COMMAND] [OPTIONS]
+.SH DESCRIPTION 
+clitheme is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
+.SH OPTIONS
+.P
+.B apply-theme [themedef-file] [--overlay] [--preserve-temp]
+.RS 7
+Applies a given theme definition file into the current system. Supported applications will immediately start using the defined values after performing this operation.
+
+Specify \fB--overlay\fR to append value definitions in the file onto the current data.
+
+Specify \fB--preserve-temp\fR to prevent the temporary directory from removed after the operation.
+.RE
+.P 
+.B get-current-theme-info
+.RS 7
+Outputs detailed information about the currently applied theme. If multiple themes are applied using the \fB--overlay\fR option, outputs detailed information for each applied theme.
+.RE
+.P
+.B unset-current-theme
+.RS 7
+Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
+.RE
+.P
+.B generate-data-hierarchy [themedef-file] [--overlay]
+.RS 7
+Generates the data hierarchy for a given theme definition file. This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
+
+This command is for debug purposes only.
+.RE
+.P
+.B --help
+.RS 7
+Outputs a short help message consisting of available commands.
+.RE
+.P
+.B --version
+.RS 7
+Outputs the current version of the program.
+.RE
+.SH SEE ALSO
+For more information, please see the 
+.UR https://gitee.com/swiftycode/clitheme
+project homepage
+.UE 
+and the
+.UR https://gitee.com/swiftycode/clitheme/wikis 
+project wiki:
+.UE
+.P
+https://gitee.com/swiftycode/clitheme
+.P
+https://gitee.com/swiftycode/clitheme/wikis
