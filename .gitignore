@@ -5,9 +5,12 @@ dist
 dist/*
 .vscode
 .vscode/*
-debian/*.ex
+# excluded files (ex)
+debian/*.ex 
 debian/clitheme
 debian/.debhelper
+debian/files
+debian/*.debhelper.log
 .pybuild
 .pybuild/*
 # for building Arch Linux package
