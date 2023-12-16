@@ -1,5 +1,5 @@
 Source: clitheme
-#Section: unknown
+Section: libs
 Priority: optional
 Maintainer: swiftycode <3291929745@qq.com>
 Rules-Requires-Root: no
@@ -12,7 +12,9 @@ Package: clitheme
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, python3 (> 3.7)
-Description: A code library for text theming
- clitheme allows users to customize the output of supported programs, such as multi-language support or mimicing your favorite cartoon character. It has a easy-to-understand syntax and implementation module for programs. 
+Description: Application framework for text theming
+ clitheme allows users to customize the output of supported programs, such as
+ multi-language support or mimicing your favorite cartoon character. It has an
+ easy-to-understand syntax and implementation module for programs. 
  .
  For more information, visit the homepage and the pages in the Wiki section.
