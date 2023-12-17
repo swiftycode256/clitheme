@@ -7,7 +7,7 @@ arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
 license=('GPL-3-or-later')
 depends=('python>=3.7')
-makedepends=('python-hatch' 'python-installer' 'python-wheel')
+makedepends=('git' 'python-hatch' 'python-installer' 'python-wheel')
 checkdepends=()
 optdepends=()
 provides=($pkgname)
