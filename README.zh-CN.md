@@ -182,11 +182,9 @@ end_main
 
 ### 通过Arch Linux软件包安装
 
-因为Arch Linux上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Arch Linux软件包。
+因为Arch Linux上无法使用`pip`往系统里直接安装pip软件包，所以本项目支持通过Arch Linux软件包安装。
 
-如需安装，从最新发行版页面下载`.pkg.tar.zst`文件，使用`pacman`安装即可：
-
-    $ sudo pacman -U clitheme-<version>.pkg.tar.zst
+因为构建的Arch Linux软件包只兼容特定的Python版本，并且升级Python版本后会导致原软件包失效，本项目仅提供构建软件包的方式，不提供构建好的软件包。详细请见下方的**构建Arch Linux软件包**。
 
 ### 通过deb软件包安装
 
@@ -220,26 +218,18 @@ end_main
 
     $ sudo pacman -S base-devel
 
-构建软件包的方法如下：
+构建软件包只需要在仓库目录中执行`makepkg`指令就可以了。你可以通过以下一系列命令来完成这些操作：
 
-- 在仓库目录下创建一个临时文件夹（如`build`）并切换当前路径
-- 给当前仓库创建一个名为`repo-src.tar.gz`的归档，存储在临时目录（必须在临时目录或仓库目录内完成）
-- 把`PKGBUILD`文件拷贝到临时文件夹里
-- 使用`makepkg`构建软件包
-
-你可以通过以下一系列命令来完成这些操作。确保当前目录为仓库目录，并且执行以下命令：
 ```sh
-mkdir build; cd build
-tar cf repo-src.tar.gz ..
-cp ../PKGBUILD .
-makepkg -sci
+makepkg -si
 # -s：自动安装构建时需要的软件包
-# -c：构建完后删除临时生成的数据和文件夹
 # -i：构建完后自动安装生成的软件包
 
 # 完成后，你可以删除临时文件夹
-cd ..; rm -rf build
+rm -rf buildtmp srctmp
 ```
+
+**注意：** 每次升级Python版本时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
 
 ### 构建deb软件包
 
