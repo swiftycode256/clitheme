@@ -17,29 +17,30 @@ backup=()
 options=()
 install=
 changelog=
-source=("repo-buildsrc::git+file://$PWD")
+source=("srctmp::git+file://$PWD")
 noextract=()
 md5sums=('SKIP')
 validpgpkeys=()
-
+# Make sure that it doesn't conflict with "src" directory
+BUILDDIR="$PWD/buildtmp"
 pkgver(){
-	cd repo-buildsrc
+	cd srctmp
 	cd src/clitheme
 	pkgrel=$(python3 -c "from _version import version_buildnumber; print(version_buildnumber)")
 	python3 -c "from _version import version_main; print(version_main)"
 }
 
 build() {
-	cd repo-buildsrc
+	cd srctmp
 	hatch build -t wheel
 }
 
 check() {
-	cd repo-buildsrc
+	cd srctmp
 	test -f dist/*.whl
 }
 
 package() {
-	cd repo-buildsrc
+	cd srctmp
 	python3 -m installer --destdir="$pkgdir" dist/*.whl
 }
