@@ -55,7 +55,10 @@ def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
     except SyntaxError:
         print("Error\nAn error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
         return 1
-    print("Successfully generated data\n==> Applying theme...",end='')
+    print("Successfully generated data")
+    if preserve_temp:
+        print("View at {}".format(_generator.path))
+    print("==> Applying theme...",end='')
     # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError: None
