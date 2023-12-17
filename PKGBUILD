@@ -5,7 +5,7 @@ pkgrel=1 # to be filled out by pkgver()
 pkgdesc="A text theming library for command line applications"
 arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
-license=('GPL-3-or-later')
+license=('GPL3')
 depends=('python>=3.7')
 makedepends=('git' 'python-hatch' 'python-installer' 'python-wheel')
 checkdepends=()
