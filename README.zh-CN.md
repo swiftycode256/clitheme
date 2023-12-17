@@ -188,6 +188,14 @@ end_main
 
     $ sudo pacman -U clitheme-<version>.pkg.tar.zst
 
+### 通过deb软件包安装
+
+因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
+
+如需在Debian系统上安装，请从最新发行版页面下载`.deb`文件，使用`apt`安装即可：
+
+    $ sudo apt install ./clitheme_<version>_all.deb
+
 ## 构建安装包
 
 你也可以从仓库源代码构建安装包，以包括最新或自定义更改。如果需要安装最新的开发版本，则需要通过此方法安装。
@@ -232,6 +240,22 @@ makepkg -sci
 # 完成后，你可以删除临时文件夹
 cd ..; rm -rf build
 ```
+
+### 构建deb软件包
+
+因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
+
+构建Debian软件包前，你需要安装以下用于构建的系统组件：
+
+- `debhelper`
+- `dh-python`
+- `python3-hatchling`
+
+你可以使用以下命令安装：
+
+    sudo apt install debhelper dh-python python3-hatchling
+
+安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
 
 ## 更多信息
 
