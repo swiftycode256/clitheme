@@ -37,10 +37,20 @@ build() {
 
 check() {
 	cd srctmp
-	test -f dist/*.whl
+	echo -n "Ensuring generated wheel files exist..."
+	test ! -f dist/*.whl && echo "Error" && return 1
+	echo "OK"
+	# manpage
+	echo "Ensuring manpage files (in docs directory) exist:"
+	echo -n "docs/clitheme.1 ..."
+	test ! -f docs/clitheme.1 && echo "Error" && return 1
+	echo "OK"
 }
 
 package() {
 	cd srctmp
 	python3 -m installer --destdir="$pkgdir" dist/*.whl
+	# install manpage
+	mkdir -p $pkgdir/usr/share/man/man1
+	gzip -c docs/clitheme.1 > $pkgdir/usr/share/man/man1/clitheme.1.gz
 }
