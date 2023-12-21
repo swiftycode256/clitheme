@@ -1,5 +1,6 @@
 begin_header
     name 颜文字样例主题
+    description 适配项目中提供的example程序的一个颜文字主题，把它的输出变得可爱
     version 1.0
     locales zh_CN
     supported_apps clitheme_example

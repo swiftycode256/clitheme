@@ -151,6 +151,12 @@ def get_current_theme_info():
         if os.path.isfile(target_path+"/"+"clithemeinfo_version"):
             version=open(target_path+"/"+"clithemeinfo_version", 'r').read().strip()
             print("Version: {}".format(version))
+        # description
+        description="(Unknown)"
+        if os.path.isfile(target_path+"/"+"clithemeinfo_description"):
+            description=open(target_path+"/"+"clithemeinfo_description", 'r').read().strip()
+            print("Description:")
+            print(description)
         # locales
         locales="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
