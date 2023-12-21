@@ -210,7 +210,7 @@ def main(cli_args):
         try:
             contents=open(path, 'r').read()
         except Exception:
-            print("An error occured while reading the file: \n{}".format(str(sys.exc_info()[1])))
+            print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
             return 1
         return apply_theme(contents, overlay=overlay, preserve_temp=preserve_temp)
     elif cli_args[1]=="get-current-theme-info":
@@ -238,7 +238,7 @@ def main(cli_args):
         try:
             contents=open(path, 'r').read()
         except Exception:
-            print("An error occured while reading the file: \n{}".format(str(sys.exc_info()[1])))
+            print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
             return 1
         return generate_data_hierarchy(contents, overlay=overlay)
     elif cli_args[1]=="--version":

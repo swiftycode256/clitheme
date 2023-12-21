@@ -183,4 +183,4 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     # Update current theme index
     theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w')
     theme_index.write(custom_infofile_name+"\n")
-    return True # Everything is successul! :)
+    return True # Everything is successful! :)

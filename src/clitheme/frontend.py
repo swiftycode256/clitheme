@@ -95,7 +95,7 @@ class FetchDescriptor():
         path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
         for section in entry_path.split():
             path+="/"+section
-        # path with lang, path with lang but without e.g. .UTF-8, path wth no lang
+        # path with lang, path with lang but without e.g. .UTF-8, path with no lang
         possible_paths=[path+"__"+lang, path+"__"+lang_without_encoding, path]
         for p in possible_paths:
             if self.debug_mode: print("Trying "+p, end="...")

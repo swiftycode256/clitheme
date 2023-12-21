@@ -17,7 +17,7 @@ if clitheme_root_data_path=="": # prev did not succeed
             raise KeyError
         clitheme_root_data_path=os.environ["HOME"]+"/.local/share/clitheme"
     except KeyError:
-        print("[clitheme] Error: unable to get your home directory or invaild home directory information")
+        print("[clitheme] Error: unable to get your home directory or invalid home directory information")
         print("Please make sure that the $HOME environment variable is set correctly.")
         print("Try restarting your terminal session to fix this issue.")
         exit(1)
@@ -27,7 +27,7 @@ generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 generator_index_filename="current_theme_index"
 entry_banphrases=['/','\\']
-# function to check whether the pathname contains invaild phrases
+# function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
 sanity_check_error_message=""
