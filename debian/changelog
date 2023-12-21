@@ -1,3 +1,9 @@
+clitheme (1.1-dev20231221-1) experimental; urgency=low
+
+  * In development
+
+ -- swiftycode <3291929745@qq.com>  Thu, 21 Dec 2023 19:48:00 +0800
+
 clitheme (1.0-r2-1) unstable; urgency=medium
 
   * Version 1.0-r2 in Debian package format
