@@ -186,14 +186,15 @@ def main(cli_args):
     
     Provide a list of command line arguments to this function through cli_args.
     """
+    arg_first="clitheme" # controls what appears as the command name in messages
     if len(cli_args)<=1: # no arguments passed
-        print(usage_description.format(cli_args[0]))
+        print(usage_description.format(arg_first))
         print("Error: no command or option specified")
         return 1
 
     if cli_args[1]=="apply-theme":
         if len(cli_args)<3:
-            return handle_usage_error("Error: not enough arguments", cli_args[0])
+            return handle_usage_error("Error: not enough arguments", arg_first)
         path=""
         overlay=False
         preserve_temp=False
@@ -201,10 +202,10 @@ def main(cli_args):
             if is_option(arg):
                 if arg.strip()=="--overlay": overlay=True
                 elif arg.strip()=="--preserve-temp": preserve_temp=True
-                else: return handle_usage_error("Unknown option \"{}\"".format(arg), cli_args[0])
+                else: return handle_usage_error("Unknown option \"{}\"".format(arg), arg_first)
             else:
                 if path!="": # already specified path
-                    return handle_usage_error("Error: too many arguments", cli_args[0])
+                    return handle_usage_error("Error: too many arguments", arg_first)
                 path=arg
         contents=""
         try:
@@ -215,24 +216,24 @@ def main(cli_args):
         return apply_theme(contents, overlay=overlay, preserve_temp=preserve_temp)
     elif cli_args[1]=="get-current-theme-info":
         if len(cli_args)>2: # disabled additional options
-            return handle_usage_error("Error: too many arguments", cli_args[0])
+            return handle_usage_error("Error: too many arguments", arg_first)
         return get_current_theme_info()
     elif cli_args[1]=="unset-current-theme":
         if len(cli_args)>2:
-            return handle_usage_error("Error: too many arguments", cli_args[0])
+            return handle_usage_error("Error: too many arguments", arg_first)
         return unset_current_theme()
     elif cli_args[1]=="generate-data-hierarchy":
         if len(cli_args)<3:
-            return handle_usage_error("Error: not enough arguments", cli_args[0])
+            return handle_usage_error("Error: not enough arguments", arg_first)
         path=""
         overlay=False
         for arg in cli_args[2:]:
             if is_option(arg):
                 if arg.strip()=="--overlay": overlay=True
-                else: return handle_usage_error("Unknown option \"{}\"".format(arg), cli_args[0])
+                else: return handle_usage_error("Unknown option \"{}\"".format(arg), arg_first)
             else:
                 if path!="": # already specified path
-                    return handle_usage_error("Error: too many arguments", cli_args[0])
+                    return handle_usage_error("Error: too many arguments", arg_first)
                 path=arg
         contents=""
         try:
@@ -245,9 +246,9 @@ def main(cli_args):
         print("clitheme version {0}".format(_globalvar.clitheme_version))
     else:
         if cli_args[1]=="--help":
-            print(usage_description.format(cli_args[0]))
+            print(usage_description.format(arg_first))
         else:
-            return handle_usage_error("Error: unknown command \"{0}\"".format(cli_args[1]), cli_args[0])
+            return handle_usage_error("Error: unknown command \"{0}\"".format(cli_args[1]), arg_first)
     return 0
 def script_main(): # for script
     exit(main(sys.argv))
