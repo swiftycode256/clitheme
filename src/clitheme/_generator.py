@@ -4,6 +4,7 @@ Generator function used in applying themes (should not be invoked directly)
 import os
 import string
 import random
+import re
 try:
     from . import _globalvar
 except ImportError: # for test program
@@ -77,15 +78,66 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     # To detect repeated blocks
     headerparsed=False
     mainparsed=False
+
     current_domainapp="" # for in_domainapp and unset_domainapp in main block
     current_entry_name="" # for entry
     current_subsection="" # for in_subsection
+
+    current_entry_locale="" # for handling locale_block
+    current_entry_linenumber=-1
+
+    blockinput=False # for multi-line (block) input
+    blockinput_data="" # data of current block input
+    blockinput_minspaces=-1 # min number of whitespaces
     for line in file_content.splitlines():
         linenumber+=1
         phrases=line.split()
-        if line.strip()=="" or line.strip()[0]=="#": # if empty line or comment
+        if blockinput==False and (line.strip()=="" or line.strip()[0]=="#"): # if empty line or comment (except in block input mode)
             continue
-        if current_status=="": # expect begin_header or begin_main
+
+        if blockinput==True:
+            if len(phrases)>0 and phrases[0]=="end_block":
+                if blockinput_minspaces!=-1:
+                    # process whitespaces
+                    # trim amount of leading whitespaces on each line
+                    pattern=r"(?P<optline>\n|^)[ ]{"+str(blockinput_minspaces)+"}"
+                    blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data)
+                if current_status=="entry":
+                    target_entry=current_entry_name
+                    if current_entry_locale!="default":
+                        target_entry+="__"+current_entry_locale
+                    add_entry(datapath,target_entry, blockinput_data, current_entry_linenumber)
+                    # clear data
+                    current_entry_locale=""
+                    current_entry_linenumber=-1
+                else: # the unlikely case
+                    handle_error("Line {}: internal error while handling block input; please file a bug report".format(str(linenumber)))
+                # clear data
+                blockinput=False
+                blockinput_data=""
+            else:
+                if blockinput_data!="": blockinput_data+="\n"
+                line_content=line.strip()
+                if line_content=="": continue # empty line
+                # Calculate whitespaces
+                spaces=-1
+                ws_match=re.search(r"^\s+", line) # match leading whitespaces
+                if ws_match==None: # no leading spaces
+                    spaces=0
+                else:
+                    leading_whitespace=ws_match.group()
+                    # substitute \t with 8 spaces
+                    leading_whitespace=re.sub(r"\t"," "*8, leading_whitespace)
+                    # append it to line_content
+                    line_content=leading_whitespace+line_content
+                    # write line_content to data
+                    blockinput_data+=line_content
+                    spaces=len(leading_whitespace)
+                # update min count
+                if spaces!=-1 and (spaces<blockinput_minspaces or blockinput_minspaces==-1):
+                    blockinput_minspaces=spaces
+                
+        elif current_status=="": # expect begin_header or begin_main
             if phrases[0]=="begin_header": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
@@ -173,10 +225,17 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 if phrases[1]!="default":
                     target_entry+="__"+phrases[1]
                 add_entry(datapath,target_entry,content,linenumber)
+            if phrases[0]=="locale_block":
+                if len(phrases)!=2:
+                    handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
+                current_entry_locale=phrases[1]
+                current_entry_linenumber=linenumber
+                blockinput=True # start block input
             elif phrases[0]=="end_entry":
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))
                 current_status="main"
+                current_entry_name=""
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
     if not headerparsed or not mainparsed:
         handle_error("Missing or incomplete header or main block")
