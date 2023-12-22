@@ -14,7 +14,7 @@ Multi-Arch: foreign
 Depends: ${misc:Depends}, python3 (> 3.7)
 Description: Application framework for text theming
  clitheme allows users to customize the output of supported programs, such as
- multi-language support or mimicing your favorite cartoon character. It has an
+ multi-language support or mimicking your favorite cartoon character. It has an
  easy-to-understand syntax and implementation module for programs. 
  .
  For more information, visit the homepage and the pages in the Wiki section.
