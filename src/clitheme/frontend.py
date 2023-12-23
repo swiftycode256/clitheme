@@ -5,6 +5,7 @@ clitheme front-end interface for accessing entries
 import os,sys
 import random
 import string
+import re
 from typing import Optional
 try:
     from . import _globalvar
@@ -101,9 +102,10 @@ class FetchDescriptor():
             if self.debug_mode: print("Trying "+p, end="...")
             try:
                 f=open(p,'r')
-                dat=f.read().strip()
+                dat=f.read()
                 if self.debug_mode: print("Success:\n> "+dat)
-                return dat
+                # since the generator adds an extra newline in the entry data, we need to remove it
+                return re.sub(r"\n\Z", "", dat)
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string

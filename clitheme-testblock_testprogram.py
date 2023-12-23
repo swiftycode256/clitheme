@@ -11,18 +11,31 @@ end_header
 begin_main
     entry test_entry
         locale_block default
+
+
             this
             and
             that
 
                 is just good
-                #enough
+                    #enough
+            should have leading 2 lines and trailing 3 lines
+
+
+
         end_block
         locale_block zh_CN
+
+
+
             这是一个
             很好的东西
 
                 #非常好
+                    ...
+            should have leading 3 lines and trailing 2 lines
+
+
         end_block
     end_entry
 end_main
@@ -38,3 +51,6 @@ print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
 print(f.reof("test_entry", "Nonexistent"))
+
+import shutil
+shutil.rmtree(_generator.path)

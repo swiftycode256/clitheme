@@ -118,7 +118,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
             else:
                 if blockinput_data!="": blockinput_data+="\n"
                 line_content=line.strip()
-                if line_content=="": continue # empty line
+                if line_content=="": # empty line
+                    if blockinput_data=="": blockinput_data+=" "
+                    continue
                 # Calculate whitespaces
                 spaces=-1
                 ws_match=re.search(r"^\s+", line) # match leading whitespaces
@@ -225,7 +227,7 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 if phrases[1]!="default":
                     target_entry+="__"+phrases[1]
                 add_entry(datapath,target_entry,content,linenumber)
-            if phrases[0]=="locale_block":
+            elif phrases[0]=="locale_block":
                 if len(phrases)!=2:
                     handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
                 current_entry_locale=phrases[1]
