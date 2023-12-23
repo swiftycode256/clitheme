@@ -53,21 +53,21 @@ def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
     try:
         _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
     except SyntaxError:
-        print("Error\nAn error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
+        print("An error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
         return 1
     print("Successfully generated data")
     if preserve_temp:
         print("View at {}".format(_generator.path))
-    print("==> Applying theme...",end='')
+    print("==> Applying theme...")
     # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError: None
     try:
         shutil.copytree(_generator.path, _globalvar.clitheme_root_data_path) 
     except Exception:
-        print("Error\nAn error occurred while applying the theme:\n{}".format(str(sys.exc_info()[1])))
+        print("An error occurred while applying the theme:\n{}".format(str(sys.exc_info()[1])))
         return 1
-    print("Success\nTheme applied successfully")
+    print("Theme applied successfully")
     if not preserve_temp:
         try: shutil.rmtree(_generator.path)
         except Exception: None
@@ -111,15 +111,14 @@ def unset_current_theme():
     """
     Delete the current theme data hierarchy from the data path
     """
-    print("==> Removing data...", end='')
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError:
-        print("Error\nNo theme data present (no theme was set)")
+        print("No theme data present (no theme was set)")
         return 1
     except Exception:
-        print("Error\nAn error occurred while removing the data:\n{}".format(str(sys.exc_info()[1])))
+        print("An error occurred while removing the data:\n{}".format(str(sys.exc_info()[1])))
         return 1
-    print("Success\nSuccessfully removed the current theme data")
+    print("Successfully removed the current theme data")
     return 0
 
 def get_current_theme_info():
