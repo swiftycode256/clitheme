@@ -54,6 +54,17 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     f=open(target_path,'w')
     f.write(content+'\n')
 
+def write_infofile_v2(path: str, filename: str, content_phrases: list[str], line_number_debug: int, header_name_debug: str):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    target_path=path+"/"+filename
+    if os.path.isfile(target_path):
+        handle_warning("Line {}: repeated header info \"{}\", overwriting"\
+            .format(str(line_number_debug), header_name_debug))
+    f=open(target_path,'w')
+    for line in content_phrases:
+        f.write(line+"\n")
+
 def generate_custom_path():
     # Generate a temporary path
     global path
@@ -86,6 +97,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     current_entry_locale="" # for handling locale_block
     current_entry_linenumber=-1
 
+    current_header_entry="" # for block input in header
+    current_header_linenumber=-1
+
     blockinput=False # for multi-line (block) input
     blockinput_data="" # data of current block input
     blockinput_minspaces=-1 # min number of whitespaces
@@ -110,6 +124,24 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                     # clear data
                     current_entry_locale=""
                     current_entry_linenumber=-1
+                elif current_status=="header":
+                    if current_header_entry!="description":
+                        # trim all leading whitespaces
+                        blockinput_data=re.sub(r"(?P<optline>\n|^)[ ]+",r"\g<optline>", blockinput_data)
+                        # trim all trailing whitespaces
+                        blockinput_data=re.sub(r"[ ]+(?P<optline>\n|$)",r"\g<optline>", blockinput_data)
+                        # trim all leading/trailing newlines
+                        blockinput_data=re.sub(r"(\A\n+|\n+\Z)", "", blockinput_data)
+                    filename="clithemeinfo_"+current_header_entry+"_v2"
+                    if current_header_entry=="description":
+                        filename="clithemeinfo_"+current_header_entry
+                    write_infofile( \
+                        path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
+                        filename,\
+                        blockinput_data,current_header_linenumber,current_header_entry) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+                    # clear data
+                    current_header_entry=""
+                    current_header_linenumber=-1
                 else: # the unlikely case
                     handle_error("Line {}: internal error while handling block input; please file a bug report".format(str(linenumber)))
                 # clear data
@@ -154,16 +186,28 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                 current_status="main"
             else: handle_error("Unexpected \"{}\" on line {}".format(phrases[0],str(linenumber)))
         elif current_status=="header": # expect name, version, locales, or end_header
-            if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="locales" or phrases[0]=="supported_apps" or phrases[0]=="description":
+            if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
                 if len(phrases)<2:
                     handle_error("Not enough arguments for {} line at line {}"\
                                  .format(phrases[0],str(linenumber)))
-                # headerinfo_file.write(line.strip()+"\n")                
                 content=splitarray_to_string(phrases[1:])
                 write_infofile( \
                     path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                     "clithemeinfo_"+phrases[0],\
                     content,linenumber,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
+            elif phrases[0]=="locales" or phrases[0]=="supported_apps":
+                if len(phrases)<2:
+                    handle_error("Not enough arguments for {} line at line {}"\
+                                 .format(phrases[0],str(linenumber)))
+                content=phrases[1:]
+                write_infofile_v2( \
+                    path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
+                    "clithemeinfo_"+phrases[0]+"_v2",\
+                    content,linenumber,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+            elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block":
+                current_header_entry=re.sub(r"_block$", "", phrases[0])
+                current_header_linenumber=linenumber
+                blockinput=True # start block input mode
             elif phrases[0]=="end_header": 
                 if len(phrases)!=1:
                     handle_error("Extra arguments after \"{}\" on line {}".format(phrases[0],str(linenumber)))

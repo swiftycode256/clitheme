@@ -154,19 +154,32 @@ def get_current_theme_info():
         # description
         description="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_description"):
-            description=open(target_path+"/"+"clithemeinfo_description", 'r').read().strip()
+            description=open(target_path+"/"+"clithemeinfo_description", 'r').read()
             print("Description:")
             print(description)
         # locales
         locales="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
+        # version 2: items are seperated by newlines instead of spaces
+        if os.path.isfile(target_path+"/"+"clithemeinfo_locales_v2"):
+            locales=open(target_path+"/"+"clithemeinfo_locales_v2", 'r').read().strip()
+            print("Supported locales:")
+            for locale in locales.splitlines():
+                if locale.strip()!="":
+                    print("• {}".format(locale.strip()))
+        elif os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
             locales=open(target_path+"/"+"clithemeinfo_locales", 'r').read().strip()
             print("Supported locales: ")
             for locale in locales.split():
                 print("• {}".format(locale))
         # supported_apps
         supported_apps="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
+        if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps_v2"):
+            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps_v2", 'r').read().strip()
+            print("Supported apps: ")
+            for app in supported_apps.splitlines():
+               if app.strip()!="":
+                print("• {}".format(app))
+        elif os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
             supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r').read().strip()
             print("Supported apps: ")
             for app in supported_apps.split():

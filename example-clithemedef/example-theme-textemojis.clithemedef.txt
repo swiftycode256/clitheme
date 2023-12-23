@@ -1,9 +1,24 @@
 begin_header
     name 颜文字样例主题
-    description 适配项目中提供的example程序的一个颜文字主题，把它的输出变得可爱
     version 1.0
-    locales zh_CN
-    supported_apps clitheme_example
+    # testing block input
+    locales_block
+        Simplified Chinese
+        简体中文
+        zh_CN
+    end_block
+    supported_apps_block
+        clitheme example
+        clitheme 样例应用
+        clitheme_example
+    end_block
+    description_block
+        适配项目中提供的example程序的一个颜文字主题，把它的输出变得可爱。
+        应用这个主题，沉浸在颜文字的世界中吧！
+
+            不要小看我的年龄，人家可是非常萌的～！
+    end_block
+
 end_header
 
 begin_main
