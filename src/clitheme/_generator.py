@@ -37,7 +37,7 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
     elif os.path.isfile(target_path):
         handle_warning("Line {}: repeated entry \"{}\", overwriting"\
             .format(str(line_number_debug),entry_name))
-    f=open(target_path,'w')
+    f=open(target_path,'w', encoding="utf-8")
     f.write(entry_content+"\n")
 def splitarray_to_string(split_content):
     final=""
@@ -51,7 +51,7 @@ def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     if os.path.isfile(target_path):
         handle_warning("Line {}: repeated header info \"{}\", overwriting"\
             .format(str(line_number_debug), header_name_debug))
-    f=open(target_path,'w')
+    f=open(target_path,'w', encoding="utf-8")
     f.write(content+'\n')
 
 def write_infofile_v2(path: str, filename: str, content_phrases: list[str], line_number_debug: int, header_name_debug: str):
@@ -61,7 +61,7 @@ def write_infofile_v2(path: str, filename: str, content_phrases: list[str], line
     if os.path.isfile(target_path):
         handle_warning("Line {}: repeated header info \"{}\", overwriting"\
             .format(str(line_number_debug), header_name_debug))
-    f=open(target_path,'w')
+    f=open(target_path,'w', encoding="utf-8")
     for line in content_phrases:
         f.write(line+"\n")
 
@@ -286,6 +286,6 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     if not headerparsed or not mainparsed:
         handle_error("Missing or incomplete header or main block")
     # Update current theme index
-    theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w')
+    theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(custom_infofile_name+"\n")
     return True # Everything is successful! :)

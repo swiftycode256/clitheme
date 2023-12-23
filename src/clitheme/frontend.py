@@ -101,7 +101,7 @@ class FetchDescriptor():
         for p in possible_paths:
             if self.debug_mode: print("Trying "+p, end="...")
             try:
-                f=open(p,'r')
+                f=open(p,'r', encoding="utf-8")
                 dat=f.read()
                 if self.debug_mode: print("Success:\n> "+dat)
                 # since the generator adds an extra newline in the entry data, we need to remove it

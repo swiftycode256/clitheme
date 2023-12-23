@@ -7,6 +7,7 @@ clitheme command line utility interface
 import os
 import sys
 import shutil
+import re
 try:
     from . import _globalvar
     from . import _generator
@@ -40,7 +41,7 @@ def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
             print("Try setting a theme first")
             return 1
         # update index
-        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r').read().strip())+1
+        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r', encoding="utf-8").read().strip())+1
         except ValueError:
             print("Error: the current data is corrupt")
             print("Remove the current theme, set the theme, and try again")
@@ -57,7 +58,10 @@ def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
         return 1
     print("Successfully generated data")
     if preserve_temp:
-        print("View at {}".format(_generator.path))
+        if os.name=="nt":
+            print("View at {}".format(re.sub(r"/", r"\\", _generator.path))) # make the output look pretty
+        else:
+            print("View at {}".format(_generator.path))
     print("==> Applying theme...")
     # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
@@ -88,7 +92,7 @@ def generate_data_hierarchy(file_content: str, overlay: bool):
             print("Try setting a theme first")
             return 1
         # update index
-        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r').read().strip())+1
+        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r', encoding="utf-8").read().strip())+1
         except ValueError:
             print("Error: the current data is corrupt")
             print("Remove the current theme, set the theme, and try again")
@@ -104,7 +108,10 @@ def generate_data_hierarchy(file_content: str, overlay: bool):
         print("Error\nAn error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
         return 1
     print("Successfully generated data")
-    print("View at {}".format(_generator.path))
+    if os.name=="nt":
+        print("View at {}".format(re.sub(r"/", r"\\", _generator.path))) # make the output look pretty
+    else:
+        print("View at {}".format(_generator.path))
     return 0
 
 def unset_current_theme():
@@ -143,43 +150,43 @@ def get_current_theme_info():
         # name
         name="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_name"):
-            name=open(target_path+"/"+"clithemeinfo_name", 'r').read().strip()
+            name=open(target_path+"/"+"clithemeinfo_name", 'r', encoding="utf-8").read().strip()
         print("[{}]: {}".format(theme_pathname, name))
         # version
         version="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_version"):
-            version=open(target_path+"/"+"clithemeinfo_version", 'r').read().strip()
+            version=open(target_path+"/"+"clithemeinfo_version", 'r', encoding="utf-8").read().strip()
             print("Version: {}".format(version))
         # description
         description="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_description"):
-            description=open(target_path+"/"+"clithemeinfo_description", 'r').read()
+            description=open(target_path+"/"+"clithemeinfo_description", 'r', encoding="utf-8").read()
             print("Description:")
             print(description)
         # locales
         locales="(Unknown)"
         # version 2: items are seperated by newlines instead of spaces
         if os.path.isfile(target_path+"/"+"clithemeinfo_locales_v2"):
-            locales=open(target_path+"/"+"clithemeinfo_locales_v2", 'r').read().strip()
+            locales=open(target_path+"/"+"clithemeinfo_locales_v2", 'r', encoding="utf-8").read().strip()
             print("Supported locales:")
             for locale in locales.splitlines():
                 if locale.strip()!="":
                     print("• {}".format(locale.strip()))
         elif os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
-            locales=open(target_path+"/"+"clithemeinfo_locales", 'r').read().strip()
+            locales=open(target_path+"/"+"clithemeinfo_locales", 'r', encoding="utf-8").read().strip()
             print("Supported locales: ")
             for locale in locales.split():
                 print("• {}".format(locale))
         # supported_apps
         supported_apps="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps_v2"):
-            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps_v2", 'r').read().strip()
+            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps_v2", 'r', encoding="utf-8").read().strip()
             print("Supported apps: ")
             for app in supported_apps.splitlines():
                if app.strip()!="":
                 print("• {}".format(app))
         elif os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
-            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r').read().strip()
+            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r', encoding="utf-8").read().strip()
             print("Supported apps: ")
             for app in supported_apps.split():
                 print("• {}".format(app))
@@ -221,7 +228,7 @@ def main(cli_args):
                 path=arg
         contents=""
         try:
-            contents=open(path, 'r').read()
+            contents=open(path, 'r', encoding="utf-8").read()
         except Exception:
             print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
             return 1
@@ -249,7 +256,7 @@ def main(cli_args):
                 path=arg
         contents=""
         try:
-            contents=open(path, 'r').read()
+            contents=open(path, 'r', encoding="utf-8").read()
         except Exception:
             print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
             return 1
