@@ -37,10 +37,8 @@ $ example-app install-file foo-nonexist
 - 无需前端API也可访问当前主题数据（易懂的数据结构）
 
 `clitheme` 不仅可以定制命令行应用的输出，它还可以：
-- 为应用添加多语言支持
+- 为应用程序添加多语言支持
 - 支持图形化应用
-
-**注意：**`clitheme`当前仅支持拥有Python 3的Linux和macOS系统，暂不支持Windows系统。
 
 # 基本用法
 
@@ -221,6 +219,9 @@ end_main
 构建软件包只需要在仓库目录中执行`makepkg`指令就可以了。你可以通过以下一系列命令来完成这些操作：
 
 ```sh
+# 如果之前执行过makepkg，请删除之前生成的临时文件夹，否则构建时会出现问题
+rm -rf buildtmp srctmp
+
 makepkg -si
 # -s：自动安装构建时需要的软件包
 # -i：构建完后自动安装生成的软件包
@@ -240,10 +241,11 @@ rm -rf buildtmp srctmp
 - `debhelper`
 - `dh-python`
 - `python3-hatchling`
+- `dpkg-dev`
 
 你可以使用以下命令安装：
 
-    sudo apt install debhelper dh-python python3-hatchling
+    sudo apt install debhelper dh-python python3-hatchling dpkg-dev
 
 安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
 
