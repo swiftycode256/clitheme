@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# This file is originally named clitheme_example.py
+
 import os
 import sys
 from src.clitheme import frontend
