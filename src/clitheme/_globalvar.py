@@ -7,26 +7,25 @@ try: from . import _version
 except ImportError: import _version
 
 clitheme_root_data_path=""
-if os.name=="nt": # Windows
-    try:
-        clitheme_root_data_path=os.environ["LOCALAPPDATA"]+"\\clitheme"
-    except KeyError: None
-else:
+if os.name=="posix": # Linux/macOS only
     try:
         clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
     except KeyError: None
 
 if clitheme_root_data_path=="": # prev did not succeed
     try: 
-        if os.name=="nt":
-            clitheme_root_data_path=os.environ["USERPROFILE"]+"\\AppData\\Local\\clitheme"
+        if os.name=="nt": # Windows
+            clitheme_root_data_path=os.environ["USERPROFILE"]+"\\.local\\share\\clitheme"
         else:
             if not os.environ['HOME'].startswith('/'): # sanity check
                 raise KeyError
             clitheme_root_data_path=os.environ["HOME"]+"/.local/share/clitheme"
     except KeyError:
         print("[clitheme] Error: unable to get your home directory or invalid home directory information")
-        print("Please make sure that the $HOME environment variable is set correctly.")
+        if os.name=="nt":
+            print(r"Please make sure that the %USERPROFILE% environment variable is set correctly")
+        else:
+            print("Please make sure that the $HOME environment variable is set correctly.")
         print("Try restarting your terminal session to fix this issue.")
         exit(1)
 clitheme_temp_root="/tmp"
