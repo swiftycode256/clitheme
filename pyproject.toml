@@ -12,7 +12,7 @@ authors = [
   { name="swiftycode", email="3291929745@qq.com" },
 ]
 description = "A text theming library for command line applications"
-readme = "README.zh-CN.md"
+readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.7"
 classifiers = [
