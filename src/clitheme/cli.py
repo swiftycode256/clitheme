@@ -23,9 +23,9 @@ usage_description=\
        {0} --help
        {0} --version"""
 
-def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
+def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False):
     """
-    Apply the theme using the provided definition file content.
+    Apply the theme using the provided definition file contents in a list[str] object.
 
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
@@ -50,12 +50,18 @@ def apply_theme(file_content: str, overlay: bool, preserve_temp=False):
         _generator.generate_custom_path()
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
-    # Generate data hierarchy, erase current data, copy it to data path
-    try:
-        _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
-    except SyntaxError:
-        print("An error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
-        return 1
+    for i in range(len(file_contents)):
+        if len(file_contents)>1: print("    > Processing file {}...".format(str(i+1)))
+        file_content=file_contents[i]
+        # Generate data hierarchy, erase current data, copy it to data path
+        try:
+            _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
+            generate_path=False # Don't generate another temp folder after first one
+            index+=1
+        except SyntaxError:
+            print("[File {}] An error occurred while generating the data:\n{}".format(str(i+1), str(sys.exc_info()[1])))
+            return 1
+    if len(file_contents)>1: print("    > All finished")
     print("Successfully generated data")
     if preserve_temp:
         if os.name=="nt":
@@ -120,7 +126,7 @@ def unset_current_theme():
     """
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError:
-        print("No theme data present (no theme was set)")
+        print("Error: No theme data present (no theme was set)")
         return 1
     except Exception:
         print("An error occurred while removing the data:\n{}".format(str(sys.exc_info()[1])))
@@ -214,7 +220,7 @@ def main(cli_args):
     if cli_args[1]=="apply-theme":
         if len(cli_args)<3:
             return handle_usage_error("Error: not enough arguments", arg_first)
-        path=""
+        paths=[]
         overlay=False
         preserve_temp=False
         for arg in cli_args[2:]:
@@ -223,16 +229,28 @@ def main(cli_args):
                 elif arg.strip()=="--preserve-temp": preserve_temp=True
                 else: return handle_usage_error("Unknown option \"{}\"".format(arg), arg_first)
             else:
-                if path!="": # already specified path
-                    return handle_usage_error("Error: too many arguments", arg_first)
-                path=arg
-        contents=""
-        try:
-            contents=open(path, 'r', encoding="utf-8").read()
-        except Exception:
-            print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
-            return 1
-        return apply_theme(contents, overlay=overlay, preserve_temp=preserve_temp)
+                paths.append(arg)
+        if len(paths)>1 or True: # currently set to True for now
+            print("The following definition files will be applied in the following order: ")
+            for i in range(len(paths)):
+                path=paths[i]
+                print("\t{}: {}".format(str(i+1), path))
+            if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
+                print("The existing theme data will be overwritten if you continue.")
+            if overlay==True:
+                print("The definition files will be appended on top of the existing theme data.")
+            inp=input("Do you want to continue? [y/n] ").strip().lower()
+            if not (inp=="y" or inp=="yes"):
+                return 1
+        content_list=[]
+        for i in range(len(paths)):
+            path=paths[i]
+            try:
+                content_list.append(open(path, 'r', encoding="utf-8").read())
+            except Exception:
+                print("[File {}] An error occurred while reading the file: \n{}".format(str(i+1), str(sys.exc_info()[1])))
+                return 1
+        return apply_theme(content_list, overlay=overlay, preserve_temp=preserve_temp)
     elif cli_args[1]=="get-current-theme-info":
         if len(cli_args)>2: # disabled additional options
             return handle_usage_error("Error: too many arguments", arg_first)
