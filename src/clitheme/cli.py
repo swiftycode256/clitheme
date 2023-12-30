@@ -19,7 +19,7 @@ usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
        {0} get-current-theme-info
        {0} unset-current-theme
-       {0} generate-data-hierarchy [themedef-file] [--overlay]
+       {0} generate-data [themedef-file] [--overlay]
        {0} --help
        {0} --version"""
 
@@ -138,7 +138,7 @@ def get_current_theme_info():
             print(description)
         # locales
         locales="(Unknown)"
-        # version 2: items are seperated by newlines instead of spaces
+        # version 2: items are separated by newlines instead of spaces
         if os.path.isfile(target_path+"/"+"clithemeinfo_locales_v2"):
             locales=open(target_path+"/"+"clithemeinfo_locales_v2", 'r', encoding="utf-8").read().strip()
             print("Supported locales:")
@@ -184,10 +184,10 @@ def main(cli_args):
         print("Error: no command or option specified")
         return 1
 
-    if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data-hierarchy":
+    if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy":
         if len(cli_args)<3:
             return handle_usage_error("Error: not enough arguments", arg_first)
-        generate_only=(cli_args[1]=="generate-data-hierarchy")
+        generate_only=(cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy")
         paths=[]
         overlay=False
         preserve_temp=False
