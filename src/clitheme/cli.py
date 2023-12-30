@@ -23,12 +23,13 @@ usage_description=\
        {0} --help
        {0} --version"""
 
-def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False):
+def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents in a list[str] object.
 
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
+    - Set generate_only=True to generate the data hierarchy only (and not apply the theme)
     """
     if overlay: print("Overlay specified")
     print("==> Generating data...")
@@ -63,11 +64,14 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False):
             return 1
     if len(file_contents)>1: print("    > All finished")
     print("Successfully generated data")
-    if preserve_temp:
+    if preserve_temp or generate_only:
         if os.name=="nt":
             print("View at {}".format(re.sub(r"/", r"\\", _generator.path))) # make the output look pretty
         else:
             print("View at {}".format(_generator.path))
+    if generate_only: return 0 
+    # ---Stop here if generate_only is set---
+
     print("==> Applying theme...")
     # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
@@ -81,43 +85,6 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False):
     if not preserve_temp:
         try: shutil.rmtree(_generator.path)
         except Exception: None
-    return 0
-
-def generate_data_hierarchy(file_content: str, overlay: bool):
-    """
-    Generate the data hierarchy at the temporary directory (debugging purposes only)
-    """
-    if overlay: print("Overlay specified")
-    print("==> Generating data...")
-    index=1
-    generate_path=True
-    if overlay:
-        # Check if current data exists
-        if not os.path.isfile(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename):
-            print("Error: no theme set or the current data is corrupt")
-            print("Try setting a theme first")
-            return 1
-        # update index
-        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r', encoding="utf-8").read().strip())+1
-        except ValueError:
-            print("Error: the current data is corrupt")
-            print("Remove the current theme, set the theme, and try again")
-            return 1
-        # copy the current data into the temp directory
-        _generator.generate_custom_path()
-        shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
-        generate_path=False
-    # Generate data hierarchy, erase current data, copy it to data path
-    try:
-        _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
-    except SyntaxError:
-        print("Error\nAn error occurred while generating the data:\n{}".format(str(sys.exc_info()[1])))
-        return 1
-    print("Successfully generated data")
-    if os.name=="nt":
-        print("View at {}".format(re.sub(r"/", r"\\", _generator.path))) # make the output look pretty
-    else:
-        print("View at {}".format(_generator.path))
     return 0
 
 def unset_current_theme():
@@ -217,31 +184,36 @@ def main(cli_args):
         print("Error: no command or option specified")
         return 1
 
-    if cli_args[1]=="apply-theme":
+    if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data-hierarchy":
         if len(cli_args)<3:
             return handle_usage_error("Error: not enough arguments", arg_first)
+        generate_only=(cli_args[1]=="generate-data-hierarchy")
         paths=[]
         overlay=False
         preserve_temp=False
         for arg in cli_args[2:]:
             if is_option(arg):
                 if arg.strip()=="--overlay": overlay=True
-                elif arg.strip()=="--preserve-temp": preserve_temp=True
+                elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
                 else: return handle_usage_error("Unknown option \"{}\"".format(arg), arg_first)
             else:
                 paths.append(arg)
         if len(paths)>1 or True: # currently set to True for now
-            print("The following definition files will be applied in the following order: ")
+            if generate_only:
+                print("The theme data will be generated from the following definition files in the following order:")
+            else:
+                print("The following definition files will be applied in the following order: ")
             for i in range(len(paths)):
                 path=paths[i]
                 print("\t{}: {}".format(str(i+1), path))
-            if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
-                print("The existing theme data will be overwritten if you continue.")
-            if overlay==True:
-                print("The definition files will be appended on top of the existing theme data.")
-            inp=input("Do you want to continue? [y/n] ").strip().lower()
-            if not (inp=="y" or inp=="yes"):
-                return 1
+            if not generate_only:
+                if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
+                    print("The existing theme data will be overwritten if you continue.")
+                if overlay==True:
+                    print("The definition files will be appended on top of the existing theme data.")
+                inp=input("Do you want to continue? [y/n] ").strip().lower()
+                if not (inp=="y" or inp=="yes"):
+                    return 1
         content_list=[]
         for i in range(len(paths)):
             path=paths[i]
@@ -250,7 +222,7 @@ def main(cli_args):
             except Exception:
                 print("[File {}] An error occurred while reading the file: \n{}".format(str(i+1), str(sys.exc_info()[1])))
                 return 1
-        return apply_theme(content_list, overlay=overlay, preserve_temp=preserve_temp)
+        return apply_theme(content_list, overlay=overlay, preserve_temp=preserve_temp, generate_only=generate_only)
     elif cli_args[1]=="get-current-theme-info":
         if len(cli_args)>2: # disabled additional options
             return handle_usage_error("Error: too many arguments", arg_first)
@@ -259,26 +231,6 @@ def main(cli_args):
         if len(cli_args)>2:
             return handle_usage_error("Error: too many arguments", arg_first)
         return unset_current_theme()
-    elif cli_args[1]=="generate-data-hierarchy":
-        if len(cli_args)<3:
-            return handle_usage_error("Error: not enough arguments", arg_first)
-        path=""
-        overlay=False
-        for arg in cli_args[2:]:
-            if is_option(arg):
-                if arg.strip()=="--overlay": overlay=True
-                else: return handle_usage_error("Unknown option \"{}\"".format(arg), arg_first)
-            else:
-                if path!="": # already specified path
-                    return handle_usage_error("Error: too many arguments", arg_first)
-                path=arg
-        contents=""
-        try:
-            contents=open(path, 'r', encoding="utf-8").read()
-        except Exception:
-            print("An error occurred while reading the file: \n{}".format(str(sys.exc_info()[1])))
-            return 1
-        return generate_data_hierarchy(contents, overlay=overlay)
     elif cli_args[1]=="--version":
         print("clitheme version {0}".format(_globalvar.clitheme_version))
     else:
