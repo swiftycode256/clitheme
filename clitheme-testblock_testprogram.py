@@ -10,7 +10,7 @@ end_header
 
 begin_main
     entry test_entry
-        locale_block default
+        locale_block default en_US en C
 
 
             this
@@ -51,6 +51,19 @@ print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
 print(f.reof("test_entry", "Nonexistent"))
+
+for lang in ["C", "en", "en_US", "zh_CN"]:
+    f.disable_lang=True
+    name=f"test_entry__{lang}"
+    if f.entry_exists(name):
+        print(f"{name} OK")
+    else:
+        print(f"{name} not found")
+
+import sys
+if sys.argv.__contains__("--preserve-temp"):
+    print(f"View generated data at {_generator.path}")
+    exit()
 
 import shutil
 shutil.rmtree(_generator.path)

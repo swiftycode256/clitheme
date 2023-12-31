@@ -117,10 +117,11 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                     pattern=r"(?P<optline>\n|^)[ ]{"+str(blockinput_minspaces)+"}"
                     blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data)
                 if current_status=="entry":
-                    target_entry=current_entry_name
-                    if current_entry_locale!="default":
-                        target_entry+="__"+current_entry_locale
-                    add_entry(datapath,target_entry, blockinput_data, current_entry_linenumber)
+                    for this_locale in current_entry_locale.split():
+                        target_entry=current_entry_name
+                        if this_locale!="default":
+                            target_entry+="__"+this_locale
+                        add_entry(datapath,target_entry, blockinput_data, current_entry_linenumber)
                     # clear data
                     current_entry_locale=""
                     current_entry_linenumber=-1
@@ -272,9 +273,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
                     target_entry+="__"+phrases[1]
                 add_entry(datapath,target_entry,content,linenumber)
             elif phrases[0]=="locale_block":
-                if len(phrases)!=2:
+                if len(phrases)<2:
                     handle_error("Format error in {} at line {}".format(phrases[0],linenumber))
-                current_entry_locale=phrases[1]
+                current_entry_locale=splitarray_to_string(phrases[1:])
                 current_entry_linenumber=linenumber
                 blockinput=True # start block input
             elif phrases[0]=="end_entry":
