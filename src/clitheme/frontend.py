@@ -81,23 +81,49 @@ class FetchDescriptor():
             if self.debug_mode: print("Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
             return fallback_string
         lang=""
-        lang_without_encoding=""
+        # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
         if not self.disable_lang:
             if self.lang!="":
                 lang=self.lang
-            elif os.environ.__contains__("LANG"):
-                lang=os.environ["LANG"]
-            if lang.strip()!="": # not empty
-                for char in lang:
-                    if char=='.': # if reaches e.g. ".UTF-8" section
-                        break
-                    lang_without_encoding+=char 
-        if self.debug_mode: print("[Debug]", lang, lang_without_encoding, entry_path)
+            else:
+                # $LANGUAGE (list of languages separated by colons)
+                if os.environ.__contains__("LANGUAGE"):
+                    target_str=os.environ['LANGUAGE']
+                    for each_language in target_str.strip().split(":"):
+                        # avoid exploit of accessing top-level folders
+                        if each_language.startswith("."): continue
+                        # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
+                        if each_language!="en" and each_language!="en_US":
+                            # Treat C as en_US also
+                            if re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)=="C":
+                                lang+=re.sub(r".+[\.]", "en_US.", each_language)+" "
+                                lang+="en_US"+" "
+                            lang+=each_language+" "
+                            # no encoding
+                            lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)+" "
+                    lang=lang.strip()
+                # $LC_ALL
+                elif os.environ.__contains__("LC_ALL"):
+                    target_str=os.environ["LC_ALL"].strip()
+                    if not target_str.startswith("."): 
+                        lang=target_str+" "
+                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
+                # $LANG
+                elif os.environ.__contains__("LANG"):
+                    target_str=os.environ["LANG"].strip()
+                    if not target_str.startswith("."): 
+                        lang=target_str+" "
+                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
+
+        if self.debug_mode: print("[Debug]", lang, entry_path)
         path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
         for section in entry_path.split():
             path+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path with no lang
-        possible_paths=[path+"__"+lang, path+"__"+lang_without_encoding, path]
+        possible_paths=[]
+        for l in lang.split():
+            possible_paths.append(path+"__"+l)
+        possible_paths.append(path)
         for p in possible_paths:
             if self.debug_mode: print("Trying "+p, end="...")
             try:
