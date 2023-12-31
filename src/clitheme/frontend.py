@@ -85,7 +85,10 @@ class FetchDescriptor():
         if not self.disable_lang:
             if self.lang!="":
                 if self.debug_mode: print("[Debug] Locale: Using defined self.lang")
-                lang=self.lang
+                if not _globalvar.sanity_check(self.lang)==False:
+                    lang=self.lang
+                else:
+                    if self.debug_mode: print("[Debug] Locale: sanity check failed")
             else:
                 if self.debug_mode: print("[Debug] Locale: Using environment variables")
                 # $LANGUAGE (list of languages separated by colons)
@@ -93,7 +96,7 @@ class FetchDescriptor():
                     target_str=os.environ['LANGUAGE']
                     for each_language in target_str.strip().split(":"):
                         # avoid exploit of accessing top-level folders
-                        if each_language.startswith("."): continue
+                        if _globalvar.sanity_check(each_language)==False: continue
                         # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
                         if each_language!="en" and each_language!="en_US":
                             # Treat C as en_US also
@@ -107,15 +110,19 @@ class FetchDescriptor():
                 # $LC_ALL
                 elif os.environ.__contains__("LC_ALL"):
                     target_str=os.environ["LC_ALL"].strip()
-                    if not target_str.startswith("."): 
+                    if not _globalvar.sanity_check(target_str)==False:
                         lang=target_str+" "
                         lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
+                    else:
+                        if self.debug_mode: print("[Debug] Locale: sanity check failed")
                 # $LANG
                 elif os.environ.__contains__("LANG"):
                     target_str=os.environ["LANG"].strip()
-                    if not target_str.startswith("."): 
+                    if not _globalvar.sanity_check(target_str)==False:
                         lang=target_str+" "
                         lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
+                    else:
+                        if self.debug_mode: print("[Debug] Locale: sanity check failed")
 
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
