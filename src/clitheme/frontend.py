@@ -37,24 +37,24 @@ class FetchDescriptor():
         # Leave domain and app names blank for global reference
 
         if domain_name==None:
-            self.domain_name=global_domain
+            self.domain_name=global_domain.strip()
         else:
             self.domain_name=domain_name.strip()
 
         if app_name==None:
-            self.app_name=global_appname
+            self.app_name=global_appname.strip()
         else:
             self.app_name=app_name.strip()
 
         if subsections==None:
-            self.subsections=global_subsections
+            self.subsections=global_subsections.strip()
         else:
             self.subsections=subsections.strip()
 
         if lang==None:
-            self.lang=global_lang
+            self.lang=global_lang.strip()
         else:
-            self.lang=lang
+            self.lang=lang.strip()
         
         if debug_mode==None:
             self.debug_mode=global_debugmode
