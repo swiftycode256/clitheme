@@ -6,11 +6,14 @@ import os,sys
 import random
 import string
 import re
+import hashlib
 from typing import Optional
 try:
     from . import _globalvar
+    from . import _generator
 except ImportError: # for test program
     import _globalvar
+    import _generator
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 global_domain=""
@@ -19,6 +22,43 @@ global_subsections=""
 global_debugmode=False
 global_lang="" # Override locale
 global_disablelang=False
+
+alt_path=None
+# Support for setting a local definition file
+# - Generate the data in a temporary directory named after content hash
+# - First try alt_path then data_path
+
+def set_local_themedef(file_content: str) -> bool:
+    """
+    Sets a local theme definition file for the current frontend instance.
+    When set, the FetchDescriptor functions will try the local definition before falling back to global theme data.
+
+    WARNING: Pass the file content in str to this function; DO NOT pass the path to the file.
+    
+    This function returns True if successful, otherwise returns False.
+    """
+    # Determine directory name
+    h=hashlib.shake_256(bytes(file_content, "utf-8"))
+    dir_name=f"clitheme-data-{h.hexdigest(6)}" # length of 12 (6*2)
+    path_name=_globalvar.clitheme_temp_root+"/"+dir_name
+    if global_debugmode: print("[Debug] "+path_name)
+    # Generate data hierarchy as needed
+    if not os.path.exists(path_name):
+        _generator.path=path_name
+        try:
+            _generator.generate_data_hierarchy(file_content, custom_path_gen=False)
+        except SyntaxError:
+            if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
+            return False
+    global alt_path
+    alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    return True
+def unset_local_themedef():
+    """
+    Unsets the local theme definition file for the current frontend instance.
+    After this operation, FetchDescriptor functions will no longer use local definitions.
+    """
+    global alt_path; alt_path=None
 
 class FetchDescriptor():
     """
@@ -127,10 +167,17 @@ class FetchDescriptor():
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
         path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
+        path2=None
+        if alt_path!=None: path2=alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
         for section in entry_path.split():
             path+="/"+section
+            if path2!=None: path2+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path with no lang
         possible_paths=[]
+        if path2!=None:
+            for l in lang.split():
+                possible_paths.append(path2+"__"+l)
+            possible_paths.append(path2)
         for l in lang.split():
             possible_paths.append(path+"__"+l)
         possible_paths.append(path)
@@ -151,7 +198,7 @@ class FetchDescriptor():
     def entry_exists(self, entry_path: str) -> bool:
         """
         Check if the entry at the given entry path exists.
-        Returns true if exists and false if does not exist
+        Returns true if exists and false if does not exist.
         """
         # just being lazy here I don't want to rewrite this all over again ಥ_ಥ
         fallback_string=""

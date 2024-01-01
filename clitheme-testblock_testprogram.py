@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Program for testing multi-line (block) processing of _generator
-from src.clitheme import _generator, frontend, _globalvar
+from src.clitheme import _generator, frontend
 
 file_data="""
 begin_header
@@ -41,17 +41,20 @@ begin_main
 end_main
 """
 
-_generator.generate_data_hierarchy(file_data)
-frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
+frontend.global_debugmode=True
+if frontend.set_local_themedef(file_data)==False:
+    print("Error: set_local_themedef failed")
+    exit(1)
 f=frontend.FetchDescriptor()
 print("Default locale:")
 f.disable_lang=True
-print(f.reof("test_entry", "Nonexistent"))
+# Not printing because debug mode already prints
+(f.reof("test_entry", "Nonexistent"))
 print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
-print(f.reof("test_entry", "Nonexistent"))
-
+(f.reof("test_entry", "Nonexistent"))
+f.debug_mode=False
 for lang in ["C", "en", "en_US", "zh_CN"]:
     f.disable_lang=True
     name=f"test_entry__{lang}"
