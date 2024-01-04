@@ -195,6 +195,24 @@ class FetchDescriptor():
     
     reof=retrieve_entry_or_fallback # a shorter alias of the function
 
+    def format_entry_or_fallback(self, entry_path: str, fallback_string: str, *args, **kwargs) -> str:
+        """
+        Attempt to retrieve and format the entry based on given entry path and arguments. 
+        If the entry does not exist or an error occurs while formatting the entry string, use the provided fallback string instead.
+        """
+        # retrieve the entry
+        if not self.entry_exists(entry_path): 
+            if self.debug_mode: print("[Debug] Entry not found")
+            return fallback_string.format(*args, **kwargs)
+        entry=self.retrieve_entry_or_fallback(entry_path, "")
+        # format the string
+        try:
+            return entry.format(*args, **kwargs)
+        except Exception:
+            if self.debug_mode: print("[Debug] Format error: {err}".format(err=str(sys.exc_info()[1])))
+            return fallback_string.format(*args, **kwargs)
+    feof=format_entry_or_fallback # a shorter alias of the function
+            
     def entry_exists(self, entry_path: str) -> bool:
         """
         Check if the entry at the given entry path exists.
