@@ -24,22 +24,28 @@ global_lang="" # Override locale
 global_disablelang=False
 
 alt_path=None
+alt_path_dirname=None
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
 
-def set_local_themedef(file_content: str) -> bool:
+def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """
     Sets a local theme definition file for the current frontend instance.
     When set, the FetchDescriptor functions will try the local definition before falling back to global theme data.
 
+    - Set overlay=True to overlay on top of existing local definition data (if exists)
+    
     WARNING: Pass the file content in str to this function; DO NOT pass the path to the file.
     
     This function returns True if successful, otherwise returns False.
     """
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
+    global alt_path_dirname
     dir_name=f"clitheme-data-{h.hexdigest(6)}" # length of 12 (6*2)
+    if alt_path_dirname!=None and overlay==True: # overlay
+        dir_name=alt_path_dirname
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
@@ -52,6 +58,7 @@ def set_local_themedef(file_content: str) -> bool:
             return False
     global alt_path
     alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    alt_path_dirname=dir_name
     return True
 def unset_local_themedef():
     """
@@ -59,6 +66,7 @@ def unset_local_themedef():
     After this operation, FetchDescriptor functions will no longer use local definitions.
     """
     global alt_path; alt_path=None
+    global alt_path_dirname; alt_path_dirname=None
 
 class FetchDescriptor():
     """
