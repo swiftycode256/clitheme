@@ -12,6 +12,11 @@ if os.name=="posix": # Linux/macOS only
         clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
     except KeyError: None
 
+error_msg_str= \
+"""[clitheme] Error: unable to get your home directory or invalid home directory information.
+Please make sure that the {var} environment variable is set correctly.
+Try restarting your terminal session to fix this issue."""
+
 if clitheme_root_data_path=="": # prev did not succeed
     try: 
         if os.name=="nt": # Windows
@@ -21,12 +26,10 @@ if clitheme_root_data_path=="": # prev did not succeed
                 raise KeyError
             clitheme_root_data_path=os.environ["HOME"]+"/.local/share/clitheme"
     except KeyError:
-        print("[clitheme] Error: unable to get your home directory or invalid home directory information")
+        var="$HOME"
         if os.name=="nt":
-            print(r"Please make sure that the %USERPROFILE% environment variable is set correctly")
-        else:
-            print("Please make sure that the $HOME environment variable is set correctly.")
-        print("Try restarting your terminal session to fix this issue.")
+            var=r"%USERPROFILE%"
+        print(error_msg_str.format(var=var))
         exit(1)
 clitheme_temp_root="/tmp"
 if os.name=="nt":
