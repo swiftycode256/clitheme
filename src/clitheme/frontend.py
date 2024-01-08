@@ -10,10 +10,8 @@ import hashlib
 from typing import Optional
 try:
     from . import _globalvar
-    from . import _generator
 except ImportError: # for test program
     import _globalvar
-    import _generator
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 global_domain=""
@@ -40,6 +38,8 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     
     This function returns True if successful, otherwise returns False.
     """
+    try: from . import _generator
+    except ImportError: import _generator
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
     global alt_path_dirname
