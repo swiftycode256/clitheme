@@ -182,13 +182,13 @@ class FetchDescriptor():
             if path2!=None: path2+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path with no lang
         possible_paths=[]
+        for l in lang.split():
+            possible_paths.append(path+"__"+l)
+        possible_paths.append(path)
         if path2!=None:
             for l in lang.split():
                 possible_paths.append(path2+"__"+l)
             possible_paths.append(path2)
-        for l in lang.split():
-            possible_paths.append(path+"__"+l)
-        possible_paths.append(path)
         for p in possible_paths:
             if self.debug_mode: print("Trying "+p, end="...")
             try:
