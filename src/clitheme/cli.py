@@ -85,7 +85,7 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, ge
     print(f.reof("applying-theme", "==> Applying theme..."))
     # remove the current data, ignoring directory not found error
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
-    except FileNotFoundError: None
+    except FileNotFoundError: pass
     except Exception:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
         return 1
@@ -98,7 +98,7 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, ge
     print(f.reof("apply-theme-success", "Theme applied successfully"))
     if not preserve_temp:
         try: shutil.rmtree(_generator.path)
-        except Exception: None
+        except Exception: pass
     return 0
 
 def unset_current_theme():

@@ -10,7 +10,7 @@ clitheme_root_data_path=""
 if os.name=="posix": # Linux/macOS only
     try:
         clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
-    except KeyError: None
+    except KeyError: pass
 
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
