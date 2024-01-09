@@ -252,7 +252,9 @@ rm -rf buildtmp srctmp
 ## 更多信息
 
 - 更多的详细信息和文档请参考本项目Wiki页面：https://gitee.com/swiftycode/clitheme/wikis/pages
+    - 你也可以通过以下仓库访问这些Wiki页面：
+    - https://gitee.com/swiftycode/clitheme-wiki-repo
+    - https://github.com/swiftycode256/clitheme-wiki-repo
+- 本仓库中的代码也同步在GitHub上（使用Gitee仓库镜像功能自动同步）：https://github.com/swiftycode256/clitheme
 - 欢迎通过Issues和Pull Requests提交建议和改进。
-- 本仓库中的代码也同步在GitHub上：https://github.com/swiftycode256/clitheme
-    - GitHub仓库上只包含仓库代码，不包含新版本公告和发行版信息。
-    - 不建议在GitHub仓库上提交Issues和Pull Requests，因为我可能不会及时回复。
+    - Wiki页面也可以；你可以在上方列出的仓库中提交Issues和Pull Requests
