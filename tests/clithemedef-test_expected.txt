@@ -1,12 +1,3 @@
-../theme-info/1/clithemeinfo_locales
-en_US zh_CN
-../theme-info/1/clithemeinfo_version
-1.0
-../theme-info/1/clithemeinfo_name
-Example theme
-../theme-info/1/clithemeinfo_supported_apps
-example-app example-app-two another-example shound_unset-app
-
 com.example/example-app/text-one
 Some example text one
 com.example/example-app/text-one__en_US
