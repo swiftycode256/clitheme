@@ -1,8 +1,10 @@
-clitheme (1.1-dev20240117-1) UNRELEASED; urgency=low
+clitheme (1.1-r1-1) unstable; urgency=medium
 
-  * In development, please see commit logs for changes
+  * Version 1.1-r1 in Debian package format
+  For more information please see: 
+  https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r1
 
- -- swiftycode <3291929745@qq.com>  Wed, 17 Jan 2024 21:50:00 +0800
+ -- swiftycode <3291929745@qq.com>  Wed, 17 Jan 2024 22:14:00 +0800
 
 clitheme (1.0-r2-1) unstable; urgency=medium
 
