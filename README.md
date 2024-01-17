@@ -1,5 +1,7 @@
 # clitheme - 命令行应用文本主题框架
 
+**中文** | [English](README.en.md)
+
 `clitheme` 允许你定制命令行应用程序的输出，给它们一个你想要的风格和个性。
 
 样例：
@@ -56,9 +58,11 @@ $ example-app install-file foo-nonexist
 
 `clitheme`的数据结构采用了**子文件夹**的结构，意味着路径中的每一段代表着数据结构中的一个文件夹/文件。
 
-比如说，`com.example example-app example-text` 的字符串会被存储在`$datapath/com.example/example-app/example-text`。一般情况下，`$datapath`（数据根目录）是 `~/.local/share/clitheme/theme-data`。
+比如说，`com.example example-app example-text` 的字符串会被存储在`<datapath>/com.example/example-app/example-text`。在Linux和macOS系统下，`<datapath>`是 `$XDG_DATA_HOME/clitheme/theme-data`或`~/.local/share/clitheme/theme-data`。
 
-如果需要访问该字符串的其他语言，直接在路径的最后添加`__`加上locale名称就可以了。比如：`$datapath/com.example/example-app/example-text__zh_CN`
+在Windows系统下，`<datapath>`是`%USERPROFILE%\.local\share\clitheme\theme-data`。（`C:\Users\<用户名称>\.local\share\clitheme\theme-data`）
+
+如果需要访问该字符串的其他语言，直接在路径的最后添加`__`加上locale名称就可以了。比如：`<datapath>/com.example/example-app/example-text__zh_CN`
 
 所以说，如果需要直接访问字符串信息，只需要访问对应的文件路径就可以了。
 
@@ -81,18 +85,18 @@ from clitheme import frontend
 f=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app")
 
 # 对应 “在当前目录找到了2个文件”
-fcount=[...]
+fcount="[...]"
 f.retrieve_entry_or_fallback("found-file", "在当前目录找到了{}个文件".format(str(fcount)))
 
 # 对应 “-> 正在安装 "example-file"...”
-filename=[...]
+filename="[...]"
 f.retrieve_entry_or_fallback("installing-file", "-> 正在安装\"{}\"...".format(filename))
 
 # 对应 “已成功安装2个文件”
 f.retrieve_entry_or_fallback("install-success", "已成功安装{}个文件".format(str(fcount)))
 
 # 对应 “错误：找不到文件 "foo-nonexist"”
-filename_err=[...]
+filename_err="[...]"
 f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
 ```
 
@@ -109,7 +113,7 @@ except (ModuleNotFoundError, ImportError):
     import clitheme_fallback as frontend
 ```
 
-本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以获得最新的功能。
+本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以适配最新的功能。
 
 ### 应用程序应该提供的信息
 
@@ -132,7 +136,7 @@ com.example example-app file-not-found
 错误：找不到文件 "{}"
 ```
 
-应用程序还可以在对应的官方文档中包括此信息。如需样例，请参考本仓库中`example-clithemedef`文件夹的README文件。
+应用程序还可以在对应的官方文档中包括此信息。如需样例，请参考本仓库中`example-clithemedef`文件夹的[README文件](example-clithemedef/README.zh-CN.md)。
 
 ### 编写主题文件
 
@@ -143,6 +147,7 @@ begin_header
     name 样例主题
     version 1.0
     locales zh_CN
+    supported_apps clitheme_demo
 end_header
 
 begin_main
@@ -170,7 +175,7 @@ end_main
 
 # 安装
 
-安装`clitheme`非常简单，您可以通过Arch Linux软件包或者pip软件包安装。
+安装`clitheme`非常简单，您可以通过Arch Linux软件包，Debian软件包，或者pip软件包安装。
 
 ### 通过pip软件包安装
 
@@ -184,7 +189,7 @@ end_main
 
 因为构建的Arch Linux软件包只兼容特定的Python版本，并且升级Python版本后会导致原软件包失效，本项目仅提供构建软件包的方式，不提供构建好的软件包。详细请见下方的**构建Arch Linux软件包**。
 
-### 通过deb软件包安装
+### 通过Debian软件包安装
 
 因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
@@ -207,6 +212,8 @@ end_main
 然后，切换到项目目录，使用`hatch build`构建软件包：
 
     $ hatch build
+
+如果这个指令无法正常运行，请尝试运行`hatchling build`。
 
 构建完成后，相应的安装包文件可以在当前目录中的`dist`文件夹中找到。
 
@@ -232,7 +239,7 @@ rm -rf buildtmp srctmp
 
 **注意：** 每次升级Python版本时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
 
-### 构建deb软件包
+### 构建Debian软件包
 
 因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
