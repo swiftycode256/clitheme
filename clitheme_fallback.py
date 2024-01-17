@@ -28,10 +28,13 @@ class FetchDescriptor():
     def __init__(self, domain_name: Optional[str] = None, app_name: Optional[str] = None, subsections: Optional[str] = None, lang: Optional[str] = None, debug_mode: Optional[bool] = None, disable_lang: Optional[bool] = None):
         """Fallback init function"""
         return
-    def retrieve_entry_or_Fallback(self, entry_path: str, Fallback_string: str) -> str:
+    def retrieve_entry_or_Fallback(self, entry_path: str, fallback_string: str) -> str:
         """Fallback retrieve_entry_or_Fallback function (always return Fallback string)"""
-        return Fallback_string
+        return fallback_string
     reof=retrieve_entry_or_Fallback # a shorter alias of the function
+    def format_entry_or_fallback(self, entry_path: str, fallback_string: str, *args, **kwargs) -> str:
+        return fallback_string.format(*args, **kwargs)
+    feof=format_entry_or_fallback
     def entry_exists(self, entry_path: str) -> bool:
         """Fallback entry_exists function (always return false)"""
         return False
