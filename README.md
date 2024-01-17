@@ -34,7 +34,7 @@ $ example-app install-file foo-nonexist
 - 多语言支持
 - 支持同时应用多个主题
 - 简洁易懂的主题信息文件（`clithemedef`）语法
-- 无需前端API也可访问当前主题数据（易懂的数据结构）
+- 无需frontend模块也可访问当前主题数据（易懂的数据结构）
 
 `clitheme` 不仅可以定制命令行应用的输出，它还可以：
 - 为应用程序添加多语言支持
@@ -52,7 +52,7 @@ $ example-app install-file foo-nonexist
 
 ### 直接访问主题数据结构
 
-`clitheme`的核心设计理念之一包括无需使用前端API就可以访问主题数据，并且访问方法直观易懂。这一点在使用其他语言编写的程序中尤其重要，因为前端API目前只提供Python程序的支持。
+`clitheme`的核心设计理念之一包括无需使用frontend模块就可以访问主题数据，并且访问方法直观易懂。这一点在使用其他语言编写的程序中尤其重要，因为frontend模块目前只提供Python程序的支持。
 
 `clitheme`的数据结构采用了**子文件夹**的结构，意味着路径中的每一段代表着数据结构中的一个文件夹/文件。
 
@@ -64,9 +64,9 @@ $ example-app install-file foo-nonexist
 
 ## 前端实施和编写主题文件
 
-### 使用内置前端API
+### 使用内置frontend模块
 
-使用`clitheme`的python前端API非常简单。只需要新建一个`frontend.FetchDescriptor`实例然后调用该实例中的`retrieve_entry_or_fallback`即可。
+使用`clitheme`的frontend模块非常简单。只需要新建一个`frontend.FetchDescriptor`实例然后调用该实例中的`retrieve_entry_or_fallback`即可。
 
 该函数需要提供路径名称和默认字符串。如果当前主题设定没有适配该字符串，则函数会返回提供的默认字符串。
 
@@ -96,9 +96,9 @@ filename_err=[...]
 f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
 ```
 
-### 使用前端fallback模块
+### 使用fallback模块
 
-应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理`clitheme`模块不存在时的情况。该fallback模块包括了前端API中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
+应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理`clitheme`模块不存在时的情况。该fallback模块包括了frontend模块中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
 
 如需使用，请在你的项目文件中导入`clitheme_fallback.py`文件，并且在你的程序中包括以下代码：
 
