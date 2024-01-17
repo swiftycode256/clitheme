@@ -126,7 +126,7 @@ class FetchDescriptor():
 
         # Sanity check the path
         if _globalvar.sanity_check(entry_path)==False:
-            if self.debug_mode: print("Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
+            if self.debug_mode: print("[Debug] Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
             return fallback_string
         lang=""
         # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
@@ -136,7 +136,7 @@ class FetchDescriptor():
                 if not _globalvar.sanity_check(self.lang)==False:
                     lang=self.lang
                 else:
-                    if self.debug_mode: print("[Debug] Locale: sanity check failed")
+                    if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
             else:
                 if self.debug_mode: print("[Debug] Locale: Using environment variables")
                 # $LANGUAGE (list of languages separated by colons)
@@ -162,7 +162,7 @@ class FetchDescriptor():
                         lang=target_str+" "
                         lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
                     else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed")
+                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
                 # $LANG
                 elif os.environ.__contains__("LANG"):
                     target_str=os.environ["LANG"].strip()
@@ -170,7 +170,7 @@ class FetchDescriptor():
                         lang=target_str+" "
                         lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
                     else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed")
+                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
 
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 

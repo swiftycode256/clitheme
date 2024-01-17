@@ -39,18 +39,36 @@ generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 generator_index_filename="current_theme_index"
 entry_banphrases=['/','\\']
+startswith_banphrases=['.']
+banphrase_error_message="cannot contain '{char}'"
+startswith_error_message="cannot start with '{char}'"
 # function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
 sanity_check_error_message=""
+
+# retrieve the entry only once to avoid dead loop in frontend.FetchDescriptor callbacks
+msg_retrieved=False
 def sanity_check(path):
+    # retrieve the entry (only for the first time)
+    try: from . import frontend
+    except ImportError: import frontend
+    global msg_retrieved
+    if not msg_retrieved:
+        msg_retrieved=True
+        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="sanitycheck")
+        global banphrase_error_message
+        banphrase_error_message=f.feof("sanitycheck-banphrase-err", banphrase_error_message, char="{char}")
+        global startswith_error_message
+        startswith_error_message=f.feof("sanitycheck-startswith-err", startswith_error_message, char="{char}")
     global sanity_check_error_message
     for p in path.split():
-        if p.startswith('.'):
-            sanity_check_error_message="cannot start with '.'"
-            return False
+        for b in startswith_banphrases:
+            if p.startswith(b):
+                sanity_check_error_message=startswith_error_message.format(char=b)
+                return False
         for b in entry_banphrases:
             if p.find(b)!=-1:
-                sanity_check_error_message="cannot contain '{}'".format(b)
+                sanity_check_error_message=banphrase_error_message.format(char=b)
                 return False
     return True
