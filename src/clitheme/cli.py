@@ -165,20 +165,20 @@ def get_current_theme_info():
                     print(f.feof("list-item", "• {content}", content=locale.strip()))
         elif os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
             locales=open(target_path+"/"+"clithemeinfo_locales", 'r', encoding="utf-8").read().strip()
-            print("Supported locales: ")
+            print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.split():
                 print(f.feof("list-item", "• {content}", content=locale.strip()))
         # supported_apps
         supported_apps="(Unknown)"
         if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps_v2"):
             supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps_v2", 'r', encoding="utf-8").read().strip()
-            print("Supported apps: ")
+            print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.splitlines():
                 if app.strip()!="":
                     print(f.feof("list-item", "• {content}", content=app.strip()))
         elif os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
             supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r', encoding="utf-8").read().strip()
-            print("Supported apps: ")
+            print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
                 print(f.feof("list-item", "• {content}", content=app.strip()))
     return 0
