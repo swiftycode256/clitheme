@@ -56,11 +56,11 @@ def sanity_check(path):
     global msg_retrieved
     if not msg_retrieved:
         msg_retrieved=True
-        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="sanitycheck")
+        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
         global banphrase_error_message
-        banphrase_error_message=f.feof("sanitycheck-banphrase-err", banphrase_error_message, char="{char}")
+        banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
         global startswith_error_message
-        startswith_error_message=f.feof("sanitycheck-startswith-err", startswith_error_message, char="{char}")
+        startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
     global sanity_check_error_message
     for p in path.split():
         for b in startswith_banphrases:
