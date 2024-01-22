@@ -1,4 +1,4 @@
-.TH clitheme 1 2023-12-16
+.TH clitheme 1 2024-01-20
 .SH NAME 
 clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
@@ -7,11 +7,11 @@ clitheme \- frontend to customize output of applications
 clitheme is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
 .SH OPTIONS
 .P
-.B apply-theme [themedef-file] [--overlay] [--preserve-temp]
+.B apply-theme [themedef-file(s)] [--overlay] [--preserve-temp]
 .RS 7
-Applies a given theme definition file into the current system. Supported applications will immediately start using the defined values after performing this operation.
+Applies the given theme definition file(s) into the current system. Supported applications will immediately start using the defined values after performing this operation.
 
-Specify \fB--overlay\fR to append value definitions in the file onto the current data.
+Specify \fB--overlay\fR to append value definitions in the file(s) onto the current data.
 
 Specify \fB--preserve-temp\fR to prevent the temporary directory from removed after the operation.
 .RE
@@ -26,9 +26,9 @@ Outputs detailed information about the currently applied theme. If multiple them
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
 .RE
 .P
-.B generate-data-hierarchy [themedef-file] [--overlay]
+.B generate-data [themedef-file(s)] [--overlay]
 .RS 7
-Generates the data hierarchy for a given theme definition file. This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
+Generates the data hierarchy for the given theme definition file(s). This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
 
 This command is for debug purposes only.
 .RE

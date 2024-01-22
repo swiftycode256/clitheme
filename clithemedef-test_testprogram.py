@@ -5,8 +5,8 @@ import random
 import string
 
 print("Testing generator function...")
-mainfile_data=open("tests/clithemedef-test_mainfile.clithemedef.txt",'r').read()
-expected_data=open("tests/clithemedef-test_expected.txt",'r').read()
+mainfile_data=open("tests/clithemedef-test_mainfile.clithemedef.txt",'r', encoding="utf-8").read()
+expected_data=open("tests/clithemedef-test_expected.txt",'r', encoding="utf-8").read()
 funcresult=_generator.generate_data_hierarchy(mainfile_data)
 
 errorcount=0
@@ -21,7 +21,7 @@ for line in expected_data.splitlines():
         # read the file
         contents=""
         try:
-            contents=open(rootpath+"/"+current_path).read()
+            contents=open(rootpath+"/"+current_path, 'r', encoding="utf-8").read()
             print("File "+rootpath+"/"+current_path+" OK")
         except FileNotFoundError:
             print("[File] file "+rootpath+"/"+current_path+" does not exist")
@@ -38,7 +38,7 @@ from src.clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
 frontend.global_debugmode=True
 frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
-expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r').read()
+expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
 errorcount_frontend=0
 for line in expected_data_frontend.splitlines():
