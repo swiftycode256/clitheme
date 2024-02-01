@@ -1,0 +1,135 @@
+begin_header
+    name clitheme提示信息中文翻译
+    version 1.2
+    locales zh_CN
+    supported_apps clitheme
+end_header
+
+begin_main
+in_domainapp swiftycode clitheme 
+    # 命令行指令
+    in_subsection cli
+        entry no-command
+            locale zh_CN 错误：没有提供指令或选项
+        end_entry
+        entry not-enough-arguments
+            locale zh_CN 错误：参数不够
+        end_entry
+        entry unknown-option
+            locale zh_CN 错误：未知选项”{option}“
+        end_entry
+        entry unknown-command
+            locale zh_CN 错误：未知指令“{cmd}“
+        end_entry
+        entry too-many-arguments
+            locale zh_CN 错误：参数太多
+        end_entry
+        entry help-usage-prompt
+            locale zh_CN 使用“clitheme --help”以获取使用方法
+        end_entry
+        entry version-str
+            locale zh_CN clitheme版本{ver}
+        end_entry
+        # apply-theme 和 generate-data 指令
+        in_subsection cli apply-theme
+            entry generate-data-msg
+                locale zh_CN test
+            end_entry
+            entry apply-theme-msg
+                locale zh_CN 这些主题定义文件将会通过以下顺序被应用：
+            end_entry
+            entry overwrite-notice
+                locale zh_CN 如果继续，当前的主题数据将会被覆盖。
+            end_entry
+            entry overlay-notice
+                locale zh_CN 这些主题定义文件会被叠加在当前的数据上。
+            end_entry
+            entry confirm-prompt
+                locale zh_CN 是否继续操作？[y/n]
+            end_entry
+            entry overlay-msg
+                locale zh_CN 已使用数据叠加模式
+            end_entry
+            entry generating-data
+                locale zh_CN ==> 正在生成数据……
+            end_entry
+            entry processing-file
+                locale zh_CN > 正在处理文件{filename}
+            end_entry
+            entry all-finished
+                locale zh_CN > 已处理全部文件
+            end_entry
+            entry generate-data-success
+                locale zh_CN 已成功生成数据
+            end_entry
+            entry view-temp-dir
+                locale zh_CN 生成的数据可以在“{path}”查看
+            end_entry
+            entry applying-theme
+                locale zh_CN ==> 正在应用主题……
+            end_entry
+            entry apply-theme-success
+                locale zh_CN 已成功应用主题
+            end_entry
+            entry read-file-error
+                locale_block zh_CN
+                    [文件{index}] 读取文件时出现了错误：
+                    {message}
+                end_block
+            end_entry
+            entry overlay-no-data
+                locale_block zh_CN 
+                    错误：当前没有设定主题或当前数据损坏
+                    请尝试设定主题
+                end_block
+            end_entry
+            entry overlay-data-error
+                locale_block zh_CN
+                    错误：当前主题数据损坏
+                    请移除当前数据和重新设定主题后重试
+                end_block
+            end_entry
+            entry generate-data-error
+                locale_block zh_CN
+                    [文件{index}] 生成数据时发生了错误：
+                    {message}
+                end_block
+            end_entry
+        # unset-current-theme 指令
+        in_subsection cli unset-current-theme
+            entry no-data-found
+                locale zh_CN 错误：当前没有设定主题
+            end_entry
+            entry remove-data-error
+                locale_block zh_CN 
+                    移除当前数据时发生了错误：
+                    {message}
+                end_block
+            end_entry
+            entry remove-data-success
+                locale zh_CN 已成功移除当前主题数据
+            end_entry
+        # get-current-theme-info 指令
+        in_subsection cli get-current-theme-info
+            entry no-theme
+                locale zh_CN 当前没有设定任何主题
+            end_entry
+            entry current-theme-msg
+                locale zh_CN 当前设定的主题：
+            end_entry 
+            entry overlay-history-msg
+                locale zh_CN 叠加历史记录（根据最新安装的主题排序）：
+            end_entry
+            entry version-str
+                locale zh_CN 版本：{ver}
+            end_entry
+            entry description-str
+                locale zh_CN 详细说明：
+            end_entry
+            entry locales-str
+                locale zh_CN 支持的语言：
+            end_entry
+            entry supported-apps-str
+                locale zh_CN 支持的应用程序：
+            end_entry
+end_main
