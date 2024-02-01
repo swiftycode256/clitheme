@@ -174,9 +174,9 @@ class FetchDescriptor():
 
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
-        path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
+        path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         path2=None
-        if alt_path!=None: path2=alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+self.subsections
+        if alt_path!=None: path2=alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         for section in entry_path.split():
             path+="/"+section
             if path2!=None: path2+="/"+section
