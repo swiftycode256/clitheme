@@ -7,6 +7,7 @@ import random
 import string
 import re
 import hashlib
+import shutil
 from typing import Optional
 try:
     from . import _globalvar
@@ -23,6 +24,7 @@ global_disablelang=False
 
 alt_path=None
 alt_path_dirname=None
+alt_path_hash=None
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
@@ -42,15 +44,43 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     except ImportError: import _generator
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
+    d=h.hexdigest(6)
+    global alt_path_hash
+    # if overlay, update hash with new contents of file
+    if alt_path_hash!=None and overlay==True:
+        newhash=""
+        for x in range(len(alt_path_hash)):
+            chart=string.ascii_uppercase+string.ascii_lowercase+string.digits
+            numorig=0
+            numcur=0
+            if d[x]>='A' and d[x]<='Z': #uppercase letters
+                numorig=ord(d[x])-ord('A')
+            elif d[x]>='a' and d[x]<='z': #lowercase letters
+                numorig=(ord(d[x])-ord('a'))+len(string.ascii_uppercase)
+            elif d[x]>='0' and d[x]<='9': #digit
+                numorig=ord(d[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
+            if alt_path_hash[x]>='A' and alt_path_hash[x]<='Z': #uppercase letters
+                numcur=ord(alt_path_hash[x])-ord('A')
+            elif alt_path_hash[x]>='a' and alt_path_hash[x]<='z': #lowercase letters
+                numcur=(ord(alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
+            elif alt_path_hash[x]>='0' and alt_path_hash[x]<='9': #digit
+                numcur=ord(alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
+            newhash+=chart[(numorig+numcur)%len(chart)]
+        alt_path_hash=newhash
+    else: alt_path_hash=d # else, use generated hash
     global alt_path_dirname
-    dir_name=f"clitheme-data-{h.hexdigest(6)}" # length of 12 (6*2)
+    dir_name=f"clitheme-data-{alt_path_hash}" # length of 12 (6*2)
+    overlay_cont=False
     if alt_path_dirname!=None and overlay==True: # overlay
-        dir_name=alt_path_dirname
+        if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name):
+            overlay_cont=True
+            shutil.copytree(_globalvar.clitheme_temp_root+"/"+alt_path_dirname, _globalvar.clitheme_temp_root+"/"+dir_name)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
-    if not os.path.exists(path_name):
+    if overlay_cont or not os.path.exists(path_name):
         _generator.path=path_name
+        _generator.silence_warn=True
         try:
             _generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
@@ -67,6 +97,7 @@ def unset_local_themedef():
     """
     global alt_path; alt_path=None
     global alt_path_dirname; alt_path_dirname=None
+    global alt_path_hash; alt_path_hash=None
 
 class FetchDescriptor():
     """
