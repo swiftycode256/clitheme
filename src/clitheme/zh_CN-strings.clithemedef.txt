@@ -28,7 +28,7 @@ in_domainapp swiftycode clitheme
             locale zh_CN 使用“clitheme --help”以获取使用方法
         end_entry
         entry version-str
-            locale zh_CN clitheme版本{ver}
+            locale zh_CN clitheme 版本：{ver}
         end_entry
         # apply-theme 和 generate-data 指令
         in_subsection cli apply-theme
@@ -51,7 +51,7 @@ in_domainapp swiftycode clitheme
                 locale zh_CN 已使用数据叠加模式
             end_entry
             entry generating-data
-                locale zh_CN ==> 正在生成数据……
+                locale zh_CN ==> 正在生成数据...
             end_entry
             entry processing-file
                 locale zh_CN > 正在处理文件{filename}
@@ -66,7 +66,7 @@ in_domainapp swiftycode clitheme
                 locale zh_CN 生成的数据可以在“{path}”查看
             end_entry
             entry applying-theme
-                locale zh_CN ==> 正在应用主题……
+                locale zh_CN ==> 正在应用主题...
             end_entry
             entry apply-theme-success
                 locale zh_CN 已成功应用主题
