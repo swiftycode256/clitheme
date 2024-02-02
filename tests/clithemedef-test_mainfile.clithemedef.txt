@@ -105,7 +105,8 @@ begin_main
         locale en_US Some text
         locale zh_CN 一些文本
     end_entry
-    entry global.example global_entry
+    in_subsection global.example
+    entry global_entry
         locale default Global entry in app
         locale en_US Global entry in app
         locale zh_CN app内的通用实例
