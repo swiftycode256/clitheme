@@ -1,5 +1,5 @@
 begin_header
-    name clitheme提示信息中文翻译
+    name clitheme message text translations (cli)
     version 1.2
     locales zh_CN
     supported_apps clitheme
@@ -16,16 +16,16 @@ in_domainapp swiftycode clitheme
             locale zh_CN 错误：参数不够
         end_entry
         entry unknown-option
-            locale zh_CN 错误：未知选项”{option}“
+            locale zh_CN 错误：未知选项"{option}"
         end_entry
         entry unknown-command
-            locale zh_CN 错误：未知指令“{cmd}“
+            locale zh_CN 错误：未知指令"{cmd}"
         end_entry
         entry too-many-arguments
             locale zh_CN 错误：参数太多
         end_entry
         entry help-usage-prompt
-            locale zh_CN 使用“clitheme --help”以获取使用方法
+            locale zh_CN 使用"clitheme --help"以获取使用方法
         end_entry
         entry version-str
             locale zh_CN clitheme 版本：{ver}
@@ -63,7 +63,7 @@ in_domainapp swiftycode clitheme
                 locale zh_CN 已成功生成数据
             end_entry
             entry view-temp-dir
-                locale zh_CN 生成的数据可以在“{path}”查看
+                locale zh_CN 生成的数据可以在"{path}"查看
             end_entry
             entry applying-theme
                 locale zh_CN ==> 正在应用主题...

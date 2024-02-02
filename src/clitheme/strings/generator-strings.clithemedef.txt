@@ -1,0 +1,72 @@
+begin_header
+    name clitheme message text translations (generator)
+    version 1.2
+    locales zh_CN
+    supported_apps clitheme
+end_header
+
+begin_main
+in_domainapp swiftycode clitheme 
+in_subsection generator
+    entry error-str
+        locale zh_CN 语法错误：{msg}
+    end_entry
+    entry subsection-conflict-err
+        locale zh_CN 第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在
+    end_entry
+    entry entry-conflict-err
+        locale zh_CN 第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在
+    end_entry
+    entry internal-error-blockinput
+        locale zh_CN 第{num}行：处理多行输入时发生了未知错误；请提交问题反馈
+    end_entry
+    entry extra-arguments-err
+        locale zh_CN 第{num}行："{phrase}"后的参数太多
+    end_entry
+    entry repeated-header-err
+        locale zh_CN 第{num}行：重复的header段落
+    end_entry
+    entry repeated-main-err
+        locale zh_CN 第{num}行：重复的main段落
+    end_entry
+    entry invalid-phrase-err
+        locale zh_CN 第{num}行：无效的"{phrase}"
+    end_entry
+    entry not-enough-args-err
+        locale zh_CN 第{num}行："{phrase}"后参数不够
+    end_entry
+    entry subsection-before-domainapp-err
+        locale zh_CN 第{num}行：未定义"in_domainapp"时使用"in_subsection"
+    end_entry
+    entry incomplete-block-err
+        locale zh_CN 文件缺少或包含不完整的header或main段落
+    end_entry
+    # warning strings
+    entry warning-str
+        警告：{msg}
+    end_entry
+    entry repeated-entry-warn
+        locale zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
+    end_entry
+    entry repeated-header-warn
+        locale zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
+    end_entry
+    # sanity check
+    entry sanity-check-entry-err
+        locale zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
+    end_entry
+    entry sanity-check-domainapp-err
+        locale zh_CN 第{num}行：开发者和应用程序名称{sanitycheck_msg}
+    end_entry
+    entry sanity-check-subsection-err
+        locale zh_CN 第{num}行：子路径名称{sanitycheck_msg}
+    end_entry
+    entry sanity-check-msg-banphrase-err
+        locale zh_CN 不能包含'{char}'
+    end_entry
+    entry sanity-check-msg-startswith-err
+        locale zh_CN 不能以'{char}'开头
+    end_entry
+end_main
+    
+    
