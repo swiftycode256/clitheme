@@ -35,9 +35,6 @@ in_subsection generator
     entry not-enough-args-err
         locale zh_CN 第{num}行："{phrase}"后参数不够
     end_entry
-    entry subsection-before-domainapp-err
-        locale zh_CN 第{num}行：未定义"in_domainapp"时使用"in_subsection"
-    end_entry
     entry incomplete-block-err
         locale zh_CN 文件缺少或包含不完整的header或main段落
     end_entry
