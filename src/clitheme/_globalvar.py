@@ -51,10 +51,15 @@ sanity_check_error_message=""
 msg_retrieved=False
 def sanity_check(path):
     # retrieve the entry (only for the first time)
-    try: from . import frontend
-    except ImportError: import frontend
+    try: from . import frontend, _get_resource
+    except ImportError: import frontend, _get_resource
     global msg_retrieved
     if not msg_retrieved:
+        try:
+            if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+        except:
+            if _version.release==0: print("set_local_themedef failed")
+            pass
         msg_retrieved=True
         f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
         global banphrase_error_message

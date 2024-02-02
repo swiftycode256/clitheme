@@ -12,10 +12,14 @@ try:
     from . import _globalvar
     from . import _generator
     from . import frontend
+    from . import _get_resource
+    from . import _version
 except ImportError:
     import _globalvar
     import _generator
     import frontend
+    import _get_resource
+    import _version
 
 usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
@@ -28,6 +32,12 @@ usage_description=\
 frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
+
+try:
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt")): raise RuntimeError()
+except:
+    if _version.release==0: print("set_local_themedef failed")
+    pass
 
 def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """
@@ -64,6 +74,7 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, ge
         file_content=file_contents[i]
         # Generate data hierarchy, erase current data, copy it to data path
         try:
+            _generator.silence_warn=False
             _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
             generate_path=False # Don't generate another temp folder after first one
             index+=1
