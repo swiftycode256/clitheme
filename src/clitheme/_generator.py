@@ -244,9 +244,6 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
             elif phrases[0]=="in_subsection":
                 if len(phrases)<2:
                     handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=phrases[0], num=str(linenumber)))
-                # check if in_domainapp is set
-                if current_domainapp=="":
-                    handle_error(fd.feof("subsection-before-domainapp-err", "Line {num}: in_subsection used before in_domainapp", num=str(linenumber)))
                 # sanity check
                 if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
                     handle_error(fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(linenumber), sanitycheck_msg=_globalvar.sanity_check_error_message))
