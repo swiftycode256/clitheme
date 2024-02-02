@@ -40,7 +40,7 @@ in_subsection generator
     end_entry
     # warning strings
     entry warning-str
-        警告：{msg}
+        locale zh_CN 警告：{msg}
     end_entry
     entry repeated-entry-warn
         locale zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
