@@ -6,10 +6,10 @@ import string
 import random
 import re
 try:
-    from . import _globalvar
-    from . import frontend
-    from . import _version
-    from . import _get_resource
+    from .. import _globalvar
+    from .. import frontend
+    from .. import _version
+    from .. import _get_resource
 except ImportError: # for test program
     import _globalvar
     import frontend
