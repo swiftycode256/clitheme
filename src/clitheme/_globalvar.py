@@ -38,6 +38,9 @@ clitheme_version=_version.__version__
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 generator_index_filename="current_theme_index"
+db_data_tablename="clitheme_subst_data"
+db_filename="subst-data.db"
+
 entry_banphrases=['/','\\']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
