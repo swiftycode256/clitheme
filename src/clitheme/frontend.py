@@ -170,8 +170,17 @@ class FetchDescriptor():
                     if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
             else:
                 if self.debug_mode: print("[Debug] Locale: Using environment variables")
+                # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
+                skip_LANGUAGE=False
+                LANG_value=""
+                if "LANG" not in os.environ or os.environ["LANG"]=='': LANG_value="C"
+                else: LANG_value=os.environ['LANG']
+                LC_ALL_value=""
+                if "LC_ALL" not in os.environ or os.environ["LC_ALL"]=='': LC_ALL_value="C"
+                else: LC_ALL_value=os.environ["LC_ALL"]
+                if (LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C.")): skip_LANGUAGE=True
                 # $LANGUAGE (list of languages separated by colons)
-                if os.environ.__contains__("LANGUAGE"):
+                if "LANGUAGE" in os.environ and not skip_LANGUAGE:
                     target_str=os.environ['LANGUAGE']
                     for each_language in target_str.strip().split(":"):
                         # avoid exploit of accessing top-level folders
@@ -187,7 +196,7 @@ class FetchDescriptor():
                             lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)+" "
                     lang=lang.strip()
                 # $LC_ALL
-                elif os.environ.__contains__("LC_ALL"):
+                elif "LC_ALL" in os.environ:
                     target_str=os.environ["LC_ALL"].strip()
                     if not _globalvar.sanity_check(target_str)==False:
                         lang=target_str+" "
@@ -195,7 +204,7 @@ class FetchDescriptor():
                     else:
                         if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
                 # $LANG
-                elif os.environ.__contains__("LANG"):
+                elif "LANG" in os.environ:
                     target_str=os.environ["LANG"].strip()
                     if not _globalvar.sanity_check(target_str)==False:
                         lang=target_str+" "
