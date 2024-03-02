@@ -8,4 +8,4 @@ final_str="" # directory where the script files are in
 for part in l:
     final_str+=part+os.sep
 def read_file(path: str) -> str:
-    return open(final_str+os.sep+path).read()
+    return open(final_str+os.sep+path, encoding="utf-8").read()
