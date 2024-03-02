@@ -1,6 +1,14 @@
+clitheme (1.1-r2-1) unstable; urgency=medium
+
+  * Version 1.1 release 2
+  For more information please see: 
+  https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r2
+
+ -- swiftycode <3291929745@qq.com>  Sat, 02 Mar 2024 23:49:00 +0800
+
 clitheme (1.1-r1-1) unstable; urgency=medium
 
-  * Version 1.1-r1 in Debian package format
+  * Version 1.1 release 1
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r1
 
@@ -8,7 +16,7 @@ clitheme (1.1-r1-1) unstable; urgency=medium
 
 clitheme (1.0-r2-1) unstable; urgency=medium
 
-  * Version 1.0-r2 in Debian package format
+  * Version 1.0 release 2
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.0-r2
 
@@ -16,6 +24,6 @@ clitheme (1.0-r2-1) unstable; urgency=medium
 
 clitheme (1.0-r1-1) unstable; urgency=medium
 
-  * Version 1.0_r1 in Debian package format
+  * Version 1.0 release 1
 
  -- swiftycode <3291929745@qq.com>  Wed, 13 Dec 2023 17:16:33 +0800
