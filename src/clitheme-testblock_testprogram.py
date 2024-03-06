@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Program for testing multi-line (block) processing of _generator
-from src.clitheme import _generator, frontend
+from clitheme import _generator, frontend
 
 file_data="""
 begin_header

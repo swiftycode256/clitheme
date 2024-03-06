@@ -1,6 +1,6 @@
 import shutil
-from src.clitheme import _generator
-from src.clitheme import _globalvar
+from clitheme import _generator
+from clitheme import _globalvar
 import random
 import string
 
@@ -34,7 +34,7 @@ for line in expected_data.splitlines():
 
 # Test frontend
 print("Testing frontend...")
-from src.clitheme import frontend
+from clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
 frontend.global_debugmode=True
 frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
