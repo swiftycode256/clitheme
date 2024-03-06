@@ -54,27 +54,31 @@ sanity_check_error_message=""
 msg_retrieved=False
 try: from . import frontend, _get_resource
 except ImportError: import frontend, _get_resource
-def sanity_check(path):
-    # retrieve the entry (only for the first time)
-    global msg_retrieved
+def sanity_check(path: str) -> bool:
+    def retrieve_entry():
+        # retrieve the entry (only for the first time)
+        global msg_retrieved
+        global sanity_check_error_message, banphrase_error_message, startswith_error_message
+        if not msg_retrieved:
+            try:
+                if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+            except RuntimeError:
+                if _version.release==0: print("_globalvar set_local_themedef failed")
+                pass
+            msg_retrieved=True
+            f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+            banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
+            startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
     global sanity_check_error_message
     for p in path.split():
         for b in startswith_banphrases:
             if p.startswith(b):
+                retrieve_entry()
                 sanity_check_error_message=startswith_error_message.format(char=b)
                 return False
         for b in entry_banphrases:
             if p.find(b)!=-1:
+                retrieve_entry()
                 sanity_check_error_message=banphrase_error_message.format(char=b)
                 return False
     return True
-if not msg_retrieved:
-    try:
-        if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-    except RuntimeError:
-        if _version.release==0: print("_globalvar set_local_themedef failed")
-        pass
-    msg_retrieved=True
-    f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
-    banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
-    startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
