@@ -88,16 +88,6 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
 
     This function should not be invoked directly unless absolutely necessary.
     """
-    global silence_warn
-    sw=silence_warn
-    if not silence_warn: # avoid dead loops in set_local_themedef
-        try:
-            if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-            if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-        except:
-            if _version.release==0: print("generator set_local_themedef failed")
-            pass
-    silence_warn=sw
     if custom_path_gen:
         generate_custom_path()
     if not os.path.exists(path): os.mkdir(path)
@@ -304,3 +294,9 @@ def generate_data_hierarchy(file_content, custom_path_gen=True, custom_infofile_
     theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(custom_infofile_name+"\n")
     return True # Everything is successful! :)
+
+try:
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+except:
+    if _version.release==0: print("generator set_local_themedef failed")
+    pass
