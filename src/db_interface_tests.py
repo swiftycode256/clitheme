@@ -3,11 +3,12 @@ from clitheme._generator import db_interface
 # sample input for testing
 sample_inputs=[("rm: missing operand", "rm"),
                ("type rm --help for more information", "rm"),
-               ("rm: /etc/folder: Permission denied", "rm -rf /etc/folder"),
+               ("rm: /etc/folder: Permission denied", "rm /etc/folder -rf"),
+               ("rm: /etc/file: Permission denied", "rm /etc/folder"), # test multiple phrase detection (substitution should not happen)
                ("cat: /dev/mem: Permission denied","cat /dev/mem"),
                ("bash: /etc/secret: Permission denied","cd /etc/secret"),
                ("ls: /etc/secret: Permission denied","ls /etc/secret"),
-               ("ls: /etc/secret: Permission denied","wef ls /etc/secret"), # test first phrase detection
+               ("ls: /etc/secret: Permission denied","wef ls /etc/secret"), # test first phrase detection (substitution should not happen)
                ("ls: unrecognized option '--help'", "ls --help"),
                ("Warning: invaild input", "input anything"),
                ("Error: invaild input   ","input anything"), # test extra spaces
@@ -15,7 +16,7 @@ sample_inputs=[("rm: missing operand", "rm"),
 # substitute patterns
 subst_patterns=[("rm: missing operand", "rm says: missing arguments and options (>﹏<)", False, ["rm"]),
                 ("type rm --help for more information", "For more information, use rm --help (｡ì _ í｡)", False, ["rm"]),
-                (r"(?P<shell>.+): (?P<filename>.+): Permission denied",r"""\g<shell> says: Access denied to \g<filename>! ಥ_ಥ""",True, ["rm", "cat", "cd", "ls"]),
+                (r"(?P<shell>.+): (?P<filename>.+): Permission denied",r"""\g<shell> says: Access denied to \g<filename>! ಥ_ಥ""",True, ["rm -rf", "cat", "cd", "ls"]),
                 (r"(?P<shell>.+): unrecognized option '(?P<opt>.+)'",r"""wef""",True, ["ls"]), # testing repeated entry detection
                 (r"(?P<shell>.+): unrecognized option '(?P<opt>.+)'",r"""\g<shell> says: option '\g<opt>' not known! (ToT)/~~~'""",True, ["ls"]),
                 (r"^Warning:( )", r"o(≧v≦)o Note:\g<1>",True , None),
