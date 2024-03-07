@@ -1,7 +1,7 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
-pkgver=UNKNOWN # to be filled out by pkgver()
-pkgrel=1 # to be filled out by pkgver()
+pkgver='1.2_dev20240307'
+pkgrel=1
 pkgdesc="A text theming library for command line applications"
 arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
