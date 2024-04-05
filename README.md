@@ -249,10 +249,11 @@ rm -rf buildtmp srctmp
 - `dh-python`
 - `python3-hatchling`
 - `dpkg-dev`
+- `pybuild-plugin-pyproject`
 
 你可以使用以下命令安装：
 
-    sudo apt install debhelper dh-python python3-hatchling dpkg-dev
+    sudo apt install debhelper dh-python python3-hatchling dpkg-dev pybuild-plugin-pyproject
 
 安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
 

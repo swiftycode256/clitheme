@@ -249,10 +249,11 @@ The following packages are required prior to building the package:
 - `dh-python`
 - `python3-hatchling`
 - `dpkg-dev`
+- `pybuild-plugin-pyproject`
 
 They can be installed using this command:
 
-    sudo apt install debhelper dh-python python3-hatchling dpkg-dev
+    sudo apt install debhelper dh-python python3-hatchling dpkg-dev pybuild-plugin-pyproject
 
 Run `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated in the upper folder after the build process finishes.
 
