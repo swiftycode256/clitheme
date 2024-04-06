@@ -3,10 +3,15 @@ from clitheme import _generator
 from clitheme import _globalvar
 import random
 import string
-
+import os
+l=__file__.split(os.sep)
+l.pop()
+root_directory="" # directory where the script files are in
+for part in l:
+    root_directory+=part+os.sep
 print("Testing generator function...")
-mainfile_data=open("tests/clithemedef-test_mainfile.clithemedef.txt",'r', encoding="utf-8").read()
-expected_data=open("tests/clithemedef-test_expected.txt",'r', encoding="utf-8").read()
+mainfile_data=open(root_directory+"/testprogram-data/clithemedef-test_mainfile.clithemedef.txt",'r', encoding="utf-8").read()
+expected_data=open(root_directory+"/testprogram-data/clithemedef-test_expected.txt",'r', encoding="utf-8").read()
 funcresult=_generator.generate_data_hierarchy(mainfile_data)
 
 errorcount=0
@@ -38,7 +43,7 @@ from clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
 frontend.global_debugmode=True
 frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
-expected_data_frontend=open("tests/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
+expected_data_frontend=open(root_directory+"/testprogram-data/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
 errorcount_frontend=0
 for line in expected_data_frontend.splitlines():
