@@ -33,7 +33,7 @@ in_domainapp swiftycode clitheme
         # apply-theme 和 generate-data 指令
         in_subsection cli apply-theme
             entry generate-data-msg
-                locale zh_CN test
+                locale zh_CN 主题定义数据将会从以下顺序的主题定义文件生成：
             end_entry
             entry apply-theme-msg
                 locale zh_CN 这些主题定义文件将会通过以下顺序被应用：
