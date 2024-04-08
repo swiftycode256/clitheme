@@ -5,6 +5,7 @@ import os
 import string
 import random
 import re
+import math
 try:
     from .. import _globalvar
     from .. import frontend
@@ -94,6 +95,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     mainparsed=False
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
+    options={}
 
     # define check functions
     def check_enough_args(phrases: list[str], count: int):
@@ -109,9 +111,41 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
     # defined sub-processing functions
-    def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block") -> str:
+    def parse_options(options_data: str, merge_global_options: bool) -> dict:
+        # value options: leadtabindents, leadspaces
+        value_options=["leadtabindents", "leadspaces"]
+        # on/off options: substesc, strictcmdmatch, exactcmdmatch (use no<...> to disable)
+        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch"]
+        final_options={}
+        if merge_global_options: nonlocal options; final_options=options
+        if len(options_data.split())==0: return {}
+        for each_option in options_data.split():
+            option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
+            option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
+            if option_name in value_options:
+                # must not begin with no
+                if option_name_preserve_no.startswith("no"):
+                    handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
+                # get value
+                results=re.search(r"^(?P<name>.+?):(?P<value>.+)+$", each_option)
+                value: int
+                if results==None: # no value specified
+                    handle_error(fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name))
+                else: 
+                    try: value=int(results.groupdict()['value'])
+                    except ValueError: handle_error(fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=str(lineindex+1), phrase=option_name))
+                # set option
+                final_options[option_name]=value
+            elif option_name in bool_options:
+                # if starts with no, set to false; else, set to true
+                final_options[option_name]=not option_name_preserve_no.startswith("no")
+            else:
+                handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
+        return final_options 
+                
+    def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True) -> str:
         nonlocal lineindex
-        minspaces=0
+        minspaces=math.inf
         blockinput_data=""
         while lineindex<len(lines_data)-1:
             lineindex+=1
@@ -131,11 +165,11 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     leading_whitespace=re.sub(r"\t", " "*8, leading_whitespace)
                     # update line content
                     # replace \end_block with end_block
-                    line=leading_whitespace+re.sub(r"^\\([\\]*)end_block", r"\g<1>end_block", line.strip())
+                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
                     # update minspaces
                     minspaces=min(minspaces, len(leading_whitespace))
             else: # don't preserve whitespaces
-                line=re.sub(r"^\\([\\]*)end_block", r"\g<1>end_block", line.strip())
+                line=re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
             # write to data
             blockinput_data+="\n"+line
         # remove the extra leading newline
@@ -143,7 +177,24 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # remove all whitespaces except common minspaces (if preserve_indents)
         if preserve_indents:
             pattern=r"(?P<optline>\n|^)[ ]{"+str(minspaces)+"}"
-            blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data)
+            blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
+        # parse leadtabindents leadspaces, and substesc options
+        if len(lines_data[lineindex].split())>1:
+            got_options=parse_options(splitarray_to_string(lines_data[lineindex].split()[1:]), merge_global_options=True)
+            for option in got_options.keys():
+                if option=="leadtabindents": 
+                    if not preserve_indents and option not in options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                    # insert tabs at start of each line
+                    blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
+                elif option=="leadspaces":
+                    if not preserve_indents and option not in options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                    # insert spaces at start of each line
+                    blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
+                elif option=="substesc":
+                    # substitute {{ESC}} with escape literal
+                    if got_options['substesc']==True: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
+                elif disallow_cmdmatch_options:
+                    handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
         return blockinput_data
     def handle_entry(entry_name: str):
         # expect locale, locale_block, end_entry

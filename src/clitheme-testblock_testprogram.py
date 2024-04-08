@@ -23,7 +23,7 @@ begin_main
 
 
 
-        end_block
+        end_block leadtabindents:1
         locale_block zh_CN
 
 
@@ -36,7 +36,7 @@ begin_main
             should have leading 3 lines and trailing 2 lines
 
 
-        end_block
+        end_block leadspaces:4
     end_entry
 end_main
 """
@@ -59,7 +59,7 @@ for lang in ["C", "en", "en_US", "zh_CN"]:
     f.disable_lang=True
     name=f"test_entry__{lang}"
     if f.entry_exists(name):
-        print(f"{name} OK")
+        print(f"{name} found")
     else:
         print(f"{name} not found")
 
