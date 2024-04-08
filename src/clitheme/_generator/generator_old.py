@@ -1,5 +1,5 @@
 """
-Generator function used in applying themes (should not be invoked directly)
+OBSOLETE generator functions; --Do not use--
 """
 import os
 import string
