@@ -96,7 +96,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     mainparsed=False
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
-    options={}
+    global_options={}
 
     # define check functions
     def check_enough_args(phrases: list[str], count: int):
@@ -118,8 +118,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # on/off options: substesc, strictcmdmatch, exactcmdmatch (use no<...> to disable)
         bool_options=["substesc", "strictcmdmatch", "exactcmdmatch"]
         final_options={}
-        if merge_global_options: nonlocal options; final_options=copy.copy(options)
-        if len(options_data)==0: return {}
+        if merge_global_options: nonlocal global_options; final_options=copy.copy(global_options)
+        if len(options_data)==0: return final_options # return either empty data or pre-existing global options
         for each_option in options_data:
             option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
@@ -143,7 +143,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             else:
                 handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
         return final_options 
-                
+    def handle_set_global_options(options_data: list[str]):
+        # set options globally
+        nonlocal global_options; global_options=parse_options(options_data, merge_global_options=True) 
     def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True) -> str:
         nonlocal lineindex
         minspaces=math.inf
@@ -180,22 +182,23 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             pattern=r"(?P<optline>\n|^)[ ]{"+str(minspaces)+"}"
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
         # parse leadtabindents leadspaces, and substesc options
+        got_options=copy.copy(global_options)
         if len(lines_data[lineindex].split())>1:
             got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
-            for option in got_options.keys():
-                if option=="leadtabindents": 
-                    if not preserve_indents and option not in options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
-                    # insert tabs at start of each line
-                    blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
-                elif option=="leadspaces":
-                    if not preserve_indents and option not in options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
-                    # insert spaces at start of each line
-                    blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
-                elif option=="substesc":
-                    # substitute {{ESC}} with escape literal
-                    if got_options['substesc']==True: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
-                elif disallow_cmdmatch_options:
-                    handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+        for option in got_options.keys():
+            if option=="leadtabindents": 
+                if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                # insert tabs at start of each line
+                blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
+            elif option=="leadspaces":
+                if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                # insert spaces at start of each line
+                blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
+            elif option=="substesc":
+                # substitute {{ESC}} with escape literal
+                if got_options['substesc']==True: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
+            elif disallow_cmdmatch_options:
+                handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
         return blockinput_data
     def handle_entry(entry_name: str):
         # expect locale, locale_block, end_entry
@@ -208,6 +211,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 check_enough_args(phrases, 3)
                 content=splitarray_to_string(phrases[2:])
                 target_entry=entry_name
+                # substesc
+                if "substesc" in global_options.keys() and global_options['substesc']==True:
+                    content=re.sub(r"{{ESC}}", '\x1b', content)
                 if phrases[1]!="default":
                     target_entry+="__"+phrases[1]
                 add_entry(datapath, target_entry, content, lineindex+1)
@@ -315,6 +321,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     if domainapp!="": entry_name=domainapp+" "+entry_name
                     recursive_mkdir(datapath, entry_name, lineindex+1)
                     handle_entry(entry_name)
+                elif phrases[0]=="set_options":
+                    check_enough_args(phrases, 2)
+                    handle_set_global_options(phrases[1:])
                 elif phrases[0]=="end_main":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     mainparsed=True
