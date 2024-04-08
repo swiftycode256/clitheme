@@ -6,6 +6,7 @@ import string
 import random
 import re
 import math
+import copy
 try:
     from .. import _globalvar
     from .. import frontend
@@ -111,15 +112,15 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
     # defined sub-processing functions
-    def parse_options(options_data: str, merge_global_options: bool) -> dict:
+    def parse_options(options_data: list[str], merge_global_options: bool) -> dict:
         # value options: leadtabindents, leadspaces
         value_options=["leadtabindents", "leadspaces"]
         # on/off options: substesc, strictcmdmatch, exactcmdmatch (use no<...> to disable)
         bool_options=["substesc", "strictcmdmatch", "exactcmdmatch"]
         final_options={}
-        if merge_global_options: nonlocal options; final_options=options
-        if len(options_data.split())==0: return {}
-        for each_option in options_data.split():
+        if merge_global_options: nonlocal options; final_options=copy.copy(options)
+        if len(options_data)==0: return {}
+        for each_option in options_data:
             option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             if option_name in value_options:
@@ -180,7 +181,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
         # parse leadtabindents leadspaces, and substesc options
         if len(lines_data[lineindex].split())>1:
-            got_options=parse_options(splitarray_to_string(lines_data[lineindex].split()[1:]), merge_global_options=True)
+            got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
             for option in got_options.keys():
                 if option=="leadtabindents": 
                     if not preserve_indents and option not in options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
