@@ -9,6 +9,7 @@ begin_header
 end_header
 
 begin_main
+    set_options leadtabindents:1
     entry test_entry
         locale_block default en_US en C
 
@@ -23,7 +24,7 @@ begin_main
 
 
 
-        end_block leadtabindents:1
+        end_block
     end_entry
 end_main
 """
