@@ -105,6 +105,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         else: not_pass=len(phrases)>count
         if not_pass:
             handle_error(fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=phrases[0]))
+    def is_ignore_line() -> bool:
+        return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
     # defined sub-processing functions
     def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block") -> str:
@@ -148,8 +150,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         nonlocal lineindex
         while lineindex<len(lines_data)-1:
             lineindex+=1
-            if lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#'): 
-                continue
+            if is_ignore_line(): continue
             phrases=lines_data[lineindex].split()
             if phrases[0]=="locale":
                 check_enough_args(phrases, 3)
@@ -176,8 +177,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     while lineindex<len(lines_data)-1:
         lineindex+=1
         # ignore empty and comment lines
-        if lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#'): 
-            continue
+        if is_ignore_line(): continue
         # process header and main sections here
         if lines_data[lineindex].split()[0]=="begin_header":
             # avoid repeated block
@@ -186,8 +186,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             # --Process header block--
             while lineindex<len(lines_data)-1:
                 lineindex+=1
-                if lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#'): 
-                    continue
+                if is_ignore_line(): continue
                 phrases=lines_data[lineindex].split()
                 # Expect name, description, description_block, version, locales, locales_block, supported_apps, supported_apps_block
                 if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
@@ -233,8 +232,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             subsection=""
             while lineindex<len(lines_data)-1:
                 lineindex+=1
-                if lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#'): 
-                    continue
+                if is_ignore_line(): continue
                 phrases=lines_data[lineindex].split()
                 # expect entry, in_domainapp, in_subsction, unset_domainapp, unset_subsection
                 if phrases[0]=="in_domainapp":
@@ -270,6 +268,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     mainparsed=True
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
+            ## END --Process main block--
     if not headerparsed or not mainparsed:
         handle_error(fd.reof("incomplete-block-err", "Missing or incomplete header or main block"))
     # Update current theme index
