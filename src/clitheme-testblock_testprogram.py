@@ -24,6 +24,17 @@ begin_main
 
 
         end_block leadtabindents:1
+    end_entry
+end_main
+"""
+
+file_data_2="""
+begin_header
+    name untitled
+end_header
+
+begin_main
+    entry test_entry
         locale_block zh_CN
 
 
@@ -45,6 +56,9 @@ frontend.global_debugmode=True
 if frontend.set_local_themedef(file_data)==False:
     print("Error: set_local_themedef failed")
     exit(1)
+if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
+    print("Error: set_local_themedef failed")
+    exit(1)
 f=frontend.FetchDescriptor()
 print("Default locale:")
 f.disable_lang=True
@@ -64,9 +78,10 @@ for lang in ["C", "en", "en_US", "zh_CN"]:
         print(f"{name} not found")
 
 import sys
-if sys.argv.__contains__("--preserve-temp"):
+if "--preserve-temp" in sys.argv:
     print(f"View generated data at {_generator.path}")
     exit()
 
 import shutil
-shutil.rmtree(_generator.path)
+try: shutil.rmtree(_generator.path)
+except: print("Warning: failed to remove temp directory \"{}\"".format(_generator.path))
