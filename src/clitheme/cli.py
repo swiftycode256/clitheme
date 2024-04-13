@@ -214,9 +214,18 @@ def main(cli_args):
         print(f.reof("no-command", "Error: no command or option specified"))
         return 1
 
+    def check_enough_args(count: int, exclude_options: bool=True):
+        c=0
+        for arg in cli_args:
+            if not exclude_options or not is_option(arg): c+=1
+        if c<count:
+            exit(handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
+    def check_extra_args(count: int):
+        if len(cli_args)>count:
+            exit(handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
+
     if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy":
-        if len(cli_args)<3:
-            return handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first)
+        check_enough_args(3)
         generate_only=(cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy")
         paths=[]
         overlay=False
@@ -258,17 +267,17 @@ def main(cli_args):
                 return 1
         return apply_theme(content_list, overlay=overlay, preserve_temp=preserve_temp, generate_only=generate_only)
     elif cli_args[1]=="get-current-theme-info":
-        if len(cli_args)>2: # disabled additional options
-            return handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first)
+        check_extra_args(2) # disabled additional options
         return get_current_theme_info()
     elif cli_args[1]=="unset-current-theme":
-        if len(cli_args)>2:
-            return handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first)
+        check_extra_args(2)
         return unset_current_theme()
     elif cli_args[1]=="--version":
+        check_extra_args(2)
         print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
     else:
         if cli_args[1]=="--help":
+            check_extra_args(2)
             print(usage_description.format(arg_first))
         else:
             return handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
