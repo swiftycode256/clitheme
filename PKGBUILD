@@ -1,6 +1,6 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
-pkgver='1.2_dev20240409'
+pkgver='1.2_dev20240413'
 pkgrel=1
 pkgdesc="A text theming library for command line applications"
 arch=('any')
@@ -17,7 +17,7 @@ backup=()
 options=()
 install=
 changelog='debian/changelog'
-source=("srctmp::git+file://$PWD#branch=v1.2_dev")
+source=("srctmp::git+file://$PWD#branch=v1.2_dev") # REMOVE "#branch=v1.2_dev" WHEN MERGING WITH STABLE BRANCH!!
 noextract=()
 md5sums=('SKIP')
 validpgpkeys=()
