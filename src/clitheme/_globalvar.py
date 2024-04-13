@@ -62,6 +62,7 @@ def sanity_check(path: str) -> bool:
         if not msg_retrieved:
             try:
                 if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+                if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
             except RuntimeError:
                 if _version.release==0: print("_globalvar set_local_themedef failed")
                 pass

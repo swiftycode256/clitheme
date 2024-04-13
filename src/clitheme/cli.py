@@ -35,6 +35,7 @@ frontend.global_subsections="cli"
 
 try:
     if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt")): raise RuntimeError()
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
 except:
     if _version.release==0: print("set_local_themedef failed")
     pass
