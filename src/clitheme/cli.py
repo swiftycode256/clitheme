@@ -244,7 +244,7 @@ def main(cli_args):
                     print(fi.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
                 inpstr=fi.reof("confirm-prompt", "Do you want to continue? [y/n]")
                 try: inp=input(inpstr+" ").strip().lower()
-                except KeyboardInterrupt: print();return 1
+                except (KeyboardInterrupt, EOFError): print();return 130
                 if not (inp=="y" or inp=="yes"):
                     return 1
         content_list=[]
