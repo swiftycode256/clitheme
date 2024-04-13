@@ -200,33 +200,45 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             elif disallow_cmdmatch_options:
                 handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
         return blockinput_data
-    def handle_entry(entry_name: str):
+    def handle_entry(entry_name: str, end_phrase: str):
         # expect locale, locale_block, end_entry
         nonlocal lineindex
         while lineindex<len(lines_data)-1:
             lineindex+=1
             if is_ignore_line(): continue
             phrases=lines_data[lineindex].split()
-            if phrases[0]=="locale":
-                check_enough_args(phrases, 3)
-                content=splitarray_to_string(phrases[2:])
-                target_entry=entry_name
+            if phrases[0]=="locale" or phrases[0].startswith("locale:"):
+                content: str
+                locale: str
+                if phrases[0].startswith("locale:"):
+                    check_enough_args(phrases, 2)
+                    results=re.search(r"locale:(?P<locale>.+)", phrases[0])
+                    if results==None:
+                        handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=str(lineindex+1)))
+                    else:
+                        locale=results.groupdict()['locale']
+                    content=splitarray_to_string(phrases[1:])
+                else:
+                    check_enough_args(phrases, 3)
+                    content=splitarray_to_string(phrases[2:])
+                    locale=phrases[1]
+                target_entry=copy.copy(entry_name)
                 # substesc
                 if "substesc" in global_options.keys() and global_options['substesc']==True:
                     content=re.sub(r"{{ESC}}", '\x1b', content)
-                if phrases[1]!="default":
-                    target_entry+="__"+phrases[1]
+                if locale!="default":
+                    target_entry+="__"+locale
                 add_entry(datapath, target_entry, content, lineindex+1)
-            elif phrases[0]=="locale_block":
+            elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 check_enough_args(phrases, 2)
                 locales=phrases[1:]
-                content=handle_block_input(preserve_indents=True, preserve_empty_lines=True)
+                content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
                 for this_locale in locales:
                     suffix=""
                     if this_locale!="default":
                         suffix="__"+this_locale
                     add_entry(datapath, entry_name+suffix, content, lineindex+1)
-            elif phrases[0]=="end_entry":
+            elif phrases[0]==end_phrase:
                 check_extra_args(phrases, 1, use_exact_count=True)
                 break
             else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
@@ -236,11 +248,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         lineindex+=1
         # ignore empty and comment lines
         if is_ignore_line(): continue
+        first_phrase=lines_data[lineindex].split()[0]
         # process header and main sections here
-        if lines_data[lineindex].split()[0]=="begin_header":
+        if first_phrase=="begin_header" or first_phrase==r"{header_section}":
             # avoid repeated block
             if headerparsed==True: 
                 handle_error(fd.feof("repeated-header-err", "Repeated header block at line {num}", num=str(lineindex+1)))
+            end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
             # --Process header block--
             while lineindex<len(lines_data)-1:
                 lineindex+=1
@@ -261,31 +275,36 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         "clithemeinfo_"+phrases[0]+"_v2",\
                         content,lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
-                elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block":
+                elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block" or phrases[0]=="[locales]" or phrases[0]=="[supported_apps]" or phrases[0]=="[description]":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     # handle block input
                     content=""; filename=""
+                    endphrase="end_block"
+                    if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
                     if phrases[0]=="description_block":
-                        content=handle_block_input(preserve_indents=True, preserve_empty_lines=True)
-                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0])}"
+                        content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
+                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']','')}"
                     else:
-                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False)
-                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0])}_v2"
+                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase)
+                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']','')}_v2"
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         filename,\
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
-                elif phrases[0]=="end_header":
+                elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     headerparsed=True
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             # END --Process header block--
 
-        elif lines_data[lineindex].split()[0]=="begin_main":
+        elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
             if mainparsed:
                 handle_error(fd.feof("repeated-main-err", "Repeated main block at line {num}", num=str(lineindex+1)))
-            # --Process main block--
+            end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
+            if first_phrase=="begin_main":
+                handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
+            # --Process entries/main block--
             domainapp=""
             subsection=""
             while lineindex<len(lines_data)-1:
@@ -311,7 +330,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="unset_subsection":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     subsection=""
-                elif phrases[0]=="entry":
+                elif phrases[0]=="entry" or phrases[0]=="[entry]":
                     check_enough_args(phrases, 2)
                     # Prevent leading . & prevent /,\ in entry name
                     if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
@@ -320,16 +339,19 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     if subsection!="": entry_name=subsection+" "+entry_name
                     if domainapp!="": entry_name=domainapp+" "+entry_name
                     recursive_mkdir(datapath, entry_name, lineindex+1)
-                    handle_entry(entry_name)
+                    handle_entry(entry_name, end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
                     handle_set_global_options(phrases[1:])
-                elif phrases[0]=="end_main":
+                elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     mainparsed=True
+                    # deprecation warning
+                    if phrases[0]=="end_main":
+                        handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
-            ## END --Process main block--
+            ## END --Process entries/main block--
     if not headerparsed or not mainparsed:
         handle_error(fd.reof("incomplete-block-err", "Missing or incomplete header or main block"))
     # Update current theme index
