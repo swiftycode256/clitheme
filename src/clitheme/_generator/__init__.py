@@ -7,16 +7,13 @@ import random
 import re
 import math
 import copy
+from typing import Optional
 try:
-    from .. import _globalvar
-    from .. import frontend
-    from .. import _version
-    from .. import _get_resource
+    from .. import _globalvar, frontend, _version, _get_resource
+    from . import db_interface
 except ImportError: # for test program
-    import _globalvar
-    import frontend
-    import _version
-    import _get_resource
+    import _globalvar, frontend, _version, _get_resource
+    import _generator.db_interface as db_interface
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
@@ -92,8 +89,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if not os.path.exists(datapath): os.mkdir(datapath)
 
     # data to keep track of
-    headerparsed=False
-    mainparsed=False
+    parsed_sections=[]
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
     global_options={}
@@ -112,17 +108,22 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
     # defined sub-processing functions
-    def parse_options(options_data: list[str], merge_global_options: bool) -> dict:
+    def parse_options(options_data: list[str], merge_global_options: bool, allowed_options: Optional[list]=None) -> dict:
+        nonlocal global_options
         # value options: leadtabindents, leadspaces
         value_options=["leadtabindents", "leadspaces"]
         # on/off options: substesc, strictcmdmatch, exactcmdmatch (use no<...> to disable)
-        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch"]
+        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "endmatchhere"]
+        # only one of these options can be set to true at the same time
+        bool_options_unique=["strictcmdmatch", "exactcmdmatch"]
         final_options={}
-        if merge_global_options: nonlocal global_options; final_options=copy.copy(global_options)
+        if merge_global_options: final_options=copy.copy(global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
         for each_option in options_data:
             option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
+            if allowed_options!=None and option_name not in allowed_options:
+                handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option_name))
             if option_name in value_options:
                 # must not begin with no
                 if option_name_preserve_no.startswith("no"):
@@ -138,6 +139,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 # set option
                 final_options[option_name]=value
             elif option_name in bool_options:
+                # process unique bool options
+                if option_name_preserve_no in bool_options_unique:
+                    # can't be specified at the same time
+                    for opt in options_data:
+                        if opt!=option_name and opt in bool_options_unique:
+                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same with \"{option2}\"", option1=option_name, option2=opt))
+                    # set all other options to false
+                    for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
                 final_options[option_name]=not option_name_preserve_no.startswith("no")
             else:
@@ -200,9 +209,12 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             elif disallow_cmdmatch_options:
                 handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
         return blockinput_data
-    def handle_entry(entry_name: str, end_phrase: str):
+    def handle_entry(entry_name: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
+        # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int, end_match_here: bool
         # expect locale, locale_block, end_entry
         nonlocal lineindex
+        substrules_entries=[] # (match_content, substitute_content)
+        substrules_endmatchhere=substrules_options['end_match_here'] if 'end_match_here' in substrules_options else False
         while lineindex<len(lines_data)-1:
             lineindex+=1
             if is_ignore_line(): continue
@@ -228,7 +240,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     content=re.sub(r"{{ESC}}", '\x1b', content)
                 if locale!="default":
                     target_entry+="__"+locale
-                add_entry(datapath, target_entry, content, lineindex+1)
+                if not is_substrules: add_entry(datapath, target_entry, content, lineindex+1)
+                else: substrules_entries.append((entry_name, content))
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 check_enough_args(phrases, 2)
                 locales=phrases[1:]
@@ -237,13 +250,20 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     suffix=""
                     if this_locale!="default":
                         suffix="__"+this_locale
-                    add_entry(datapath, entry_name+suffix, content, lineindex+1)
+                    if not is_substrules: add_entry(datapath, entry_name+suffix, content, lineindex+1)
+                    else: substrules_entries.append((entry_name, content))
             elif phrases[0]==end_phrase:
-                check_extra_args(phrases, 1, use_exact_count=True)
+                if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
+                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere"])
+                for option in got_options:
+                    if option=="endmatchhere" and got_options['endmatchhere']==True:
+                        substrules_endmatchhere=True
                 break
             else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
-            
+        if is_substrules:
+            for entry in substrules_entries: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere)
 
+    ## Main code
     while lineindex<len(lines_data)-1:
         lineindex+=1
         # ignore empty and comment lines
@@ -252,10 +272,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # process header and main sections here
         if first_phrase=="begin_header" or first_phrase==r"{header_section}":
             # avoid repeated block
-            if headerparsed==True: 
-                handle_error(fd.feof("repeated-header-err", "Repeated header block at line {num}", num=str(lineindex+1)))
-            end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
+            if "header" in parsed_sections: 
+                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="header"))
             # --Process header block--
+            end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
             while lineindex<len(lines_data)-1:
                 lineindex+=1
                 if is_ignore_line(): continue
@@ -293,18 +313,18 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    headerparsed=True
+                    parsed_sections.append("header")
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             # END --Process header block--
 
         elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
-            if mainparsed:
-                handle_error(fd.feof("repeated-main-err", "Repeated main block at line {num}", num=str(lineindex+1)))
+            if "entries" in parsed_sections:
+                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="entries"))
+            # --Process entries/main block--
             end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
             if first_phrase=="begin_main":
                 handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
-            # --Process entries/main block--
             domainapp=""
             subsection=""
             while lineindex<len(lines_data)-1:
@@ -345,14 +365,78 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_set_global_options(phrases[1:])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    mainparsed=True
+                    parsed_sections.append("entries")
                     # deprecation warning
                     if phrases[0]=="end_main":
                         handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process entries/main block--
-    if not headerparsed or not mainparsed:
+        elif first_phrase==r"{substrules_section}":
+            if "substrules" in parsed_sections:
+                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="substrules"))
+            ## --Process substrules block--
+            end_phrase=r"{/substrules_section}"
+            command_filters: Optional[list[str]]=None
+            command_filter_strictness=0
+            # initialize the database
+            if os.path.exists(path+"/"+_globalvar.db_filename):
+                db_interface.connection=db_interface.sqlite3.connect(path+"/"+_globalvar.db_filename)
+            else: db_interface.init_db(path+"/"+_globalvar.db_filename)
+            while lineindex<len(lines_data)-1:
+                lineindex+=1
+                if is_ignore_line(): continue
+                phrases=lines_data[lineindex].split()
+                if phrases[0]=="[filter_commands]":
+                    check_extra_args(phrases, 1, use_exact_count=True)
+                    content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_cmdmatch_options=False)
+                    # read commands
+                    command_strings=content.splitlines()
+
+                    strictness=0 #1: strictcmdmatch, 2: exactcmdmatch
+                    # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
+                    got_options=copy.copy(global_options)
+                    if len(lines_data[lineindex].split())>1:
+                        got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
+                    for this_option in got_options:
+                        if this_option=="strictcmdmatch" and got_options['strictcmdmatch']==True:
+                            strictness=1
+                        elif this_option=="exactcmdmatch" and got_options['exactcmdmatch']==True:
+                            strictness=2
+                    command_filters=[]
+                    for cmd in command_strings:
+                        command_filters.append(cmd)
+                    command_filter_strictness=strictness
+                elif phrases[0]=="filter_command":
+                    check_enough_args(phrases, 2) 
+                    content=splitarray_to_string(phrases[1:])
+                    strictness=0
+                    for this_option in global_options:
+                        if this_option=="strictcmdmatch" and global_options['strictcmdmatch']==True:
+                            strictness=1
+                        elif this_option=="exactcmdmatch" and global_options['exactcmdmatch']==True:
+                            strictness=2
+                    command_filters=[content]
+                    command_filter_strictness=strictness
+                elif phrases[0]=="unset_filter_command":
+                    check_extra_args(phrases, 1, use_exact_count=True)
+                    command_filters=None
+                elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
+                    check_enough_args(phrases, 2)
+                    options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
+                    handle_entry(splitarray_to_string(phrases[1:]), end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
+                elif phrases[0]=="set_options":
+                    check_enough_args(phrases, 2)
+                    handle_set_global_options(phrases[1:])
+                elif phrases[0]==end_phrase:
+                    check_extra_args(phrases, 1, use_exact_count=True)
+                    parsed_sections.append("substrules")
+                    break
+                else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
+            ## END --Process substrules block--
+        else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(lineindex+1)))
+
+    if not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections):
         handle_error(fd.reof("incomplete-block-err", "Missing or incomplete header or main block"))
     # Update current theme index
     theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
