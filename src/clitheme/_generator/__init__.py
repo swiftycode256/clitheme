@@ -437,7 +437,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(lineindex+1)))
 
     if not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections):
-        handle_error(fd.reof("incomplete-block-err", "Missing or incomplete header or main block"))
+        handle_error(fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # Update current theme index
     theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(custom_infofile_name+"\n")
