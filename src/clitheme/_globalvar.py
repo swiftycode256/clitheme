@@ -6,16 +6,18 @@ import os
 try: from . import _version
 except ImportError: import _version
 
-clitheme_root_data_path=""
-if os.name=="posix": # Linux/macOS only
-    try:
-        clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
-    except KeyError: pass
-
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
 Please make sure that the {var} environment variable is set correctly.
 Try restarting your terminal session to fix this issue."""
+
+clitheme_version=_version.__version__
+## Core data paths
+clitheme_root_data_path=""
+if os.name=="posix": # Linux/macOS only: Try to get XDG_DATA_HOME if possible
+    try:
+        clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
+    except KeyError: pass
 
 if clitheme_root_data_path=="": # prev did not succeed
     try: 
@@ -31,16 +33,16 @@ if clitheme_root_data_path=="": # prev did not succeed
             var=r"%USERPROFILE%"
         print(error_msg_str.format(var=var))
         exit(1)
-clitheme_temp_root="/tmp"
-if os.name=="nt":
-    clitheme_temp_root=os.environ['TEMP']
-clitheme_version=_version.__version__
+clitheme_temp_root="/tmp" if os.name!="nt" else os.environ['TEMP']
+## _generator file and folder names
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 generator_index_filename="current_theme_index"
+## _generator.db_interface file and table names
 db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db"
 
+## Sanity check function
 entry_banphrases=['/','\\']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
