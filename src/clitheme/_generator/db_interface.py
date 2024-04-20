@@ -39,10 +39,10 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command and command_match_strictness(if ==2)
         extra_condition=""
-        if command_match_strictness==2: extra_condition=" AND command_match_strictness=2"
-        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=?{extra_condition};", (match_pattern.strip(),cmd)).fetchall())>0:
+        if command_match_strictness==2: extra_condition="AND command_match_strictness=2"
+        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {extra_condition};", (match_pattern.strip(),cmd)).fetchall())>0:
             print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
-            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=?{extra_condition};", (match_pattern.strip(),cmd))
+            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {extra_condition};", (match_pattern.strip(),cmd))
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here) VALUES (?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd, is_regex, command_match_strictness, end_match_here))
     connection.commit()
@@ -66,14 +66,15 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
         def split_len(obj: tuple) -> int: return len(obj[0].split())
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
-        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2", (command.strip(),)).fetchall()+cmdlist
+        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),)).fetchall()+cmdlist
         # attempt to find matching command 
         for tp in cmdlist:
             cmd=tp[0] # extract value from tuple
             strictness=tp[1] # strictness setting
             success=True
-            if strictness==1: # must start with pattern
-                if not command.startswith(cmd): success=False
+            if strictness==1: # must start with pattern in terms of space-separated phrases
+                condition=len(cmd.split())<len(command.split()) and command.split()[:len(cmd.split())]==cmd.split()
+                if not condition==True: success=False
             elif strictness==2: # must equal to pattern
                 if not command==cmd: success=False
             else: # implying strictness==0; must contain all phrases in pattern
@@ -82,8 +83,9 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
                         success=False; break
             if success:
                 # if found matching command
-                if cmd not in final_cmdlist: final_cmdlist.append(cmd)
-                final_cmdlist_strictmatch.append(strictness==2)
+                if cmd not in final_cmdlist: 
+                    final_cmdlist.append(cmd)
+                    final_cmdlist_strictmatch.append(strictness==2)
                 break
     content_str=copy.copy(content)
     matches=[]
@@ -92,7 +94,8 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
             cmd=final_cmdlist[x]
             # prioritize exact match
             if final_cmdlist_strictmatch[x]==True: matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2 ORDER BY rowid;", (cmd,)).fetchall()
-            matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE effective_command=? ORDER BY rowid;", (cmd,)).fetchall()
+            # also append matches with other strictness
+            matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness!=2 ORDER BY rowid;", (cmd,)).fetchall()
     matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE typeof(effective_command)=typeof(null) ORDER BY rowid;").fetchall()
     for match_data in matches:
         try:
