@@ -4,6 +4,7 @@ Global variable definitions for clitheme
 
 import os
 import re
+from copy import copy
 try: from . import _version
 except ImportError: import _version
 
@@ -46,12 +47,13 @@ generator_index_filename="current_theme_index"
 db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db"
 
-
 ## Sanity check function
 entry_banphrases=['/','\\']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
+banphrase_error_message_orig=copy(banphrase_error_message)
 startswith_error_message="cannot start with '{char}'"
+startswith_error_message_orig=copy(startswith_error_message)
 # function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
@@ -60,7 +62,7 @@ sanity_check_error_message=""
 msg_retrieved=False
 try: from . import frontend, _get_resource
 except ImportError: import frontend, _get_resource
-def sanity_check(path: str) -> bool:
+def sanity_check(path: str, use_orig: bool=False) -> bool:
     def retrieve_entry():
         # retrieve the entry (only for the first time)
         global msg_retrieved
@@ -80,13 +82,13 @@ def sanity_check(path: str) -> bool:
     for p in path.split():
         for b in startswith_banphrases:
             if p.startswith(b):
-                retrieve_entry()
-                sanity_check_error_message=startswith_error_message.format(char=b)
+                if not use_orig: retrieve_entry()
+                sanity_check_error_message=startswith_error_message.format(char=b) if not use_orig else startswith_error_message_orig.format(char=b)
                 return False
         for b in entry_banphrases:
             if p.find(b)!=-1:
-                retrieve_entry()
-                sanity_check_error_message=banphrase_error_message.format(char=b)
+                if not use_orig: retrieve_entry()
+                sanity_check_error_message=banphrase_error_message.format(char=b) if not use_orig else banphrase_error_message_orig.format(char=b)
                 return False
     return True
 
@@ -118,7 +120,7 @@ def get_locale(debug_mode: bool=False):
     # $LC_ALL
     elif "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!="":
         target_str=os.environ["LC_ALL"].strip()
-        if not sanity_check(target_str)==False:
+        if not sanity_check(target_str, use_orig=True)==False:
             lang.append(target_str)
             lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
         else:
@@ -126,7 +128,7 @@ def get_locale(debug_mode: bool=False):
     # $LANG
     elif "LANG" in os.environ and os.environ["LANG"].strip()!="":
         target_str=os.environ["LANG"].strip()
-        if not sanity_check(target_str)==False:
+        if not sanity_check(target_str, use_orig=True)==False:
             lang.append(target_str)
             lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
         else:
