@@ -24,8 +24,8 @@ def init_db(file_path: str):
     connection.commit()
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, line_number_debug: int=-1):
-    global cursor
     cmdlist=[]
+    re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
     if effective_commands!=None and len(effective_commands)>0: 
