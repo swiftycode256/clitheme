@@ -80,10 +80,6 @@ substrules_file=r"""
 {/substrules_section}
 """
 
-# db_interface.init_db(":memory:")
-# # record substitute patterns
-# for dat in subst_patterns: db_interface.add_subst_entry(match_pattern=dat[0], substitute_pattern=dat[1], effective_commands=dat[3], is_regex=dat[2], command_match_strictness=dat[4], end_match_here=dat[5])
-
 _generator.generate_data_hierarchy(substrules_file)
 db_interface.connection=db_interface.sqlite3.connect(_generator.path+"/"+_globalvar.db_filename)
 
