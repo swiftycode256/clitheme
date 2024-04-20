@@ -26,9 +26,11 @@ substrules_file=r"""
     filter_command rm
         [substitute_string] rm: missing operand
             locale:default rm says: missing arguments and options (>﹏<)
+            locale:zh_CN rm 说：缺少参数和选项 (>﹏<)
         [/substitute_string]
         [substitute_string] type rm --help for more information
             locale:default For more information, use rm --help (｡ì _ í｡)
+            locale:zh_CN 关于更多信息，请使用rm --help (｡ì _ í｡)
         [/substitute_string]
     [filter_commands]
         rm -rf
@@ -38,6 +40,7 @@ substrules_file=r"""
     [/filter_commands]
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Permission denied
             locale:default \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
+            locale:zh_CN \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
         [/substitute_regex]
     filter_command ls
         # testing repeated entry detection
@@ -45,27 +48,33 @@ substrules_file=r"""
             locale:default wef
         [/substitute_regex]
         [substitute_regex] (?P<shell>.+): unrecognized option '(?P<opt>.+)'
-            locale:default \g<shell> says: option '\g<opt>' not known! (ToT)/~~~'
+            locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
+            locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/substitute_regex]
     unset_filter_command
     [substitute_regex] ^Warning:( )
         locale:default o(≧v≦)o Note:\g<1>
+        locale:zh_CN o(≧v≦)o 提示：\g<1>
     [/substitute_regex]
     [substitute_regex] ^Error:( )
         locale:default (ToT)/~~~ Error:\g<1>
+        locale:zh_CN (ToT)/~~~ 错误：
     [/substitute_regex]
-    [substitute_regex] invaild input( ){0,}$
+    [substitute_regex] invaild input( )*$
         locale:default input is invaild! ಥ_ಥ
+        locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
     set_options strictcmdmatch
     filter_command example_app install-stuff
         [substitute_string] Error: sample message
             locale:default Error: sample message! (>﹏<)
+            locale:zh_CN 错误：样例提示！(>﹏<)
         [/substitute_string] endmatchhere
     set_options exactcmdmatch
     filter_command rm -rf
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Permission denied
             locale:default \g<shell> says: Missing argument for operation! ಥ_ಥ
+            locale:zh_CN \g<shell> 说：缺少操作参数！ಥ_ಥ
         [/substitute_regex]
     set_options noexactcmdmatch nostrictcmdmatch
 {/substrules_section}
