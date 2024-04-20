@@ -17,34 +17,37 @@ def init_db(file_path: str):
                     substitute_pattern TEXT NOT NULL, \
                     is_regex INTEGER DEFAULT true NOT NULL, \
                     effective_command TEXT, \
+                    effective_locale TEXT, \
                     command_match_strictness INTEGER DEFAULT 0 NOT NULL, \
                     end_match_here INTEGER DEFAULT 0 NOT NULL \
                     );")
     connection.commit()
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, line_number_debug: int=-1):
+def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, line_number_debug: int=-1):
     global cursor
     cmdlist=[]
+    # handle condition where no effective_locale is specified ("default")
+    locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
             cmdlist.append(re.sub(r" {2,}", " ", cmd).strip())
     else:
         # remove any existing values with the same match_pattern
-        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null);", (match_pattern.strip(),)).fetchall())>0:
+        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition};", (match_pattern.strip(), effective_locale)).fetchall())>0:
             print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
-            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null);", (match_pattern.strip(),))
+            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition};", (match_pattern.strip(), effective_locale))
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, is_regex, command_match_strictness, end_match_here) VALUES (?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), is_regex, command_match_strictness, end_match_here))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), is_regex, command_match_strictness, end_match_here, effective_locale))
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command and command_match_strictness(if ==2)
-        extra_condition=""
-        if command_match_strictness==2: extra_condition="AND command_match_strictness=2"
-        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {extra_condition};", (match_pattern.strip(),cmd)).fetchall())>0:
+        strictness_condition=""
+        if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
+        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(),cmd, effective_locale)).fetchall())>0:
             print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
-            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {extra_condition};", (match_pattern.strip(),cmd))
+            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(),cmd, effective_locale))
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here) VALUES (?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd, is_regex, command_match_strictness, end_match_here))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd, is_regex, command_match_strictness, end_match_here, effective_locale))
     connection.commit()
 
 def match_content(content: bytes, command: Optional[str]=None) -> bytes:
@@ -89,14 +92,27 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
                 break
     content_str=copy.copy(content)
     matches=[]
+    def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
+        fetch_items="match_pattern, substitute_pattern, is_regex, end_match_here"
+        # get locales
+        locales=_globalvar.get_locale()
+        nonlocal matches
+        # try the ones with locale defined
+        for this_locale in locales:
+            fetch_data=connection.execute(f"SELECT {fetch_items} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND effective_locale=? ORDER BY rowid;", filter_data+(this_locale,)).fetchall()
+            if len(fetch_data)>0:
+                matches+=fetch_data
+                return
+        # else, fetches the ones without locale defined
+        matches+=connection.execute(f"SELECT {fetch_items} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND typeof(effective_locale)=typeof(null) ORDER BY rowid;", filter_data).fetchall()
     if len(final_cmdlist)>0:
         for x in range(len(final_cmdlist)):
             cmd=final_cmdlist[x]
             # prioritize exact match
-            if final_cmdlist_strictmatch[x]==True: matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2 ORDER BY rowid;", (cmd,)).fetchall()
+            if final_cmdlist_strictmatch[x]==True: fetch_matches_by_locale("effective_command=? AND command_match_strictness=2", (cmd,))
             # also append matches with other strictness
-            matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness!=2 ORDER BY rowid;", (cmd,)).fetchall()
-    matches+=connection.execute(f"SELECT match_pattern, substitute_pattern, is_regex, end_match_here FROM {_globalvar.db_data_tablename} WHERE typeof(effective_command)=typeof(null) ORDER BY rowid;").fetchall()
+            fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
+    fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
     for match_data in matches:
         try:
             if match_data[2]==True: # is regex 

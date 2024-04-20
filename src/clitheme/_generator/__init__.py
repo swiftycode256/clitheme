@@ -213,7 +213,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int, end_match_here: bool
         # expect locale, locale_block, end_entry
         nonlocal lineindex
-        substrules_entries=[] # (match_content, substitute_content)
+        substrules_entries=[] # (match_content, substitute_content, locale)
         substrules_entries_linenumber=[]
         substrules_endmatchhere=substrules_options['end_match_here'] if 'end_match_here' in substrules_options else False
         while lineindex<len(lines_data)-1:
@@ -242,7 +242,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 if locale!="default":
                     target_entry+="__"+locale
                 if not is_substrules: add_entry(datapath, target_entry, content, lineindex+1)
-                else: substrules_entries.append((entry_name, content)); substrules_entries_linenumber.append(lineindex+1)
+                else: substrules_entries.append((entry_name, content, None if locale=="default" else locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 check_enough_args(phrases, 2)
                 locales=phrases[1:]
@@ -252,7 +252,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     if this_locale!="default":
                         suffix="__"+this_locale
                     if not is_substrules: add_entry(datapath, entry_name+suffix, content, lineindex+1)
-                    else: substrules_entries.append((entry_name, content)); substrules_entries_linenumber.append(lineindex+1)
+                    else: substrules_entries.append((entry_name, content, None if locale=="default" else locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
                 got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere"])
@@ -264,7 +264,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if is_substrules:
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
-                db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, line_number_debug=substrules_entries_linenumber[x])
+                db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, line_number_debug=substrules_entries_linenumber[x])
 
     ## Main code
     while lineindex<len(lines_data)-1:
