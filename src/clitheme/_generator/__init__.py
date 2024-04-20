@@ -144,7 +144,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     # can't be specified at the same time
                     for opt in options_data:
                         if opt!=option_name and opt in bool_options_unique:
-                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same with \"{option2}\"", option1=option_name, option2=opt))
+                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\"", option1=option_name, option2=opt))
                     # set all other options to false
                     for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
@@ -193,7 +193,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # parse leadtabindents leadspaces, and substesc options
         got_options=copy.copy(global_options)
         if len(lines_data[lineindex].split())>1:
-            got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
+            got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=(["leadtabindents", "leadspaces"] if preserve_indents else []) if disallow_cmdmatch_options else None)
         for option in got_options.keys():
             if option=="leadtabindents": 
                 if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
@@ -408,7 +408,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                             strictness=2
                     command_filters=[]
                     for cmd in command_strings:
-                        command_filters.append(cmd)
+                        command_filters.append(cmd.strip())
                     command_filter_strictness=strictness
                 elif phrases[0]=="filter_command":
                     check_enough_args(phrases, 2) 
