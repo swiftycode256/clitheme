@@ -106,12 +106,12 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     # defined sub-processing functions
     def parse_options(options_data: list[str], merge_global_options: bool, allowed_options: Optional[list]=None) -> dict:
         nonlocal global_options
-        # value options: leadtabindents, leadspaces
+        # value options: options requiring an integer value
         value_options=["leadtabindents", "leadspaces"]
-        # on/off options: substesc, strictcmdmatch, exactcmdmatch (use no<...> to disable)
-        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "endmatchhere"]
+        # on/off options (use no<...> to disable)
+        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere"]
         # only one of these options can be set to true at the same time
-        bool_options_unique=["strictcmdmatch", "exactcmdmatch"]
+        bool_options_unique=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"]
         final_options={}
         if merge_global_options: final_options=copy.copy(global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
@@ -140,7 +140,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     # can't be specified at the same time
                     for opt in options_data:
                         if opt!=option_name and opt in bool_options_unique:
-                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\"", option1=option_name, option2=opt))
+                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
                     # set all other options to false
                     for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
@@ -407,6 +407,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                             strictness=1
                         elif this_option=="exactcmdmatch" and got_options['exactcmdmatch']==True:
                             strictness=2
+                        elif this_option=="smartcmdmatch" and got_options['smartcmdmatch']==True:
+                            strictness=-1
                     command_filters=[]
                     for cmd in command_strings:
                         command_filters.append(cmd.strip())
@@ -420,6 +422,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                             strictness=1
                         elif this_option=="exactcmdmatch" and global_options['exactcmdmatch']==True:
                             strictness=2
+                        elif this_option=="smartcmdmatch" and global_options['smartcmdmatch']==True:
+                            strictness=-1
                     command_filters=[content]
                     command_filter_strictness=strictness
                 elif phrases[0]=="unset_filter_command":

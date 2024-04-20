@@ -24,7 +24,7 @@ def init_db(file_path: str):
     connection.commit()
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, line_number_debug: int=-1):
-    cmdlist=[]
+    cmdlist: list[str]=[]
     re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
@@ -43,11 +43,11 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         # remove any existing values with the same match_pattern and effective_command and command_match_strictness(if ==2)
         strictness_condition=""
         if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
-        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(),cmd, effective_locale)).fetchall())>0:
+        if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(), cmd.strip(), effective_locale)).fetchall())>0:
             print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
-            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(),cmd, effective_locale))
+            connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(), cmd.strip(), effective_locale))
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd, is_regex, command_match_strictness, end_match_here, effective_locale))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd.strip(), is_regex, command_match_strictness, end_match_here, effective_locale))
     connection.commit()
 
 def match_content(content: bytes, command: Optional[str]=None) -> bytes:
@@ -70,26 +70,40 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
         cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),)).fetchall()+cmdlist
+        def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
+            match_cmd_phrases=[]
+            for p in range(len(match_cmd.split())):
+                ph=match_cmd.split()[p]
+                results=re.search(r"^-([a-zA-z0-9]+)",ph)
+                if p>0 and results!=None:
+                    for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
+                else: match_cmd_phrases.append(ph)
+            return match_cmd_phrases
         # attempt to find matching command 
         for tp in cmdlist:
-            cmd=tp[0] # extract value from tuple
-            strictness=tp[1] # strictness setting
+            match_cmd: str=tp[0].strip() # extract value from tuple
+            strictness: int=tp[1] # strictness setting
             success=True
             if strictness==1: # must start with pattern in terms of space-separated phrases
-                condition=len(cmd.split())<len(command.split()) and command.split()[:len(cmd.split())]==cmd.split()
+                condition=len(match_cmd.split())<len(command.split()) and command.split()[:len(match_cmd.split())]==match_cmd.split()
                 if not condition==True: success=False
             elif strictness==2: # must equal to pattern
-                if not command==cmd: success=False
+                if not re.sub(r" {2,}", " ", command).strip()==match_cmd: success=False
+            elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
+                # process both phrases
+                match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
+                command_phrases=process_smartcmdmatch_phrases(command)
+                for phrase in match_cmd_phrases:
+                    if phrase not in command_phrases: success=False
             else: # implying strictness==0; must contain all phrases in pattern
-                for phrase in cmd.split():
-                    if phrase not in command.split():
-                        success=False; break
+                for phrase in match_cmd.split():
+                    if phrase not in command.split(): success=False
             if success:
                 # if found matching command
-                if cmd not in final_cmdlist: 
-                    final_cmdlist.append(cmd)
+                if match_cmd not in final_cmdlist: 
+                    final_cmdlist.append(match_cmd)
                     final_cmdlist_strictmatch.append(strictness==2)
-                break
+
     content_str=copy.copy(content)
     matches=[]
     def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
