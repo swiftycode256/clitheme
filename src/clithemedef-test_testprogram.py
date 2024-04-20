@@ -57,7 +57,7 @@ for line in expected_data_frontend.splitlines():
         entry_path=None
         if len(phrases)>2:
             descriptor=frontend.FetchDescriptor(domain_name=phrases[0],app_name=phrases[1])
-            entry_path=_generator.splitarray_to_string(phrases[2:]) # just being lazy here
+            entry_path=_globalvar.splitarray_to_string(phrases[2:]) # just being lazy here
         else:
             descriptor=frontend.FetchDescriptor()
             entry_path=current_path_frontend

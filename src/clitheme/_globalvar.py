@@ -93,6 +93,11 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
     return True
 
 ## Convenience functions
+def splitarray_to_string(split_content):
+    final=""
+    for phrase in split_content:
+        final+=phrase+" "
+    return final.strip()
 def get_locale(debug_mode: bool=False):
     lang=[]
     # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)

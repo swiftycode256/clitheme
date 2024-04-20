@@ -47,11 +47,6 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
             num=str(line_number_debug), name=entry_name))
     f=open(target_path,'w', encoding="utf-8")
     f.write(entry_content+"\n")
-def splitarray_to_string(split_content):
-    final=""
-    for phrase in split_content:
-        final+=phrase+" "
-    return final.strip()
 def write_infofile(path,filename,content,line_number_debug, header_name_debug):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -230,10 +225,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=str(lineindex+1)))
                     else:
                         locale=results.groupdict()['locale']
-                    content=splitarray_to_string(phrases[1:])
+                    content=_globalvar.splitarray_to_string(phrases[1:])
                 else:
                     check_enough_args(phrases, 3)
-                    content=splitarray_to_string(phrases[2:])
+                    content=_globalvar.splitarray_to_string(phrases[2:])
                     locale=phrases[1]
                 target_entry=copy.copy(entry_name)
                 # substesc
@@ -286,7 +281,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 # Expect name, description, description_block, version, locales, locales_block, supported_apps, supported_apps_block
                 if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
                     check_enough_args(phrases, 2)
-                    content=splitarray_to_string(phrases[1:])
+                    content=_globalvar.splitarray_to_string(phrases[1:])
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         "clithemeinfo_"+phrases[0],\
@@ -344,9 +339,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     subsection="" # clear subsection
                 elif phrases[0]=="in_subsection":
                     check_enough_args(phrases, 2)
-                    if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
+                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(phrases[1:]))==False:
                         handle_error(fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    subsection=splitarray_to_string(phrases[1:])
+                    subsection=_globalvar.splitarray_to_string(phrases[1:])
                 elif phrases[0]=="unset_domainapp":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     domainapp=""; subsection=""
@@ -356,9 +351,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="entry" or phrases[0]=="[entry]":
                     check_enough_args(phrases, 2)
                     # Prevent leading . & prevent /,\ in entry name
-                    if _globalvar.sanity_check(splitarray_to_string(phrases[1:]))==False:
+                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(phrases[1:]))==False:
                         handle_error(fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    entry_name=splitarray_to_string(phrases[1:])
+                    entry_name=_globalvar.splitarray_to_string(phrases[1:])
                     if subsection!="": entry_name=subsection+" "+entry_name
                     if domainapp!="": entry_name=domainapp+" "+entry_name
                     recursive_mkdir(datapath, entry_name, lineindex+1)
@@ -412,7 +407,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     command_filter_strictness=strictness
                 elif phrases[0]=="filter_command":
                     check_enough_args(phrases, 2) 
-                    content=splitarray_to_string(phrases[1:])
+                    content=_globalvar.splitarray_to_string(phrases[1:])
                     strictness=0
                     for this_option in global_options:
                         if this_option=="strictcmdmatch" and global_options['strictcmdmatch']==True:
@@ -427,7 +422,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
                     check_enough_args(phrases, 2)
                     options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
-                    handle_entry(splitarray_to_string(phrases[1:]), end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
+                    handle_entry(_globalvar.splitarray_to_string(phrases[1:]), end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
                     handle_set_global_options(phrases[1:])
