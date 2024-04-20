@@ -159,58 +159,18 @@ class FetchDescriptor():
         if _globalvar.sanity_check(entry_path)==False:
             if self.debug_mode: print("[Debug] Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
             return fallback_string
-        lang=""
+        lang=[]
         # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
         if not self.disable_lang:
             if self.lang!="":
                 if self.debug_mode: print("[Debug] Locale: Using defined self.lang")
                 if not _globalvar.sanity_check(self.lang)==False:
-                    lang=self.lang
+                    lang=[self.lang]
                 else:
                     if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
             else:
                 if self.debug_mode: print("[Debug] Locale: Using environment variables")
-                # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
-                skip_LANGUAGE=False
-                LANG_value=""
-                if "LANG" not in os.environ or os.environ["LANG"]=='': LANG_value="C"
-                else: LANG_value=os.environ['LANG']
-                LC_ALL_value=""
-                if "LC_ALL" not in os.environ or os.environ["LC_ALL"]=='': LC_ALL_value="C"
-                else: LC_ALL_value=os.environ["LC_ALL"]
-                if (LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C.")): skip_LANGUAGE=True
-                # $LANGUAGE (list of languages separated by colons)
-                if "LANGUAGE" in os.environ and not skip_LANGUAGE:
-                    target_str=os.environ['LANGUAGE']
-                    for each_language in target_str.strip().split(":"):
-                        # avoid exploit of accessing top-level folders
-                        if _globalvar.sanity_check(each_language)==False: continue
-                        # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
-                        if each_language!="en" and each_language!="en_US":
-                            # Treat C as en_US also
-                            if re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)=="C":
-                                lang+=re.sub(r".+[\.]", "en_US.", each_language)+" "
-                                lang+="en_US"+" "
-                            lang+=each_language+" "
-                            # no encoding
-                            lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)+" "
-                    lang=lang.strip()
-                # $LC_ALL
-                elif "LC_ALL" in os.environ:
-                    target_str=os.environ["LC_ALL"].strip()
-                    if not _globalvar.sanity_check(target_str)==False:
-                        lang=target_str+" "
-                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
-                    else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
-                # $LANG
-                elif "LANG" in os.environ:
-                    target_str=os.environ["LANG"].strip()
-                    if not _globalvar.sanity_check(target_str)==False:
-                        lang=target_str+" "
-                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
-                    else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
+                lang=_globalvar.get_locale(debug_mode=self.debug_mode)
 
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
@@ -222,11 +182,11 @@ class FetchDescriptor():
             if path2!=None: path2+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path with no lang
         possible_paths=[]
-        for l in lang.split():
+        for l in lang:
             possible_paths.append(path+"__"+l)
         possible_paths.append(path)
         if path2!=None:
-            for l in lang.split():
+            for l in lang:
                 possible_paths.append(path2+"__"+l)
             possible_paths.append(path2)
         for p in possible_paths:

@@ -3,6 +3,7 @@ Global variable definitions for clitheme
 """
 
 import os
+import re
 try: from . import _version
 except ImportError: import _version
 
@@ -12,6 +13,7 @@ Please make sure that the {var} environment variable is set correctly.
 Try restarting your terminal session to fix this issue."""
 
 clitheme_version=_version.__version__
+
 ## Core data paths
 clitheme_root_data_path=""
 if os.name=="posix": # Linux/macOS only: Try to get XDG_DATA_HOME if possible
@@ -34,13 +36,16 @@ if clitheme_root_data_path=="": # prev did not succeed
         print(error_msg_str.format(var=var))
         exit(1)
 clitheme_temp_root="/tmp" if os.name!="nt" else os.environ['TEMP']
+
 ## _generator file and folder names
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
 generator_index_filename="current_theme_index"
+
 ## _generator.db_interface file and table names
 db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db"
+
 
 ## Sanity check function
 entry_banphrases=['/','\\']
@@ -51,7 +56,6 @@ startswith_error_message="cannot start with '{char}'"
 # - cannot start with .
 # - cannot contain banphrases
 sanity_check_error_message=""
-
 # retrieve the entry only once to avoid dead loop in frontend.FetchDescriptor callbacks
 msg_retrieved=False
 try: from . import frontend, _get_resource
@@ -85,3 +89,46 @@ def sanity_check(path: str) -> bool:
                 sanity_check_error_message=banphrase_error_message.format(char=b)
                 return False
     return True
+
+## Convenience functions
+def get_locale(debug_mode: bool=False):
+    lang=[]
+    # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
+    skip_LANGUAGE=False
+    LANG_value=os.environ["LANG"] if "LANG" in os.environ and os.environ["LANG"].strip()!='' else "C"
+    LC_ALL_value=os.environ["LC_ALL"] if "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!='' else "C"
+    if (LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C.")): skip_LANGUAGE=True
+    # $LANGUAGE (list of languages separated by colons)
+    if "LANGUAGE" in os.environ and not skip_LANGUAGE:
+        target_str=os.environ['LANGUAGE']
+        for language in target_str.split(":"):
+            each_language=language.strip()
+            if each_language=="": continue
+            # avoid exploit of accessing top-level folders
+            if sanity_check(each_language)==False: continue
+            # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
+            if each_language!="en" and each_language!="en_US":
+                # Treat C as en_US also
+                if re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)=="C":
+                    lang.append(re.sub(r".+[\.]", "en_US.", each_language))
+                    lang.append("en_US")
+                lang.append(each_language)
+                # no encoding
+                lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language))
+    # $LC_ALL
+    elif "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!="":
+        target_str=os.environ["LC_ALL"].strip()
+        if not sanity_check(target_str)==False:
+            lang.append(target_str)
+            lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
+        else:
+            if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
+    # $LANG
+    elif "LANG" in os.environ and os.environ["LANG"].strip()!="":
+        target_str=os.environ["LANG"].strip()
+        if not sanity_check(target_str)==False:
+            lang.append(target_str)
+            lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
+        else:
+            if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
+    return lang
