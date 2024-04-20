@@ -264,5 +264,6 @@ Run `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated
     - https://gitee.com/swiftycode/clitheme-wiki-repo
     - https://github.com/swiftycode256/clitheme-wiki-repo
 - This repository is also synced onto GitHub (using Gitee automatic sync feature): https://github.com/swiftycode256/clitheme
+- The latest developments, future plans, and in-development features of this project are detailed in the Issues section of the Gitee repository: https://gitee.com/swiftycode/clitheme/issues
 - You are welcome to propose suggestions and changes using Issues and Pull Requests
     - Use the Wiki repositories listed above for Wiki-related suggestions
