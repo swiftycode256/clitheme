@@ -21,11 +21,11 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 path=""
 silence_warn=False
 
-def handle_error(message):
+def handle_error(message: str):
     raise SyntaxError(fd.feof("error-str", "Syntax error: {msg}", msg=message))
-def handle_warning(message):
+def handle_warning(message: str):
     if not silence_warn: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
-def recursive_mkdir(path, entry_name, line_number_debug): # recursively generate directories (excluding file itself)
+def recursive_mkdir(path: str, entry_name: str, line_number_debug: int): # recursively generate directories (excluding file itself)
     current_path=path
     current_entry="" # for error output
     for x in entry_name.split()[:-1]:
@@ -36,7 +36,7 @@ def recursive_mkdir(path, entry_name, line_number_debug): # recursively generate
                 num=str(line_number_debug), name=current_entry))
         elif os.path.isdir(str(current_path))==False: # directory does not exist
            os.mkdir(current_path) 
-def add_entry(path, entry_name, entry_content, line_number_debug): # add entry to where it belongs (assuming recursive_mkdir already completed)
+def add_entry(path: str, entry_name: str, entry_content: str, line_number_debug: int): # add entry to where it belongs (assuming recursive_mkdir already completed)
     target_path=path
     for x in entry_name.split():
         target_path+="/"+x
@@ -48,7 +48,7 @@ def add_entry(path, entry_name, entry_content, line_number_debug): # add entry t
             num=str(line_number_debug), name=entry_name))
     f=open(target_path,'w', encoding="utf-8")
     f.write(entry_content+"\n")
-def write_infofile(path,filename,content,line_number_debug, header_name_debug):
+def write_infofile(path: str, filename: str, content: str, line_number_debug: int, header_name_debug: str):
     if not os.path.isdir(path):
         os.makedirs(path)
     target_path=path+"/"+filename
