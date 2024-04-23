@@ -18,4 +18,5 @@ buildtmp
 buildtmp/*
 srctmp
 srctmp/*
+*.pkg.tar.zst
 .DS_Store
