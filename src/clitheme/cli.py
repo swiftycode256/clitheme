@@ -152,44 +152,44 @@ def get_current_theme_info():
         if not os.path.isdir(target_path): continue # skip current_theme_index file
         # name
         name="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_name"):
-            name=open(target_path+"/"+"clithemeinfo_name", 'r', encoding="utf-8").read().strip()
+        if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
+            name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
         print("[{}]: {}".format(theme_pathname, name))
         # version
         version="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_version"):
-            version=open(target_path+"/"+"clithemeinfo_version", 'r', encoding="utf-8").read().strip()
+        if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="version")):
+            version=open(target_path+"/"+_globalvar.generator_info_filename.format(info="version"), 'r', encoding="utf-8").read().strip()
             print(f.feof("version-str", "Version: {ver}", ver=version))
         # description
         description="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_description"):
-            description=open(target_path+"/"+"clithemeinfo_description", 'r', encoding="utf-8").read()
+        if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="description")):
+            description=open(target_path+"/"+_globalvar.generator_info_filename.format(info="description"), 'r', encoding="utf-8").read()
             print(f.reof("description-str", "Description:"))
             print(description)
         # locales
         locales="(Unknown)"
         # version 2: items are separated by newlines instead of spaces
-        if os.path.isfile(target_path+"/"+"clithemeinfo_locales_v2"):
-            locales=open(target_path+"/"+"clithemeinfo_locales_v2", 'r', encoding="utf-8").read().strip()
+        if os.path.isfile(target_path+"/"+_globalvar.generator_info_v2filename.format(info="locales")):
+            locales=open(target_path+"/"+_globalvar.generator_info_v2filename.format(info="locales"), 'r', encoding="utf-8").read().strip()
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.splitlines():
                 if locale.strip()!="":
                     print(f.feof("list-item", "• {content}", content=locale.strip()))
-        elif os.path.isfile(target_path+"/"+"clithemeinfo_locales"):
-            locales=open(target_path+"/"+"clithemeinfo_locales", 'r', encoding="utf-8").read().strip()
+        elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="locales")):
+            locales=open(target_path+"/"+_globalvar.generator_info_filename.format(info="locales"), 'r', encoding="utf-8").read().strip()
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.split():
                 print(f.feof("list-item", "• {content}", content=locale.strip()))
         # supported_apps
         supported_apps="(Unknown)"
-        if os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps_v2"):
-            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps_v2", 'r', encoding="utf-8").read().strip()
+        if os.path.isfile(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps")):
+            supported_apps=open(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps"), 'r', encoding="utf-8").read().strip()
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.splitlines():
                 if app.strip()!="":
                     print(f.feof("list-item", "• {content}", content=app.strip()))
-        elif os.path.isfile(target_path+"/"+"clithemeinfo_supported_apps"):
-            supported_apps=open(target_path+"/"+"clithemeinfo_supported_apps", 'r', encoding="utf-8").read().strip()
+        elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps")):
+            supported_apps=open(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps"), 'r', encoding="utf-8").read().strip()
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
                 print(f.feof("list-item", "• {content}", content=app.strip()))

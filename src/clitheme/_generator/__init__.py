@@ -290,14 +290,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     content=_globalvar.splitarray_to_string(phrases[1:])
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
-                        "clithemeinfo_"+phrases[0],\
+                        _globalvar.generator_info_filename.format(info=phrases[0]),\
                         content,lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
                 elif phrases[0]=="locales" or phrases[0]=="supported_apps":
                     check_enough_args(phrases, 2)
                     content=phrases[1:]
                     write_infofile_newlines( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
-                        "clithemeinfo_"+phrases[0]+"_v2",\
+                        _globalvar.generator_info_v2filename.format(info=phrases[0]),\
                         content,lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
                 elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block" or phrases[0]=="[locales]" or phrases[0]=="[supported_apps]" or phrases[0]=="[description]":
                     check_extra_args(phrases, 1, use_exact_count=True)
@@ -307,10 +307,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
                     if phrases[0]=="description_block" or phrases[0]=="[description]":
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
-                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']','')}"
+                        filename=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     else:
                         content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase)
-                        filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']','')}_v2"
+                        filename=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         filename,\
