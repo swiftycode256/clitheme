@@ -305,7 +305,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     content=""; filename=""
                     endphrase="end_block"
                     if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
-                    if phrases[0]=="description_block":
+                    if phrases[0]=="description_block" or phrases[0]=="[description]":
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                         filename=f"clithemeinfo_{re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']','')}"
                     else:
