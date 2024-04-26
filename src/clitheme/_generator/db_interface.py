@@ -7,6 +7,10 @@ try: from .. import _globalvar
 except ImportError: import _globalvar
 
 connection=sqlite3.connect(":memory:") # placeholder
+debug_mode=False
+
+def handle_warning(message: str):
+    if debug_mode: print(message)
 def init_db(file_path: str):
     global connection
     connection=sqlite3.connect(file_path)
@@ -35,7 +39,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
     else:
         # remove any existing values with the same match_pattern
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition};", (match_pattern.strip(), effective_locale)).fetchall())>0:
-            print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
+            handle_warning(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition};", (match_pattern.strip(), effective_locale))
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), is_regex, command_match_strictness, end_match_here, effective_locale))
@@ -44,7 +48,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         strictness_condition=""
         if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(), cmd.strip(), effective_locale)).fetchall())>0:
-            print(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
+            handle_warning(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE match_pattern=? AND effective_command=? {strictness_condition} {locale_condition};", (match_pattern.strip(), cmd.strip(), effective_locale))
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} (match_pattern, substitute_pattern, effective_command, is_regex, command_match_strictness, end_match_here, effective_locale) VALUES (?,?,?,?,?,?,?);", (match_pattern.strip(), substitute_pattern.strip(), cmd.strip(), is_regex, command_match_strictness, end_match_here, effective_locale))
@@ -134,8 +138,7 @@ def match_content(content: bytes, command: Optional[str]=None) -> bytes:
             else: # is string
                 content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
         except:
-            print("Error occurred while matching string: ", end="")
-            print(sys.exc_info()[1])
+            handle_warning("Error occurred while matching string: "+str(sys.exc_info()[1]))
         if match_data[3]==True: # endmatchoption is set
             break
     return content_str

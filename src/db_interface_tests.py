@@ -106,6 +106,7 @@ substrules_file=r"""
 {/substrules_section}
 """
 
+db_interface.debug_mode=True
 _generator.generate_data_hierarchy(substrules_file)
 db_interface.connection=db_interface.sqlite3.connect(_generator.path+"/"+_globalvar.db_filename)
 

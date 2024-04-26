@@ -387,6 +387,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             if os.path.exists(path+"/"+_globalvar.db_filename):
                 db_interface.connection=db_interface.sqlite3.connect(path+"/"+_globalvar.db_filename)
             else: db_interface.init_db(path+"/"+_globalvar.db_filename)
+            db_interface.debug_mode=not silence_warn
             while lineindex<len(lines_data)-1:
                 lineindex+=1
                 if is_ignore_line(): continue
