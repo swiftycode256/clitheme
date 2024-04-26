@@ -252,7 +252,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     if this_locale!="default":
                         suffix="__"+this_locale
                     if not is_substrules: add_entry(datapath, entry_name+suffix, content, lineindex+1)
-                    else: substrules_entries.append((entry_name, content, None if locale=="default" else locale)); substrules_entries_linenumber.append(lineindex+1)
+                    else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
                 got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere"])
