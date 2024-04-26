@@ -47,9 +47,8 @@ def handler_main(command: list[str]):
             # Process outputs
             for line_data in output_lines:
                 line=line_data[0]
-                # TODO: handle is_stderr
                 # subst operation
-                subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command))
+                subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line+b"\n")
         except KeyboardInterrupt:
             process.send_signal(2) #SIGINT

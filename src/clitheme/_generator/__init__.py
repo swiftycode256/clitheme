@@ -109,9 +109,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # value options: options requiring an integer value
         value_options=["leadtabindents", "leadspaces"]
         # on/off options (use no<...> to disable)
-        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere"]
-        # only one of these options can be set to true at the same time
-        bool_options_unique=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"]
+        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere", "stdout_only", "stderr_only"]
+        # only one of these options can be set to true at the same time (specific to groups)
+        bool_options_unique_groups=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"], ["stdout_only", "stderr_only"]]
         final_options={}
         if merge_global_options: final_options=copy.copy(global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
@@ -136,13 +136,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 final_options[option_name]=value
             elif option_name in bool_options:
                 # process unique bool options
-                if option_name_preserve_no in bool_options_unique:
-                    # can't be specified at the same time
-                    for opt in options_data:
-                        if opt!=option_name and opt in bool_options_unique:
-                            handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
-                    # set all other options to false
-                    for opt in bool_options_unique: final_options[opt]=False
+                for bool_options_unique in bool_options_unique_groups:
+                    if option_name_preserve_no in bool_options_unique:
+                        # can't be specified at the same time
+                        for opt in options_data:
+                            if opt!=option_name and opt in bool_options_unique:
+                                handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
+                        # set all other options to false
+                        for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
                 final_options[option_name]=not option_name_preserve_no.startswith("no")
             else:
@@ -206,12 +207,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
         return blockinput_data
     def handle_entry(entry_name: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
-        # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int, end_match_here: bool
+        # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
         # expect locale, locale_block, end_entry
         nonlocal lineindex
         substrules_entries=[] # (match_content, substitute_content, locale)
         substrules_entries_linenumber=[]
         substrules_endmatchhere=substrules_options['end_match_here'] if 'end_match_here' in substrules_options else False
+        substrules_stdout_stderr_option=0
         if is_substrules:
             # check if patterns are valid
             try: re.compile(entry_name)
@@ -255,16 +257,20 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
-                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere"])
+                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "stdout_only", "stderr_only"])
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
                         substrules_endmatchhere=True
+                    elif option=="stdout_only" and got_options['stdout_only']==True:
+                        substrules_stdout_stderr_option=1
+                    elif option=="stderr_only" and got_options['stderr_only']==True:
+                        substrules_stdout_stderr_option=2
                 break
             else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
         if is_substrules:
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
-                try: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, line_number_debug=substrules_entries_linenumber[x])
+                try: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x])
                 except re.error: handle_error(fd.feof("invaild-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(lineindex+1), error_msg=sys.exc_info()[1]))
 
     ## Main code
@@ -402,7 +408,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
                     got_options=copy.copy(global_options)
                     if len(lines_data[lineindex].split())>1:
-                        got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
+                        got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"])
                     for this_option in got_options:
                         if this_option=="strictcmdmatch" and got_options['strictcmdmatch']==True:
                             strictness=1
