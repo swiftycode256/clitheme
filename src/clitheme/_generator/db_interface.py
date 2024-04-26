@@ -1,4 +1,5 @@
 import sys
+import os
 import sqlite3
 import re
 import copy
@@ -26,6 +27,11 @@ def init_db(file_path: str):
                     end_match_here INTEGER DEFAULT 0 NOT NULL \
                     );")
     connection.commit()
+def connect_db():
+    if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
+        raise FileNotFoundError("No theme set or theme does not contain substrules")
+    global connection
+    connection=sqlite3.connect(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}")
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, line_number_debug: int=-1):
     cmdlist: list[str]=[]
