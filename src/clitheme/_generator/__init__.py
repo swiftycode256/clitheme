@@ -432,7 +432,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
                     check_enough_args(phrases, 2)
                     options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
-                    handle_entry(_globalvar.splitarray_to_string(phrases[1:]), end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
+                    match_pattern=_globalvar.splitarray_to_string(phrases[1:])
+                    if "substesc" in global_options.keys() and global_options['substesc']==True:
+                        match_pattern=match_pattern.replace("{{ESC}}", "\x1b")
+                    handle_entry(match_pattern, end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
                     handle_set_global_options(phrases[1:])
