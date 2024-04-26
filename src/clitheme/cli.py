@@ -165,7 +165,7 @@ def get_current_theme_info():
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="description")):
             description=open(target_path+"/"+_globalvar.generator_info_filename.format(info="description"), 'r', encoding="utf-8").read()
             print(f.reof("description-str", "Description:"))
-            print(description)
+            print(re.sub(r"\n\Z", "", description)) # remove the extra newline added by _generator
         # locales
         locales="(Unknown)"
         # version 2: items are separated by newlines instead of spaces
