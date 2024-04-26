@@ -136,14 +136,15 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 final_options[option_name]=value
             elif option_name in bool_options:
                 # process unique bool options
-                for bool_options_unique in bool_options_unique_groups:
-                    if option_name_preserve_no in bool_options_unique:
-                        # can't be specified at the same time
-                        for opt in options_data:
-                            if opt!=option_name and opt in bool_options_unique:
-                                handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
-                        # set all other options to false
-                        for opt in bool_options_unique: final_options[opt]=False
+                if not option_name_preserve_no.startswith("no"):
+                    for bool_options_unique in bool_options_unique_groups:
+                        if option_name_preserve_no in bool_options_unique:
+                            # can't be specified at the same time
+                            for opt in options_data:
+                                if opt!=option_name and opt in bool_options_unique:
+                                    handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
+                            # set all other options to false
+                            for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
                 final_options[option_name]=not option_name_preserve_no.startswith("no")
             else:
