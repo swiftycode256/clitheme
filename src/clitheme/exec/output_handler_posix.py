@@ -51,7 +51,11 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
     env['TERM']="dumb"
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
-    process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stderr_slave, bufsize=0, close_fds=True, env=env)
+    process: subprocess.Popen
+    try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stderr_slave, bufsize=0, close_fds=True, env=env)
+    except:
+        print("Failed to run command: "+str(sys.exc_info()[1]))
+        return 1
     while True:
         try:
             # update cbreak (realtime stdin) attributes from what the program sets
