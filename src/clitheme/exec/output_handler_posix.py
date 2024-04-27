@@ -21,6 +21,10 @@ def handler_main(command: list[str]):
     stdin_fd, stdin_slave=pty.openpty()
 
     env=copy.copy(os.environ)
+    # Tell apps that the terminal aren't designed to handle TUI
+    env['TERM']="dumb"
+    # Prevent apps from using "less" or "more" as pager, as it won't work here
+    env['PAGER']="cat"
     process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stderr_slave, bufsize=0, close_fds=True, env=env)
     while process.poll()==None:
         try:
