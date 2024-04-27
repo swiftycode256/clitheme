@@ -16,8 +16,7 @@ def main(arguments: list[str]):
         return 1
     # check dataase
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-        print("No theme set; please set a theme")
-        return 1
+        print("Warning: no theme set or theme does not have substrules")
     # determine platform
     if os.name=="posix":
         output_handler_posix.handler_main(arguments[1:])

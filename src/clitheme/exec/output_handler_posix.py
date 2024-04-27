@@ -15,7 +15,9 @@ except ImportError:
 
 
 def handler_main(command: list[str]):
-    db_interface.connect_db()
+    do_subst=True
+    try: db_interface.connect_db()
+    except FileNotFoundError: do_subst=False
     stdout_fd, stdout_slave=pty.openpty()
     stderr_fd, stderr_slave=pty.openpty()
     stdin_fd, stdin_slave=pty.openpty()
@@ -52,7 +54,8 @@ def handler_main(command: list[str]):
             for line_data in output_lines:
                 line=line_data[0]
                 # subst operation
-                subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
+                subst_line=copy.copy(line)
+                if do_subst: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line+b"\n")
         except KeyboardInterrupt:
             process.send_signal(2) #SIGINT
