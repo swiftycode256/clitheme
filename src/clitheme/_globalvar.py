@@ -48,6 +48,7 @@ generator_info_v2filename=generator_info_filename+"_v2" # e.g. [...]/theme-info/
 ## _generator.db_interface file and table names
 db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db"
+db_version=1
 
 ## Sanity check function
 entry_banphrases=['/','\\']

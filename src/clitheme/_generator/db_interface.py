@@ -10,6 +10,9 @@ except ImportError: import _globalvar
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False
 
+class need_db_regenerate(Exception):
+    pass
+
 def handle_warning(message: str):
     if debug_mode: print(message)
 def init_db(file_path: str):
@@ -28,12 +31,18 @@ def init_db(file_path: str):
                     end_match_here INTEGER NOT NULL, \
                     stdout_stderr_only INTEGER NOT NULL \
                     );")
+    connection.execute(f"CREATE TABLE {_globalvar.db_data_tablename}_version (value INTEGER NOT NULL);")
+    connection.execute(f"INSERT INTO {_globalvar.db_data_tablename}_version (value) VALUES (?)", (_globalvar.db_version,)) 
     connection.commit()
 def connect_db():
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
         raise FileNotFoundError("No theme set or theme does not contain substrules")
     global connection
     connection=sqlite3.connect(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}")
+    # check db version
+    version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
+    if version!=_globalvar.db_version:
+        raise need_db_regenerate
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, line_number_debug: int=-1):
     cmdlist: list[str]=[]

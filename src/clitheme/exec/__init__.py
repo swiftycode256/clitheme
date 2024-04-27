@@ -3,12 +3,50 @@ Module used for clitheme-exec (should not be invoked directly)
 """
 import sys
 import os
+import shutil
 try:
     from . import output_handler_posix
-    from .. import _globalvar
+    from .. import _globalvar, cli
+    from .._generator import db_interface
 except ImportError:
     import output_handler_posix
-    import _globalvar
+    import _globalvar, cli
+    from _generator import db_interface
+
+def check_regenerate_db() -> bool:
+    try: db_interface.connect_db()
+    except db_interface.need_db_regenerate:
+        print("Migrating substrules database...")
+        try:
+            # gather files
+            search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
+            if not os.path.isdir(search_path): raise Exception
+            lsdir_result=os.listdir(search_path); lsdir_result.sort()
+            lsdir_num=0
+            for x in lsdir_result: 
+                if os.path.isdir(search_path+"/"+x): lsdir_num+=1
+            if lsdir_num<1: raise Exception
+
+            file_contents=[]
+            for pathname in lsdir_result:
+                target_path=search_path+"/"+pathname
+                if not os.path.isdir(target_path): continue
+                content=open(target_path+"/file_content", encoding="utf-8").read()
+                file_contents.append(content)
+            cli.apply_theme(file_contents, overlay=False, generate_only=True, preserve_temp=True)
+            os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
+            shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
+            print("Done")
+        except:
+            print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
+            print("Please re-apply the theme and try again")
+            return False
+    except: 
+        print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
+        print("Please re-apply the theme and try again")
+        return False
+    return True
+
 def main(arguments: list[str]):
     # get arguments
     if len(arguments)<2: 
@@ -31,6 +69,8 @@ def main(arguments: list[str]):
             debug_mode.append("newlines")
         elif arg=="--debug-showchars":
             debug_mode.append("showchars")
+        else: print("Unknown option \"{}\"".format(arg)); return 1
+    if not check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
         return output_handler_posix.handler_main(arguments[1+argcount:], debug_mode)
