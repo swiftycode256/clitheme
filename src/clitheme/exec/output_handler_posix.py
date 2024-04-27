@@ -34,18 +34,19 @@ def handler_main(command: list[str]):
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
             fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.1)[0]
             output_lines=[] # (line_content, is_stderr)
+            readsize=40960
             if sys.stdin in fds:
-                data=os.read(sys.stdin.fileno(), 1024)
+                data=os.read(sys.stdin.fileno(), readsize)
                 if not data: break
                 os.write(stdin_fd, data)
             if stdout_fd in fds:
-                data=os.read(stdout_fd, 1024)
+                data=os.read(stdout_fd, readsize)
                 #data=b'\x1b[33m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[33m')+b'\x1b[0m' # DEBUG purposes
                 #data=b'\x1b[33m'+data+b'\x1b[0m' # DEBUG purposes
                 for line in data.splitlines():
                     output_lines.append((line,False))
             if stderr_fd in fds:
-                data=os.read(stderr_fd, 1024)
+                data=os.read(stderr_fd, readsize)
                 #data=b'\x1b[31m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[31m')+b'\x1b[0m' # DEBUG purposes
                 #data=b'\x1b[31m'+data+b'\x1b[0m' # DEBUG purposes
                 for line in data.splitlines():
