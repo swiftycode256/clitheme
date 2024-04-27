@@ -52,10 +52,11 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
     process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stderr_slave, bufsize=0, close_fds=True, env=env)
-    while process.poll()==None:
+    while True:
         try:
             # update cbreak (realtime stdin) attributes from what the program sets
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
+            try: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
+            except termios.error: pass
             fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.1)[0]
             output_lines=[] # (line_content, is_stderr)
             readsize=1000000
@@ -77,6 +78,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
                 lines=data.splitlines(keepends=True)
                 for line in lines:
                     output_lines.append((line,True))
+            if process.poll()!=None and len(output_lines)==0: break
             # Process outputs
             for line_data in output_lines:
                 line=line_data[0]
@@ -88,3 +90,4 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
         except KeyboardInterrupt:
             process.send_signal(2) #SIGINT
             #os.write(stdin_fd, b'\x03')
+    return process.poll()

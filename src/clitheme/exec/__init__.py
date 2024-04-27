@@ -33,7 +33,7 @@ def main(arguments: list[str]):
             debug_mode.append("showchars")
     # determine platform
     if os.name=="posix":
-        output_handler_posix.handler_main(arguments[1+argcount:], debug_mode)
+        return output_handler_posix.handler_main(arguments[1+argcount:], debug_mode)
     elif os.name=="nt":
         print("Windows platform is not currently supported")
         return 1
