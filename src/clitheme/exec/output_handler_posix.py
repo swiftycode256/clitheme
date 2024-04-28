@@ -8,11 +8,18 @@ import termios
 import copy
 try:
     from .._generator import db_interface
-    from .. import _globalvar
+    from .. import _globalvar, frontend, _get_resource, _version
 except ImportError:
     from _generator import db_interface
-    import _globalvar
+    import _globalvar, frontend, _get_resource, _version
 
+try:
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
+except:
+    if _version.release==0: print("db_interface set_local_themedef failed")
+    pass
+fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
@@ -55,7 +62,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
     try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
     except:
-        print("Error: failed to run command: "+str(sys.exc_info()[1]))
+        print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
     output_lines=[] # (line_content, is_stderr)
     while True:

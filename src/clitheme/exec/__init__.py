@@ -7,17 +7,25 @@ import io
 import shutil
 try:
     from . import output_handler_posix
-    from .. import _globalvar, cli
+    from .. import _globalvar, cli, frontend, _get_resource, _version
     from .._generator import db_interface
 except ImportError:
     import output_handler_posix
-    import _globalvar, cli
+    import _globalvar, cli, frontend, _get_resource, _version
     from _generator import db_interface
+
+try:
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
+except:
+    if _version.release==0: print("db_interface set_local_themedef failed")
+    pass
+fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 
 def check_regenerate_db() -> bool:
     try: db_interface.connect_db()
     except db_interface.need_db_regenerate:
-        print("Migrating substrules database...")
+        print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
         try:
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -37,35 +45,34 @@ def check_regenerate_db() -> bool:
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
             if not cli.apply_theme(file_contents, overlay=False, generate_only=True, preserve_temp=True)==0: 
-                raise Exception("Failed to generate data (full log below):\n"+cli_msg.getvalue()+"\n")
+                raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=sys.__stdout__
             os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
             shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
-            print("Successfully completed migration, proceeding execution")
+            print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
-            print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
-            print("Please re-apply the theme and try again")
+            print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             return False
     except FileNotFoundError: pass
     except: 
-        print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
-        print("Please re-apply the theme and try again")
+        print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
         return False
     return True
 
 def handle_help_message(full_help: bool=False):
-    print("Usage: ")
+    fd2=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec help-message")
+    print(fd2.reof("usage-str", "Usage:"))
     print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [command]")
     if not full_help: return
-    print("Options: ")
-    print("\t--debug: Display indicator at the beginning of each read output by line")
-    print("\t--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)")
-    print("\t--debug-newlines: Use newlines to display output that does not end on a newline")
-    print("\t--debug-showchars: Display various control characters in plain text")
+    print(fd2.reof("options-str", "Options:"))
+    print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
+    print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
+    print("\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
+    print("\t"+fd2.reof("options-debug-showchars", "--debug-showchars: Display various control characters in plain text"))
 
 def handle_error(message: str):
     print(message)
-    print("Run clitheme-exec --help for usage information")
+    print(fd.reof("help-usage-prompt", "Run clitheme-exec --help for usage information"))
     return 1
 
 def main(arguments: list[str]):
@@ -86,18 +93,19 @@ def main(arguments: list[str]):
             debug_mode.append("showchars")
         elif arg=="--help":
             showhelp=True
-        else: return handle_error("Error: unknown option \"{}\"".format(arg))
+        else: 
+            return handle_error(fd.feof("unknown-option-err", "Error: unknown option \"{phrase}\"", phrase=arg))
     if len(arguments)<=1+argcount:
         if showhelp:
             handle_help_message(full_help=True)
             return 0
         else: 
             handle_help_message()
-            print("Error: no command specified")
+            print(fd.reof("no-command-err", "Error: no command specified"))
             return 1
     # check database
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-        print("Warning: no theme set or theme does not have substrules")
+        print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
     if not check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":

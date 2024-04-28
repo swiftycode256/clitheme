@@ -1,0 +1,60 @@
+{header_section}
+    name clitheme message text translations (clitheme-exec)
+    version 2.0
+    locales zh_CN
+    supported_apps clitheme
+{/header_section}
+
+{entries_section}
+in_domainapp swiftycode clitheme
+    in_subsection exec help-message
+        [entry] usage-str
+            locale:zh_CN 使用方式：
+        [/entry]
+        [entry] options-str
+            locale:zh_CN 选项：
+        [/entry]
+        [entry] options-debug
+            locale:zh_CN --debug: 在每一行被读取的输出前显示标记
+        [/entry]
+        [entry] options-debug-color
+            locale:zh_CN --debug-color: 为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）
+        [/entry]
+        [entry] options-debug-newlines
+            locale:zh_CN --debug-newlines: 使用新的一行来显示没有新行的输出
+        [/entry]
+        [entry] options-debug-showchars
+            locale:zh_CN --debug-showchars: 使用明文显示终端控制符号
+        [/entry]
+    in_subsection exec
+        [entry] help-usage-prompt
+            locale:zh_CN 使用"clitheme-exec --help"以获取使用方式
+        [/entry]
+        [entry] unknown-option-err
+            locale:zh_CN 错误：未知选项"{phrase}"
+        [/entry]
+        [entry] no-command-err
+            locale:zh_CN 错误：未指定命令
+        [/entry]
+        [entry] no-theme-warn
+            locale:zh_CN 警告：没有设定主题或当前主题没有substrules定义
+        [/entry]
+        [entry] substrules-migrate-msg
+            locale:zh_CN 正在迁移数据库...
+        [/entry]
+        [entry] db-migration-generator-err
+            locale:zh_CN 无法生成数据（完整日志在此）：
+        [/entry]
+        [entry] db-migration-err
+            [locale] zh_CN 
+                迁移数据库时发生了错误: {msg}
+                请重新应用当前主题，然后重试
+            [/locale]
+        [/entry]
+        [entry] db-migrate-success-msg
+            locale:zh_CN 数据库迁移完成，继续执行命令
+        [/entry]
+        [entry] command-fail-err
+            locale:zh_CN 错误: 无法执行命令: {msg}
+        [/entry]
+{/entries_section}
