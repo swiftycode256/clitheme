@@ -51,7 +51,9 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
     process: subprocess.Popen
-    try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stderr_slave, bufsize=0, close_fds=True, env=env)
+    # Redirect stderr to stdout for now (BETA)
+        # need to find a method to preserve exact order when using separated stdout and stderr pipes
+    try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
     except:
         print("Failed to run command: "+str(sys.exc_info()[1]))
         return 1

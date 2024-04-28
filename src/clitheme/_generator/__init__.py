@@ -109,7 +109,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # value options: options requiring an integer value
         value_options=["leadtabindents", "leadspaces"]
         # on/off options (use no<...> to disable)
-        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere", "stdout_only", "stderr_only"]
+        bool_options=["substesc", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere"]
+        # Disable these options for now (BETA)
+        # bool_options+=["stdout_only", "stderr_only"]
+
         # only one of these options can be set to true at the same time (specific to groups)
         bool_options_unique_groups=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"], ["stdout_only", "stderr_only"]]
         final_options={}
