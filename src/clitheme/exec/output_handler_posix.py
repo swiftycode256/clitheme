@@ -1,12 +1,11 @@
 import subprocess
 import sys
 import os
+import io
 import pty
 import select
 import termios
 import copy
-import string
-from typing import Optional
 try:
     from .._generator import db_interface
     from .. import _globalvar
@@ -14,6 +13,8 @@ except ImportError:
     from _generator import db_interface
     import _globalvar
 
+# https://docs.python.org/3/library/stdtypes.html#str.splitlines
+newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
 def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False) -> list[bytes]:
     # debug_mode: newlines, showchars, color
@@ -21,7 +22,7 @@ def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fal
     for x in range(len(lines)):
         line=lines[x]
         if "newlines" in debug_mode:
-            if not line.endswith(b'\n') and not line.endswith(b'\f') and not line.endswith(b'\x0c'):
+            if not line.endswith(newlines):
                 line+=b"\n"
         if "showchars" in debug_mode:
             wrapper=b"\x1b[32m{}\x1b[0m"
@@ -47,8 +48,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
     stdin_fd, stdin_slave=pty.openpty()
 
     env=copy.copy(os.environ)
-    # Tell apps that the terminal aren't designed to handle TUI
-    env['TERM']="dumb"
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
     process: subprocess.Popen
@@ -56,14 +55,14 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
     except:
         print("Failed to run command: "+str(sys.exc_info()[1]))
         return 1
+    output_lines=[] # (line_content, is_stderr)
     while True:
         try:
             # update cbreak (realtime stdin) attributes from what the program sets
             try: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
             except termios.error: pass
-            fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.1)[0]
-            output_lines=[] # (line_content, is_stderr)
-            readsize=1000000
+            fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
+            readsize=io.DEFAULT_BUFFER_SIZE
             if sys.stdin in fds:
                 data=os.read(sys.stdin.fileno(), readsize)
                 if not data: break
@@ -73,24 +72,42 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
                 #data=b'\x1b[33m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[33m')+b'\x1b[0m' # DEBUG purposes
                 #data=b'\x1b[33m'+data+b'\x1b[0m' # DEBUG purposes
                 lines=data.splitlines(keepends=True)
-                for line in lines:
-                    output_lines.append((line,False))
+                for x in range(len(lines)):
+                    line=lines[x]
+                    # if last input did not end with newlines, append new content to it
+                    if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
+                        orig_line=output_lines[-1][0]
+                        output_lines.pop()
+                        output_lines.append((orig_line+line,False))
+                    else: output_lines.append((line,False))
             if stderr_fd in fds:
                 data=os.read(stderr_fd, readsize)
                 #data=b'\x1b[31m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[31m')+b'\x1b[0m' # DEBUG purposes
                 #data=b'\x1b[31m'+data+b'\x1b[0m' # DEBUG purposes
                 lines=data.splitlines(keepends=True)
-                for line in lines:
-                    output_lines.append((line,True))
+                for x in range(len(lines)):
+                    line=lines[x]
+                    if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
+                        orig_line=output_lines[-1][0]
+                        output_lines.pop()
+                        output_lines.append((orig_line+line,True))
+                    else: output_lines.append((line,True))
             if process.poll()!=None and len(output_lines)==0: break
             # Process outputs
-            for line_data in output_lines:
-                line=line_data[0]
+            for x in range(len(output_lines)):
+                line_data=output_lines[x]
+                line: bytes=line_data[0]
+                # if does not end with newlines, leave it for the next iteration
+                if x==len(output_lines)-1 and not line.endswith(newlines):
+                    if not len(line_data)>2: # not from previous iteration
+                        output_lines=[line_data+(True,)] # add another entry to signal it's from previous iteration
+                        break
                 # subst operation
                 subst_line=copy.copy(line)
                 if do_subst: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
                 subst_line=process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
+            else: output_lines=[] # happens when no 'break' statement occurs
         except KeyboardInterrupt:
             process.send_signal(2) #SIGINT
             #os.write(stdin_fd, b'\x03')
