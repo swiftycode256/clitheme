@@ -19,6 +19,8 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 
 class need_db_regenerate(Exception):
     pass
+class bad_pattern(Exception):
+    pass
 
 def handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
@@ -53,7 +55,8 @@ def connect_db():
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, line_number_debug: int=-1):
     cmdlist: list[str]=[]
-    re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
+    try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
+    except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
     insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only"]
