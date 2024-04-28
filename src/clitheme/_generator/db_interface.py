@@ -4,17 +4,24 @@ import sqlite3
 import re
 import copy
 from typing import Optional
-try: from .. import _globalvar
-except ImportError: import _globalvar
+try: from .. import _globalvar, frontend, _get_resource, _version
+except ImportError: import _globalvar, frontend, _get_resource, _version
 
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False
+try:
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
+except:
+    if _version.release==0: print("db_interface set_local_themedef failed")
+    pass
+fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
 class need_db_regenerate(Exception):
     pass
 
 def handle_warning(message: str):
-    if debug_mode: print(message)
+    if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
 def init_db(file_path: str):
     global connection
     connection=sqlite3.connect(file_path)
@@ -59,7 +66,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         match_condition=f"match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition} AND stdout_stderr_only=?"
         match_params=(match_pattern.strip(), effective_locale, stdout_stderr_matchoption)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
-            handle_warning(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
+            handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern.strip(), substitute_pattern.strip(), None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption))
@@ -70,7 +77,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         match_condition=f"match_pattern=? AND effective_command=? {strictness_condition} {locale_condition} AND stdout_stderr_only=?"
         match_params=(match_pattern.strip(), cmd.strip(), effective_locale, stdout_stderr_matchoption)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
-            handle_warning(f"Warning: Repeated entry at line {line_number_debug}, overwriting")
+            handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern.strip(), substitute_pattern.strip(), cmd.strip(), is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption))

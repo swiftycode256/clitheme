@@ -62,6 +62,9 @@ in_subsection generator
     [entry] repeated-entry-warn
         locale:zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
     [/entry]
+    [entry] repeated-substrules-warn
+        locale:zh_CN 第{num}行：重复的substrules定义；之前的定义内容将会被覆盖
+    [/entry]
     [entry] repeated-header-warn
         locale:zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
     [/entry]
