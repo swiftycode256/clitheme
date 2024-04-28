@@ -1,6 +1,6 @@
 {header_section}
     name clitheme message text translations (generator)
-    version 1.2
+    version 2.0
     locales zh_CN
     supported_apps clitheme
 {/header_section}
@@ -8,6 +8,7 @@
 {entries_section}
 in_domainapp swiftycode clitheme 
 in_subsection generator
+    # error strings
     [entry] error-str
         locale:zh_CN 语法错误：{msg}
     [/entry]
@@ -17,17 +18,11 @@ in_subsection generator
     [entry] entry-conflict-err
         locale:zh_CN 第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在
     [/entry]
-    [entry] internal-error-blockinput
-        locale:zh_CN 第{num}行：处理多行输入时发生了未知错误；请提交问题反馈
-    [/entry]
     [entry] extra-arguments-err
         locale:zh_CN 第{num}行："{phrase}"后的参数太多
     [/entry]
-    [entry] repeated-header-err
-        locale:zh_CN 第{num}行：重复的header段落
-    [/entry]
-    [entry] repeated-main-err
-        locale:zh_CN 第{num}行：重复的main段落
+    [entry] repeated-section-err
+        locale:zh_CN 第{num}行：重复的{phrase}段落
     [/entry]
     [entry] invalid-phrase-err
         locale:zh_CN 第{num}行：无效的"{phrase}"
@@ -35,8 +30,30 @@ in_subsection generator
     [entry] not-enough-args-err
         locale:zh_CN 第{num}行："{phrase}"后参数不够
     [/entry]
-    [entry] incomplete-block-err
-        locale:zh_CN 文件缺少或包含不完整的header或main段落
+    [entry] incomplete-section-err
+        locale:zh_CN 文件缺少或包含不完整的header或内容段落
+    [/entry]
+    # Options error strings
+    [entry] option-not-allowed-err
+        locale:zh_CN 第{num}行：选项"{phrase}"不允许再这里指定
+    [/entry]
+    [entry] unknown-option-err
+        locale:zh_CN 第{num}行：未知选项"{phrase}"
+    [/entry]
+    [entry] option-without-value-err
+        locale:zh_CN 第{num}行：选项"{phrase}"未指定数值
+    [/entry]
+    [entry] optional-value-not-int-err 
+        locale:zh_CN 第{num}行：选项"{phrase}"指定的数值不是整数
+    [/entry]
+    [entry] option-conflict-err
+        locale:zh_CN 第{num}行：选项"{option1}"和"{option2}"不能同时指定
+    [/entry]
+    [entry] bad-match-pattern-err
+        locale:zh_CN 第{num}行：无效的匹配正则表达式（{error_msg}）
+    [/entry]
+    [entry] bad-subst-pattern-err
+        locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
     [/entry]
     # warning strings
     [entry] warning-str
@@ -47,6 +64,9 @@ in_subsection generator
     [/entry]
     [entry] repeated-header-warn
         locale:zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
+    [/entry]
+    [entry] syntax-phrase-deprecation-warn
+        locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
     [/entry]
     # sanity check
     [entry] sanity-check-entry-err

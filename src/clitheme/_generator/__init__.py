@@ -221,7 +221,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if is_substrules:
             # check if patterns are valid
             try: re.compile(entry_name)
-            except re.error: handle_error(fd.feof("invaild-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(lineindex+1), error_msg=sys.exc_info()[1]))
+            except re.error: handle_error(fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(lineindex+1), error_msg=sys.exc_info()[1]))
         while lineindex<len(lines_data)-1:
             lineindex+=1
             if is_ignore_line(): continue
@@ -275,7 +275,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
                 try: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x])
-                except re.error: handle_error(fd.feof("invaild-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(lineindex+1), error_msg=sys.exc_info()[1]))
+                except re.error: handle_error(fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(substrules_entries_linenumber[x]), error_msg=sys.exc_info()[1]))
 
     ## Main code
     while lineindex<len(lines_data)-1:
@@ -338,7 +338,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             # --Process entries/main block--
             end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
             if first_phrase=="begin_main":
-                handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
+                handle_warning(fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
             domainapp=""
             subsection=""
             while lineindex<len(lines_data)-1:
@@ -382,7 +382,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     parsed_sections.append("entries")
                     # deprecation warning
                     if phrases[0]=="end_main":
-                        handle_warning(fd.feof("syntax-phrase-deprecation-warning", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
+                        handle_warning(fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process entries/main block--
