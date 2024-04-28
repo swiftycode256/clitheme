@@ -3,10 +3,38 @@ clitheme (2.0-dev20240427-1) UNRELEASED; urgency=low
   * In development, please see commit logs for changes
 
  -- swiftycode <3291929745@qq.com>  Sat, 27 Apr 2024 23:18:00 +0800
+ 
+clitheme (1.1-r2-1) unstable; urgency=medium
 
+  Version 1.1 release 2
+  
+  Bug fixes:
+  * Fixes an issue where setting overlay=True in frontend.set_local_themedef causes the function to not work properly
+  * Fixes an issue where the subsections in frontend functions are incorrectly parsed
+  
+  For more information please see: 
+  https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r2
+
+ -- swiftycode <3291929745@qq.com>  Sat, 02 Mar 2024 23:49:00 +0800
+  
 clitheme (1.1-r1-1) unstable; urgency=medium
 
-  * Version 1.1 release 1
+  Version 1.1 release 1
+  
+  New features: 
+  * New description header definition for theme definition files
+  * Add support for multi-line/block input in theme definition files
+  * Support local deployment of theme definition files
+  * The CLI interface can be modified using theme definition files
+  * frontend module: Add format_entry_or_fallback function
+  * Add support for Windows
+  * CLI interface: Support specifying multiple files on apply-theme and generate-data-hierarchy commands
+  
+  Improvements and bug fixes:
+  * frontend module: Optimize language detection process
+  * CLI interface: Rename generate-data-hierarchy command to generate-data (the original command can still be used)
+  * Fix some grammar and spelling errors in output messages
+
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r1
 
@@ -14,7 +42,8 @@ clitheme (1.1-r1-1) unstable; urgency=medium
 
 clitheme (1.0-r2-1) unstable; urgency=medium
 
-  * Version 1.0 release 2
+  Version 1.0 release 2
+  
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.0-r2
 
@@ -22,6 +51,6 @@ clitheme (1.0-r2-1) unstable; urgency=medium
 
 clitheme (1.0-r1-1) unstable; urgency=medium
 
-  * Version 1.0 release 1
+  Version 1.0 release 1
 
  -- swiftycode <3291929745@qq.com>  Wed, 13 Dec 2023 17:16:33 +0800
