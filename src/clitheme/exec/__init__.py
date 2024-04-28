@@ -53,17 +53,26 @@ def check_regenerate_db() -> bool:
         return False
     return True
 
+def handle_help_message(full_help: bool=False):
+    print("Usage: ")
+    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [command]")
+    if not full_help: return
+    print("Options: ")
+    print("\t--debug: Display indicator at the beginning of each read output by line")
+    print("\t--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)")
+    print("\t--debug-newlines: Use newlines to display output that does not end on a newline")
+    print("\t--debug-showchars: Display various control characters in plain text")
+
+def handle_error(message: str):
+    print(message)
+    print("Run clitheme-exec --help for usage information")
+    return 1
+
 def main(arguments: list[str]):
-    # get arguments
-    if len(arguments)<2: 
-        print("Not enough arguments")
-        return 1
-    # check database
-    if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-        print("Warning: no theme set or theme does not have substrules")
     # process debug mode arguments
     debug_mode=[]
     argcount=0
+    showhelp=False
     for arg in arguments[1:]:
         if not arg.startswith('-'): break
         argcount+=1
@@ -75,15 +84,28 @@ def main(arguments: list[str]):
             debug_mode.append("newlines")
         elif arg=="--debug-showchars":
             debug_mode.append("showchars")
-        else: print("Unknown option \"{}\"".format(arg)); return 1
+        elif arg=="--help":
+            showhelp=True
+        else: return handle_error("Error: unknown option \"{}\"".format(arg))
+    if len(arguments)<=1+argcount:
+        if showhelp:
+            handle_help_message(full_help=True)
+            return 0
+        else: 
+            handle_help_message()
+            print("Error: no command specified")
+            return 1
+    # check database
+    if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
+        print("Warning: no theme set or theme does not have substrules")
     if not check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
         return output_handler_posix.handler_main(arguments[1+argcount:], debug_mode)
     elif os.name=="nt":
-        print("Windows platform is not currently supported")
+        print("Error: Windows platform is not currently supported")
         return 1
     else:
-        print("Unsupported platform")
+        print("Error: Unsupported platform")
         return 1
     return 0

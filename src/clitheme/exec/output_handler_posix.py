@@ -55,7 +55,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
     try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
     except:
-        print("Failed to run command: "+str(sys.exc_info()[1]))
+        print("Error: failed to run command: "+str(sys.exc_info()[1]))
         return 1
     output_lines=[] # (line_content, is_stderr)
     while True:
