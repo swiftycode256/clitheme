@@ -11,10 +11,8 @@ import copy
 from typing import Optional
 try:
     from .. import _globalvar, frontend, _version, _get_resource
-    from . import db_interface
 except ImportError: # for test program
     import _globalvar, frontend, _version, _get_resource
-    import _generator.db_interface as db_interface
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
@@ -466,9 +464,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     theme_index=open(path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(custom_infofile_name+"\n")
 
+# prevent circular import error
+try: from . import db_interface
+except ImportError: import db_interface
 try:
     if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
     if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
+    if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
 except:
-    if _version.release==0: print("generator set_local_themedef failed")
+    if _version.release==0: print("generator set_local_themedef failed: "+str(sys.exc_info()[1]))
     pass

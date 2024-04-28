@@ -3,6 +3,7 @@ Global variable definitions for clitheme
 """
 
 import os
+import sys
 import re
 from copy import copy
 try: from . import _version
@@ -74,8 +75,9 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
             try:
                 if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
                 if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
+                if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
             except RuntimeError:
-                if _version.release==0: print("_globalvar set_local_themedef failed")
+                if _version.release==0: print("_globalvar set_local_themedef failed: "+str(sys.exc_info()[1]))
                 pass
             msg_retrieved=True
             f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
