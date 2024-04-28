@@ -3,6 +3,7 @@ Module used for clitheme-exec (should not be invoked directly)
 """
 import sys
 import os
+import io
 import shutil
 try:
     from . import output_handler_posix
@@ -33,14 +34,19 @@ def check_regenerate_db() -> bool:
                 if not os.path.isdir(target_path): continue
                 content=open(target_path+"/file_content", encoding="utf-8").read()
                 file_contents.append(content)
-            cli.apply_theme(file_contents, overlay=False, generate_only=True, preserve_temp=True)
+            cli_msg=io.StringIO()
+            sys.stdout=cli_msg
+            if not cli.apply_theme(file_contents, overlay=False, generate_only=True, preserve_temp=True)==0: 
+                raise Exception("Failed to generate data (full log below):\n"+cli_msg.getvalue()+"\n")
+            sys.stdout=sys.__stdout__
             os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
             shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
-            print("Done")
+            print("Successfully completed migration, proceeding execution")
         except:
             print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
             print("Please re-apply the theme and try again")
             return False
+    except FileNotFoundError: pass
     except: 
         print("An error occurred while migrating the database: "+str(sys.exc_info()[1]))
         print("Please re-apply the theme and try again")
