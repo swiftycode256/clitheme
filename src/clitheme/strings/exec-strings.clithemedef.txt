@@ -15,16 +15,16 @@ in_domainapp swiftycode clitheme
             locale:zh_CN 选项：
         [/entry]
         [entry] options-debug
-            locale:zh_CN --debug: 在每一行被读取的输出前显示标记
+            locale:zh_CN --debug：在每一行被读取的输出前显示标记
         [/entry]
         [entry] options-debug-color
-            locale:zh_CN --debug-color: 为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）
+            locale:zh_CN --debug-color：为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）
         [/entry]
         [entry] options-debug-newlines
-            locale:zh_CN --debug-newlines: 使用新的一行来显示没有新行的输出
+            locale:zh_CN --debug-newlines：使用新的一行来显示没有新行的输出
         [/entry]
         [entry] options-debug-showchars
-            locale:zh_CN --debug-showchars: 使用明文显示终端控制符号
+            locale:zh_CN --debug-showchars：使用明文显示终端控制符号
         [/entry]
     in_subsection exec
         [entry] help-usage-prompt
@@ -47,7 +47,7 @@ in_domainapp swiftycode clitheme
         [/entry]
         [entry] db-migration-err
             [locale] zh_CN 
-                迁移数据库时发生了错误: {msg}
+                迁移数据库时发生了错误：{msg}
                 请重新应用当前主题，然后重试
             [/locale]
         [/entry]
@@ -55,6 +55,6 @@ in_domainapp swiftycode clitheme
             locale:zh_CN 数据库迁移完成，继续执行命令
         [/entry]
         [entry] command-fail-err
-            locale:zh_CN 错误: 无法执行命令: {msg}
+            locale:zh_CN 错误：无法执行命令：{msg}
         [/entry]
 {/entries_section}
