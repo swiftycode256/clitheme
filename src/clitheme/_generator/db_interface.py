@@ -171,8 +171,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
             else: # is string
                 content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+            if match_data[3]==True and re.search(bytes(match_data[0], 'utf-8'), content_str)!=None: # endmatchoption is set
+                break
         except:
             handle_warning("Error occurred while matching string: "+str(sys.exc_info()[1]))
-        if match_data[3]==True: # endmatchoption is set
-            break
     return content_str
