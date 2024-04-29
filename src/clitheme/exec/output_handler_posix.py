@@ -37,6 +37,7 @@ def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fal
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
             line=line.replace(b'\r', wrapper.replace(b'{}',b'\\r'))
+            line=line.replace(b'\n', wrapper.replace(b'{}',b'\\n\n'))
             line=line.replace(b'\b', wrapper.replace(b'{}',b'\\x08'))
             line=line.replace(b'\a', wrapper.replace(b'{}',b'\\x07'))
         if "color" in debug_mode:
