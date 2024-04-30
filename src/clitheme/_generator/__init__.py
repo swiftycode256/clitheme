@@ -171,17 +171,17 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
         return new_content
-    def handle_set_variable(phrases: list[str]):
+    def handle_set_variable(line_content: str):
         nonlocal global_variables
-        if not phrases[0].startswith("setvar:"): return
+        if not line_content.split()[0].startswith("setvar:"): return
         # match variable name
-        check_enough_args(phrases, 2)
-        results=re.search(r"setvar:(?P<name>.+)", phrases[0])
+        check_enough_args(line_content.split(), 2)
+        results=re.search(r"setvar:(?P<name>.+)", line_content.split()[0])
         var_name: str
         if results==None:
             handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=str(lineindex+1)))
         else: var_name=results.groupdict()['name']
-        var_content=_globalvar.splitarray_to_string(phrases[1:])
+        var_content=_globalvar.extract_content(line_content)
         # subst variable references
         if "substvar" in global_options and global_options["substvar"]==True:
             var_content=subst_variable_content(var_content)
@@ -270,10 +270,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=str(lineindex+1)))
                     else:
                         locale=results.groupdict()['locale']
-                    content=_globalvar.splitarray_to_string(phrases[1:])
+                    content=_globalvar.extract_content(lines_data[lineindex])
                 else:
                     check_enough_args(phrases, 3)
-                    content=_globalvar.splitarray_to_string(phrases[2:])
+                    content=_globalvar.extract_content(lines_data[lineindex], begin_phrase_count=2)
                     locale=phrases[1]
                 target_entry=copy.copy(entry_name)
                 # substvar
@@ -333,7 +333,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 # Expect name, description, description_block, version, locales, locales_block, supported_apps, supported_apps_block
                 if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
                     check_enough_args(phrases, 2)
-                    content=_globalvar.splitarray_to_string(phrases[1:])
+                    content=_globalvar.extract_content(lines_data[lineindex])
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         _globalvar.generator_info_filename.format(info=phrases[0]),\
@@ -404,10 +404,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     subsection=""
                 elif phrases[0]=="entry" or phrases[0]=="[entry]":
                     check_enough_args(phrases, 2)
+                    entry_name=_globalvar.extract_content(lines_data[lineindex])
                     # Prevent leading . & prevent /,\ in entry name
-                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(phrases[1:]))==False:
+                    if _globalvar.sanity_check(entry_name)==False:
                         handle_error(fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    entry_name=_globalvar.splitarray_to_string(phrases[1:])
                     entry_name=subst_variable_content(entry_name)
                     if subsection!="": entry_name=subsection+" "+entry_name
                     if domainapp!="": entry_name=domainapp+" "+entry_name
@@ -418,7 +418,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_set_global_options(phrases[1:])
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
-                    handle_set_variable(phrases)
+                    handle_set_variable(lines_data[lineindex])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     parsed_sections.append("entries")
@@ -485,7 +485,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
                     check_enough_args(phrases, 2)
                     options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
-                    match_pattern=_globalvar.splitarray_to_string(phrases[1:])
+                    match_pattern=_globalvar.extract_content(lines_data[lineindex])
                     match_pattern=subst_variable_content(match_pattern)
                     if "substesc" in global_options.keys() and global_options['substesc']==True:
                         match_pattern=match_pattern.replace("{{ESC}}", "\x1b")
@@ -495,7 +495,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_set_global_options(phrases[1:])
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
-                    handle_set_variable(phrases)
+                    handle_set_variable(lines_data[lineindex])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     parsed_sections.append("substrules")

@@ -103,6 +103,10 @@ def splitarray_to_string(split_content):
     for phrase in split_content:
         final+=phrase+" "
     return final.strip()
+def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
+    results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
+    if results==None: raise ValueError("Match content failed (no matches)")
+    else: return results.groupdict()['content']
 def get_locale(debug_mode: bool=False):
     lang=[]
     # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
