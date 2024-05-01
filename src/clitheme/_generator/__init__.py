@@ -181,6 +181,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if results==None:
             handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=str(lineindex+1)))
         else: var_name=results.groupdict()['name']
+        # sanity check var_name
+        def bad_var(): handle_error(fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=var_name, num=str(lineindex+1)))
+        if var_name=='ESC': bad_var()
+        banphrases=['{', '}', '[', ']', '(', ')']
+        for char in banphrases:
+            if char in var_name: bad_var()
+
         var_content=_globalvar.extract_content(line_content)
         # subst variable references
         if "substvar" in global_options and global_options["substvar"]==True:
