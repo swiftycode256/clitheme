@@ -29,17 +29,17 @@ def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fal
     final_lines=[]
     for x in range(len(lines)):
         line=lines[x]
-        if "newlines" in debug_mode:
-            if not line.endswith(b'\n'):
-                line+=b"\n"
         if "showchars" in debug_mode:
             wrapper=b"\x1b[32m{}\x1b[0m"
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
             line=line.replace(b'\r', wrapper.replace(b'{}',b'\\r'))
-            line=line.replace(b'\n', wrapper.replace(b'{}',b'\\n\n'))
+            line=line.replace(b'\n', wrapper.replace(b'{}',b'\\n')+b'\n')
             line=line.replace(b'\b', wrapper.replace(b'{}',b'\\x08'))
             line=line.replace(b'\a', wrapper.replace(b'{}',b'\\x07'))
+        if "newlines" in debug_mode:
+            if not line.endswith(b'\n'):
+                line+=b"\n"
         if "color" in debug_mode:
             line=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')+line+b"\x1b[0m"
         if "normal" in debug_mode:
