@@ -71,6 +71,8 @@ in_subsection generator
     [entry] syntax-phrase-deprecation-warn
         locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
     [/entry]
+    [entry] unknown-variable-warn
+        locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
     # sanity check
     [entry] sanity-check-entry-err
         locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
