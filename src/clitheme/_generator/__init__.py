@@ -83,6 +83,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if not os.path.exists(datapath): os.mkdir(datapath)
 
     # data to keep track of
+    section_parsing=False
     parsed_sections=[]
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
@@ -331,6 +332,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             # avoid repeated block
             if "header" in parsed_sections: 
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="header"))
+            section_parsing=True
             # --Process header block--
             end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
             while lineindex<len(lines_data)-1:
@@ -371,6 +373,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     parsed_sections.append("header")
+                    section_parsing=False
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             # END --Process header block--
@@ -378,6 +381,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
             if "entries" in parsed_sections:
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="entries"))
+            section_parsing=True
             # --Process entries/main block--
             end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
             if first_phrase=="begin_main":
@@ -429,6 +433,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     parsed_sections.append("entries")
+                    section_parsing=False
                     # deprecation warning
                     if phrases[0]=="end_main":
                         handle_warning(fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
@@ -438,6 +443,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         elif first_phrase==r"{substrules_section}":
             if "substrules" in parsed_sections:
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="substrules"))
+            section_parsing=True
             ## --Process substrules block--
             end_phrase=r"{/substrules_section}"
             command_filters: Optional[list[str]]=None
@@ -506,12 +512,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     parsed_sections.append("substrules")
+                    section_parsing=False
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process substrules block--
         else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(lineindex+1)))
 
-    if not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections):
+    if section_parsing or not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections):
         handle_error(fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
     write_infofile(path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, "file_content", file_content, lineindex+1, "<file_content>")
