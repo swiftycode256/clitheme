@@ -30,7 +30,7 @@ def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fal
     for x in range(len(lines)):
         line=lines[x]
         if "newlines" in debug_mode:
-            if not line.endswith(newlines):
+            if not line.endswith(b'\n'):
                 line+=b"\n"
         if "showchars" in debug_mode:
             wrapper=b"\x1b[32m{}\x1b[0m"
