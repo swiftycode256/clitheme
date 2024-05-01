@@ -55,6 +55,9 @@ in_subsection generator
     [entry] bad-subst-pattern-err
         locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
     [/entry]
+    [entry] bad-var-name-err
+        locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
+    [/entry]
     # warning strings
     [entry] warning-str
         locale:zh_CN 警告：{msg}
