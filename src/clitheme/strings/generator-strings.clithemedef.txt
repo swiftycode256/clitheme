@@ -76,6 +76,7 @@ in_subsection generator
     [/entry]
     [entry] unknown-variable-warn
         locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
+    [/entry]
     # sanity check
     [entry] sanity-check-entry-err
         locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
