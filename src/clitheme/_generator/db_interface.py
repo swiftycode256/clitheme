@@ -9,13 +9,7 @@ except ImportError: import _globalvar, frontend, _get_resource, _version
 
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False
-try:
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-except:
-    if _version.release==0: print("db_interface set_local_themedef failed: "+str(sys.exc_info()[1]))
-    pass
+_globalvar.handle_set_themedef(frontend, "db_interface")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
 class need_db_regenerate(Exception):

@@ -13,13 +13,7 @@ except ImportError:
     from _generator import db_interface
     import _globalvar, frontend, _get_resource, _version
 
-try:
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-except:
-    if _version.release==0: print("output_handler_posix set_local_themedef failed: "+str(sys.exc_info()[1]))
-    pass
+_globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 

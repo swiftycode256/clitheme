@@ -14,13 +14,7 @@ except ImportError:
     import _globalvar, cli, frontend, _get_resource, _version
     from _generator import db_interface
 
-try:
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-except:
-    if _version.release==0: print("clitheme-exec set_local_themedef failed: "+str(sys.exc_info()[1]))
-    pass
+_globalvar.handle_set_themedef(frontend, "clitheme-exec")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 
 def check_regenerate_db() -> bool:

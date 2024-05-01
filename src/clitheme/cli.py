@@ -33,13 +33,7 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
 
-try:
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt")): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-    if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-except:
-    if _version.release==0: print("cli set_local_themedef failed: "+str(sys.exc_info()[1]))
-    pass
+_globalvar.handle_set_themedef(frontend, "cli")
 
 def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """

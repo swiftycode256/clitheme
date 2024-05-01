@@ -2,6 +2,7 @@
 Global variable definitions for clitheme
 """
 
+import io
 import os
 import sys
 import re
@@ -72,13 +73,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
         global msg_retrieved
         global sanity_check_error_message, banphrase_error_message, startswith_error_message
         if not msg_retrieved:
-            try:
-                if not frontend.set_local_themedef(_get_resource.read_file("strings/generator-strings.clithemedef.txt")): raise RuntimeError()
-                if not frontend.set_local_themedef(_get_resource.read_file("strings/cli-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-                if not frontend.set_local_themedef(_get_resource.read_file("strings/exec-strings.clithemedef.txt"), overlay=True): raise RuntimeError()
-            except RuntimeError:
-                if _version.release==0: print("_globalvar set_local_themedef failed: "+str(sys.exc_info()[1]))
-                pass
+            handle_set_themedef(frontend, "_globalvar")
             msg_retrieved=True
             f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
             banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
@@ -148,3 +143,17 @@ def get_locale(debug_mode: bool=False):
         else:
             if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
     return lang
+
+def handle_set_themedef(fr, debug_name: str):
+    try:
+        files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt"]
+        for filename in files:
+            msg=io.StringIO()
+            sys.stdout=msg
+            fr.global_debugmode=True
+            if not fr.set_local_themedef(_get_resource.read_file(filename), overlay=True): raise RuntimeError("Full log below: \n"+msg.getvalue())
+            fr.global_debugmode=False
+            sys.stdout=sys.__stdout__
+    except:
+        if _version.release==0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]))
+        pass
