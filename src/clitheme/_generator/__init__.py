@@ -168,7 +168,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 try: 
                     var_content=global_variables[var_name]
                 except KeyError: 
-                    handle_warning(fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\" in content, not performing substitution", num=str(lineindex+1), name=var_name))
+                    handle_warning(fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", num=str(lineindex+1), name=var_name))
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
         return new_content
