@@ -394,12 +394,12 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 phrases=lines_data[lineindex].split()
                 # expect entry, in_domainapp, in_subsction, unset_domainapp, unset_subsection
                 if phrases[0]=="in_domainapp":
-                    check_enough_args(phrases, 3)
-                    check_extra_args(phrases, 3, use_exact_count=False)
-                    if _globalvar.sanity_check(phrases[1]+" "+phrases[2])==False:
+                    this_phrases=subst_variable_content(lines_data[lineindex].strip()).split()
+                    check_enough_args(this_phrases, 3)
+                    check_extra_args(this_phrases, 3, use_exact_count=False)
+                    domainapp=this_phrases[1]+" "+this_phrases[2]
+                    if _globalvar.sanity_check(domainapp)==False:
                         handle_error(fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    domainapp=phrases[1]+" "+phrases[2]
-                    domainapp=subst_variable_content(domainapp)
                     subsection="" # clear subsection
                 elif phrases[0]=="in_subsection":
                     check_enough_args(phrases, 2)
