@@ -147,14 +147,16 @@ def get_locale(debug_mode: bool=False):
 def handle_set_themedef(fr, debug_name: str):
     try:
         files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt"]
-        for filename in files:
+        for x in range(len(files)):
+            filename=files[x]
             msg=io.StringIO()
             sys.stdout=msg
             fr.global_debugmode=True
-            if not fr.set_local_themedef(_get_resource.read_file(filename), overlay=True): raise RuntimeError("Full log below: \n"+msg.getvalue())
+            if not fr.set_local_themedef(_get_resource.read_file(filename), overlay=not x==0): raise RuntimeError("Full log below: \n"+msg.getvalue())
             fr.global_debugmode=False
             sys.stdout=sys.__stdout__
     except:
         sys.stdout=sys.__stdout__
+        fr.global_debugmode=False
         if _version.release==0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]))
         pass
