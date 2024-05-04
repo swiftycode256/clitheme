@@ -114,6 +114,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
             else: output_lines=[] # happens when no 'break' statement occurs
         except KeyboardInterrupt:
-            process.send_signal(2) #SIGINT
+            try: process.send_signal(2) #SIGINT
+            except KeyboardInterrupt: pass
             #os.write(stdin_fd, b'\x03')
     return process.poll()
