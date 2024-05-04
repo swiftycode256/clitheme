@@ -44,8 +44,9 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     except ImportError: import _generator
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
-    d=h.hexdigest(6)
+    d=h.hexdigest(6) # length of 12 (6*2)
     global alt_path_hash
+    local_path_hash=alt_path_hash
     # if overlay, update hash with new contents of file
     if alt_path_hash!=None and overlay==True:
         newhash=""
@@ -66,27 +67,31 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
             elif alt_path_hash[x]>='0' and alt_path_hash[x]<='9': #digit
                 numcur=ord(alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
             newhash+=chart[(numorig+numcur)%len(chart)]
-        alt_path_hash=newhash
-    else: alt_path_hash=d # else, use generated hash
-    global alt_path_dirname
-    dir_name=f"clitheme-data-{alt_path_hash}" # length of 12 (6*2)
+        local_path_hash=newhash
+    else: local_path_hash=d # else, use generated hash
+    dir_name=f"clitheme-data-{local_path_hash}"
+    _generator.generate_custom_path() # prepare _generator.path
     overlay_cont=False
+    global alt_path_dirname
     if alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name):
+        if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name): # check if not already generated before
             overlay_cont=True
-            shutil.copytree(_globalvar.clitheme_temp_root+"/"+alt_path_dirname, _globalvar.clitheme_temp_root+"/"+dir_name)
+            shutil.copytree(_globalvar.clitheme_temp_root+"/"+alt_path_dirname, _generator.path)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
     if overlay_cont or not os.path.exists(path_name):
-        _generator.path=path_name
         _generator.silence_warn=True
         try:
             _generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
             if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
+        shutil.copytree(_generator.path, path_name)
+        try: shutil.rmtree(_generator.path)
+        except: pass
     global alt_path
+    alt_path_hash=local_path_hash
     alt_path=path_name+"/"+_globalvar.generator_data_pathname
     alt_path_dirname=dir_name
     return True
