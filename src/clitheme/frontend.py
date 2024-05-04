@@ -119,16 +119,21 @@ class FetchDescriptor():
             self.domain_name=global_domain.strip()
         else:
             self.domain_name=domain_name.strip()
+        if len(self.domain_name.split())>1:
+            raise SyntaxError("Only one phrase is allowed for domain_name")
 
         if app_name==None:
             self.app_name=global_appname.strip()
         else:
             self.app_name=app_name.strip()
+        if len(self.app_name.split())>1:
+            raise SyntaxError("Only one phrase is allowed for app_name")
 
         if subsections==None:
             self.subsections=global_subsections.strip()
         else:
             self.subsections=subsections.strip()
+        self.subsections=re.sub(" {2,}", " ", self.subsections)
 
         if lang==None:
             self.lang=global_lang.strip()
@@ -156,15 +161,16 @@ class FetchDescriptor():
         # entry_path e.g. "class-a sample_text"
 
         # Sanity check the path
-        if _globalvar.sanity_check(entry_path)==False:
-            if self.debug_mode: print("[Debug] Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
-            return fallback_string
+        if entry_path.strip()=="":
+            raise SyntaxError("Empty entry name")
+        if _globalvar.sanity_check(entry_path, use_orig=True)==False:
+            raise SyntaxError("Entry names and subsections {}".format(_globalvar.sanity_check_error_message))
         lang=[]
         # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
         if not self.disable_lang:
             if self.lang!="":
                 if self.debug_mode: print("[Debug] Locale: Using defined self.lang")
-                if not _globalvar.sanity_check(self.lang)==False:
+                if not _globalvar.sanity_check(self.lang, use_orig=True)==False:
                     lang=[self.lang]
                 else:
                     if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
@@ -190,7 +196,7 @@ class FetchDescriptor():
                 possible_paths.append(path2+"__"+l)
             possible_paths.append(path2)
         for p in possible_paths:
-            if self.debug_mode: print("Trying "+p, end="...")
+            if self.debug_mode: print("Trying "+p, end=" ...")
             try:
                 f=open(p,'r', encoding="utf-8")
                 dat=f.read()
@@ -230,6 +236,6 @@ class FetchDescriptor():
         fallback_string=""
         for x in range(30): 
             fallback_string+=random.choice(string.ascii_letters)
-        recieved_content=self.retrieve_entry_or_fallback(entry_path, fallback_string)
-        if recieved_content.strip()==fallback_string: return False
+        received_content=self.retrieve_entry_or_fallback(entry_path, fallback_string)
+        if received_content.strip()==fallback_string: return False
         else: return True
