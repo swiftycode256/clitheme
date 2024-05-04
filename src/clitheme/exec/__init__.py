@@ -46,6 +46,7 @@ def check_regenerate_db() -> bool:
             shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
             print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
+            sys.stdout=sys.__stdout__
             print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             return False
     except FileNotFoundError: pass
