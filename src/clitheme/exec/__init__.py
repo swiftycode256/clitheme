@@ -113,3 +113,5 @@ def main(arguments: list[str]):
         print("Error: Unsupported platform")
         return 1
     return 0
+def script_main(): # for script
+    return main(sys.argv)

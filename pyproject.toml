@@ -1,9 +1,16 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.version]
-path = "src/clitheme/_version.py"
+[tool.setuptools.dynamic]
+version = {attr = "clitheme._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["*test*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
 
 [project]
 name = "clitheme"
@@ -12,7 +19,7 @@ authors = [
   { name="swiftycode", email="3291929745@qq.com" },
 ]
 description = "A text theming library for command line applications"
-readme = "README.md"
+readme = "README.en.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.7"
 classifiers = [
@@ -23,8 +30,9 @@ classifiers = [
 
 [project.scripts]
 clitheme = "clitheme:cli.script_main"
+clitheme-exec= "clitheme:exec.script_main"
 
 [project.urls]
-Homepage = "https://gitee.com/swiftycode/clitheme"
-Documentation = "https://gitee.com/swiftycode/clitheme/wikis"
+Repository = "https://gitee.com/swiftycode/clitheme"
+Documentation = "https://gitee.com/swiftycode/clitheme/wikis/pages"
 Issues = "https://gitee.com/swiftycode/clitheme/issues"

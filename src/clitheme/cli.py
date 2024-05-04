@@ -279,6 +279,6 @@ def main(cli_args):
             return handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
     return 0
 def script_main(): # for script
-    exit(main(sys.argv))
+    return main(sys.argv)
 if __name__=="__main__":
     exit(main(sys.argv))
