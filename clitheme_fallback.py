@@ -1,5 +1,5 @@
 """
-clitheme fallback frontend for 1.1 (returns fallback values for all functions)
+clitheme fallback frontend for version 2.0 (returns fallback values for all functions)
 """
 from typing import Optional
 
@@ -13,8 +13,10 @@ global_lang=""
 global_disablelang=False
 
 alt_path=None
+alt_path_dirname=None
+alt_path_hash=None
 
-def set_local_themedef(file_content: str) -> bool:
+def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """Fallback set_local_themedef function (always returns False)"""
     return False
 def unset_local_themedef():
