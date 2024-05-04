@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: swiftycode <3291929745@qq.com>
 Rules-Requires-Root: no
-Build-Depends: debhelper-compat (= 13), python3, dh-python, python3-hatchling, pybuild-plugin-pyproject
+Build-Depends: debhelper-compat (= 13), python3, dh-python, python3-setuptools, pybuild-plugin-pyproject
 Standards-Version: 4.6.2
 Homepage: https://gitee.com/swiftycode/clitheme
 Vcs-Git: https://gitee.com/swiftycode/clitheme.git

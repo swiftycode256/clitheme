@@ -7,7 +7,7 @@ arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
 license=('GPL3')
 depends=('python>=3.7' 'sqlite>=3')
-makedepends=('git' 'python-hatch' 'python-installer' 'python-wheel' 'gzip')
+makedepends=('git' 'python-setuptools' 'python-build' 'python-installer' 'python-wheel' 'gzip')
 checkdepends=()
 optdepends=()
 provides=()
@@ -32,7 +32,7 @@ pkgver(){
 
 build() {
 	cd srctmp
-	hatch build -t wheel
+	python3 -m build --wheel --no-isolation
 }
 
 check() {
