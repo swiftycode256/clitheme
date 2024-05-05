@@ -91,7 +91,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     really_really_global_options={} # options defined outside any blocks
     global_variables={}
 
-    # define check functions
+    ## check functions
     def check_enough_args(phrases: list[str], count: int):
         if len(phrases)<count:
             handle_error(fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=phrases[0], num=str(lineindex+1)))
@@ -104,7 +104,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     def is_ignore_line() -> bool:
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
-    # defined sub-processing functions
+    ## sub-processing functions and handlers
     def parse_options(options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
         nonlocal global_options
         # value options: options requiring an integer value
@@ -200,7 +200,17 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             var_content=subst_variable_content(var_content)
         # set variable
         global_variables[var_name]=var_content
+    def handle_begin_section(section_name: str):
+        nonlocal parsed_sections
+        if section_name in parsed_sections: 
+            handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section=section_name))
+        nonlocal section_parsing; section_parsing=True
+        handle_setup_global_options()
+    def handle_end_section(section_name: str):
+        nonlocal parsed_sections; parsed_sections.append(section_name)
+        nonlocal section_parsing; section_parsing=False
 
+    ## sub-block processing functions
     def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True) -> str:
         nonlocal lineindex
         minspaces=math.inf
@@ -337,11 +347,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             check_enough_args(lines_data[lineindex].split(), 2)
             handle_set_global_options(lines_data[lineindex].split()[1:], really_really_global=True)
         elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
-            # avoid repeated block
-            if "header" in parsed_sections: 
-                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="header"))
-            section_parsing=True
-            handle_setup_global_options()
+            handle_begin_section("header")
             # --Process header block--
             end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
             while lineindex<len(lines_data)-1:
@@ -381,17 +387,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    parsed_sections.append("header")
-                    section_parsing=False
+                    handle_end_section("header")
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             # END --Process header block--
 
         elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
-            if "entries" in parsed_sections:
-                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="entries"))
-            section_parsing=True
-            handle_setup_global_options()
+            handle_begin_section("entries")
             # --Process entries/main block--
             end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
             if first_phrase=="begin_main":
@@ -442,8 +444,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_set_variable(lines_data[lineindex])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    parsed_sections.append("entries")
-                    section_parsing=False
+                    handle_end_section("entries")
                     # deprecation warning
                     if phrases[0]=="end_main":
                         handle_warning(fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
@@ -451,10 +452,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process entries/main block--
         elif first_phrase==r"{substrules_section}":
-            if "substrules" in parsed_sections:
-                handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="substrules"))
-            section_parsing=True
-            handle_setup_global_options()
+            handle_begin_section("substrules")
             ## --Process substrules block--
             end_phrase=r"{/substrules_section}"
             command_filters: Optional[list[str]]=None
@@ -522,8 +520,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_set_variable(lines_data[lineindex])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    parsed_sections.append("substrules")
-                    section_parsing=False
+                    handle_end_section("substrules")
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process substrules block--
