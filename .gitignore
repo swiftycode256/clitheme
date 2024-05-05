@@ -3,6 +3,9 @@ __pycache__
 __pycache__/*
 dist
 dist/*
+build
+build/*
+src/*.egg-info
 .vscode
 .vscode/*
 # excluded files (ex)
