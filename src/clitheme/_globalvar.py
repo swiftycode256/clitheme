@@ -43,6 +43,7 @@ clitheme_temp_root="/tmp" if os.name!="nt" else os.environ['TEMP']
 ## _generator file and folder names
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
+generator_manpage_pathname="manpages" # e.g. ~/.local/share/clitheme/manpages
 generator_index_filename="current_theme_index" # e.g. [...]/theme-info/current_theme_index
 generator_info_filename="clithemeinfo_{info}" # e.g. [...]/theme-info/1/clithemeinfo_name
 generator_info_v2filename=generator_info_filename+"_v2" # e.g. [...]/theme-info/1/clithemeinfo_description_v2

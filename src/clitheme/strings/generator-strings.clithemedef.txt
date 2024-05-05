@@ -58,6 +58,9 @@ in_subsection generator
     [entry] bad-var-name-err
         locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
     [/entry]
+    [entry] manpage-subdir-file-conflict-err
+        locale:zh_CN 第{num}行：子路径和文件有冲突；请检查之前的定义
+    [/entry]
     # warning strings
     [entry] warning-str
         locale:zh_CN 警告：{msg}
@@ -77,6 +80,8 @@ in_subsection generator
     [entry] unknown-variable-warn
         locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
     [/entry]
+    [entry] repeated-manpage-warn
+        locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
     # sanity check
     [entry] sanity-check-entry-err
         locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
@@ -87,6 +92,8 @@ in_subsection generator
     [entry] sanity-check-subsection-err
         locale:zh_CN 第{num}行：子路径名称{sanitycheck_msg}
     [/entry]
+    [entry] sanity-check-manpage-err
+        locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
     [entry] sanity-check-msg-banphrase-err
         locale:zh_CN 不能包含'{char}'
     [/entry]

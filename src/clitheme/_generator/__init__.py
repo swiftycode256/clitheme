@@ -8,6 +8,7 @@ import random
 import re
 import math
 import copy
+import gzip
 from typing import Optional
 try:
     from .. import _globalvar, frontend, _version, _get_resource
@@ -66,6 +67,26 @@ def write_infofile_newlines(path: str, filename: str, content_phrases: list[str]
     f=open(target_path,'w', encoding="utf-8")
     for line in content_phrases:
         f.write(line+"\n")
+
+def write_manpage_file(file_path: list[str], content: str, line_number_debug: int):
+    parent_path=path+"/"+_globalvar.generator_manpage_pathname+"/"
+    if len(file_path)>1:
+        for subdir in file_path[:-1]:
+            parent_path+=subdir+"/"
+    # create the parent directory
+    if not os.path.isdir(path):
+        try: os.makedirs(parent_path)
+        except NotADirectoryError:
+            handle_error(fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+    # write the compressed and original version of the file
+    full_path=parent_path+"/"+file_path[-1]
+    if os.path.isfile(full_path):
+        handle_warning(fd.feof("repeated-manpage-warn","Line {num}: repeated manpage file, overwriting", num=str(line_number_debug)))
+    try:
+        open(full_path, "w", encoding="utf-8").write(content)
+        open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
+    except IsADirectoryError:
+        handle_error(fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
 
 def generate_custom_path():
     # Generate a temporary path
@@ -525,9 +546,37 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     break
                 else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))
             ## END --Process substrules block--
+        elif first_phrase==r"{manpage_section}":
+            handle_begin_section("manpage")
+            ## --Process manpage block--
+            end_phrase="{/manpage_section}"
+            while lineindex<len(lines_data)-1:
+                lineindex+=1
+                if is_ignore_line(): continue
+                phrases=lines_data[lineindex].split()
+                if phrases[0]=="[manpage]":
+                    check_enough_args(phrases, 2)
+                    check_extra_args(phrases, 2, use_exact_count=True)
+                    filepath=phrases[1:]
+                    # sanity check the file path
+                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
+                        handle_error(fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/manpage]")
+                    write_manpage_file(filepath, content, lineindex+1)
+                elif phrases[0]=="set_options":
+                    check_enough_args(phrases, 2)
+                    handle_set_global_options(phrases[1:])
+                elif phrases[0].startswith("setvar:"): 
+                    check_enough_args(phrases, 2)
+                    handle_set_variable(lines_data[lineindex])
+                elif phrases[0]==end_phrase:
+                    check_extra_args(phrases, 1, use_exact_count=True)
+                    handle_end_section("manpage")
+                    break
+            ## END --Process manpage block--
         else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(lineindex+1)))
 
-    if section_parsing or not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections):
+    if section_parsing or not "header" in parsed_sections or (not "entries" in parsed_sections and not "substrules" in parsed_sections and not "manpage" in parsed_sections):
         handle_error(fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
     write_infofile(path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, "file_content", file_content, lineindex+1, "<file_content>")
