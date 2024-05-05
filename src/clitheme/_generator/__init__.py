@@ -88,6 +88,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
     global_options={}
+    really_really_global_options={} # options defined outside any blocks
     global_variables={}
 
     # define check functions
@@ -104,7 +105,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
     # defined sub-processing functions
-    def parse_options(options_data: list[str], merge_global_options: bool, allowed_options: Optional[list]=None) -> dict:
+    def parse_options(options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
         nonlocal global_options
         # value options: options requiring an integer value
         value_options=["leadtabindents", "leadspaces"]
@@ -116,7 +117,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # only one of these options can be set to true at the same time (specific to groups)
         bool_options_unique_groups=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"], ["stdout_only", "stderr_only"]]
         final_options={}
-        if merge_global_options: final_options=copy.copy(global_options)
+        if merge_global_options!=0: final_options=copy.copy(global_options if merge_global_options==1 else really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
         for each_option in options_data:
             option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
@@ -153,9 +154,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             else:
                 handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
         return final_options 
-    def handle_set_global_options(options_data: list[str]):
+    def handle_set_global_options(options_data: list[str], really_really_global: bool=False):
         # set options globally
-        nonlocal global_options; global_options=parse_options(options_data, merge_global_options=True) 
+        if really_really_global: nonlocal really_really_global_options; really_really_global_options=parse_options(options_data, merge_global_options=2)
+        else: nonlocal global_options; global_options=parse_options(options_data, merge_global_options=1) 
+    def handle_setup_global_options():
+        # reset global_options to contents of really_really_global_options
+        nonlocal global_options; global_options=copy.copy(really_really_global_options)
     def subst_variable_content(content: str, override_check: bool=False) -> str:
         if not override_check and (not "substvar" in global_options or global_options["substvar"]==False): return content
         # get all variables used in content
@@ -239,11 +244,11 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             if option=="leadtabindents": 
                 if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # insert tabs at start of each line
-                blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
+                if preserve_indents: blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
             elif option=="leadspaces":
                 if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # insert spaces at start of each line
-                blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
+                if preserve_indents: blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
             elif option=="substesc":
                 # substitute {{ESC}} with escape literal
                 if got_options['substesc']==True: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
@@ -328,11 +333,15 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if is_ignore_line(): continue
         first_phrase=lines_data[lineindex].split()[0]
         # process header and main sections here
-        if first_phrase=="begin_header" or first_phrase==r"{header_section}":
+        if first_phrase=="set_options":
+            check_enough_args(lines_data[lineindex].split(), 2)
+            handle_set_global_options(lines_data[lineindex].split()[1:], really_really_global=True)
+        elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
             # avoid repeated block
             if "header" in parsed_sections: 
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="header"))
             section_parsing=True
+            handle_setup_global_options()
             # --Process header block--
             end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
             while lineindex<len(lines_data)-1:
@@ -382,6 +391,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             if "entries" in parsed_sections:
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="entries"))
             section_parsing=True
+            handle_setup_global_options()
             # --Process entries/main block--
             end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
             if first_phrase=="begin_main":
@@ -444,6 +454,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             if "substrules" in parsed_sections:
                 handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section="substrules"))
             section_parsing=True
+            handle_setup_global_options()
             ## --Process substrules block--
             end_phrase=r"{/substrules_section}"
             command_filters: Optional[list[str]]=None
