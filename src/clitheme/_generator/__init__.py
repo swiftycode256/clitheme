@@ -206,6 +206,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section=section_name))
         nonlocal section_parsing; section_parsing=True
         handle_setup_global_options()
+        nonlocal global_variables; global_variables={}
     def handle_end_section(section_name: str):
         nonlocal parsed_sections; parsed_sections.append(section_name)
         nonlocal section_parsing; section_parsing=False
