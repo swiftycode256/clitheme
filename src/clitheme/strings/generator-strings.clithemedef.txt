@@ -82,6 +82,7 @@ in_subsection generator
     [/entry]
     [entry] repeated-manpage-warn
         locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
+    [/entry]
     # sanity check
     [entry] sanity-check-entry-err
         locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
@@ -94,6 +95,7 @@ in_subsection generator
     [/entry]
     [entry] sanity-check-manpage-err
         locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
+    [/entry]
     [entry] sanity-check-msg-banphrase-err
         locale:zh_CN 不能包含'{char}'
     [/entry]
