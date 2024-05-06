@@ -190,7 +190,7 @@ def is_option(arg):
 def handle_usage_error(message, cli_args_first):
     f=frontend.FetchDescriptor()
     print(message)
-    print(f.feof("help-usage-prompt", "Run {clitheme} --help for usage information", clitheme=cli_args_first))
+    print(f.feof("help-usage-prompt", "Run \"{clitheme} --help\" for usage information", clitheme=cli_args_first))
     return 1
 def main(cli_args):
     """
