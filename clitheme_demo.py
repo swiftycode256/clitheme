@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-# This file is originally named clitheme_example.py
+# This program is a demo of the clitheme frontend API for applications. Apply a theme definition file in the folder "demo-clithemedef" to see it in action.
+# 这个程序展示了clitheme的应用程序frontend API。请应用一个在"demo-clithemedef"文件夹中的任意一个主题定义文件以观察它的效果。
 
 import os
 import sys
