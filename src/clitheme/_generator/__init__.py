@@ -11,9 +11,9 @@ import copy
 import gzip
 from typing import Optional
 try:
-    from .. import _globalvar, frontend, _version, _get_resource
+    from .. import _globalvar, frontend
 except ImportError: # for test program
-    import _globalvar, frontend, _version, _get_resource
+    import _globalvar, frontend
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
@@ -574,14 +574,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 lineindex+=1
                 if is_ignore_line(): continue
                 phrases=lines_data[lineindex].split()
-                if phrases[0]=="[manpage]":
+                if phrases[0]=="[file_content]":
                     check_enough_args(phrases, 2)
-                    check_extra_args(phrases, 2, use_exact_count=True)
-                    filepath=phrases[1:]
+                    filepath=subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
                     # sanity check the file path
                     if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
                         handle_error(fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/manpage]")
+                    content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/file_content]")
                     write_manpage_file(filepath, content, lineindex+1)
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
