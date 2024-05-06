@@ -97,7 +97,7 @@ def main(arguments: list[str]):
             return 0
         else: 
             handle_help_message()
-            print(fd.reof("no-command-err", "Error: no command specified"))
+            handle_error(fd.reof("no-command-err", "Error: no command specified"))
             return 1
     # check database
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):

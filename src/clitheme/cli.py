@@ -22,7 +22,6 @@ usage_description=\
        {0} get-current-theme-info
        {0} unset-current-theme
        {0} generate-data [themedef-file] [--overlay]
-       {0} --help
        {0} --version"""
 
 frontend.global_domain="swiftycode"
@@ -203,7 +202,7 @@ def main(cli_args):
     arg_first="clitheme" # controls what appears as the command name in messages
     if len(cli_args)<=1: # no arguments passed
         print(usage_description.format(arg_first))
-        print(f.reof("no-command", "Error: no command or option specified"))
+        handle_usage_error(f.reof("no-command", "Error: no command or option specified"), arg_first)
         return 1
 
     def check_enough_args(count: int, exclude_options: bool=True):
