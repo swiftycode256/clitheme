@@ -12,14 +12,10 @@ try:
     from . import _globalvar
     from . import _generator
     from . import frontend
-    from . import _get_resource
-    from . import _version
 except ImportError:
     import _globalvar
     import _generator
     import frontend
-    import _get_resource
-    import _version
 
 usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
