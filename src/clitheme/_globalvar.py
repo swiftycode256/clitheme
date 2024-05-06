@@ -159,5 +159,5 @@ def handle_set_themedef(fr, debug_name: str):
     except:
         sys.stdout=sys.__stdout__
         fr.global_debugmode=False
-        if _version.release==0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]))
+        if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]))
         pass

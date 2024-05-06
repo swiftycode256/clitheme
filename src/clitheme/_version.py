@@ -3,7 +3,7 @@
 __version__="2.0-dev20240505"
 major=2
 minor=0
-release=0 # 0 stands for "dev"
+release=-1 # -1 stands for "dev"
 # For PKGBUILD
 # version_main CANNOT contain hyphens (-); use underscores (_) instead
 version_main="2.0_dev20240505"
