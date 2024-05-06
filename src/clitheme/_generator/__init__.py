@@ -109,8 +109,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     lines_data=file_content.splitlines()
     lineindex=-1 # counter extra +1 operation at beginning
     global_options={}
-    really_really_global_options={} # options defined outside any blocks
+    really_really_global_options={} # options defined outside any sections
     global_variables={}
+    really_really_global_variables={} # variables defined outside any sections
 
     ## check functions
     def check_enough_args(phrases: list[str], count: int):
@@ -182,6 +183,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     def handle_setup_global_options():
         # reset global_options to contents of really_really_global_options
         nonlocal global_options; global_options=copy.copy(really_really_global_options)
+        nonlocal global_variables; global_variables=copy.copy(really_really_global_variables)
     def subst_variable_content(content: str, override_check: bool=False) -> str:
         if not override_check and (not "substvar" in global_options or global_options["substvar"]==False): return content
         # get all variables used in content
@@ -198,8 +200,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
         return new_content
-    def handle_set_variable(line_content: str):
-        nonlocal global_variables
+    def handle_set_variable(line_content: str, really_really_global: bool=False):
+        nonlocal global_variables, really_really_global_variables
         if not line_content.split()[0].startswith("setvar:"): return
         # match variable name
         check_enough_args(line_content.split(), 2)
@@ -220,14 +222,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if "substvar" in global_options and global_options["substvar"]==True:
             var_content=subst_variable_content(var_content)
         # set variable
-        global_variables[var_name]=var_content
+        if really_really_global: really_really_global_variables[var_name]=var_content
+        else: global_variables[var_name]=var_content
     def handle_begin_section(section_name: str):
         nonlocal parsed_sections
         if section_name in parsed_sections: 
             handle_error(fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(lineindex+1), section=section_name))
         nonlocal section_parsing; section_parsing=True
         handle_setup_global_options()
-        nonlocal global_variables; global_variables={}
     def handle_end_section(section_name: str):
         nonlocal parsed_sections; parsed_sections.append(section_name)
         nonlocal section_parsing; section_parsing=False
@@ -368,6 +370,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if first_phrase=="set_options":
             check_enough_args(lines_data[lineindex].split(), 2)
             handle_set_global_options(lines_data[lineindex].split()[1:], really_really_global=True)
+        elif first_phrase.startswith("setvar:"): 
+            check_enough_args(phrases, 2)
+            handle_set_variable(lines_data[lineindex], really_really_global=True)
         elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
             handle_begin_section("header")
             # --Process header block--
