@@ -235,7 +235,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         nonlocal section_parsing; section_parsing=False
 
     ## sub-block processing functions
-    def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True) -> str:
+    def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True, disable_substesc: bool=False) -> str:
         nonlocal lineindex
         minspaces=math.inf
         blockinput_data=""
@@ -272,20 +272,24 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
         # parse leadtabindents leadspaces, and substesc options
         got_options=copy.copy(global_options)
+        specified_options={}
         if len(lines_data[lineindex].split())>1:
             got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=(["leadtabindents", "leadspaces"] if preserve_indents else []) if disallow_cmdmatch_options else None)
+            specified_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=False, allowed_options=(["leadtabindents", "leadspaces"] if preserve_indents else []) if disallow_cmdmatch_options else None)
         for option in got_options.keys():
+            def is_specified_in_block() -> bool: return option in specified_options.keys() and specified_options[option]==True
             if option=="leadtabindents": 
-                if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                if not preserve_indents and is_specified_in_block(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # insert tabs at start of each line
                 if preserve_indents: blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
             elif option=="leadspaces":
-                if not preserve_indents and option not in global_options.keys(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
+                if not preserve_indents and is_specified_in_block(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # insert spaces at start of each line
                 if preserve_indents: blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
             elif option=="substesc":
+                if disable_substesc and is_specified_in_block(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # substitute {{ESC}} with escape literal
-                if got_options['substesc']==True: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
+                if got_options['substesc']==True and not disable_substesc: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
             elif option=="substvar":
                 if got_options['substvar']==True: blockinput_data=subst_variable_content(blockinput_data, True)
             elif disallow_cmdmatch_options:
@@ -385,6 +389,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
                     check_enough_args(phrases, 2)
                     content=_globalvar.extract_content(lines_data[lineindex])
+                    content=subst_variable_content(content)
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         _globalvar.generator_info_filename.format(info=phrases[0]),\
@@ -392,6 +397,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="locales" or phrases[0]=="supported_apps":
                     check_enough_args(phrases, 2)
                     content=phrases[1:]
+                    for x in range(len(content)):
+                        content[x]=subst_variable_content(content[x])
                     write_infofile_newlines( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         _globalvar.generator_info_v2filename.format(info=phrases[0]),\
@@ -406,12 +413,19 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                         filename=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     else:
-                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase)
+                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_substesc=True)
                         filename=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
+                    content=subst_variable_content(content)
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         filename,\
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+                elif phrases[0]=="set_options":
+                    check_enough_args(phrases, 2)
+                    handle_set_global_options(phrases[1:])
+                elif phrases[0].startswith("setvar:"): 
+                    check_enough_args(phrases, 2)
+                    handle_set_variable(lines_data[lineindex])
                 elif phrases[0]==end_phrase:
                     check_extra_args(phrases, 1, use_exact_count=True)
                     handle_end_section("header")
@@ -442,10 +456,10 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     subsection="" # clear subsection
                 elif phrases[0]=="in_subsection":
                     check_enough_args(phrases, 2)
-                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(phrases[1:]))==False:
-                        handle_error(fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     subsection=_globalvar.splitarray_to_string(phrases[1:])
                     subsection=subst_variable_content(subsection)
+                    if _globalvar.sanity_check(subsection)==False:
+                        handle_error(fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 elif phrases[0]=="unset_domainapp":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     domainapp=""; subsection=""
@@ -495,7 +509,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 phrases=lines_data[lineindex].split()
                 if phrases[0]=="[filter_commands]":
                     check_extra_args(phrases, 1, use_exact_count=True)
-                    content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_cmdmatch_options=False)
+                    content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_cmdmatch_options=False, disable_substesc=True)
                     # read commands
                     command_strings=content.splitlines()
 
@@ -518,6 +532,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="filter_command":
                     check_enough_args(phrases, 2) 
                     content=_globalvar.splitarray_to_string(phrases[1:])
+                    content=subst_variable_content(content)
                     strictness=0
                     for this_option in global_options:
                         if this_option=="strictcmdmatch" and global_options['strictcmdmatch']==True:
