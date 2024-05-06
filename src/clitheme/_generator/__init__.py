@@ -371,7 +371,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             check_enough_args(lines_data[lineindex].split(), 2)
             handle_set_global_options(lines_data[lineindex].split()[1:], really_really_global=True)
         elif first_phrase.startswith("setvar:"): 
-            check_enough_args(phrases, 2)
+            check_enough_args(lines_data[lineindex].split(), 2)
             handle_set_variable(lines_data[lineindex], really_really_global=True)
         elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
             handle_begin_section("header")
