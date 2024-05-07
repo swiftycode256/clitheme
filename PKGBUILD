@@ -46,6 +46,8 @@ check() {
 	test ! -f docs/clitheme.1 && echo "Error" && return 1
 	echo -n "docs/clitheme-exec.1 ..."
 	test ! -f docs/clitheme-exec.1 && echo "Error" && return 1
+	echo -n "docs/clitheme-man.1 ..."
+	test ! -f docs/clitheme-man.1 && echo "Error" && return 1
 	echo "OK"
 }
 
@@ -56,4 +58,5 @@ package() {
 	mkdir -p $pkgdir/usr/share/man/man1
 	gzip -c docs/clitheme.1 > $pkgdir/usr/share/man/man1/clitheme.1.gz
 	gzip -c docs/clitheme-exec.1 > $pkgdir/usr/share/man/man1/clitheme-exec.1.gz
+	gzip -c docs/clitheme-man.1 > $pkgdir/usr/share/man/man1/clitheme-man.1.gz
 }
