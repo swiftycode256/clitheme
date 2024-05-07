@@ -1,0 +1,42 @@
+.TH clitheme-exec 1 2024-05-07
+.SH NAME
+clitheme\-exec \- match and substitute output of a command
+.SH SYNOPSIS
+.B clitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] \fIcommand\fR
+.SH DESCRIPTION
+\fIclitheme-exec\fR substitutes the output of the specified command with substitution rules defined through a theme definition file. The current theme definition on the system is controlled through \fIclitheme(1)\fR.
+.SH OPTIONS
+.TP
+.B --debug
+Display an indicator at the beginning of each line of output. The indicator contains information about stdout/stderr and whether if substitution happened.
+.P
+.RS 14
+- \fIo>\fR: stdout output
+
+- \fIe>\fR: stderr output
+.RE
+.TP
+.B --debug-color
+Applies color on the output contents; used to determine whether output is stdout or stderr. 
+
+For stdout, yellow color is applied. For stderr, red color is applied.
+.TP
+.B --debug-newlines
+For output that does not end on a newline, display the output ending with newlines. 
+.TP
+.B --debug-showchars
+Display various control characters in plain text. The following characters will be displayed as its code name:
+.P
+.RS 14
+- ANSI escape character (ESC)
+
+- Carriage return (\\r)
+
+- Newline character (\\n)
+
+- Backspace character (\\x08)
+
+- Bell character (\\x07)
+.RE
+.SH SEE ALSO
+\fIclitheme(1)\fR

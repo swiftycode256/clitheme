@@ -44,6 +44,8 @@ check() {
 	echo "Ensuring manpage files (in docs directory) exist:"
 	echo -n "docs/clitheme.1 ..."
 	test ! -f docs/clitheme.1 && echo "Error" && return 1
+	echo -n "docs/clitheme-exec.1 ..."
+	test ! -f docs/clitheme-exec.1 && echo "Error" && return 1
 	echo "OK"
 }
 
@@ -53,4 +55,5 @@ package() {
 	# install manpage
 	mkdir -p $pkgdir/usr/share/man/man1
 	gzip -c docs/clitheme.1 > $pkgdir/usr/share/man/man1/clitheme.1.gz
+	gzip -c docs/clitheme-exec.1 > $pkgdir/usr/share/man/man1/clitheme-exec.1.gz
 }
