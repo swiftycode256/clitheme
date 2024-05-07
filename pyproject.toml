@@ -30,7 +30,8 @@ classifiers = [
 
 [project.scripts]
 clitheme = "clitheme:cli.script_main"
-clitheme-exec= "clitheme:exec.script_main"
+clitheme-exec = "clitheme:exec.script_main"
+clitheme-man = "clitheme:man.script_main"
 
 [project.urls]
 Repository = "https://gitee.com/swiftycode/clitheme"
