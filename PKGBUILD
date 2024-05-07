@@ -44,8 +44,10 @@ check() {
 	echo "Ensuring manpage files (in docs directory) exist:"
 	echo -n "docs/clitheme.1 ..."
 	test ! -f docs/clitheme.1 && echo "Error" && return 1
+	echo "OK"
 	echo -n "docs/clitheme-exec.1 ..."
 	test ! -f docs/clitheme-exec.1 && echo "Error" && return 1
+	echo "OK"
 	echo -n "docs/clitheme-man.1 ..."
 	test ! -f docs/clitheme-man.1 && echo "Error" && return 1
 	echo "OK"
