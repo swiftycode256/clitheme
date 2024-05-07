@@ -8,10 +8,10 @@ import termios
 import copy
 try:
     from .._generator import db_interface
-    from .. import _globalvar, frontend, _get_resource, _version
+    from .. import _globalvar, frontend
 except ImportError:
     from _generator import db_interface
-    import _globalvar, frontend, _get_resource, _version
+    import _globalvar, frontend
 
 _globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")

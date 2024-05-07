@@ -4,8 +4,8 @@ import sqlite3
 import re
 import copy
 from typing import Optional
-try: from .. import _globalvar, frontend, _get_resource, _version
-except ImportError: import _globalvar, frontend, _get_resource, _version
+try: from .. import _globalvar, frontend
+except ImportError: import _globalvar, frontend
 
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False
