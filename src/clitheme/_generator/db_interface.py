@@ -69,9 +69,9 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption))
     for cmd in cmdlist:
-        # remove any existing values with the same match_pattern and effective_command and command_match_strictness(if ==2)
+        # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
-        if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
+        # if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
         match_condition=f"match_pattern=? AND effective_command=? {strictness_condition} {locale_condition} AND stdout_stderr_only=?"
         match_params=(match_pattern, cmd, effective_locale, stdout_stderr_matchoption)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
