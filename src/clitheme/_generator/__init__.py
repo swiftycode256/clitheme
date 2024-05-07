@@ -74,10 +74,9 @@ def write_manpage_file(file_path: list[str], content: str, line_number_debug: in
         for subdir in file_path[:-1]:
             parent_path+=subdir+"/"
     # create the parent directory
-    if not os.path.isdir(path):
-        try: os.makedirs(parent_path)
-        except NotADirectoryError:
-            handle_error(fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+    try: os.makedirs(parent_path, exist_ok=True)
+    except NotADirectoryError:
+        handle_error(fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
     # write the compressed and original version of the file
     full_path=parent_path+"/"+file_path[-1]
     if os.path.isfile(full_path):
