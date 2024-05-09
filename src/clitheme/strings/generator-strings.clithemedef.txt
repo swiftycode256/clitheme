@@ -61,6 +61,15 @@ in_subsection generator
     [entry] manpage-subdir-file-conflict-err
         locale:zh_CN 第{num}行：子路径和文件有冲突；请检查之前的定义
     [/entry]
+    [entry] include-file-read-err
+        [locale] zh_CN
+            第{num}行：无法读取文件"{filepath}"：
+            {error_msg}
+        [/locale]
+    [/entry]
+    [entry] include-file-missing-phrase-err
+        locale:zh_CN 第{num}行：在下一行缺少"as <文件名>"语句
+    [/entry]
     # warning strings
     [entry] warning-str
         locale:zh_CN 警告：{msg}
