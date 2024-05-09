@@ -401,19 +401,19 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block" or phrases[0]=="[locales]" or phrases[0]=="[supported_apps]" or phrases[0]=="[description]":
                     check_extra_args(phrases, 1, use_exact_count=True)
                     # handle block input
-                    content=""; filename=""
+                    content=""; file_name=""
                     endphrase="end_block"
                     if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
                     if phrases[0]=="description_block" or phrases[0]=="[description]":
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
-                        filename=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
+                        file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     else:
                         content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_substesc=True)
-                        filename=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
+                        file_name=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     content=subst_variable_content(content)
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
-                        filename,\
+                        file_name,\
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
@@ -587,7 +587,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     parent_dir=""
                     if filename.strip()!="":
                         parent_dir+=os.path.dirname(filename)
-                    file_dir=parent_dir+"/"+_globalvar.splitarray_to_string(filepath).replace(" ","/")
+                    file_dir=parent_dir+("/" if parent_dir!="" else "")+_globalvar.splitarray_to_string(filepath).replace(" ","/")
                     filecontent: str
                     try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
                     except: handle_error(fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(lineindex+1), filepath=file_dir, error_msg=sys.exc_info()[1]))
