@@ -30,7 +30,7 @@ frontend.global_subsections="cli"
 
 _globalvar.handle_set_themedef(frontend, "cli")
 
-def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: list[str], overlay: bool, filenames: list[str]=[], preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents in a list[str] object.
 
@@ -38,6 +38,8 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, ge
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
     - Set generate_only=True to generate the data hierarchy only (and not apply the theme)
     """
+    if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
+        raise ValueError("file_contents and filenames have different lengths")
     f=frontend.FetchDescriptor(subsections="cli apply-theme")
     if overlay: print(f.reof("overlay-msg", "Overlay specified"))
     print(f.reof("generating-data", "==> Generating data..."))
@@ -66,7 +68,7 @@ def apply_theme(file_contents: list[str], overlay: bool, preserve_temp=False, ge
         # Generate data hierarchy, erase current data, copy it to data path
         try:
             _generator.silence_warn=False
-            _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index))
+            _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             generate_path=False # Don't generate another temp folder after first one
             index+=1
         except SyntaxError:
@@ -256,7 +258,7 @@ def main(cli_args):
                 print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
                     index=str(i+1), message=str(sys.exc_info()[1])))
                 return 1
-        return apply_theme(content_list, overlay=overlay, preserve_temp=preserve_temp, generate_only=generate_only)
+        return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
     elif cli_args[1]=="get-current-theme-info":
         check_extra_args(2) # disabled additional options
         return get_current_theme_info()

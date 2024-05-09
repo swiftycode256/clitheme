@@ -70,12 +70,10 @@ def write_infofile_newlines(path: str, filename: str, content_phrases: list[str]
 
 def write_manpage_file(file_path: list[str], content: str, line_number_debug: int):
     parent_path=path+"/"+_globalvar.generator_manpage_pathname+"/"
-    if len(file_path)>1:
-        for subdir in file_path[:-1]:
-            parent_path+=subdir+"/"
+    parent_path+=os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
     # create the parent directory
     try: os.makedirs(parent_path, exist_ok=True)
-    except NotADirectoryError:
+    except (FileExistsError, NotADirectoryError):
         handle_error(fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
     # write the compressed and original version of the file
     full_path=parent_path+"/"+file_path[-1]
@@ -94,7 +92,7 @@ def generate_custom_path():
     for x in range(8):
         path+=random.choice(string.ascii_letters)
 
-def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_infofile_name="1"):
+def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_infofile_name="1", filename: str=""):
     # make directories
     if custom_path_gen:
         generate_custom_path()
@@ -395,9 +393,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content,lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
                 elif phrases[0]=="locales" or phrases[0]=="supported_apps":
                     check_enough_args(phrases, 2)
-                    content=phrases[1:]
-                    for x in range(len(content)):
-                        content[x]=subst_variable_content(content[x])
+                    content=subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
                     write_infofile_newlines( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         _globalvar.generator_info_v2filename.format(info=phrases[0]),\
@@ -581,6 +577,29 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         handle_error(fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/file_content]")
                     write_manpage_file(filepath, content, lineindex+1)
+                elif phrases[0]=="include_file":
+                    check_enough_args(phrases, 2)
+                    filepath=subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
+                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
+                        handle_error(fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    # get content
+                    # if no filename provided, use current working directory as parent path; else, use the directory the file is in as the parent path
+                    parent_dir=""
+                    if filename.strip()!="":
+                        parent_dir+=os.path.dirname(filename)
+                    file_dir=parent_dir+"/"+_globalvar.splitarray_to_string(filepath).replace(" ","/")
+                    filecontent: str
+                    try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
+                    except: handle_error(fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(lineindex+1), filepath=file_dir, error_msg=sys.exc_info()[1]))
+                    # expect "as" clause right on next line
+                    lineindex+=1
+                    if lineindex<len(lines_data) and len(lines_data[lineindex].split())>0 and lines_data[lineindex].split()[0]=="as":
+                        target_file=subst_variable_content(_globalvar.splitarray_to_string(lines_data[lineindex].split()[1:])).split()
+                        if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
+                            handle_error(fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                        write_manpage_file(target_file, filecontent, lineindex+1)
+                    else:
+                        handle_error(fd.feof("include-file-missing-phrase-err", "Missing \"as <filename>\" phrase on next line of line {num}", num=str(lineindex+1-1)))
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
                     handle_set_global_options(phrases[1:])
