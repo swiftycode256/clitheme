@@ -368,7 +368,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # process header and main sections here
         if first_phrase=="set_options":
             check_enough_args(lines_data[lineindex].split(), 2)
-            handle_set_global_options(lines_data[lineindex].split()[1:], really_really_global=True)
+            handle_set_global_options(subst_variable_content(_globalvar.splitarray_to_string(lines_data[lineindex].split()[1:])).split(), really_really_global=True)
         elif first_phrase.startswith("setvar:"): 
             check_enough_args(lines_data[lineindex].split(), 2)
             handle_set_variable(lines_data[lineindex], really_really_global=True)
@@ -406,16 +406,15 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                         file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     else:
-                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_substesc=True)
+                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase)
                         file_name=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
-                    content=subst_variable_content(content)
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
                         file_name,\
                         content,lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
-                    handle_set_global_options(phrases[1:])
+                    handle_set_global_options(subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
                     handle_set_variable(lines_data[lineindex])
@@ -462,17 +461,17 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 elif phrases[0]=="entry" or phrases[0]=="[entry]":
                     check_enough_args(phrases, 2)
                     entry_name=_globalvar.extract_content(lines_data[lineindex])
+                    entry_name=subst_variable_content(entry_name)
                     # Prevent leading . & prevent /,\ in entry name
                     if _globalvar.sanity_check(entry_name)==False:
                         handle_error(fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
-                    entry_name=subst_variable_content(entry_name)
                     if subsection!="": entry_name=subsection+" "+entry_name
                     if domainapp!="": entry_name=domainapp+" "+entry_name
                     recursive_mkdir(datapath, entry_name, lineindex+1)
                     handle_entry(entry_name, end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
-                    handle_set_global_options(phrases[1:])
+                    handle_set_global_options(subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
                     handle_set_variable(lines_data[lineindex])
@@ -549,7 +548,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     handle_entry(match_pattern, end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
-                    handle_set_global_options(phrases[1:])
+                    handle_set_global_options(subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
                     handle_set_variable(lines_data[lineindex])
@@ -600,7 +599,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         handle_error(fd.feof("include-file-missing-phrase-err", "Missing \"as <filename>\" phrase on next line of line {num}", num=str(lineindex+1-1)))
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
-                    handle_set_global_options(phrases[1:])
+                    handle_set_global_options(subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
                 elif phrases[0].startswith("setvar:"): 
                     check_enough_args(phrases, 2)
                     handle_set_variable(lines_data[lineindex])
