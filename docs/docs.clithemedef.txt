@@ -12,9 +12,9 @@
     set_options substvar
     setvar:name clitheme
     include_file {{name}}.1
-    as man1 {{name}}.1
+        as man1 {{name}}.1
     include_file {{name}}-exec.1
-    as man1 {{name}}-exec.1
+        as man1 {{name}}-exec.1
     include_file {{name}}-man.1
-    as man1 {{name}}-man.1
+        as man1 {{name}}-man.1
 {/manpage_section}
