@@ -15,7 +15,9 @@ except ImportError:
     from _generator import db_interface
 
 _globalvar.handle_set_themedef(frontend, "clitheme-exec")
-fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
+frontend.global_domain="swiftycode"
+frontend.global_appname="clitheme"
+fd=frontend.FetchDescriptor(subsections="exec")
 
 def check_regenerate_db() -> bool:
     try: db_interface.connect_db()
@@ -56,7 +58,7 @@ def check_regenerate_db() -> bool:
     return True
 
 def handle_help_message(full_help: bool=False):
-    fd2=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec help-message")
+    fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
     print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [command]")
     if not full_help: return
