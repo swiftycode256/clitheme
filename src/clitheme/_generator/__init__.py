@@ -129,12 +129,12 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # value options: options requiring an integer value
         value_options=["leadtabindents", "leadspaces"]
         # on/off options (use no<...> to disable)
-        bool_options=["substesc", "substvar", "strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "endmatchhere"]
-        # Disable these options for now (BETA)
-        # bool_options+=["stdout_only", "stderr_only"]
-
+        bool_options=["substesc", "substvar", "endmatchhere"]
         # only one of these options can be set to true at the same time (specific to groups)
-        bool_options_unique_groups=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"], ["stdout_only", "stderr_only"]]
+        switch_options=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]]
+        # Disable these options for now (BETA)
+        # switch_options+=[["subststdoutonly", "subststderronly", "substall"]]
+
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(global_options if merge_global_options==1 else really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
@@ -143,10 +143,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             if allowed_options!=None and option_name not in allowed_options:
                 handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option_name))
-            if option_name in value_options:
-                # must not begin with no
-                if option_name_preserve_no.startswith("no"):
-                    handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
+            if option_name_preserve_no in value_options: # must not begin with "no"
                 # get value
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)+$", each_option)
                 value: int
@@ -158,20 +155,21 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 # set option
                 final_options[option_name]=value
             elif option_name in bool_options:
-                # process unique bool options
-                if not option_name_preserve_no.startswith("no"):
-                    for bool_options_unique in bool_options_unique_groups:
-                        if option_name_preserve_no in bool_options_unique:
-                            # can't be specified at the same time
-                            for opt in options_data:
-                                if opt!=option_name and opt in bool_options_unique:
-                                    handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name, option2=opt))
-                            # set all other options to false
-                            for opt in bool_options_unique: final_options[opt]=False
                 # if starts with no, set to false; else, set to true
                 final_options[option_name]=not option_name_preserve_no.startswith("no")
             else:
-                handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
+                for option_group in switch_options:
+                    if option_name_preserve_no in option_group:
+                        for opt in options_data:
+                            if opt!=option_name_preserve_no and opt in option_group:
+                                handle_error(fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(lineindex+1), option1=option_name_preserve_no, option2=opt))
+                        # set all other options to false
+                        for opt in option_group: final_options[opt]=False
+                        # set the option
+                        final_options[option_name_preserve_no]=True
+                        break
+                else: # executed when no break occurs
+                    handle_error(fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(lineindex+1), phrase=option_name_preserve_no))
         return final_options 
     def handle_set_global_options(options_data: list[str], really_really_global: bool=False):
         # set options globally
@@ -345,13 +343,13 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
-                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "stdout_only", "stderr_only"])
+                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "subststdoutonly", "subststderronly"])
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
                         substrules_endmatchhere=True
-                    elif option=="stdout_only" and got_options['stdout_only']==True:
+                    elif option=="subststdoutonly" and got_options['subststdoutonly']==True:
                         substrules_stdout_stderr_option=1
-                    elif option=="stderr_only" and got_options['stderr_only']==True:
+                    elif option=="subststderronly" and got_options['subststderronly']==True:
                         substrules_stdout_stderr_option=2
                 break
             else: handle_error(fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(lineindex+1)))

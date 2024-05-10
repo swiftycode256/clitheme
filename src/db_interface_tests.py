@@ -1,5 +1,6 @@
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
+import shutil
 
 # sample input for testing
 sample_inputs=[("rm: missing operand", "rm"),
@@ -85,7 +86,7 @@ substrules_file=r"""
             locale:zh_CN \g<shell> 说：缺少操作参数！ಥ_ಥ
         [/substitute_regex]
     
-    set_options noexactcmdmatch
+    set_options normalcmdmatch
     filter_command example_app
         [substitute_string] example_app:
             locale:default o(≧v≦)o example_app says:
@@ -102,7 +103,7 @@ substrules_file=r"""
             locale:default using list options! (⊙ω⊙)
             locale:zh_CN 正在使用列表选项！(⊙ω⊙)
         [/substitute_string]
-    set_options nosmartcmdmatch
+    set_options normalcmdmatch
 {/substrules_section}
 """
 
@@ -113,3 +114,6 @@ db_interface.connection=db_interface.sqlite3.connect(_generator.path+"/"+_global
 print("Successfully recorded data\nTesting sample outputs: ")
 for inp in sample_inputs:
     print(db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8'))
+
+try: shutil.rmtree(_generator.path)
+except: pass
