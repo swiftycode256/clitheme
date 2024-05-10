@@ -34,14 +34,16 @@ def check_regenerate_db() -> bool:
             if lsdir_num<1: raise Exception
 
             file_contents=[]
+            paths=[]
             for pathname in lsdir_result:
                 target_path=search_path+"/"+pathname
                 if not os.path.isdir(target_path): continue
                 content=open(target_path+"/file_content", encoding="utf-8").read()
                 file_contents.append(content)
+                paths.append(target_path+"/file_content")
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
-            if not cli.apply_theme(file_contents, overlay=False, generate_only=True, preserve_temp=True)==0: 
+            if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
                 raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=sys.__stdout__
             os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)

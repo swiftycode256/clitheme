@@ -30,9 +30,9 @@ frontend.global_subsections="cli"
 
 _globalvar.handle_set_themedef(frontend, "cli")
 
-def apply_theme(file_contents: list[str], overlay: bool, filenames: list[str]=[], preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """
-    Apply the theme using the provided definition file contents in a list[str] object.
+    Apply the theme using the provided definition file contents and file pathnames in a list[str] object.
 
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
