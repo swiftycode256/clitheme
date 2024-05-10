@@ -68,9 +68,9 @@ def write_infofile_newlines(path: str, filename: str, content_phrases: list[str]
     for line in content_phrases:
         f.write(line+"\n")
 
-def write_manpage_file(file_path: list[str], content: str, line_number_debug: int):
-    parent_path=path+"/"+_globalvar.generator_manpage_pathname+"/"
-    parent_path+=os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
+def write_manpage_file(file_path: list[str], content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
+    parent_path=custom_parent_path if custom_parent_path!=None else path+"/"+_globalvar.generator_manpage_pathname
+    parent_path+='/'+os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
     # create the parent directory
     try: os.makedirs(parent_path, exist_ok=True)
     except (FileExistsError, NotADirectoryError):
@@ -588,6 +588,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     filecontent: str
                     try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
                     except: handle_error(fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(lineindex+1), filepath=file_dir, error_msg=sys.exc_info()[1]))
+                    # write manpage files in theme-info for db migration feature to work successfully
+                    write_manpage_file(filepath, filecontent, lineindex+1, custom_parent_path=path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name+"/manpage_data")
                     # expect "as" clause right on next line
                     lineindex+=1
                     if lineindex<len(lines_data) and len(lines_data[lineindex].split())>0 and lines_data[lineindex].split()[0]=="as":

@@ -40,7 +40,7 @@ def check_regenerate_db() -> bool:
                 if not os.path.isdir(target_path): continue
                 content=open(target_path+"/file_content", encoding="utf-8").read()
                 file_contents.append(content)
-                paths.append(target_path+"/file_content")
+                paths.append(target_path+"/manpage_data/file_content") # small hack/workaround
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
             if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
