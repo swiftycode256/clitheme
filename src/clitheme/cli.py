@@ -187,9 +187,9 @@ def get_current_theme_info():
                 print(f.feof("list-item", "• {content}", content=app.strip()))
     return 0
 
-def is_option(arg):
+def _is_option(arg):
     return arg.strip()[0:1]=="-"
-def handle_usage_error(message, cli_args_first):
+def _handle_usage_error(message, cli_args_first):
     f=frontend.FetchDescriptor()
     print(message)
     print(f.feof("help-usage-prompt", "Run \"{clitheme} --help\" for usage information", clitheme=cli_args_first))
@@ -204,18 +204,18 @@ def main(cli_args):
     arg_first="clitheme" # controls what appears as the command name in messages
     if len(cli_args)<=1: # no arguments passed
         print(usage_description.format(arg_first))
-        handle_usage_error(f.reof("no-command", "Error: no command or option specified"), arg_first)
+        _handle_usage_error(f.reof("no-command", "Error: no command or option specified"), arg_first)
         return 1
 
     def check_enough_args(count: int, exclude_options: bool=True):
         c=0
         for arg in cli_args:
-            if not exclude_options or not is_option(arg): c+=1
+            if not exclude_options or not _is_option(arg): c+=1
         if c<count:
-            exit(handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
+            exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
     def check_extra_args(count: int):
         if len(cli_args)>count:
-            exit(handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
+            exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
 
     if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy":
         check_enough_args(3)
@@ -224,10 +224,10 @@ def main(cli_args):
         overlay=False
         preserve_temp=False
         for arg in cli_args[2:]:
-            if is_option(arg):
+            if _is_option(arg):
                 if arg.strip()=="--overlay": overlay=True
                 elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
-                else: return handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=arg), arg_first)
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=arg), arg_first)
             else:
                 paths.append(arg)
         fi=frontend.FetchDescriptor(subsections="cli apply-theme")
@@ -273,9 +273,9 @@ def main(cli_args):
             check_extra_args(2)
             print(usage_description.format(arg_first))
         else:
-            return handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
+            return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
     return 0
-def script_main(): # for script
+def _script_main(): # for script
     return main(sys.argv)
 if __name__=="__main__":
     exit(main(sys.argv))

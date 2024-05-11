@@ -26,7 +26,7 @@ def main(args: list[str]):
     results=subprocess.run([man_executable]+args[1:], env=env)
     return results.returncode
 
-def script_main(): # for script
+def _script_main(): # for script
     return main(sys.argv)
 if __name__=="__main__":
     exit(main(sys.argv))

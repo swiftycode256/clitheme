@@ -18,7 +18,7 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
-def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False) -> list[bytes]:
+def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False) -> list[bytes]:
     # debug_mode: newlines, showchars, color
     final_lines=[]
     for x in range(len(lines)):
@@ -42,7 +42,7 @@ def process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fal
         final_lines.append(line)
     return final_lines
 
-def handler_main(command: list[str], debug_mode: list[str]=[]):
+def _handler_main(command: list[str], debug_mode: list[str]=[]):
     do_subst=True
     try: db_interface.connect_db()
     except FileNotFoundError: do_subst=False
@@ -110,7 +110,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[]):
                 # subst operation
                 subst_line=copy.copy(line)
                 if do_subst: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
-                subst_line=process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
+                subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
             else: output_lines=[] # happens when no 'break' statement occurs
         except KeyboardInterrupt:
