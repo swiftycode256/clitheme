@@ -26,9 +26,9 @@ global_debugmode=False
 global_lang="" # Override locale
 global_disablelang=False
 
-alt_path=None
-alt_path_dirname=None
-alt_path_hash=None
+_alt_path=None
+_alt_path_dirname=None
+_alt_path_hash=None
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
@@ -49,12 +49,12 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
     d=h.hexdigest(6) # length of 12 (6*2)
-    global alt_path_hash
-    local_path_hash=alt_path_hash
+    global _alt_path_hash
+    local_path_hash=_alt_path_hash
     # if overlay, update hash with new contents of file
-    if alt_path_hash!=None and overlay==True:
+    if _alt_path_hash!=None and overlay==True:
         newhash=""
-        for x in range(len(alt_path_hash)):
+        for x in range(len(_alt_path_hash)):
             chart=string.ascii_uppercase+string.ascii_lowercase+string.digits
             numorig=0
             numcur=0
@@ -64,23 +64,23 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
                 numorig=(ord(d[x])-ord('a'))+len(string.ascii_uppercase)
             elif d[x]>='0' and d[x]<='9': #digit
                 numorig=ord(d[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
-            if alt_path_hash[x]>='A' and alt_path_hash[x]<='Z': #uppercase letters
-                numcur=ord(alt_path_hash[x])-ord('A')
-            elif alt_path_hash[x]>='a' and alt_path_hash[x]<='z': #lowercase letters
-                numcur=(ord(alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
-            elif alt_path_hash[x]>='0' and alt_path_hash[x]<='9': #digit
-                numcur=ord(alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
+            if _alt_path_hash[x]>='A' and _alt_path_hash[x]<='Z': #uppercase letters
+                numcur=ord(_alt_path_hash[x])-ord('A')
+            elif _alt_path_hash[x]>='a' and _alt_path_hash[x]<='z': #lowercase letters
+                numcur=(ord(_alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
+            elif _alt_path_hash[x]>='0' and _alt_path_hash[x]<='9': #digit
+                numcur=ord(_alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
             newhash+=chart[(numorig+numcur)%len(chart)]
         local_path_hash=newhash
     else: local_path_hash=d # else, use generated hash
     dir_name=f"clitheme-data-{local_path_hash}"
     _generator.generate_custom_path() # prepare _generator.path
     overlay_cont=False
-    global alt_path_dirname
-    if alt_path_dirname!=None and overlay==True: # overlay
+    global _alt_path_dirname
+    if _alt_path_dirname!=None and overlay==True: # overlay
         if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name): # check if not already generated before
             overlay_cont=True
-            shutil.copytree(_globalvar.clitheme_temp_root+"/"+alt_path_dirname, _generator.path)
+            shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
@@ -94,19 +94,19 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
         shutil.copytree(_generator.path, path_name)
         try: shutil.rmtree(_generator.path)
         except: pass
-    global alt_path
-    alt_path_hash=local_path_hash
-    alt_path=path_name+"/"+_globalvar.generator_data_pathname
-    alt_path_dirname=dir_name
+    global _alt_path
+    _alt_path_hash=local_path_hash
+    _alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    _alt_path_dirname=dir_name
     return True
 def unset_local_themedef():
     """
     Unsets the local theme definition file for the current frontend instance.
     After this operation, FetchDescriptor functions will no longer use local definitions.
     """
-    global alt_path; alt_path=None
-    global alt_path_dirname; alt_path_dirname=None
-    global alt_path_hash; alt_path_hash=None
+    global _alt_path; _alt_path=None
+    global _alt_path_dirname; _alt_path_dirname=None
+    global _alt_path_hash; _alt_path_hash=None
 
 class FetchDescriptor():
     """
@@ -191,7 +191,7 @@ class FetchDescriptor():
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
         path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         path2=None
-        if alt_path!=None: path2=alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
+        if _alt_path!=None: path2=_alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         for section in entry_path.split():
             path+="/"+section
             if path2!=None: path2+="/"+section
