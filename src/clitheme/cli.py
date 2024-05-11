@@ -203,6 +203,28 @@ def _handle_usage_error(message, cli_args_first):
     print(message)
     print(f.feof("help-usage-prompt", "Run \"{clitheme} --help\" for usage information", clitheme=cli_args_first))
     return 1
+arg_first="clitheme" # controls what appears as the command name in messages
+def _handle_help_message(full_help: bool=False):
+    fd=frontend.FetchDescriptor(subsections="cli help-message")
+    print(fd.reof("usage-str", "Usage:"))
+    print(
+"""\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
+\t{0} get-current-theme-info
+\t{0} unset-current-theme
+\t{0} generate-data [themedef-file] [--overlay]
+\t{0} --version
+\t{0} --help""".format(arg_first)
+    )
+    if not full_help: return
+    print(fd.reof("options-str", "Options:"))
+    print("\t"+fd.reof("options-apply-theme",
+    "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation.").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Outputs detailed information about the currently applied theme"))
+    print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
+    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates the data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
+    print("\t"+fd.reof("options-help", "--help: Display this help message"))
+
 def main(cli_args: list[str]):
     """
     Use this function invoke 'clitheme' with command line arguments
@@ -210,9 +232,8 @@ def main(cli_args: list[str]):
     Note: the first item in the argument list must be a program name (e.g. ['clitheme', <arguments>])
     """
     f=frontend.FetchDescriptor()
-    arg_first="clitheme" # controls what appears as the command name in messages
     if len(cli_args)<=1: # no arguments passed
-        print(usage_description.format(arg_first))
+        _handle_help_message()
         _handle_usage_error(f.reof("no-command", "Error: no command or option specified"), arg_first)
         return 1
 
@@ -280,7 +301,7 @@ def main(cli_args: list[str]):
     else:
         if cli_args[1]=="--help":
             check_extra_args(2)
-            print(usage_description.format(arg_first))
+            _handle_help_message(full_help=True)
         else:
             return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
     return 0
