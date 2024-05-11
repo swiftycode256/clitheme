@@ -1,5 +1,9 @@
 """
-clitheme front-end interface for accessing entries
+clitheme frontend interface for accessing entries
+
+- Create a FetchDescriptor instance and optionally pass information such as domain&app name and subsections
+- Use the 'retrieve_entry_or_fallback' or 'reof' function in the instance to retrieve content of an entry definition
+- Use the 'format_entry_or_fallback' or 'feof' function in the instance to retrieve and format content of entry definition using str.format
 """
 
 import os,sys
@@ -112,10 +116,10 @@ class FetchDescriptor():
         """
         Create a new instance of the object.
         
-        - Provide domain_name and app_name to automatically append them for retrieval functions.
+        - Provide domain_name and app_name to automatically append them for retrieval functions
         - Provide subsections to automatically append them after domain_name+app_name
         - Provide lang to override the automatically detected system locale information
-        - Set debug_mode=True to output underlying operations when retrieving entries.
+        - Set debug_mode=True to output underlying operations when retrieving entries (debug purposes only)
         - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
@@ -216,7 +220,7 @@ class FetchDescriptor():
 
     def format_entry_or_fallback(self, entry_path: str, fallback_string: str, *args, **kwargs) -> str:
         """
-        Attempt to retrieve and format the entry based on given entry path and arguments. 
+        Attempt to retrieve and format the entry using str.format based on given entry path and arguments. 
         If the entry does not exist or an error occurs while formatting the entry string, use the provided fallback string instead.
         """
         # retrieve the entry

@@ -1,5 +1,11 @@
 #!/usr/bin/python3
 
+"""
+Module used for clitheme-man
+
+- You can access clitheme-man by invoking this module directly: 'python3 -m clitheme.man'
+- You can also invoke clitheme-man in scripts using the 'main' function
+"""
 import sys
 import os
 import subprocess
@@ -8,6 +14,12 @@ try: from . import _globalvar
 except ImportError: import _globalvar
 
 def main(args: list[str]):
+    """
+    Invoke clitheme-man using the given command line arguments
+
+    Note: the first item in the argument list must be the program name 
+        (e.g. ['clitheme-man', <arguments>] or ['example-app', <arguments>])
+    """
     if os.name=="nt":
         print("Windows platform not supported")
         return 1

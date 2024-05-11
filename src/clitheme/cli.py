@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 """
-clitheme command line utility interface
+Module used for the clitheme command line interface
+
+- You can access 'clitheme' by invoking this module directly: 'python3 -m clitheme'
+- You can invoke individual commands in scripts using the functions in this module
 """
 
 import os
@@ -32,11 +35,13 @@ _globalvar.handle_set_themedef(frontend, "cli")
 
 def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """
-    Apply the theme using the provided definition file contents and file pathnames in a list[str] object.
+    Apply the theme using the provided definition file contents and file pathnames in a list[str] object. 
+    
+    (Invokes 'clitheme apply-theme')
 
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
-    - Set generate_only=True to generate the data hierarchy only (and not apply the theme)
+    - Set generate_only=True to generate the data hierarchy only (invokes 'clitheme generate-data' instead)
     """
     if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
         raise ValueError("file_contents and filenames have different lengths")
@@ -108,6 +113,8 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
 def unset_current_theme():
     """
     Delete the current theme data hierarchy from the data path
+
+    (Invokes 'clitheme unset-current-theme')
     """
     f=frontend.FetchDescriptor(subsections="cli unset-current-theme")
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
@@ -123,6 +130,8 @@ def unset_current_theme():
 def get_current_theme_info():
     """
     Get the current theme info
+
+    (Invokes 'clitheme get-current-theme-info')
     """
     f=frontend.FetchDescriptor(subsections="cli get-current-theme-info")
     search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -194,11 +203,11 @@ def _handle_usage_error(message, cli_args_first):
     print(message)
     print(f.feof("help-usage-prompt", "Run \"{clitheme} --help\" for usage information", clitheme=cli_args_first))
     return 1
-def main(cli_args):
+def main(cli_args: list[str]):
     """
-    Use this function for indirect invocation of the interface (e.g. from another function)
+    Use this function invoke 'clitheme' with command line arguments
     
-    Provide a list of command line arguments to this function through cli_args.
+    Note: the first item in the argument list must be a program name (e.g. ['clitheme', <arguments>])
     """
     f=frontend.FetchDescriptor()
     arg_first="clitheme" # controls what appears as the command name in messages

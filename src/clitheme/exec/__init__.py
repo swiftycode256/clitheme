@@ -1,5 +1,8 @@
 """
-Module used for clitheme-exec (should not be invoked directly)
+Module used for clitheme-exec
+
+- You can access clitheme-exec by invoking this module directly: 'python3 -m clitheme.exec'
+- You can also invoke clitheme-exec in scripts using the 'main' function
 """
 import sys
 import os
@@ -76,6 +79,12 @@ def _handle_error(message: str):
     return 1
 
 def main(arguments: list[str]):
+    """
+    Invoke clitheme-exec using the given command line arguments
+
+    Note: the first item in the argument list must be the program name 
+        (e.g. ['clitheme-exec', <arguments>] or ['example-app', <arguments>])
+    """
     # process debug mode arguments
     debug_mode=[]
     argcount=0
