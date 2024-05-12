@@ -162,9 +162,11 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         try:
             if match_data[2]==True: # is regex 
-                content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
+                try: content_str=bytes(re.sub(match_data[0], match_data[1], content_str.decode('utf-8')), 'utf-8')
+                except UnicodeDecodeError: content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
             else: # is string
-                content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+                try: content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
+                except UnicodeDecodeError: content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
             if match_data[3]==True and re.search(bytes(match_data[0], 'utf-8'), content_str)!=None: # endmatchoption is set
                 break
         except:
