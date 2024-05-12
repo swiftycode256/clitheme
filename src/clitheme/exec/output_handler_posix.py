@@ -6,6 +6,7 @@ import pty
 import select
 import termios
 import copy
+import re
 try:
     from .._generator import db_interface
     from .. import _globalvar, frontend
@@ -24,7 +25,7 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
     for x in range(len(lines)):
         line=lines[x]
         if "showchars" in debug_mode:
-            wrapper=b"\x1b[32m{}\x1b[0m"
+            wrapper=b"\x1b[4;32m{}\x1b[0m"
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
             line=line.replace(b'\r', wrapper.replace(b'{}',b'\\r'))
@@ -35,7 +36,8 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
             if not line.endswith(b'\n'):
                 line+=b"\n"
         if "color" in debug_mode:
-            line=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')+line+b"\x1b[0m"
+            try: line=bytes(re.sub(r"(\x1b\[.+?[a-zA-Z]|.)", f"\x1b[{'31' if is_stderr else '33'}m\\g<0>", line.decode('utf-8')), 'utf-8')
+            except UnicodeDecodeError: line=re.sub(bytes(r"(\x1b\[.+?[a-zA-Z]|.)", 'utf-8'), bytes(f"\x1b[{'31' if is_stderr else '33'}m\\g<0>", 'utf-8'), line)
         if "normal" in debug_mode:
             # e.g. o{ <line>; o> <start>
             line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
