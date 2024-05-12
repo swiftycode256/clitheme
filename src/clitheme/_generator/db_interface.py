@@ -105,7 +105,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             match_cmd_phrases=[]
             for p in range(len(match_cmd.split())):
                 ph=match_cmd.split()[p]
-                results=re.search(r"^-([a-zA-z0-9]+)",ph)
+                results=re.search(r"^-([^-]+)$",ph)
                 if p>0 and results!=None:
                     for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
                 else: match_cmd_phrases.append(ph)
