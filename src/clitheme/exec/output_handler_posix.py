@@ -36,8 +36,10 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
             if not line.endswith(b'\n'):
                 line+=b"\n"
         if "color" in debug_mode:
-            try: line=bytes(re.sub(r"(\x1b\[.+?[a-zA-Z]|.)", f"\x1b[{'31' if is_stderr else '33'}m\\g<0>", line.decode('utf-8')), 'utf-8')
-            except UnicodeDecodeError: line=re.sub(bytes(r"(\x1b\[.+?[a-zA-Z]|.)", 'utf-8'), bytes(f"\x1b[{'31' if is_stderr else '33'}m\\g<0>", 'utf-8'), line)
+            match_pattern=r"(^|\x1b\[[\d;]*?m)"
+            sub_pattern=f"\\g<0>\x1b[{'31' if is_stderr else '33'}m"
+            try: line=bytes(re.sub(match_pattern, sub_pattern, line.decode('utf-8')), 'utf-8')
+            except UnicodeDecodeError: line=re.sub(bytes(match_pattern, 'utf-8'), bytes(sub_pattern, 'utf-8'), line)
         if "normal" in debug_mode:
             # e.g. o{ <line>; o> <start>
             line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
