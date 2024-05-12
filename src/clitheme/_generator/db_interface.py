@@ -61,8 +61,8 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             cmdlist.append(re.sub(r" {2,}", " ", cmd).strip())
     else:
         # remove any existing values with the same match_pattern
-        match_condition=f"match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition} AND stdout_stderr_only=?"
-        match_params=(match_pattern, effective_locale, stdout_stderr_matchoption)
+        match_condition=f"match_pattern=? AND typeof(effective_command)=typeof(null) {locale_condition} AND stdout_stderr_only=? AND is_regex=?"
+        match_params=(match_pattern, effective_locale, stdout_stderr_matchoption, is_regex)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
             handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
@@ -72,8 +72,8 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
         # if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
-        match_condition=f"match_pattern=? AND effective_command=? {strictness_condition} {locale_condition} AND stdout_stderr_only=?"
-        match_params=(match_pattern, cmd, effective_locale, stdout_stderr_matchoption)
+        match_condition=f"match_pattern=? AND effective_command=? {strictness_condition} {locale_condition} AND stdout_stderr_only=? AND is_regex=?"
+        match_params=(match_pattern, cmd, effective_locale, stdout_stderr_matchoption, is_regex)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
             handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
