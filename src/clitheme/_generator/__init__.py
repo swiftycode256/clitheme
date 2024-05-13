@@ -9,6 +9,7 @@ import re
 import math
 import copy
 import gzip
+import uuid
 from typing import Optional
 try:
     from .. import _globalvar, frontend
@@ -294,6 +295,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
         # expect locale, locale_block, end_entry
         nonlocal lineindex
+        unique_id=uuid.uuid4()
         substrules_entries=[] # (match_content, substitute_content, locale)
         substrules_entries_linenumber=[]
         substrules_endmatchhere=False
@@ -356,7 +358,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if is_substrules:
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
-                try: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x])
+                try: db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x], unique_id=unique_id)
                 except db_interface.bad_pattern: handle_error(fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(substrules_entries_linenumber[x]), error_msg=sys.exc_info()[1]))
 
     ## Main code

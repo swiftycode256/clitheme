@@ -3,6 +3,7 @@ import os
 import sqlite3
 import re
 import copy
+import uuid
 from typing import Optional
 try: from .. import _globalvar, frontend
 except ImportError: import _globalvar, frontend
@@ -29,6 +30,7 @@ def init_db(file_path: str):
                     match_pattern TEXT NOT NULL, \
                     substitute_pattern TEXT NOT NULL, \
                     is_regex INTEGER NOT NULL, \
+                    unique_id TEXT NOT NULL, \
                     effective_command TEXT, \
                     effective_locale TEXT, \
                     command_match_strictness INTEGER NOT NULL, \
@@ -48,13 +50,13 @@ def connect_db():
     if version!=_globalvar.db_version:
         raise need_db_regenerate
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, line_number_debug: int=-1):
+def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, unique_id: uuid.UUID=uuid.uuid4(), line_number_debug: int=-1):
     cmdlist: list[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
-    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only"]
+    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id"]
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
@@ -67,7 +69,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
@@ -78,7 +80,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
     connection.commit()
 
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False) -> bytes:
@@ -90,7 +92,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 
     # retrieve a list of effective commands matching first argument
     final_cmdlist=[]
-    final_cmdlist_strictmatch=[]
+    final_cmdlist_exactmatch=[]
     if command!=None and len(command.split())>0:
         # obtain a list of effective_command with the same first term
         cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ?;", (command.split()[0].strip()+" %",)).fetchall()
@@ -133,12 +135,12 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 # if found matching command
                 if match_cmd not in final_cmdlist: 
                     final_cmdlist.append(match_cmd)
-                    final_cmdlist_strictmatch.append(strictness==2)
+                    final_cmdlist_exactmatch.append(strictness==2)
 
     content_str=copy.copy(content)
     matches=[]
     def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
-        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only"]
+        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id"]
         # get locales
         locales=_globalvar.get_locale()
         nonlocal matches
@@ -154,12 +156,15 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         for x in range(len(final_cmdlist)):
             cmd=final_cmdlist[x]
             # prioritize exact match
-            if final_cmdlist_strictmatch[x]==True: fetch_matches_by_locale("effective_command=? AND command_match_strictness=2", (cmd,))
+            if final_cmdlist_exactmatch[x]==True: fetch_matches_by_locale("effective_command=? AND command_match_strictness=2", (cmd,))
             # also append matches with other strictness
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
+    encountered_ids=set()
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
+        if match_data[5] in encountered_ids: continue
+        else: encountered_ids.add(match_data[5])
         matched=False
         try:
             if match_data[2]==True: # is regex 
