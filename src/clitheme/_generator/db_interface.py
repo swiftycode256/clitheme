@@ -171,13 +171,17 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 try: 
                     matched=re.search(match_data[0], content_str.decode('utf-8'))!=None
                     content_str=bytes(re.sub(match_data[0], match_data[1], content_str.decode('utf-8')), 'utf-8')
-                except UnicodeDecodeError: content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
+                except UnicodeDecodeError: 
+                    matched=re.search(bytes(match_data[0], 'utf-8'), content_str)!=None                    
+                    content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
             else: # is string
                 try: 
-                    matched=re.search(bytes(match_data[0], 'utf-8'), content_str)!=None                    
+                    matched=match_data[0] in content_str.decode('utf-8')
                     content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
-                except UnicodeDecodeError: content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
-            if match_data[3]==True and matched: # endmatchoption is set
+                except UnicodeDecodeError: 
+                    matched=bytes(match_data[0], 'utf-8') in content_str
+                    content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+            if match_data[3]==True and matched: # endmatchhere is set
                 break
         except:
             handle_warning("Error occurred while matching string: "+str(sys.exc_info()[1]))
