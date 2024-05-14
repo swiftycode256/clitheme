@@ -5,6 +5,9 @@ import io
 import pty
 import select
 import termios
+import fcntl
+import signal
+import struct
 import copy
 import re
 try:
@@ -65,11 +68,23 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
     output_lines=[] # (line_content, is_stderr)
+    def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
+    last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     while True:
         try:
             # update cbreak (realtime stdin) attributes from what the program sets
             try: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
             except termios.error: pass
+            # update terminal size
+            try:
+                new_term_size=get_terminal_size()
+                if new_term_size!=last_terminal_size:
+                    last_terminal_size=new_term_size
+                    fcntl.ioctl(stdin_fd, termios.TIOCSWINSZ, new_term_size)
+                    fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
+                    fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
+                    process.send_signal(signal.SIGWINCH)
+            except: pass
             fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
             readsize=io.DEFAULT_BUFFER_SIZE
             if sys.stdin in fds:
@@ -118,7 +133,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
             else: output_lines=[] # happens when no 'break' statement occurs
         except KeyboardInterrupt:
-            try: process.send_signal(2) #SIGINT
+            try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass
             #os.write(stdin_fd, b'\x03')
     return process.poll()
