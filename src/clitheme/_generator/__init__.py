@@ -11,10 +11,7 @@ import copy
 import gzip
 import uuid
 from typing import Optional
-try:
-    from .. import _globalvar, frontend
-except ImportError: # for test program
-    import _globalvar, frontend
+from .. import _globalvar, frontend
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 

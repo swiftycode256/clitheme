@@ -7,8 +7,7 @@ import os
 import sys
 import re
 from copy import copy
-try: from . import _version
-except ImportError: import _version
+from . import _version
 
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.

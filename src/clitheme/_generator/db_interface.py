@@ -5,8 +5,7 @@ import re
 import copy
 import uuid
 from typing import Optional
-try: from .. import _globalvar, frontend
-except ImportError: import _globalvar, frontend
+from .. import _globalvar, frontend
 
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False

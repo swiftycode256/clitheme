@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """
 Module used for the clitheme command line interface
 
@@ -11,14 +9,7 @@ import os
 import sys
 import shutil
 import re
-try:
-    from . import _globalvar
-    from . import _generator
-    from . import frontend
-except ImportError:
-    import _globalvar
-    import _generator
-    import frontend
+from . import _globalvar, _generator, frontend
 
 usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]

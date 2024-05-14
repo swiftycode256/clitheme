@@ -13,10 +13,7 @@ import re
 import hashlib
 import shutil
 from typing import Optional
-try:
-    from . import _globalvar
-except ImportError: # for test program
-    import _globalvar
+from . import _globalvar
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 global_domain=""

@@ -8,14 +8,9 @@ import sys
 import os
 import io
 import shutil
-try:
-    from . import output_handler_posix
-    from .. import _globalvar, cli, frontend
-    from .._generator import db_interface
-except ImportError:
-    import output_handler_posix
-    import _globalvar, cli, frontend
-    from _generator import db_interface
+from . import output_handler_posix
+from .. import _globalvar, cli, frontend
+from .._generator import db_interface
 
 _globalvar.handle_set_themedef(frontend, "clitheme-exec")
 frontend.global_domain="swiftycode"

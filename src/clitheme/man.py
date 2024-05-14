@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """
 Module used for clitheme-man
 
@@ -10,8 +8,7 @@ import sys
 import os
 import subprocess
 import shutil
-try: from . import _globalvar
-except ImportError: import _globalvar
+from . import _globalvar
 
 def main(args: list[str]):
     """
