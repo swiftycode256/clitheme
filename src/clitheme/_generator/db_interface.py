@@ -93,15 +93,17 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     final_cmdlist=[]
     final_cmdlist_exactmatch=[]
     if command!=None and len(command.split())>0:
+        # command without paths (e.g. /usr/bin/bash -> bash)
+        stripped_command=os.path.basename(command)
         # obtain a list of effective_command with the same first term
-        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ?;", (command.split()[0].strip()+" %",)).fetchall()
+        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
         # also include one-phrase commands
-        cmdlist+=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=?;", (command.split()[0].strip(),)).fetchall()
+        cmdlist+=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
         # sort by number of phrases (greatest to least)
         def split_len(obj: tuple) -> int: return len(obj[0].split())
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
-        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),)).fetchall()+cmdlist
+        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
         def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
             match_cmd_phrases=[]
             for p in range(len(match_cmd.split())):
@@ -112,29 +114,30 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 else: match_cmd_phrases.append(ph)
             return match_cmd_phrases
         # attempt to find matching command 
-        for tp in cmdlist:
-            match_cmd: str=tp[0].strip() # extract value from tuple
-            strictness: int=tp[1] # strictness setting
-            success=True
-            if strictness==1: # must start with pattern in terms of space-separated phrases
-                condition=len(match_cmd.split())<len(command.split()) and command.split()[:len(match_cmd.split())]==match_cmd.split()
-                if not condition==True: success=False
-            elif strictness==2: # must equal to pattern
-                if not re.sub(r" {2,}", " ", command).strip()==match_cmd: success=False
-            elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
-                # process both phrases
-                match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
-                command_phrases=process_smartcmdmatch_phrases(command)
-                for phrase in match_cmd_phrases:
-                    if phrase not in command_phrases: success=False
-            else: # implying strictness==0; must contain all phrases in pattern
-                for phrase in match_cmd.split():
-                    if phrase not in command.split(): success=False
-            if success:
-                # if found matching command
-                if match_cmd not in final_cmdlist: 
-                    final_cmdlist.append(match_cmd)
-                    final_cmdlist_exactmatch.append(strictness==2)
+        for target_command in [command, stripped_command]:
+            for tp in cmdlist:
+                match_cmd: str=tp[0].strip() # extract value from tuple
+                strictness: int=tp[1] # strictness setting
+                success=True
+                if strictness==1: # must start with pattern in terms of space-separated phrases
+                    condition=len(match_cmd.split())<len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
+                    if not condition==True: success=False
+                elif strictness==2: # must equal to pattern
+                    if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
+                elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
+                    # process both phrases
+                    match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
+                    command_phrases=process_smartcmdmatch_phrases(target_command)
+                    for phrase in match_cmd_phrases:
+                        if phrase not in command_phrases: success=False
+                else: # implying strictness==0; must contain all phrases in pattern
+                    for phrase in match_cmd.split():
+                        if phrase not in target_command.split(): success=False
+                if success:
+                    # if found matching target_command
+                    if match_cmd not in final_cmdlist: 
+                        final_cmdlist.append(match_cmd)
+                        final_cmdlist_exactmatch.append(strictness==2)
 
     content_str=copy.copy(content)
     matches=[]
@@ -165,23 +168,20 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if match_data[5] in encountered_ids: continue
         else: encountered_ids.add(match_data[5])
         matched=False
-        try:
-            if match_data[2]==True: # is regex 
-                try: 
-                    matched=re.search(match_data[0], content_str.decode('utf-8'))!=None
-                    content_str=bytes(re.sub(match_data[0], match_data[1], content_str.decode('utf-8')), 'utf-8')
-                except UnicodeDecodeError: 
-                    matched=re.search(bytes(match_data[0], 'utf-8'), content_str)!=None                    
-                    content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
-            else: # is string
-                try: 
-                    matched=match_data[0] in content_str.decode('utf-8')
-                    content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
-                except UnicodeDecodeError: 
-                    matched=bytes(match_data[0], 'utf-8') in content_str
-                    content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
-            if match_data[3]==True and matched: # endmatchhere is set
-                break
-        except:
-            handle_warning("Error occurred while matching string: "+str(sys.exc_info()[1]))
+        if match_data[2]==True: # is regex 
+            try: 
+                matched=re.search(match_data[0], content_str.decode('utf-8'))!=None
+                content_str=bytes(re.sub(match_data[0], match_data[1], content_str.decode('utf-8')), 'utf-8')
+            except UnicodeDecodeError: 
+                matched=re.search(bytes(match_data[0], 'utf-8'), content_str)!=None                    
+                content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
+        else: # is string
+            try: 
+                matched=match_data[0] in content_str.decode('utf-8')
+                content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
+            except UnicodeDecodeError: 
+                matched=bytes(match_data[0], 'utf-8') in content_str
+                content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+        if match_data[3]==True and matched: # endmatchhere is set
+            break
     return content_str

@@ -18,7 +18,7 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
                ("rm: <no filename>: Permission denied", "rm -rf"), # test exactcmdmatch (substitution rule containing this option should be prioritized over previous rules)
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
-               ("example_app: using list options", "example_app -rlc"), # test smartcmdmatch
+               ("example_app: using list options", "/usr/bin/example_app -rlc"), # test smartcmdmatch and command basename handling
 ]
 # substitute patterns
 substrules_file=r"""
