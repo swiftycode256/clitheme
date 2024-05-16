@@ -132,4 +132,33 @@ in_domainapp swiftycode clitheme
             [entry] supported-apps-str
                 locale:zh_CN 支持的应用程序：
             [/entry]
+        in_subsection cli help-message
+            [entry] usage-str
+                locale:zh_CN 使用方式：
+            [/entry]
+            [entry] options-str
+                locale:zh_CN 选项：
+            [/entry]
+            [entry] options-apply-theme
+                [locale] zh_CN
+                    apply-theme：将指定的主题定义文件应用到当前系统中
+                    指定"--overlay"选项以保留当前主题数据的情况下应用（添加到当前数据中）
+                    指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
+                [/locale]
+            [/entry]
+            [entry] options-get-current-theme-info
+                locale:zh_CN get-current-theme-info：输出当前主题设定的详细信息
+            [/entry]
+            [entry] options-unset-current-theme
+                locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
+            [/entry]
+            [entry] options-generate-data
+                locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
+            [/entry]
+            [entry] options-version
+                locale:zh_CN --version：输出clitheme的当前版本信息
+            [/entry]
+            [entry] options-help
+                locale:zh_CN --help：输出这个帮助提示
+            [/entry]
 {/entries_section}

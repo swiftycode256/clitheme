@@ -1,0 +1,21 @@
+{header_section}
+    name clitheme message text translations (man)
+    version 2.0
+    locales zh_CN
+    supported_apps clitheme
+{/header_section}
+
+{entries_section}
+in_domainapp swiftycode clitheme
+    in_subsection man
+        [entry] man-not-installed
+            locale:zh_CN 错误："man"未安装在此系统中
+        [/entry]
+        [entry] no-theme-warn
+            locale:zh_CN 警告：没有设定主题或当前主题没有manpages定义
+        [/entry]
+        [entry] win32-not-supported
+            locale:zh_CN 错误：不支持Windows平台
+        [/entry]
+{/entries_section}
+

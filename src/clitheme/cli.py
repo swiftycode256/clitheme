@@ -209,10 +209,10 @@ def _handle_help_message(full_help: bool=False):
     if not full_help: return
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
-    "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation.").replace("\n", "\n\t\t"))
+    "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Outputs detailed information about the currently applied theme"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
-    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates the data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory"))
     print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Display this help message"))
 
