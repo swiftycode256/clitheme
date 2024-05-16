@@ -12,6 +12,7 @@ import copy
 import re
 from .._generator import db_interface
 from .. import _globalvar, frontend
+from . import _labeled_print
 
 _globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
@@ -60,7 +61,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
     try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
     except:
-        print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
+        _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
     output_lines=[] # (line_content, is_stderr)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))

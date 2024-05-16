@@ -9,6 +9,8 @@ import os
 import subprocess
 import shutil
 from . import _globalvar
+def _labeled_print(msg: str):
+    print("[clitheme-man] "+msg)
 
 def main(args: list[str]):
     """
@@ -18,17 +20,17 @@ def main(args: list[str]):
         (e.g. ['clitheme-man', <arguments>] or ['example-app', <arguments>])
     """
     if os.name=="nt":
-        print("Windows platform not supported")
+        _labeled_print("Windows platform not supported")
         return 1
     # check if "man" exists on system
     man_executable: str=shutil.which("man") # type: ignore
     if man_executable==None:
-        print("Error: \"man\" is not installed on this system")
+        _labeled_print("Error: \"man\" is not installed on this system")
         return 1
     env=os.environ
     # check if theme is set
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.generator_manpage_pathname}"):
-        print("Warning: no theme set or theme does not contain manpages")
+        _labeled_print("Warning: no theme set or theme does not contain manpages")
     # set MANPATH
     env['MANPATH']=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_manpage_pathname+":"+(os.environ['MANPATH'] if 'MANPATH' in os.environ else '')
     # invoke man

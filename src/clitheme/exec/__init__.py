@@ -8,6 +8,9 @@ import sys
 import os
 import io
 import shutil
+def _labeled_print(msg: str):
+    print("[clitheme-exec] "+msg)
+
 from . import output_handler_posix
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
@@ -20,7 +23,7 @@ fd=frontend.FetchDescriptor(subsections="exec")
 def _check_regenerate_db() -> bool:
     try: db_interface.connect_db()
     except db_interface.need_db_regenerate:
-        print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
+        _labeled_print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
         try:
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -46,14 +49,14 @@ def _check_regenerate_db() -> bool:
             sys.stdout=sys.__stdout__
             os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
             shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
-            print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
+            _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
             sys.stdout=sys.__stdout__
-            print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+            _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             return False
     except FileNotFoundError: pass
     except: 
-        print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+        _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
         return False
     return True
 
@@ -109,16 +112,16 @@ def main(arguments: list[str]):
             return 1
     # check database
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-        print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
+        _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
     if not _check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
         return output_handler_posix._handler_main(arguments[1+argcount:], debug_mode)
     elif os.name=="nt":
-        print("Error: Windows platform is not currently supported")
+        _labeled_print("Error: Windows platform is not currently supported")
         return 1
     else:
-        print("Error: Unsupported platform")
+        _labeled_print("Error: Unsupported platform")
         return 1
     return 0
 def _script_main(): # for script
