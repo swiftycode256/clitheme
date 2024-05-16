@@ -19,7 +19,6 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
 def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False) -> list[bytes]:
-    # debug_mode: newlines, showchars, color
     final_lines=[]
     for x in range(len(lines)):
         line=lines[x]
@@ -89,8 +88,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 os.write(stdin_fd, data)
             if stdout_fd in fds:
                 data=os.read(stdout_fd, readsize)
-                #data=b'\x1b[33m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[33m')+b'\x1b[0m' # DEBUG purposes
-                #data=b'\x1b[33m'+data+b'\x1b[0m' # DEBUG purposes
                 lines=data.splitlines(keepends=True)
                 for x in range(len(lines)):
                     line=lines[x]
@@ -102,8 +99,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                     else: output_lines.append((line,False))
             if stderr_fd in fds:
                 data=os.read(stderr_fd, readsize)
-                #data=b'\x1b[31m'+data.replace(b'\x1b',b'\x1b[32m{{ESC}}\x1b[31m')+b'\x1b[0m' # DEBUG purposes
-                #data=b'\x1b[31m'+data+b'\x1b[0m' # DEBUG purposes
                 lines=data.splitlines(keepends=True)
                 for x in range(len(lines)):
                     line=lines[x]
@@ -131,5 +126,4 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         except KeyboardInterrupt:
             try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass
-            #os.write(stdin_fd, b'\x03')
     return process.poll()

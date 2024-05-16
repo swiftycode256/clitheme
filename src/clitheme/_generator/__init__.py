@@ -290,7 +290,6 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         return blockinput_data
     def handle_entry(entry_name: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
-        # expect locale, locale_block, end_entry
         nonlocal lineindex
         unique_id=uuid.uuid4()
         substrules_entries=[] # (match_content, substitute_content, locale)
@@ -379,7 +378,6 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 lineindex+=1
                 if is_ignore_line(): continue
                 phrases=lines_data[lineindex].split()
-                # Expect name, description, description_block, version, locales, locales_block, supported_apps, supported_apps_block
                 if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
                     check_enough_args(phrases, 2)
                     content=_globalvar.extract_content(lines_data[lineindex])
@@ -436,7 +434,6 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 lineindex+=1
                 if is_ignore_line(): continue
                 phrases=lines_data[lineindex].split()
-                # expect entry, in_domainapp, in_subsction, unset_domainapp, unset_subsection
                 if phrases[0]=="in_domainapp":
                     this_phrases=subst_variable_content(lines_data[lineindex].strip()).split()
                     check_enough_args(this_phrases, 3)
