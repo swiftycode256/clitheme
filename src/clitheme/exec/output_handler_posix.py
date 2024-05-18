@@ -52,7 +52,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
     except FileNotFoundError: do_subst=False
     stdout_fd, stdout_slave=pty.openpty()
     stderr_fd, stderr_slave=pty.openpty()
-    stdin_fd, stdin_slave=pty.openpty()
 
     env=copy.copy(os.environ)
     # Prevent apps from using "less" or "more" as pager, as it won't work here
@@ -65,9 +64,11 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
     prev_attrs=termios.tcgetattr(sys.stdin)
-    output_lines=[] # (line_content, is_stderr)
+    output_lines=[] # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
+    # this mechanism prevents user input from being processed through substrules
+    last_input_content=None
     while True:
         try:
             # update terminal attributes from what the program sets
@@ -83,7 +84,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 new_term_size=get_terminal_size()
                 if new_term_size!=last_terminal_size:
                     last_terminal_size=new_term_size
-                    fcntl.ioctl(stdin_fd, termios.TIOCSWINSZ, new_term_size)
                     fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
                     fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
                     process.send_signal(signal.SIGWINCH)
@@ -92,6 +92,9 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
             readsize=io.DEFAULT_BUFFER_SIZE
             if sys.stdin in fds:
                 data=os.read(sys.stdin.fileno(), readsize)
+                # if input from last iteration did not end with newlines, append new content
+                if last_input_content!=None: last_input_content+=data
+                else: last_input_content=data
                 # if child process not in cbreak mode, output the characters
                 # if termios.tcgetattr(stdin_fd)[3] & termios.ICANON:
                 #     os.write(sys.stdout.fileno(), data)
@@ -101,8 +104,13 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 os.write(stdout_fd, data)
                 # ^C pressed
                 # if data==b'\x03' and (not termios.tcgetattr(stdout_fd)[0] & termios.IGNBRK) and termios.tcgetattr(stdout_fd)[0] & termios.BRKINT: process.send_signal(signal.SIGINT)
-            if stdout_fd in fds:
-                data=os.read(stdout_fd, readsize)
+            def handle_output(is_stderr: bool):
+                data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                do_subst_operation=True
+                # nonlocal last_input_content
+                # print(last_input_content, data, data==last_input_content)
+                # if data==last_input_content: do_subst_operation=False
+                # last_input_content=None
                 lines=data.splitlines(keepends=True)
                 for x in range(len(lines)):
                     line=lines[x]
@@ -110,18 +118,11 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                     if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
                         orig_line=output_lines[-1][0]
                         output_lines.pop()
-                        output_lines.append((orig_line+line,False))
-                    else: output_lines.append((line,False))
-            if stderr_fd in fds:
-                data=os.read(stderr_fd, readsize)
-                lines=data.splitlines(keepends=True)
-                for x in range(len(lines)):
-                    line=lines[x]
-                    if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
-                        orig_line=output_lines[-1][0]
-                        output_lines.pop()
-                        output_lines.append((orig_line+line,True))
-                    else: output_lines.append((line,True))
+                        output_lines.append((orig_line+line,is_stderr,do_subst_operation))
+                    else: output_lines.append((line,is_stderr,do_subst_operation))
+            if stdout_fd in fds: handle_output(is_stderr=False)
+            if stderr_fd in fds: handle_output(is_stderr=True)
+
             if process.poll()!=None and len(output_lines)==0: break
             # Process outputs
             for x in range(len(output_lines)):
@@ -129,13 +130,20 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 line: bytes=line_data[0]
                 # if does not end with newlines, leave it for the next iteration
                 if x==len(output_lines)-1 and not line.endswith(newlines):
-                    if not len(line_data)>2: # not from previous iteration
+                    if not len(line_data)>=4: # not from previous iteration
                         output_lines=[line_data+(True,)] # add another entry to signal it's from previous iteration
                         break
+                # check if the output is user input. if yes, skip
+                # print(last_input_content, line) # DEBUG
+                if line==last_input_content: line_data=(line_data[0],line_data[1],False); last_input_content=None
+                elif last_input_content!=None and last_input_content.startswith(line): 
+                    line_data=(line_data[0],line_data[1],False)
+                    last_input_content=last_input_content[len(line):]
+                else: last_input_content=None
                 # subst operation
                 subst_line=copy.copy(line)
-                if do_subst: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
-                subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
+                if do_subst and line_data[2]==True: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
+                if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
             else: output_lines=[] # happens when no 'break' statement occurs
         except KeyboardInterrupt:
