@@ -2,7 +2,7 @@ import subprocess
 import sys
 import os
 import io
-import pty
+import pty, tty
 import select
 import termios
 import fcntl
@@ -60,17 +60,23 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
     process: subprocess.Popen
     # Redirect stderr to stdout for now (BETA)
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
-    try: process=subprocess.Popen(command, stdin=stdin_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
+    try: process=subprocess.Popen(command, stdin=stdout_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
+    prev_attrs=termios.tcgetattr(sys.stdin)
     output_lines=[] # (line_content, is_stderr)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     while True:
         try:
-            # update cbreak (realtime stdin) attributes from what the program sets
-            try: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdin_fd))
+            # update terminal attributes from what the program sets
+            try: 
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdout_fd))
+                attrs=termios.tcgetattr(stdout_fd)
+                # disable canonical and echo mode (enable cbreak) no matter what
+                attrs[3] &= ~(termios.ICANON | termios.ECHO)
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, attrs)
             except termios.error: pass
             # update terminal size
             try:
@@ -86,8 +92,15 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
             readsize=io.DEFAULT_BUFFER_SIZE
             if sys.stdin in fds:
                 data=os.read(sys.stdin.fileno(), readsize)
-                if not data: break
-                os.write(stdin_fd, data)
+                # if child process not in cbreak mode, output the characters
+                # if termios.tcgetattr(stdin_fd)[3] & termios.ICANON:
+                #     os.write(sys.stdout.fileno(), data)
+                #     # output a new line if return key is pressed and ends on \r
+                #     if data.endswith(b'\r'): os.write(sys.stdout.fileno(), b'\n')
+                # if not data: break
+                os.write(stdout_fd, data)
+                # ^C pressed
+                # if data==b'\x03' and (not termios.tcgetattr(stdout_fd)[0] & termios.IGNBRK) and termios.tcgetattr(stdout_fd)[0] & termios.BRKINT: process.send_signal(signal.SIGINT)
             if stdout_fd in fds:
                 data=os.read(stdout_fd, readsize)
                 lines=data.splitlines(keepends=True)
@@ -128,4 +141,5 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         except KeyboardInterrupt:
             try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     return process.poll()
