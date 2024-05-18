@@ -11,6 +11,8 @@ import shutil
 import re
 from . import _globalvar, _generator, frontend
 
+# spell-checker:ignore pathnames lsdir inpstr
+
 usage_description=\
 """Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
        {0} get-current-theme-info

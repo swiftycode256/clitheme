@@ -13,6 +13,8 @@ import uuid
 from typing import Optional
 from .. import _globalvar, frontend
 
+# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
+
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
 path=""

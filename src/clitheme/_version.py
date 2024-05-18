@@ -1,3 +1,5 @@
+# spell-checker:ignore buildnumber
+
 # Version definition file; define the package version here
 # The __version__ variable must be a literal string; DO NOT use variables
 __version__="2.0-dev20240516"

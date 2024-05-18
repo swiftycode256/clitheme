@@ -7,6 +7,8 @@ import uuid
 from typing import Optional
 from .. import _globalvar, frontend
 
+# spell-checker:ignore matchoption cmdlist exactmatch rowid
+
 connection=sqlite3.connect(":memory:") # placeholder
 debug_mode=False
 _globalvar.handle_set_themedef(frontend, "db_interface")

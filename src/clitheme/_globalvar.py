@@ -9,6 +9,8 @@ import re
 from copy import copy
 from . import _version
 
+# spell-checker:ignoreRegExp banphrase[s]{0,1}
+
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
 Please make sure that the {var} environment variable is set correctly.

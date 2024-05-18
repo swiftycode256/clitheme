@@ -14,6 +14,8 @@ from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
 
+# spell-checker:ignore cbreak ICANON readsize splitarray
+
 _globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
@@ -103,6 +105,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
                 # if not data: break
                 os.write(stdout_fd, data)
                 # ^C pressed
+                # spell-checker:ignore IGNBRK BRKINT
                 # if data==b'\x03' and (not termios.tcgetattr(stdout_fd)[0] & termios.IGNBRK) and termios.tcgetattr(stdout_fd)[0] & termios.BRKINT: process.send_signal(signal.SIGINT)
             def handle_output(is_stderr: bool):
                 data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)

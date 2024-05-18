@@ -14,6 +14,9 @@ import hashlib
 import shutil
 from typing import Optional
 from . import _globalvar
+
+# spell-checker:ignore newhash numorig numcur
+
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 global_domain=""
