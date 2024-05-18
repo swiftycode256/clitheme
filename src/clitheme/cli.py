@@ -142,8 +142,8 @@ def get_current_theme_info():
     else: 
         print(f.reof("overlay-history-msg", "Overlay history (sorted by latest installed):"))
     for theme_pathname in lsdir_result:
-        target_path=search_path+"/"+theme_pathname
-        if not os.path.isdir(target_path): continue # skip current_theme_index file
+        target_path=search_path+"/"+theme_pathname.strip()
+        if (not os.path.isdir(target_path)) or re.search(r"^\d+$", theme_pathname.strip())==None: continue # skip current_theme_index file
         # name
         name="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):

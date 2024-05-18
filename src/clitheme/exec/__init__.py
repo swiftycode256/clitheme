@@ -6,6 +6,7 @@ Module used for clitheme-exec
 """
 import sys
 import os
+import re
 import io
 import shutil
 def _labeled_print(msg: str):
@@ -40,7 +41,7 @@ def _check_regenerate_db() -> bool:
             paths=[]
             for pathname in lsdir_result:
                 target_path=search_path+"/"+pathname
-                if not os.path.isdir(target_path): continue
+                if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
                 content=open(target_path+"/file_content", encoding="utf-8").read()
                 file_contents.append(content)
                 paths.append(target_path+"/manpage_data/file_content") # small hack/workaround
