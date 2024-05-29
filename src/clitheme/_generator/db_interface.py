@@ -96,7 +96,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     final_cmdlist_exactmatch=[]
     if command!=None and len(command.split())>0:
         # command without paths (e.g. /usr/bin/bash -> bash)
-        stripped_command=os.path.basename(command)
+        stripped_command=os.path.basename(command.split()[0])+" "+(_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
         # obtain a list of effective_command with the same first term
         cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
         # also include one-phrase commands
