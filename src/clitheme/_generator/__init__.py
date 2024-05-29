@@ -228,6 +228,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     def handle_end_section(section_name: str):
         nonlocal parsed_sections; parsed_sections.append(section_name)
         nonlocal section_parsing; section_parsing=False
+    def handle_substesc(content: str) -> str:
+        return content.replace("{{ESC}}", "\x1b")
+    def handle_singleline_content(content: str) -> str:
+        target_content=copy.copy(content)
+        target_content=subst_variable_content(target_content)
+        if "substesc" in global_options.keys() and global_options['substesc']==True:
+            target_content=handle_substesc(target_content)
+        return target_content
 
     ## sub-block processing functions
     def handle_block_input(preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True, disable_substesc: bool=False) -> str:
@@ -269,8 +277,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         got_options=copy.copy(global_options)
         specified_options={}
         if len(lines_data[lineindex].split())>1:
-            got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=(["leadtabindents", "leadspaces"] if preserve_indents else []) if disallow_cmdmatch_options else None)
-            specified_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=False, allowed_options=(["leadtabindents", "leadspaces"] if preserve_indents else []) if disallow_cmdmatch_options else None)
+            got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True)
+            specified_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=False)
         for option in got_options.keys():
             def is_specified_in_block() -> bool: return option in specified_options.keys() and specified_options[option]==True
             if option=="leadtabindents": 
@@ -284,7 +292,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             elif option=="substesc":
                 if disable_substesc and is_specified_in_block(): handle_error(fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(lineindex+1), phrase=option))
                 # substitute {{ESC}} with escape literal
-                if got_options['substesc']==True and not disable_substesc: blockinput_data=re.sub(r"{{ESC}}", "\x1b", blockinput_data)
+                if got_options['substesc']==True and not disable_substesc: blockinput_data=handle_substesc(blockinput_data)
             elif option=="substvar":
                 if got_options['substvar']==True: blockinput_data=subst_variable_content(blockinput_data, True)
             elif disallow_cmdmatch_options:
@@ -322,11 +330,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     content=_globalvar.extract_content(lines_data[lineindex], begin_phrase_count=2)
                     locale=phrases[1]
                 target_entry=copy.copy(entry_name)
-                # substvar
-                content=subst_variable_content(content)
-                # substesc
-                if "substesc" in global_options.keys() and global_options['substesc']==True:
-                    content=re.sub(r"{{ESC}}", '\x1b', content)
+                content=handle_singleline_content(content) # handle substesc and substvar
                 if locale!="default":
                     target_entry+="__"+locale
                 if not is_substrules: add_entry(datapath, target_entry, content, lineindex+1)
@@ -343,7 +347,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
-                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "subststdoutonly", "subststderronly"])
+                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "subststdoutonly", "subststderronly", "substall"])
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
                         substrules_endmatchhere=True
@@ -405,7 +409,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                         content=handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                         file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     else:
-                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase)
+                        content=handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_substesc=True)
                         file_name=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
                     write_infofile( \
                         path+"/"+_globalvar.generator_info_pathname+"/"+custom_infofile_name, \
@@ -540,9 +544,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     check_enough_args(phrases, 2)
                     options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
                     match_pattern=_globalvar.extract_content(lines_data[lineindex])
-                    match_pattern=subst_variable_content(match_pattern)
-                    if "substesc" in global_options.keys() and global_options['substesc']==True:
-                        match_pattern=match_pattern.replace("{{ESC}}", "\x1b")
+                    match_pattern=handle_singleline_content(match_pattern) # handle substesc and substvar
                     handle_entry(match_pattern, end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
                 elif phrases[0]=="set_options":
                     check_enough_args(phrases, 2)
