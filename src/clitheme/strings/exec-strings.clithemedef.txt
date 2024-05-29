@@ -26,6 +26,9 @@ in_domainapp swiftycode clitheme
         [entry] options-debug-showchars
             locale:zh_CN --debug-showchars：使用明文显示终端控制符号
         [/entry]
+        [entry] options-debug-nosubst
+            locale:zh_CN --debug-nosubst：不进行任何输出替换，即使已设定主题
+        [/entry]
     in_subsection exec
         [entry] help-usage-prompt
             locale:zh_CN 使用"clitheme-exec --help"以获取使用方式

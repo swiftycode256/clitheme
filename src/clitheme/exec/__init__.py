@@ -16,7 +16,7 @@ from . import output_handler_posix
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
 
-# spell-checker:ignore lsdir showhelp argcount
+# spell-checker:ignore lsdir showhelp argcount nosubst
 
 _globalvar.handle_set_themedef(frontend, "clitheme-exec")
 frontend.global_domain="swiftycode"
@@ -66,13 +66,14 @@ def _check_regenerate_db() -> bool:
 def _handle_help_message(full_help: bool=False):
     fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
-    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [command]")
+    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [--debug-nosubst] [command]")
     if not full_help: return
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
     print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
     print("\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
     print("\t"+fd2.reof("options-debug-showchars", "--debug-showchars: Display various control characters in plain text"))
+    print("\t"+fd2.reof("options-debug-nosubst", "--debug-nosubst: Do not perform any output substitutions even if a theme is set"))
 
 def _handle_error(message: str):
     print(message)
@@ -90,6 +91,7 @@ def main(arguments: list[str]):
     debug_mode=[]
     argcount=0
     showhelp=False
+    subst=True
     for arg in arguments[1:]:
         if not arg.startswith('-'): break
         argcount+=1
@@ -101,6 +103,8 @@ def main(arguments: list[str]):
             debug_mode.append("newlines")
         elif arg=="--debug-showchars":
             debug_mode.append("showchars")
+        elif arg=="--debug-nosubst":
+            subst=False
         elif arg=="--help":
             showhelp=True
         else: 
@@ -114,12 +118,13 @@ def main(arguments: list[str]):
             _handle_error(fd.reof("no-command-err", "Error: no command specified"))
             return 1
     # check database
-    if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-        _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
-    if not _check_regenerate_db(): return 1
+    if subst:
+        if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
+            _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
+        if not _check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
-        return output_handler_posix._handler_main(arguments[1+argcount:], debug_mode)
+        return output_handler_posix._handler_main(arguments[1+argcount:], debug_mode, subst)
     elif os.name=="nt":
         _labeled_print("Error: Windows platform is not currently supported")
         return 1

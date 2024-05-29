@@ -2,7 +2,7 @@ import subprocess
 import sys
 import os
 import io
-import pty, tty
+import pty
 import select
 import termios
 import fcntl
@@ -48,10 +48,11 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
         final_lines.append(line)
     return final_lines
 
-def _handler_main(command: list[str], debug_mode: list[str]=[]):
-    do_subst=True
-    try: db_interface.connect_db()
-    except FileNotFoundError: do_subst=False
+def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True):
+    do_subst=subst
+    if do_subst==True: 
+        try: db_interface.connect_db()
+        except FileNotFoundError: do_subst=False
     stdout_fd, stdout_slave=pty.openpty()
     stderr_fd, stderr_slave=pty.openpty()
 
@@ -75,7 +76,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[]):
         try:
             # update terminal attributes from what the program sets
             try: 
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termios.tcgetattr(stdout_fd))
                 attrs=termios.tcgetattr(stdout_fd)
                 # disable canonical and echo mode (enable cbreak) no matter what
                 attrs[3] &= ~(termios.ICANON | termios.ECHO)
