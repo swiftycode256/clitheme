@@ -16,6 +16,7 @@ import signal
 import struct
 import copy
 import re
+import concurrent.futures
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
@@ -27,7 +28,7 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
-def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False) -> list[bytes]:
+def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False, failed: bool=False) -> list[bytes]:
     final_lines=[]
     for x in range(len(lines)):
         line=lines[x]
@@ -50,7 +51,7 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
             line+=b'\x1b[0m'
         if "normal" in debug_mode:
             # e.g. o{ <line>; o> <start>
-            line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
+            line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
         final_lines.append(line)
     return final_lines
 
@@ -103,23 +104,10 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
                 # if input from last iteration did not end with newlines, append new content
                 if last_input_content!=None: last_input_content+=data
                 else: last_input_content=data
-                # if child process not in cbreak mode, output the characters
-                # if termios.tcgetattr(stdin_fd)[3] & termios.ICANON:
-                #     os.write(sys.stdout.fileno(), data)
-                #     # output a new line if return key is pressed and ends on \r
-                #     if data.endswith(b'\r'): os.write(sys.stdout.fileno(), b'\n')
-                # if not data: break
                 os.write(stdout_fd, data)
-                # ^C pressed
-                # spell-checker:ignore IGNBRK BRKINT
-                # if data==b'\x03' and (not termios.tcgetattr(stdout_fd)[0] & termios.IGNBRK) and termios.tcgetattr(stdout_fd)[0] & termios.BRKINT: process.send_signal(signal.SIGINT)
             def handle_output(is_stderr: bool):
                 data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
                 do_subst_operation=True
-                # nonlocal last_input_content
-                # print(last_input_content, data, data==last_input_content)
-                # if data==last_input_content: do_subst_operation=False
-                # last_input_content=None
                 lines=data.splitlines(keepends=True)
                 for x in range(len(lines)):
                     line=lines[x]
@@ -133,6 +121,17 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
             if stderr_fd in fds: handle_output(is_stderr=True)
 
             if process.poll()!=None and len(output_lines)==0: break
+            def process_line(line: bytes, line_data):
+                # subst operation
+                subst_line=copy.copy(line)
+                failed=False
+                try: 
+                    if do_subst and line_data[2]==True: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
+                except TimeoutError: failed=True
+                if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
+                return subst_line
+            executor=concurrent.futures.ThreadPoolExecutor()
+            futures=[]
             # Process outputs
             for x in range(len(output_lines)):
                 line_data=output_lines[x]
@@ -149,12 +148,13 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
                     line_data=(line_data[0],line_data[1],False)
                     last_input_content=last_input_content[len(line):]
                 else: last_input_content=None
+                futures.append(executor.submit(process_line, line, line_data))
                 # subst operation
-                subst_line=copy.copy(line)
-                if do_subst and line_data[2]==True: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
-                if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line)[0] 
-                os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), subst_line)
+                # os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
             else: output_lines=[] # happens when no 'break' statement occurs
+            # Print outputs
+            for thread in futures:
+                os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
         except KeyboardInterrupt:
             try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass

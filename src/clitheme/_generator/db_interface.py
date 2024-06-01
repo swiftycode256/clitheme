@@ -10,15 +10,19 @@ import sqlite3
 import re
 import copy
 import uuid
+import multiprocessing, threading
 from typing import Optional
 from .. import _globalvar, frontend
 
 # spell-checker:ignore matchoption cmdlist exactmatch rowid
 
 connection=sqlite3.connect(":memory:") # placeholder
+db_path=""
 debug_mode=False
 _globalvar.handle_set_themedef(frontend, "db_interface")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+try: multiprocessing.set_start_method('fork', force=True)
+except: pass
 
 class need_db_regenerate(Exception):
     pass
@@ -28,7 +32,8 @@ class bad_pattern(Exception):
 def handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
 def init_db(file_path: str):
-    global connection
+    global connection, db_path
+    db_path=file_path
     connection=sqlite3.connect(file_path)
     # create the table
     # command_match_strictness: 0: default match options, 1: must start with pattern, 2: must exactly equal pattern
@@ -50,8 +55,10 @@ def init_db(file_path: str):
 def connect_db():
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
         raise FileNotFoundError("No theme set or theme does not contain substrules")
+    global db_path
+    db_path=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
     global connection
-    connection=sqlite3.connect(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}")
+    connection=sqlite3.connect(db_path)
     # check db version
     version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
     if version!=_globalvar.db_version:
@@ -90,6 +97,32 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
     connection.commit()
 
+_last_result=tuple()
+def _exec_re(match_data, content: bytes, ret: list):
+    matched=None; content_str=None
+    try: 
+        matched=re.search(match_data[0], content.decode('utf-8'))!=None
+        content_str=bytes(re.sub(match_data[0], match_data[1], content.decode('utf-8')), 'utf-8')
+    except UnicodeDecodeError: 
+        matched=re.search(bytes(match_data[0], 'utf-8'), content)!=None                    
+        content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content)
+    assert matched!=None
+    assert content_str!=None
+    ret+=[matched, content_str]
+    return (matched, content_str)
+def _exec_str(match_data, content: bytes, ret: list):
+    matched=None; content_str=None
+    try: 
+        matched=match_data[0] in content.decode('utf-8')
+        content_str=bytes(content.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
+    except UnicodeDecodeError: 
+        matched=bytes(match_data[0], 'utf-8') in content
+        content_str=content.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+    assert matched!=None
+    assert content_str!=None
+    ret+=[matched, content_str]
+    return (matched, content_str)
+
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False) -> bytes:
     # Match order:
     # 1. Match rules with exactcmdmatch option set
@@ -98,20 +131,21 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # 3. Match rules without command filter
 
     # retrieve a list of effective commands matching first argument
+    _connection=sqlite3.connect(db_path)
     final_cmdlist=[]
     final_cmdlist_exactmatch=[]
     if command!=None and len(command.split())>0:
         # command without paths (e.g. /usr/bin/bash -> bash)
         stripped_command=os.path.basename(command.split()[0])+" "+(_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
         # obtain a list of effective_command with the same first term
-        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
+        cmdlist=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
         # also include one-phrase commands
-        cmdlist+=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
+        cmdlist+=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
         # sort by number of phrases (greatest to least)
         def split_len(obj: tuple) -> int: return len(obj[0].split())
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
-        cmdlist=connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
+        cmdlist=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
         def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
             match_cmd_phrases=[]
             for p in range(len(match_cmd.split())):
@@ -156,12 +190,12 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         nonlocal matches
         # try the ones with locale defined
         for this_locale in locales:
-            fetch_data=connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND effective_locale=? ORDER BY rowid;", filter_data+(this_locale,)).fetchall()
+            fetch_data=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND effective_locale=? ORDER BY rowid;", filter_data+(this_locale,)).fetchall()
             if len(fetch_data)>0:
                 matches+=fetch_data
                 return
         # else, fetches the ones without locale defined
-        matches+=connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND typeof(effective_locale)=typeof(null) ORDER BY rowid;", filter_data).fetchall()
+        matches+=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND typeof(effective_locale)=typeof(null) ORDER BY rowid;", filter_data).fetchall()
     if len(final_cmdlist)>0:
         for x in range(len(final_cmdlist)):
             cmd=final_cmdlist[x]
@@ -171,25 +205,46 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
     encountered_ids=set()
+    # timeout value for each regex match
+    timeout=0.2
+    # Flag to enable creating separate processes for each operation
+    # Using multiprocessing has SERIOUS performance downsides; currently disabled
+    enable_multiprocessing=False
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         if match_data[5] in encountered_ids: continue
         else: encountered_ids.add(match_data[5])
         matched=False
         if match_data[2]==True: # is regex 
-            try: 
-                matched=re.search(match_data[0], content_str.decode('utf-8'))!=None
-                content_str=bytes(re.sub(match_data[0], match_data[1], content_str.decode('utf-8')), 'utf-8')
-            except UnicodeDecodeError: 
-                matched=re.search(bytes(match_data[0], 'utf-8'), content_str)!=None                    
-                content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
+            if enable_multiprocessing:
+                with multiprocessing.Manager() as manager:
+                    ret=manager.list()
+                    pr=multiprocessing.Process(target=_exec_re, args=(match_data,content_str,ret))
+                    pr.start();pr.join(timeout=timeout)
+                    if pr.is_alive():
+                        pr.terminate()
+                        raise TimeoutError("regex match timeout")
+                        break
+                    else:
+                        matched, content_str=ret
+            else: 
+                ret=[]; _exec_re(match_data,content_str,ret)
+                matched, content_str=ret
         else: # is string
-            try: 
-                matched=match_data[0] in content_str.decode('utf-8')
-                content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
-            except UnicodeDecodeError: 
-                matched=bytes(match_data[0], 'utf-8') in content_str
-                content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
+            if enable_multiprocessing:
+                with multiprocessing.Manager() as manager:
+                    ret=manager.list()
+                    pr=multiprocessing.Process(target=_exec_str, args=(match_data,content_str, ret))
+                    pr.start();pr.join(timeout=timeout)
+                    if pr.is_alive():
+                        pr.terminate()
+                        raise TimeoutError("string match timeout")
+                        break
+                    else:
+                        matched, content_str=ret
+            else:
+                ret=[]; _exec_str(match_data,content_str,ret)
+                matched, content_str=ret
         if match_data[3]==True and matched: # endmatchhere is set
             break
     return content_str
