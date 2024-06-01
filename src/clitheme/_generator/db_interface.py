@@ -97,32 +97,6 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
     connection.commit()
 
-_last_result=tuple()
-def _exec_re(match_data, content: bytes, ret: list):
-    matched=None; content_str=None
-    try: 
-        matched=re.search(match_data[0], content.decode('utf-8'))!=None
-        content_str=bytes(re.sub(match_data[0], match_data[1], content.decode('utf-8')), 'utf-8')
-    except UnicodeDecodeError: 
-        matched=re.search(bytes(match_data[0], 'utf-8'), content)!=None                    
-        content_str=re.sub(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content)
-    assert matched!=None
-    assert content_str!=None
-    ret+=[matched, content_str]
-    return (matched, content_str)
-def _exec_str(match_data, content: bytes, ret: list):
-    matched=None; content_str=None
-    try: 
-        matched=match_data[0] in content.decode('utf-8')
-        content_str=bytes(content.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
-    except UnicodeDecodeError: 
-        matched=bytes(match_data[0], 'utf-8') in content
-        content_str=content.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
-    assert matched!=None
-    assert content_str!=None
-    ret+=[matched, content_str]
-    return (matched, content_str)
-
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False) -> bytes:
     # Match order:
     # 1. Match rules with exactcmdmatch option set
@@ -204,47 +178,48 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             # also append matches with other strictness
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
-    encountered_ids=set()
     # timeout value for each regex match
-    timeout=0.2
-    # Flag to enable creating separate processes for each operation
-    # Using multiprocessing has SERIOUS performance downsides; currently disabled
-    enable_multiprocessing=False
+    timeout=0.5
+    # Flag to enable creating a separate process for the match operation
+    # May impact performance; function timeout not available if disabled
+    enable_multiprocessing=True
+    if enable_multiprocessing:
+        with multiprocessing.Manager() as manager:
+            ret=manager.list()
+            pr=multiprocessing.Process(target=_handle_subst, args=(matches, content_str, is_stderr, ret))
+            pr.start(); pr.join(timeout=timeout)
+            if pr.is_alive():
+                pr.terminate()
+                raise TimeoutError("match operation timeout")
+            else: content_str=ret[0]
+    else:
+        content_str=_handle_subst(matches, content_str, is_stderr)
+    return content_str
+def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
+    content_str=copy.copy(content)
+    encountered_ids=set()
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
-        if match_data[5] in encountered_ids: continue
+        if match_data[5] in encountered_ids: continue # check uuid
         else: encountered_ids.add(match_data[5])
         matched=False
         if match_data[2]==True: # is regex 
-            if enable_multiprocessing:
-                with multiprocessing.Manager() as manager:
-                    ret=manager.list()
-                    pr=multiprocessing.Process(target=_exec_re, args=(match_data,content_str,ret))
-                    pr.start();pr.join(timeout=timeout)
-                    if pr.is_alive():
-                        pr.terminate()
-                        raise TimeoutError("regex match timeout")
-                        break
-                    else:
-                        matched, content_str=ret
-            else: 
-                ret=[]; _exec_re(match_data,content_str,ret)
-                matched, content_str=ret
+            try: 
+                ret_val: tuple=re.subn(match_data[0], match_data[1], content_str.decode('utf-8'))
+                matched=ret_val[1]>0
+                content_str=bytes(ret_val[0], 'utf-8')
+            except UnicodeDecodeError: 
+                ret_val: tuple=re.subn(bytes(match_data[0],'utf-8'), bytes(match_data[1], 'utf-8'), content_str)
+                matched=ret_val[1]>0
+                content_str=ret_val[0]
         else: # is string
-            if enable_multiprocessing:
-                with multiprocessing.Manager() as manager:
-                    ret=manager.list()
-                    pr=multiprocessing.Process(target=_exec_str, args=(match_data,content_str, ret))
-                    pr.start();pr.join(timeout=timeout)
-                    if pr.is_alive():
-                        pr.terminate()
-                        raise TimeoutError("string match timeout")
-                        break
-                    else:
-                        matched, content_str=ret
-            else:
-                ret=[]; _exec_str(match_data,content_str,ret)
-                matched, content_str=ret
+            try: 
+                matched=match_data[0] in content_str.decode('utf-8')
+                content_str=bytes(content_str.decode('utf-8').replace(match_data[0], match_data[1]), 'utf-8')
+            except UnicodeDecodeError: 
+                matched=bytes(match_data[0], 'utf-8') in content_str
+                content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
         if match_data[3]==True and matched: # endmatchhere is set
             break
+    if ret!=None: ret.append(content_str)
     return content_str
