@@ -214,7 +214,7 @@ _return_values=_manager.dict() # uuid : content_str
 def _init_process():
     global _process, _input_values, _return_values
     if _process!=None and _process.is_alive(): _process.terminate()
-    _process=multiprocessing.Process(target=__process_main_loop, args=(_input_values, _return_values))
+    _process=multiprocessing.Process(target=__process_main_loop, args=(_input_values, _return_values), daemon=True)
     try: _process.start()
     except AssertionError: _init_process() # handle "cannot start a process twice" error by trying again
 def __process_main_loop(input_vals: list, return_vals: dict):
