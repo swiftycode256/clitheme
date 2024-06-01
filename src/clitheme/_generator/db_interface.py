@@ -190,14 +190,20 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             _init_process()
         result_id=uuid.uuid4()
         global _input_values; _input_values.append((matches, content_str, is_stderr, result_id))
-        for _ in range(int(timeout*1000)):
+        counter=0
+        while counter<timeout:
             time.sleep(0.001)
             if result_id in _return_values.keys():
-                content_str=_return_values[result_id]
-                del _return_values[result_id]
-                break
+                if _return_values[result_id]==None: # Processing
+                    counter+=0.001
+                else: 
+                    content_str=_return_values[result_id]
+                    del _return_values[result_id]
+                    break
         else: # executed when no "break" happens
-            _process.terminate() # type: ignore
+            try: del _return_values[result_id]
+            except: pass
+            if _process.is_alive(): _process.terminate() # type: ignore
             raise TimeoutError("match operation timeout")
     else:
         content_str=_handle_subst(matches, content_str, is_stderr)
@@ -210,7 +216,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 _manager=multiprocessing.Manager()
 _process: Optional[multiprocessing.Process]=None
 _input_values=_manager.list() # (matches, content, is_stderr, uuid)
-_return_values=_manager.dict() # uuid : content_str
+_return_values=_manager.dict() # uuid : content_str (uuid:None means processing)
 def _init_process():
     global _process, _input_values, _return_values
     if _process!=None and _process.is_alive(): _process.terminate()
@@ -218,17 +224,20 @@ def _init_process():
     try: _process.start()
     except AssertionError: _init_process() # handle "cannot start a process twice" error by trying again
 def __process_main_loop(input_vals: list, return_vals: dict):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-        def handler(content):
-            nonlocal return_vals
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        def handler():
+            nonlocal return_vals, input_vals
+            # the function might be called extra times if operation is queued, so a check is performed
+            if len(input_vals)<=0: return 
+            content=input_vals.pop(0)
+            return_vals[content[3]]=None # Processing
             return_str=_handle_subst(content[0], content[1], content[2])
             return_vals[content[3]]=return_str
         while True:
             time.sleep(0.001)
             try:
                 while len(input_vals)>0: 
-                    content=input_vals.pop(0)
-                    executor.submit(handler, content)
+                    executor.submit(handler)
             except: break
 
 def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
