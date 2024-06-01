@@ -51,7 +51,7 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
             line+=b'\x1b[0m'
         if "normal" in debug_mode:
             # e.g. o{ <line>; o> <start>
-            line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
+            line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';37;41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
         final_lines.append(line)
     return final_lines
 
