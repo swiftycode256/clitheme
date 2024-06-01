@@ -10,7 +10,8 @@ import sqlite3
 import re
 import copy
 import uuid
-import multiprocessing, threading
+import time
+import multiprocessing, concurrent.futures
 from typing import Optional
 from .. import _globalvar, frontend
 
@@ -184,17 +185,52 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # May impact performance; function timeout not available if disabled
     enable_multiprocessing=True
     if enable_multiprocessing:
-        with multiprocessing.Manager() as manager:
-            ret=manager.list()
-            pr=multiprocessing.Process(target=_handle_subst, args=(matches, content_str, is_stderr, ret))
-            pr.start(); pr.join(timeout=timeout)
-            if pr.is_alive():
-                pr.terminate()
-                raise TimeoutError("match operation timeout")
-            else: content_str=ret[0]
+        global _process
+        if _process==None or (_process!=None and not _process.is_alive()):
+            _init_process()
+        result_id=uuid.uuid4()
+        global _input_values; _input_values.append((matches, content_str, is_stderr, result_id))
+        for _ in range(int(timeout*1000)):
+            time.sleep(0.001)
+            if result_id in _return_values.keys():
+                content_str=_return_values[result_id]
+                del _return_values[result_id]
+                break
+        else: # executed when no "break" happens
+            _process.terminate() # type: ignore
+            raise TimeoutError("match operation timeout")
     else:
         content_str=_handle_subst(matches, content_str, is_stderr)
     return content_str
+
+# --The following implementation is for setting a timeout capacity on content match functions--
+    # - A main loop is started for handling substitution requests and returns the corresponding content based on UUID
+    # - If the main loop times out due to catastrophic backtracking or other issues, match_content terminates the loop
+    # - The main loop is checked and restored (if needed) every time match_content is called, while preserving input queue and return values (resumes seamlessly)
+_manager=multiprocessing.Manager()
+_process: Optional[multiprocessing.Process]=None
+_input_values=_manager.list() # (matches, content, is_stderr, uuid)
+_return_values=_manager.dict() # uuid : content_str
+def _init_process():
+    global _process, _input_values, _return_values
+    if _process!=None and _process.is_alive(): _process.terminate()
+    _process=multiprocessing.Process(target=__process_main_loop, args=(_input_values, _return_values))
+    try: _process.start()
+    except AssertionError: _init_process() # handle "cannot start a process twice" error by trying again
+def __process_main_loop(input_vals: list, return_vals: dict):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        def handler(content):
+            nonlocal return_vals
+            return_str=_handle_subst(content[0], content[1], content[2])
+            return_vals[content[3]]=return_str
+        while True:
+            time.sleep(0.001)
+            try:
+                while len(input_vals)>0: 
+                    content=input_vals.pop(0)
+                    executor.submit(handler, content)
+            except: break
+
 def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
     content_str=copy.copy(content)
     encountered_ids=set()
