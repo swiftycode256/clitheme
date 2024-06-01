@@ -16,7 +16,7 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: invaild input   ","input anything"), # test extra spaces
                ("Error: sample message", "example_app --this install-stuff"), # test strictcmdmatch (substitution should not happen)
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
-               ("rm: <no filename>: Permission denied", "rm -rf"), # test exactcmdmatch (substitution rule containing this option should be prioritized over previous rules)
+               ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
                ("example_app: using list options", "/usr/bin/example_app -rlc"), # test smartcmdmatch and command basename handling
 ]
@@ -80,9 +80,9 @@ substrules_file=r"""
         [/substitute_string] endmatchhere
 
     set_options exactcmdmatch
-    filter_command rm -rf
-        [substitute_regex] (?P<shell>.+): (?P<filename>.+): Permission denied
-            locale:default \g<shell> says: Missing argument for operation! ಥ_ಥ
+    filter_command rm file.ban
+        [substitute_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
+            locale:default \g<shell> says: Operation not permitted! ಥ_ಥ
             locale:zh_CN \g<shell> 说：缺少操作参数！ಥ_ಥ
         [/substitute_regex]
     
