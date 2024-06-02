@@ -158,5 +158,10 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
         except KeyboardInterrupt:
             try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass
+        except Exception as exc:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+            print("\x1b[0m", end='') # reset color
+            _labeled_print(fd.feof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
+            raise exc
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     return process.poll()

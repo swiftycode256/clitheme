@@ -68,4 +68,7 @@ in_domainapp swiftycode clitheme
         [entry] command-fail-err
             locale:zh_CN 错误：无法执行命令：{msg}
         [/entry]
+        [entry] internal-error-err
+            locale:zh_CN 错误：执行命令时发生内部错误（执行已终止）：
+        [/entry]
 {/entries_section}
