@@ -79,6 +79,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     # this mechanism prevents user input from being processed through substrules
     last_input_content=None
+    executor=concurrent.futures.ThreadPoolExecutor()
     while True:
         try:
             # update terminal attributes from what the program sets
@@ -130,7 +131,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
                 except TimeoutError: failed=True
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
-            executor=concurrent.futures.ThreadPoolExecutor()
             futures=[]
             # Process outputs
             for x in range(len(output_lines)):

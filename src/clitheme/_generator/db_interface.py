@@ -13,6 +13,7 @@ import uuid
 import time
 import signal
 import multiprocessing, concurrent.futures
+import queue
 from typing import Optional
 from .. import _globalvar, frontend
 
@@ -190,7 +191,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if len(_running_processes_ids)==0:
             _init_process()
         result_id=uuid.uuid4()
-        global _input_values; _input_values.append((matches, content_str, is_stderr, result_id))
+        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id))
         counter=0
         watchdog_timer=0
         while counter<timeout:
@@ -205,9 +206,9 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             else:
                 # Handle cases when the data didn't get processed at all
                 watchdog_timer+=0.001
-                if watchdog_timer>=1.000:
+                if watchdog_timer>=1.500:
                     _init_process()
-                    _input_values.append((matches, content_str, is_stderr, result_id))
+                    _input_values.put((matches, content_str, is_stderr, result_id))
                     watchdog_timer=0
         else: # executed when no "break" happens
             try: del _return_values[result_id]
@@ -224,7 +225,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # - The main loop is checked and restored (if needed) every time match_content is called, while preserving input queue and return values (resumes seamlessly)
 _manager=multiprocessing.Manager()
 _process: Optional[multiprocessing.Process]=None
-_input_values=_manager.list() # (matches, content, is_stderr, uuid)
+_input_values=multiprocessing.Queue() # (matches, content, is_stderr, uuid)
 _return_values=_manager.dict() # uuid : content_str (uuid:None means processing)
 
 _watchdog_process: Optional[multiprocessing.Process]=None
@@ -253,25 +254,26 @@ def __process_watchdog(running_ids):
                     running_ids.remove(pid)
                 except: pass
         except KeyboardInterrupt: pass
-def __process_main_loop(input_vals: list, return_vals: dict, process_ids: list):
+def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, process_ids: list):
     process_ids.append(os.getpid())
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        def handler():
-            nonlocal return_vals, input_vals
-            # the function might be called extra times if operation is queued, so a check is performed
-            if len(input_vals)<=0: return 
-            content=input_vals.pop(0)
-            return_vals[content[3]]=None # Processing
-            return_str=_handle_subst(content[0], content[1], content[2])
-            return_vals[content[3]]=return_str
-        while True:
-            try: time.sleep(0.001)
-            except KeyboardInterrupt: pass
-            try:
-                while len(input_vals)>0: 
-                    executor.submit(handler)
-            except KeyboardInterrupt: pass
-            except: break
+    #executor=concurrent.futures.ThreadPoolExecutor(max_workers=32)
+    def handler():
+        nonlocal return_vals, input_vals
+        # the function might be called extra times if operation is queued, so a check is performed
+        content: tuple
+        try: content=input_vals.get_nowait()
+        except queue.Empty: return
+        return_vals[content[3]]=None # Processing
+        return_str=_handle_subst(content[0], content[1], content[2])
+        return_vals[content[3]]=return_str
+    while True:
+        try: time.sleep(0.001)
+        except KeyboardInterrupt: pass
+        try:
+                #executor.submit(handler)
+                handler()
+        except KeyboardInterrupt: pass
+        # except: break
 
 def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
     content_str=copy.copy(content)
