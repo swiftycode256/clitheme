@@ -11,6 +11,7 @@ import re
 import copy
 import uuid
 import time
+import signal
 import multiprocessing, concurrent.futures
 from typing import Optional
 from .. import _globalvar, frontend
@@ -191,6 +192,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         result_id=uuid.uuid4()
         global _input_values; _input_values.append((matches, content_str, is_stderr, result_id))
         counter=0
+        watchdog_timer=0
         while counter<timeout:
             time.sleep(0.001)
             if result_id in _return_values.keys():
@@ -200,10 +202,17 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                     content_str=_return_values[result_id]
                     del _return_values[result_id]
                     break
+            else:
+                # Handle cases when the data didn't get processed at all
+                watchdog_timer+=0.001
+                if watchdog_timer>=1.000:
+                    _init_process()
+                    _input_values.append((matches, content_str, is_stderr, result_id))
+                    watchdog_timer=0
         else: # executed when no "break" happens
             try: del _return_values[result_id]
             except: pass
-            if _process.is_alive(): _process.terminate() # type: ignore
+            _init_process() # restart the process
             raise TimeoutError("match operation timeout")
     else:
         content_str=_handle_subst(matches, content_str, is_stderr)
@@ -234,10 +243,12 @@ def __process_main_loop(input_vals: list, return_vals: dict):
             return_str=_handle_subst(content[0], content[1], content[2])
             return_vals[content[3]]=return_str
         while True:
-            time.sleep(0.001)
+            try: time.sleep(0.001)
+            except KeyboardInterrupt: pass
             try:
                 while len(input_vals)>0: 
                     executor.submit(handler)
+            except KeyboardInterrupt: pass
             except: break
 
 def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
