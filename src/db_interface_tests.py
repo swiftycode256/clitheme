@@ -12,8 +12,8 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("ls: /etc/secret: Permission denied","ls /etc/secret"),
                ("ls: /etc/secret: Permission denied","wef ls /etc/secret"), # test first phrase detection (substitution should not happen)
                ("ls: unrecognized option '--help'", "ls --help"),
-               ("Warning: invaild input", "input anything"),
-               ("Error: invaild input   ","input anything"), # test extra spaces
+               ("Warning: invalid input", "input anything"),
+               ("Error: invalid input   ","input anything"), # test extra spaces
                ("Error: sample message", "example_app --this install-stuff"), # test strictcmdmatch (substitution should not happen)
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
@@ -67,8 +67,8 @@ substrules_file=r"""
         locale:default (ToT)/~~~ Error:\g<1>
         locale:zh_CN (ToT)/~~~ 错误：
     [/substitute_regex]
-    [substitute_regex] invaild input( )*$
-        locale:default input is invaild! ಥ_ಥ
+    [substitute_regex] invalid input( )*$
+        locale:default input is invalid! ಥ_ಥ
         locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
 
