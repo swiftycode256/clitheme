@@ -186,8 +186,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # May impact performance; function timeout not available if disabled
     enable_multiprocessing=True
     if enable_multiprocessing:
-        global _process
-        if _process==None or (_process!=None and not _process.is_alive()):
+        global _running_processes_ids
+        if len(_running_processes_ids)==0:
             _init_process()
         result_id=uuid.uuid4()
         global _input_values; _input_values.append((matches, content_str, is_stderr, result_id))
@@ -226,13 +226,35 @@ _manager=multiprocessing.Manager()
 _process: Optional[multiprocessing.Process]=None
 _input_values=_manager.list() # (matches, content, is_stderr, uuid)
 _return_values=_manager.dict() # uuid : content_str (uuid:None means processing)
+
+_watchdog_process: Optional[multiprocessing.Process]=None
+_running_processes_ids=_manager.list()
+
 def _init_process():
-    global _process, _input_values, _return_values
-    if _process!=None and _process.is_alive(): _process.terminate()
-    _process=multiprocessing.Process(target=__process_main_loop, args=(_input_values, _return_values), daemon=True)
+    global _process, _input_values, _return_values, _watchdog_process, _running_processes_ids
+    # if _process!=None and _process.is_alive(): _process.terminate()
+    if _watchdog_process==None:
+        _watchdog_process=multiprocessing.Process(name="process_watchdog", target=__process_watchdog, args=(_running_processes_ids,), daemon=True)
+        _watchdog_process.start()
+    _process=multiprocessing.Process(name="subst_content_handler", target=__process_main_loop, args=(_input_values, _return_values, _running_processes_ids), daemon=True)
     try: _process.start()
-    except AssertionError: _init_process() # handle "cannot start a process twice" error by trying again
-def __process_main_loop(input_vals: list, return_vals: dict):
+    except AssertionError: _init_process();return # handle "cannot start a process twice" error by trying again
+    # _running_processes_ids.append(_process.pid)
+# watchdog to terminate any processes other than the current one
+def __process_watchdog(running_ids):
+    while True:
+        try: 
+            time.sleep(0.01)
+            # kill all processes except the most recently started one (last in list)
+            l=running_ids[:-1]
+            for pid in l:
+                try: 
+                    os.kill(pid, signal.SIGTERM)
+                    running_ids.remove(pid)
+                except: pass
+        except KeyboardInterrupt: pass
+def __process_main_loop(input_vals: list, return_vals: dict, process_ids: list):
+    process_ids.append(os.getpid())
     with concurrent.futures.ThreadPoolExecutor() as executor:
         def handler():
             nonlocal return_vals, input_vals
