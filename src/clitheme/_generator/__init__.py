@@ -129,17 +129,27 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     def is_ignore_line() -> bool:
         return lines_data[lineindex].strip()=="" or lines_data[lineindex].strip().startswith('#')
 
+    ## Defined option groups
+    lead_indent_options=["leadtabindents", "leadspaces"]
+    content_subst_options=["substesc","substvar"]
+    command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]
+    subst_limiting_options=["subststdoutonly", "subststderronly", "substall"]
+    
+    # options used in handle_block_input
+    block_input_options=lead_indent_options+content_subst_options
+
+    # value options: options requiring an integer value
+    value_options=lead_indent_options
+    # on/off options (use no<...> to disable)
+    bool_options=content_subst_options+["endmatchhere"]
+    # only one of these options can be set to true at the same time (specific to groups)
+    switch_options=[command_filter_options]
+    # Disable these options for now (BETA)
+    # switch_options+=[subst_limiting_options]
+
     ## sub-processing functions and handlers
     def parse_options(options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
         nonlocal global_options
-        # value options: options requiring an integer value
-        value_options=["leadtabindents", "leadspaces"]
-        # on/off options (use no<...> to disable)
-        bool_options=["substesc", "substvar", "endmatchhere"]
-        # only one of these options can be set to true at the same time (specific to groups)
-        switch_options=[["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]]
-        # Disable these options for now (BETA)
-        # switch_options+=[["subststdoutonly", "subststderronly", "substall"]]
 
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(global_options if merge_global_options==1 else really_really_global_options)
@@ -220,8 +230,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
 
         var_content=_globalvar.extract_content(line_content)
         # subst variable references
-        if "substvar" in global_options and global_options["substvar"]==True:
-            var_content=subst_variable_content(var_content)
+        check_list=really_really_global_options if really_really_global else global_options
+        if "substvar" in check_list and check_list["substvar"]==True: 
+            var_content=subst_variable_content(var_content, override_check=True)
         # set variable
         if really_really_global: really_really_global_variables[var_name]=var_content
         else: global_variables[var_name]=var_content
@@ -353,7 +364,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: check_extra_args(phrases, 1, use_exact_count=True)
-                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=["endmatchhere", "subststdoutonly", "subststderronly", "substall"])
+                got_options=parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=subst_limiting_options+["endmatchhere"])
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
                         substrules_endmatchhere=True
@@ -517,7 +528,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                     # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
                     got_options=copy.copy(global_options)
                     if len(lines_data[lineindex].split())>1:
-                        got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch"])
+                        got_options=parse_options(lines_data[lineindex].split()[1:], merge_global_options=True, allowed_options=block_input_options+command_filter_options)
                     for this_option in got_options:
                         if this_option=="strictcmdmatch" and got_options['strictcmdmatch']==True:
                             strictness=1
