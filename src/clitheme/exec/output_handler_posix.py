@@ -66,6 +66,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
     env=copy.copy(os.environ)
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
+    prev_attrs=termios.tcgetattr(sys.stdin)
     process: subprocess.Popen
     # Redirect stderr to stdout for now (BETA)
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
@@ -73,7 +74,6 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=str(sys.exc_info()[1])))
         return 1
-    prev_attrs=termios.tcgetattr(sys.stdin)
     output_lines=[] # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
@@ -126,9 +126,26 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
                 # subst operation
                 subst_line=copy.copy(line)
                 failed=False
-                try: 
-                    if do_subst and line_data[2]==True: subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
-                except TimeoutError: failed=True
+                if do_subst and line_data[2]==True:
+                    def operation():
+                        nonlocal subst_line, failed
+                        try: 
+                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
+                        except TimeoutError: failed=True
+                    if db_interface.enable_multiprocessing:
+                        # First implementation (A): use the separate process in db_interface
+                        # No additional actions required
+                        operation()
+                    else:
+                        # Alternative implementation (B): use signal handlers to force exception in execution when catastrophic backtracking happens (timeout)
+                        # --Multithreading cannot be used in implementation B--
+                            # This means that only one line is processed at the same time; not ideal if multiple output lines are experiencing catastrophic backtracking
+                        def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
+                        signal.signal(signal.SIGALRM, raise_error)
+                        signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
+                        operation()
+                        # remove the interval timer to prevent exception when function finishes before timeout
+                        signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
             futures=[]
@@ -148,9 +165,9 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
                     line_data=(line_data[0],line_data[1],False)
                     last_input_content=last_input_content[len(line):]
                 else: last_input_content=None
-                futures.append(executor.submit(process_line, line, line_data))
                 # subst operation
-                # os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
+                if db_interface.enable_multiprocessing: futures.append(executor.submit(process_line, line, line_data))
+                else: os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
             else: output_lines=[] # happens when no 'break' statement occurs
             # Print outputs
             for thread in futures:
@@ -160,7 +177,7 @@ def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True
             except KeyboardInterrupt: pass
         except Exception as exc:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-            print("\x1b[0m", end='') # reset color
+            print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
             _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
             raise exc
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes

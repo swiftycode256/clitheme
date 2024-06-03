@@ -181,11 +181,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             # also append matches with other strictness
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
-    # timeout value for each regex match
-    timeout=0.5
-    # Flag to enable creating a separate process for the match operation
-    # May impact performance; function timeout not available if disabled
-    enable_multiprocessing=True
+    global enable_multiprocessing, match_timeout
     if enable_multiprocessing:
         global _running_processes_ids
         if len(_running_processes_ids)==0:
@@ -194,7 +190,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         global _input_values; _input_values.put((matches, content_str, is_stderr, result_id))
         counter=0
         watchdog_timer=0
-        while counter<timeout:
+        while counter<match_timeout:
             time.sleep(0.001)
             if result_id in _return_values.keys():
                 if _return_values[result_id]==None: # Processing
@@ -219,10 +215,19 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         content_str=_handle_subst(matches, content_str, is_stderr)
     return content_str
 
-# --The following implementation is for setting a timeout capacity on content match functions--
+# --The following implementation (A) is for setting a timeout capacity on content match functions--
     # - A main loop is started for handling substitution requests and returns the corresponding content based on UUID
     # - If the main loop times out due to catastrophic backtracking or other issues, match_content terminates the loop
     # - The main loop is checked and restored (if needed) every time match_content is called, while preserving input queue and return values (resumes seamlessly)
+    # ** May impact performance and is currently prone to random hangs, especially under Linux **
+# --An alternative implementation (B) is available in output_handler_posix, but multithreading can't be used and doesn't work under Windows--
+
+# Flag to determine whether implementation A is used
+# If False, implementation B is used in output_handler_posix under Unix/Linux
+enable_multiprocessing=False
+# timeout value for each match operation
+match_timeout=0.4
+
 _manager=multiprocessing.Manager()
 _process: Optional[multiprocessing.Process]=None
 _input_values=multiprocessing.Queue() # (matches, content, is_stderr, uuid)
@@ -256,7 +261,7 @@ def __process_watchdog(running_ids):
         except KeyboardInterrupt: pass
 def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, process_ids: list):
     process_ids.append(os.getpid())
-    #executor=concurrent.futures.ThreadPoolExecutor(max_workers=32)
+    executor=concurrent.futures.ThreadPoolExecutor(max_workers=32)
     def handler():
         nonlocal return_vals, input_vals
         # the function might be called extra times if operation is queued, so a check is performed
@@ -270,8 +275,8 @@ def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, pr
         try: time.sleep(0.001)
         except KeyboardInterrupt: pass
         try:
-                #executor.submit(handler)
-                handler()
+                executor.submit(handler)
+                # handler()
         except KeyboardInterrupt: pass
         # except: break
 
