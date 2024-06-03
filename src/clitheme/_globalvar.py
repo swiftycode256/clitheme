@@ -101,6 +101,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
     return True
 
 ## Convenience functions
+
 def splitarray_to_string(split_content):
     final=""
     for phrase in split_content:

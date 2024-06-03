@@ -4,6 +4,10 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+"""
+Main output processing handler for Unix/Linux systems (internal module)
+"""
+
 import subprocess
 import sys
 import os
@@ -55,7 +59,7 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
         final_lines.append(line)
     return final_lines
 
-def _handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True):
+def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True):
     do_subst=subst
     if do_subst==True: 
         try: db_interface.connect_db()

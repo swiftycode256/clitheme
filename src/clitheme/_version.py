@@ -1,3 +1,6 @@
+"""
+Version information definition file
+"""
 # spell-checker:ignore buildnumber
 
 # Version definition file; define the package version here

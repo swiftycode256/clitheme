@@ -25,6 +25,7 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 
 path=""
 silence_warn=False
+__all__=["generate_data_hierarchy"]
 
 def handle_error(message: str):
     raise SyntaxError(fd.feof("error-str", "Syntax error: {msg}", msg=message))
