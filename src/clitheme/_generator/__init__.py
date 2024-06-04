@@ -18,6 +18,8 @@ import gzip
 import uuid
 from typing import Optional
 from .. import _globalvar, frontend
+from . import _dataclass
+from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -650,3 +652,4 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
 try: from . import db_interface
 except ImportError: import db_interface
 _globalvar.handle_set_themedef(frontend, "generator")
+_globalvar.handle_set_themedef(_dataclass.GeneratorObject.frontend, "generator")

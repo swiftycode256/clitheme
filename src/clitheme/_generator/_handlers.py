@@ -22,13 +22,15 @@ from .. import _globalvar, frontend
 # spell-checker:ignore datapath
 
 class DataHandlers:
-    fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+    frontend=frontend
+
     def __init__(self, path: str, silence_warn: bool):
         self.path=path
         self.silence_warn=silence_warn
         if not os.path.exists(self.path): os.mkdir(self.path)
         self.datapath=self.path+"/"+_globalvar.generator_data_pathname
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
+        self.fd=self.frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
     def handle_error(self, message: str):
         raise SyntaxError(self.fd.feof("error-str", "Syntax error: {msg}", msg=message))
     def handle_warning(self, message: str):
