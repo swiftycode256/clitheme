@@ -8,7 +8,6 @@
 substrules_section parser function (internal module)
 """
 import os
-import copy
 import sys
 from typing import Optional
 from .. import _globalvar

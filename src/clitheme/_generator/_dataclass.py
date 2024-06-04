@@ -8,17 +8,13 @@
 Class object for sharing data between section parsers (internal module)
 """
 
-import os
 import sys
-import string
-import random
 import re
 import math
 import copy
-import gzip
 import uuid
 from typing import Optional
-from .. import _globalvar, frontend
+from .. import _globalvar
 from . import _handlers, db_interface
 # spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
 
