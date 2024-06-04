@@ -81,24 +81,24 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     else: local_path_hash=d # else, use generated hash
     dir_name=f"clitheme-data-{local_path_hash}"
     _generator.generate_custom_path() # prepare _generator.path
-    overlay_cont=False
     global _alt_path_dirname
-    if _alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name): # check if not already generated before
-            overlay_cont=True
-            shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
+    if _alt_path_dirname!=None and overlay==True: # overlay
+        shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
-    if overlay_cont or not os.path.exists(path_name):
+    if not os.path.exists(path_name):
         _generator.silence_warn=True
+        return_val: str
         try:
-            _generator.generate_data_hierarchy(file_content, custom_path_gen=False)
+            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
             if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
-        shutil.copytree(_generator.path, path_name)
-        try: shutil.rmtree(_generator.path)
+        # I GIVE UP on solving the callback cycle HELL on _generator.generate_data_hierarchy -> new GeneratorObject -> db_interface import -> set_local_themedef -> [generates data directory] so I'm going to add this CRAP fix
+        if not os.path.exists(path_name):
+            shutil.copytree(return_val, path_name)
+        try: shutil.rmtree(return_val)
         except: pass
     global _alt_path
     _alt_path_hash=local_path_hash

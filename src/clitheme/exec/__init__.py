@@ -57,7 +57,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             sys.stdout=sys.__stdout__
             try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
             except FileNotFoundError: raise
-            shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
+            shutil.copy(cli.last_data_path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
             _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
             sys.stdout=sys.__stdout__

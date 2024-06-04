@@ -25,12 +25,9 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
     if os.path.exists(obj.path+"/"+_globalvar.db_filename):
         try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
         except obj.db_interface.need_db_regenerate:
-            # the following import statement changes the path, so we make a copy of it
-            path_copy=obj.path
             from ..exec import _check_regenerate_db
-            if not _check_regenerate_db(path_copy): exit(1)
-            path=path_copy
-            obj.db_interface.connect_db(path=path+"/"+_globalvar.db_filename)
+            if not _check_regenerate_db(obj.path): exit(1)
+            obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
     else: obj.db_interface.init_db(obj.path+"/"+_globalvar.db_filename)
     obj.db_interface.debug_mode=not obj.silence_warn
     while obj.lineindex<len(obj.lines_data)-1:

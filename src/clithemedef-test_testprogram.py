@@ -12,10 +12,10 @@ for part in l:
 print("Testing generator function...")
 mainfile_data=open(root_directory+"/testprogram-data/clithemedef-test_mainfile.clithemedef.txt",'r', encoding="utf-8").read()
 expected_data=open(root_directory+"/testprogram-data/clithemedef-test_expected.txt",'r', encoding="utf-8").read()
-funcresult=_generator.generate_data_hierarchy(mainfile_data)
+generator_path=_generator.generate_data_hierarchy(mainfile_data)
 
 errorcount=0
-rootpath=_generator.path+"/"+_globalvar.generator_data_pathname
+rootpath=generator_path+"/"+_globalvar.generator_data_pathname
 current_path=""
 for line in expected_data.splitlines():
     if line.strip()=='' or line.strip()[0]=='#':
@@ -42,7 +42,7 @@ print("Testing frontend...")
 from clitheme import frontend
 frontend.global_lang="en_US.UTF-8"
 frontend.global_debugmode=True
-frontend.data_path=_generator.path+"/"+_globalvar.generator_data_pathname
+frontend.data_path=generator_path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open(root_directory+"/testprogram-data/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
 errorcount_frontend=0
@@ -77,11 +77,11 @@ print("\n\nTest results:")
 print("==> ",end='')
 if errorcount>0:
     print("Generator test error: "+str(errorcount)+" errors found")
-    print("See "+_generator.path+" for more details")
+    print("See "+generator_path+" for more details")
     exit(1)
 else:
     print("Generator test OK")
-    shutil.rmtree(_generator.path) # remove the temp directory
+    shutil.rmtree(generator_path) # remove the temp directory
 print("==> ",end='')
 if errorcount_frontend>0:
     print("Frontend test error: "+str(errorcount_frontend)+" errors found")

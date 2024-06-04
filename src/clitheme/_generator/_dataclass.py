@@ -15,10 +15,11 @@ import copy
 import uuid
 from typing import Optional
 from .. import _globalvar
-from . import _handlers, db_interface
+from . import _handlers
 # spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
 
 class GeneratorObject(_handlers.DataHandlers):
+
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
     content_subst_options=["substesc","substvar"]
@@ -50,7 +51,9 @@ class GeneratorObject(_handlers.DataHandlers):
 
         self.custom_infofile_name=custom_infofile_name
         self.filename=filename
+        self.file_content=file_content
         _handlers.DataHandlers.__init__(self, path, silence_warn)
+        from . import db_interface
         self.db_interface=db_interface
     def is_ignore_line(self) -> bool:
         return self.lines_data[self.lineindex].strip()=="" or self.lines_data[self.lineindex].strip().startswith('#')

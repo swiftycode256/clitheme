@@ -77,12 +77,3 @@ for lang in ["C", "en", "en_US", "zh_CN"]:
         print(f"{name} found")
     else:
         print(f"{name} not found")
-
-import sys
-if "--preserve-temp" in sys.argv:
-    print(f"View generated data at {_generator.path}")
-    exit()
-
-import shutil
-try: shutil.rmtree(_generator.path)
-except: print("Warning: failed to remove temp directory \"{}\"".format(_generator.path))

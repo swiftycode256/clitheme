@@ -108,12 +108,12 @@ substrules_file=r"""
 """
 
 db_interface.debug_mode=True
-_generator.generate_data_hierarchy(substrules_file)
-db_interface.connection=db_interface.sqlite3.connect(_generator.path+"/"+_globalvar.db_filename)
+generator_path=_generator.generate_data_hierarchy(substrules_file)
+db_interface.connection=db_interface.sqlite3.connect(generator_path+"/"+_globalvar.db_filename)
 
 print("Successfully recorded data\nTesting sample outputs: ")
 for inp in sample_inputs:
     print(db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8'))
 
-try: shutil.rmtree(_generator.path)
+try: shutil.rmtree(generator_path)
 except: pass

@@ -32,6 +32,7 @@ frontend.global_subsections="cli"
 
 _globalvar.handle_set_themedef(frontend, "cli")
 
+last_data_path=""
 def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents and file pathnames in a list[str] object. 
@@ -65,6 +66,7 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
         _generator.generate_custom_path()
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
+    final_path: str
     for i in range(len(file_contents)):
         if len(file_contents)>1: 
             print("    "+f.feof("processing-file", "> Processing file {filename}...", filename=str(i+1)))
@@ -72,7 +74,7 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
         # Generate data hierarchy, erase current data, copy it to data path
         try:
             _generator.silence_warn=False
-            _generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
+            final_path=_generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             generate_path=False # Don't generate another temp folder after first one
             index+=1
         except SyntaxError:
@@ -82,11 +84,12 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
     if len(file_contents)>1: 
         print("    "+f.reof("all-finished", "> All finished"))
     print(f.reof("generate-data-success", "Successfully generated data"))
+    global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":
-            print(f.feof("view-temp-dir", "View at {path}", path=re.sub(r"/", r"\\", _generator.path))) # make the output look pretty
+            print(f.feof("view-temp-dir", "View at {path}", path=re.sub(r"/", r"\\", final_path))) # make the output look pretty
         else:
-            print(f.feof("view-temp-dir", "View at {path}", path=_generator.path))
+            print(f.feof("view-temp-dir", "View at {path}", path=final_path))
     if generate_only: return 0 
     # ---Stop here if generate_only is set---
 
@@ -99,13 +102,13 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
         return 1
 
     try:
-        shutil.copytree(_generator.path, _globalvar.clitheme_root_data_path) 
+        shutil.copytree(final_path, _globalvar.clitheme_root_data_path) 
     except Exception:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
         return 1
     print(f.reof("apply-theme-success", "Theme applied successfully"))
     if not preserve_temp:
-        try: shutil.rmtree(_generator.path)
+        try: shutil.rmtree(final_path)
         except Exception: pass
     return 0
 
