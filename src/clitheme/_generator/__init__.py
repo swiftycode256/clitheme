@@ -103,6 +103,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     # make directories
     if custom_path_gen:
         generate_custom_path()
+    global path
     if not os.path.exists(path): os.mkdir(path)
     datapath=path+"/"+_globalvar.generator_data_pathname
     if not os.path.exists(datapath): os.mkdir(datapath)
@@ -512,7 +513,14 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             command_filter_strictness=0
             # initialize the database
             if os.path.exists(path+"/"+_globalvar.db_filename):
-                db_interface.connection=db_interface.sqlite3.connect(path+"/"+_globalvar.db_filename)
+                try: db_interface.connect_db(path=path+"/"+_globalvar.db_filename)
+                except db_interface.need_db_regenerate:
+                    # the following import statement changes the path, so we make a copy of it
+                    path_copy=path
+                    from ..exec import _check_regenerate_db
+                    if not _check_regenerate_db(path_copy): exit(1)
+                    path=path_copy
+                    db_interface.connect_db(path=path+"/"+_globalvar.db_filename)
             else: db_interface.init_db(path+"/"+_globalvar.db_filename)
             db_interface.debug_mode=not silence_warn
             while lineindex<len(lines_data)-1:

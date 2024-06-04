@@ -18,7 +18,6 @@ import shutil
 def _labeled_print(msg: str):
     print("[clitheme-exec] "+msg)
 
-from . import output_handler_posix
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
 
@@ -29,7 +28,7 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="exec")
 
-def _check_regenerate_db() -> bool:
+def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path) -> bool:
     try: db_interface.connect_db()
     except db_interface.need_db_regenerate:
         _labeled_print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
@@ -56,12 +55,14 @@ def _check_regenerate_db() -> bool:
             if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
                 raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=sys.__stdout__
-            os.remove(_globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
-            shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, _globalvar.clitheme_root_data_path+"/"+_globalvar.db_filename)
+            try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
+            except FileNotFoundError: raise
+            shutil.copy(cli._generator.path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
             _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
             sys.stdout=sys.__stdout__
             _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+            raise
             return False
     except FileNotFoundError: pass
     except: 
@@ -130,6 +131,7 @@ def main(arguments: list[str]):
         if not _check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
+        from . import output_handler_posix
         return output_handler_posix.handler_main(arguments[1+argcount:], debug_mode, subst)
     elif os.name=="nt":
         _labeled_print("Error: Windows platform is not currently supported")
