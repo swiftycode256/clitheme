@@ -4,6 +4,9 @@ from clitheme import _globalvar
 import random
 import string
 import os
+
+# spell-checker:ignore rootpath errorcount mainfile
+
 l=__file__.split(os.sep)
 l.pop()
 root_directory="" # directory where the script files are in
@@ -65,9 +68,9 @@ for line in expected_data_frontend.splitlines():
         fallback_string=""
         for x in range(30): # reduce inaccuracies
             fallback_string+=random.choice(string.ascii_letters)
-        recieved_content=descriptor.retrieve_entry_or_fallback(entry_path, fallback_string)
-        if expected_content.strip()!=recieved_content.strip():
-            if recieved_content.strip()==fallback_string:
+        received_content=descriptor.retrieve_entry_or_fallback(entry_path, fallback_string)
+        if expected_content.strip()!=received_content.strip():
+            if received_content.strip()==fallback_string:
                 print("[Error] Failed to retrieve entry for \""+current_path_frontend+"\"")
             else:
                 print("[Content] Content mismatch on path \""+current_path_frontend+"\"")

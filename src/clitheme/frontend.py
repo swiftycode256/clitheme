@@ -107,7 +107,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     return True
 def unset_local_themedef():
     """
-    Unsets the local theme definition file for the current frontend instance.
+    Unset the local theme definition file for the current frontend instance.
     After this operation, FetchDescriptor functions will no longer use local definitions.
     """
     global _alt_path; _alt_path=None

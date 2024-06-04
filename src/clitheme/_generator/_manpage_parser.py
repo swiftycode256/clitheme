@@ -13,6 +13,8 @@ from typing import Optional
 from .. import _globalvar
 from . import _dataclass
 
+# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
+
 def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("manpage")
     ## --Process manpage block--
