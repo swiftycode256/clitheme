@@ -174,7 +174,6 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             fetch_data=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND effective_locale=? ORDER BY rowid;", filter_data+(this_locale,)).fetchall()
             if len(fetch_data)>0:
                 matches+=fetch_data
-                return
         # else, fetches the ones without locale defined
         matches+=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND typeof(effective_locale)=typeof(null) ORDER BY rowid;", filter_data).fetchall()
     if len(final_cmdlist)>0:
