@@ -60,6 +60,9 @@ db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db" # e.g. ~/.local/share/clitheme/subst-data.db
 db_version=2
 
+## clitheme-exec timeout value for each output substitution operation
+output_subst_timeout=0.4
+
 ## Sanity check function
 entry_banphrases=['/','\\']
 startswith_banphrases=['.']

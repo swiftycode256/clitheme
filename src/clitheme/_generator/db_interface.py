@@ -229,7 +229,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 # If False, implementation B is used in output_handler_posix under Unix/Linux
 enable_multiprocessing=False
 # timeout value for each match operation
-match_timeout=0.4
+match_timeout=_globalvar.output_subst_timeout
 
 _manager=multiprocessing.Manager()
 _process: Optional[multiprocessing.Process]=None
