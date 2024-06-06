@@ -84,7 +84,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     global _alt_path_dirname
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if _alt_path_dirname!=None and overlay==True: # overlay
-        shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
+        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
     if not os.path.exists(path_name):
