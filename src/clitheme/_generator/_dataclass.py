@@ -233,22 +233,33 @@ class GeneratorObject(_handlers.DataHandlers):
             elif disallow_cmdmatch_options:
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option))
         return blockinput_data
-    def handle_entry(self, entry_name: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
+    def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
-        unique_id=uuid.uuid4()
-        substrules_entries=[] # (match_content, substitute_content, locale)
+        entryNames: list[tuple]=[(entry_name, uuid.uuid4())] # For supporting specifying multiple entries at once (name, uuid)
+        names_processed=False # Set to True when no more entry names are being specified
+        substrules_entries=[] # (match_content, substitute_content, locale, uuid)
         substrules_entries_linenumber=[]
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0
-        if is_substrules:
+        def check_valid_pattern(pattern: str):
             # check if patterns are valid
-            try: re.compile(entry_name)
+            try: re.compile(pattern)
             except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(self.lineindex+1), error_msg=sys.exc_info()[1]))
+        if is_substrules: check_valid_pattern(entry_name)
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             if self.is_ignore_line(): continue
             phrases=self.lines_data[self.lineindex].split()
-            if phrases[0]=="locale" or phrases[0].startswith("locale:"):
+            line_content=self.lines_data[self.lineindex]
+            # Support specifying multiple match pattern/entry names in one definition block
+            if phrases[0]!=start_phrase:
+                names_processed=True # Prevent specifying it after other definition syntax
+            if phrases[0]==start_phrase and not names_processed:
+                self.check_enough_args(phrases, 2)
+                pattern=_globalvar.extract_content(line_content)
+                check_valid_pattern(pattern)
+                entryNames.append((pattern, uuid.uuid4()))
+            elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
                 content: str
                 locale: str
                 if phrases[0].startswith("locale:"):
@@ -258,27 +269,35 @@ class GeneratorObject(_handlers.DataHandlers):
                         self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=str(self.lineindex+1)))
                     else:
                         locale=results.groupdict()['locale']
-                    content=_globalvar.extract_content(self.lines_data[self.lineindex])
+                    content=_globalvar.extract_content(line_content)
                 else:
                     self.check_enough_args(phrases, 3)
-                    content=_globalvar.extract_content(self.lines_data[self.lineindex], begin_phrase_count=2)
+                    content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                     locale=phrases[1]
-                target_entry=copy.copy(entry_name)
                 content=self.handle_singleline_content(content) # handle substesc and substvar
-                if locale!="default":
-                    target_entry+="__"+locale
-                if not is_substrules: self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
-                else: substrules_entries.append((entry_name, content, None if locale=="default" else locale)); substrules_entries_linenumber.append(self.lineindex+1)
+                for each_name in entryNames:
+                    if is_substrules:
+                        substrules_entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1]))
+                        substrules_entries_linenumber.append(self.lineindex+1)
+                    else:
+                        target_entry=copy.copy(each_name[0])
+                        if locale!="default":
+                            target_entry+="__"+locale
+                        self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 self.check_enough_args(phrases, 2)
                 locales=phrases[1:]
                 content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
                 for this_locale in locales:
-                    suffix=""
-                    if this_locale!="default":
-                        suffix="__"+this_locale
-                    if not is_substrules: self.add_entry(self.datapath, entry_name+suffix, content, self.lineindex+1)
-                    else: substrules_entries.append((entry_name, content, None if this_locale=="default" else this_locale)); substrules_entries_linenumber.append(self.lineindex+1)
+                    for each_name in entryNames:
+                        if is_substrules:
+                            substrules_entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1]))
+                            substrules_entries_linenumber.append(self.lineindex+1)
+                        else:
+                            target_entry=copy.copy(each_name[0])
+                            if this_locale!="default":
+                                target_entry+="__"+this_locale
+                            self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
             elif phrases[0]==end_phrase:
                 if not is_substrules: self.check_extra_args(phrases, 1, use_exact_count=True)
                 got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=self.subst_limiting_options+["endmatchhere"])
@@ -294,5 +313,5 @@ class GeneratorObject(_handlers.DataHandlers):
         if is_substrules:
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
-                try: self.db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x], unique_id=unique_id)
+                try: self.db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x], unique_id=entry[3])
                 except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(substrules_entries_linenumber[x]), error_msg=sys.exc_info()[1]))

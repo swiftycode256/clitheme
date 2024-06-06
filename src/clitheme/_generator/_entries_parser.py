@@ -55,7 +55,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             if subsection!="": entry_name=subsection+" "+entry_name
             if domainapp!="": entry_name=domainapp+" "+entry_name
             obj.recursive_mkdir(obj.datapath, entry_name, obj.lineindex+1)
-            obj.handle_entry(entry_name, end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
+            obj.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
         elif phrases[0]=="set_options":
             obj.check_enough_args(phrases, 2)
             obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
