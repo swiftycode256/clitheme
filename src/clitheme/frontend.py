@@ -214,9 +214,9 @@ class FetchDescriptor():
             if self.debug_mode: print("Trying "+p, end=" ...")
             try:
                 f=open(p,'r', encoding="utf-8")
+                # since the generator adds an extra newline in the entry data, we need to remove it
                 dat=re.sub(r"\n\Z", "", f.read())
                 if self.debug_mode: print("Success:\n> "+dat)
-                # since the generator adds an extra newline in the entry data, we need to remove it
                 return dat
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
