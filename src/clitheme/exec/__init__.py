@@ -35,12 +35,12 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
         try:
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
-            if not os.path.isdir(search_path): raise Exception
+            if not os.path.isdir(search_path): raise Exception(search_path+" not directory")
             lsdir_result=os.listdir(search_path); lsdir_result.sort()
             lsdir_num=0
             for x in lsdir_result: 
                 if os.path.isdir(search_path+"/"+x): lsdir_num+=1
-            if lsdir_num<1: raise Exception
+            if lsdir_num<1: raise Exception("empty directory")
 
             file_contents=[]
             paths=[]
