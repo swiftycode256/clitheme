@@ -216,6 +216,47 @@ def get_current_theme_info():
                 print(f.feof("list-item", "• {content}", content=app.strip()))
     return 0
 
+def update_theme():
+    """
+    Re-applies theme files from file paths specified in the previous apply-theme command (including all related apply-theme commands if --overlay is used)
+
+    (Invokes 'clitheme update-theme')
+    """
+    class some_exc(Exception): pass
+    file_contents: list[str]
+    file_paths: list[str]
+    fi=frontend.FetchDescriptor(subsections="cli update-theme")
+    try:
+        search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
+        if not os.path.isdir(search_path): raise some_exc(search_path+" not directory")
+        lsdir_result=os.listdir(search_path); lsdir_result.sort()
+        lsdir_num=0
+        for x in lsdir_result: 
+            if os.path.isdir(search_path+"/"+x): lsdir_num+=1
+        if lsdir_num<1: raise some_exc("empty directory")
+
+        # Get file paths from clithemeinfo_filepath files
+        file_paths=[]
+        for pathname in lsdir_result:
+            target_path=search_path+"/"+pathname
+            if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
+            got_path: str
+            try:
+                got_path=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), encoding="utf-8").readline().strip()
+            except: raise some_exc("Read error: "+str(sys.exc_info()[1]))
+            file_paths.append(got_path)
+        if len(file_paths)==0: raise some_exc("file_paths empty")
+        # Get file contents
+        try: file_contents=_get_file_contents(file_paths)
+        except: return 1
+    except some_exc:
+        print(fi.reof("not-available-err", "update-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
+        return 1
+    except:
+        print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again"))
+        return 1
+    return apply_theme(file_contents, file_paths, overlay=False)
+
 def _is_option(arg):
     return arg.strip()[0:1]=="-"
 def _handle_usage_error(message, cli_args_first):
@@ -244,6 +285,19 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory"))
     print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Display this help message"))
+
+def _get_file_contents(file_paths: list[str]) -> list[str]:
+    fi=frontend.FetchDescriptor(subsections="cli apply-theme")
+    content_list=[]
+    for i in range(len(file_paths)):
+        path=file_paths[i]
+        try:
+            content_list.append(open(path, 'r', encoding="utf-8").read())
+        except:
+            print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
+                index=str(i+1), message=path+": "+str(sys.exc_info()[1])))
+            raise
+    return content_list
 
 def main(cli_args: list[str]):
     """
@@ -281,15 +335,9 @@ def main(cli_args: list[str]):
             else:
                 paths.append(arg)
         fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-        content_list=[]
-        for i in range(len(paths)):
-            path=paths[i]
-            try:
-                content_list.append(open(path, 'r', encoding="utf-8").read())
-            except Exception:
-                print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
-                    index=str(i+1), message=str(sys.exc_info()[1])))
-                return 1
+        content_list: list[str]
+        try: content_list=_get_file_contents(paths)
+        except: return 1
         return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
     elif cli_args[1]=="get-current-theme-info":
         check_extra_args(2) # disabled additional options
@@ -297,6 +345,9 @@ def main(cli_args: list[str]):
     elif cli_args[1]=="unset-current-theme":
         check_extra_args(2)
         return unset_current_theme()
+    elif cli_args[1]=="update-theme":
+        check_extra_args(2)
+        return update_theme()
     elif cli_args[1]=="--version":
         check_extra_args(2)
         print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))

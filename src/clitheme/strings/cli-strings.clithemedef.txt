@@ -138,6 +138,20 @@ in_domainapp swiftycode clitheme
             [entry] supported-apps-str
                 locale:zh_CN 支持的应用程序：
             [/entry]
+        # update-theme 指令
+        in_subsection cli update-theme
+            [entry] not-available-err
+                [locale] zh_CN
+                    update-theme在当前主题设定上无法使用
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] other-err
+                [locale] zh_CN
+                    处理文件路径信息时发生错误：{msg}
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
         in_subsection cli help-message
             [entry] usage-str
                 locale:zh_CN 使用方式：

@@ -7,6 +7,7 @@
 """
 Generator function used in applying themes (should not be invoked directly)
 """
+import os
 import string
 import random
 from typing import Optional
@@ -61,6 +62,8 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         obj.handle_error(obj.fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
     obj.write_infofile(obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, "file_content", obj.file_content, obj.lineindex+1, "<file_content>")
+    # record *full* file path for update-themes feature
+    obj.write_infofile(obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), obj.lineindex+1, "<filepath>")
     # Update current theme index
     theme_index=open(obj.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(obj.custom_infofile_name+"\n")
