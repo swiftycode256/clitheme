@@ -52,7 +52,6 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
             _entries_parser.handle_entries_section(obj, first_phrase)
         elif first_phrase==r"{substrules_section}":
-            # the import statement it might call changes the path, so we make a copy of it
             _substrules_parser.handle_substrules_section(obj, first_phrase)
         elif first_phrase==r"{manpage_section}":
             _manpage_parser.handle_manpage_section(obj, first_phrase)

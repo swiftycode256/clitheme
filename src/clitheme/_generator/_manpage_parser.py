@@ -17,7 +17,6 @@ from . import _dataclass
 
 def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("manpage")
-    ## --Process manpage block--
     end_phrase="{/manpage_section}"
     while obj.lineindex<len(obj.lines_data)-1:
         obj.lineindex+=1
@@ -66,4 +65,3 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("manpage")
             break
-    ## END --Process manpage block--

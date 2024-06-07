@@ -15,7 +15,6 @@ from . import _dataclass
 
 def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("entries")
-    # --Process entries/main block--
     end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
     if first_phrase=="begin_main":
         obj.handle_warning(obj.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(obj.lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
@@ -70,4 +69,3 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
                 obj.handle_warning(obj.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(obj.lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
             break
         else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(obj.lineindex+1)))
-    ## END --Process entries/main block--

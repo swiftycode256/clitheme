@@ -16,7 +16,6 @@ from . import _dataclass
 
 def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("header")
-    # --Process header block--
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     while obj.lineindex<len(obj.lines_data)-1:
         obj.lineindex+=1
@@ -64,4 +63,3 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.handle_end_section("header")
             break
         else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(obj.lineindex+1)))
-    # END --Process header block--

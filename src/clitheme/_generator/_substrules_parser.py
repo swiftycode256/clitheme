@@ -17,7 +17,6 @@ from . import _dataclass
 
 def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("substrules")
-    ## --Process substrules block--
     end_phrase=r"{/substrules_section}"
     command_filters: Optional[list[str]]=None
     command_filter_strictness=0
@@ -90,4 +89,3 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             obj.handle_end_section("substrules")
             break
         else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(obj.lineindex+1)))
-    ## END --Process substrules block--

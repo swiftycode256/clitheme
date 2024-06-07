@@ -77,11 +77,11 @@ class DataHandlers:
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):
             self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
-        # write the compressed and original version of the file
         full_path=parent_path+"/"+file_path[-1]
         if os.path.isfile(full_path):
             self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: repeated manpage file, overwriting", num=str(line_number_debug)))
         try:
+            # write the compressed and original version of the file
             open(full_path, "w", encoding="utf-8").write(content)
             open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
         except IsADirectoryError:
