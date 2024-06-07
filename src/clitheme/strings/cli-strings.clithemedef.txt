@@ -172,6 +172,9 @@ in_domainapp swiftycode clitheme
             [entry] options-unset-current-theme
                 locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
             [/entry]
+            [entry] options-update-theme
+                locale:zh_CN update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）
+            [/entry]
             [entry] options-generate-data
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
             [/entry]

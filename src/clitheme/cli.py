@@ -19,13 +19,6 @@ from . import _globalvar, _generator, frontend
 
 # spell-checker:ignore pathnames lsdir inpstr
 
-usage_description=\
-"""Usage: {0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
-       {0} get-current-theme-info
-       {0} unset-current-theme
-       {0} generate-data [themedef-file] [--overlay]
-       {0} --version"""
-
 frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
@@ -272,6 +265,7 @@ def _handle_help_message(full_help: bool=False):
 """\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
 \t{0} get-current-theme-info
 \t{0} unset-current-theme
+\t{0} update-theme
 \t{0} generate-data [themedef-file] [--overlay]
 \t{0} --version
 \t{0} --help""".format(arg_first)
@@ -282,6 +276,7 @@ def _handle_help_message(full_help: bool=False):
     "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Outputs detailed information about the currently applied theme"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
+    print("\t"+fd.reof("options-update-theme", "update-theme: Re-applies the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory"))
     print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Display this help message"))
