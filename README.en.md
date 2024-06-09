@@ -159,7 +159,7 @@ $ clitheme-man ls
 
 ## Application frontend API and string entries
 
-Please see [this article][todo]
+Please see [this article](./README-frontend.en.md)
 
 # Installing and building
 
