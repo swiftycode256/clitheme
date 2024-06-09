@@ -221,7 +221,9 @@ def update_theme():
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
         search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
-        if not os.path.isdir(search_path): raise some_exc(search_path+" not directory")
+        if not os.path.isdir(search_path):
+            print(fi.reof("no-theme-err", "Error: no theme currently set"))
+            return 1
         lsdir_result=os.listdir(search_path); lsdir_result.sort()
         lsdir_num=0
         for x in lsdir_result: 

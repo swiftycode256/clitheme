@@ -192,6 +192,10 @@ in_domainapp swiftycode clitheme
         # update-theme 指令
         # update-theme command
         in_subsection cli update-theme
+            [entry] no-theme-err
+                # locale:default Error: no theme currently set
+                locale:zh_CN 错误：当前没有设定主题
+            [/entry]
             [entry] not-available-err
                 # [locale] default
                 #     update-theme cannot be used with the current theme setting
