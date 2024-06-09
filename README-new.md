@@ -6,7 +6,7 @@
 ```plaintext
 $ clang test.c
 test.c:1:1: error: unknown type name 'bool'
-bool *haku(int *a) {
+bool *func(int *a) {
 ^
 test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]
         b=a;
@@ -64,7 +64,7 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 
 $ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
 e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
-e> bool *haku(int *a) {\r\n
+e> bool *func(int *a) {\r\n
 e> {{ESC}}[0;1;32m^\r\n
 e> {{ESC}}[0m{{ESC}}[1mtest.c:4:3: {{ESC}}[0m{{ESC}}[0;1;35mwarning: {{ESC}}[0m{{ESC}}[1mincompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]{{ESC}}[0m\r\n
 e>         b=a;\r\n
@@ -87,7 +87,7 @@ e> {{ESC}}[0m2 errors generated.\r\n
 {substrules_section}
     # 设定"substesc"选项：内容中的"{{ESC}}"字样会被替换成ASCII Escape终端控制符号
     set_options substesc
-    # 命令限制条件：以下的替换规则仅会在以下命令中被应用。建议设定这个条件，因为可以尽量防止不应该的输出替换。
+    # 命令限制条件：以下的替换规则仅会在以下命令被调用时被应用。建议设定这个条件，因为可以尽量防止不应该的输出替换。
     [filter_commands]
         clang
         clang++
@@ -105,7 +105,7 @@ e> {{ESC}}[0m2 errors generated.\r\n
 {/substrules_section}
 ```
 
-使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-exec`执行命令以应用这些替换规则：
+使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-exec`执行命令以对输出应用这些替换规则：
 
 ```plaintext
 $ clitheme apply-theme clang-theme.clithemedef.txt
@@ -162,23 +162,19 @@ $ clitheme-man ls
 
 # 安装与构建
 
-安装`clitheme`非常简单，您可以通过Arch Linux软件包，Debian软件包，或者pip软件包安装。
+安装`clitheme`非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
 
 ### 通过pip软件包安装
 
-从最新发行版页面下载whl文件，使用`pip`直接安装即可：
+从最新发行版页面下载`.whl`文件，使用`pip`直接安装即可：
     
     $ pip install ./clitheme-<version>-py3-none-any.whl
 
 ### 通过Arch Linux软件包安装
 
-因为Arch Linux上无法使用`pip`往系统里直接安装pip软件包，所以本项目支持通过Arch Linux软件包安装。
-
 因为构建的Arch Linux软件包只兼容特定的Python版本，并且升级Python版本后会导致原软件包失效，本项目仅提供构建软件包的方式，不提供构建好的软件包。详细请见下方的**构建Arch Linux软件包**。
 
 ### 通过Debian软件包安装
-
-因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
 如需在Debian系统上安装，请从最新发行版页面下载`.deb`文件，使用`apt`安装即可：
 
@@ -227,11 +223,9 @@ makepkg -si
 rm -rf buildtmp srctmp
 ```
 
-**注意：** 每次升级Python版本时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
+**注意：** 每次升级Python时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
 
 ### 构建Debian软件包
-
-因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
 构建Debian软件包前，你需要安装以下用于构建的系统组件：
 
@@ -247,7 +241,7 @@ rm -rf buildtmp srctmp
 
 安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
 
-## 更多信息
+# 更多信息
 
 - 本仓库中的代码也同步在GitHub上（使用Gitee仓库镜像功能自动同步）：https://github.com/swiftycode256/clitheme
 - 该项目的最新进展、未来计划、和开发中的新功能会在这里Gitee仓库中的Issues里列出：https://gitee.com/swiftycode/clitheme/issues
