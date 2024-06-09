@@ -1,269 +1,250 @@
-# clitheme - A CLI application framework for output customization
-
-[中文](README.md) | **English**
+# clitheme - Command line customization utility
 
 `clitheme` allows you to customize the output of command line applications, giving them the style and personality you want.
 
 Example:
+```plaintext
+$ clang test.c
+test.c:1:1: error: unknown type name 'bool'
+bool *func(int *a) {
+^
+test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated
 ```
-$ example-app install-files
-Found 2 files in current directory
--> Installing "example-file"...
--> Installing "example-file-2"...
-Successfully installed 2 files
-$ example-app install-file foo-nonexist
-Error: File "foo-nonexist" not found
-```
-```
-$ clitheme apply-theme example-app-theme_clithemedef.txt
+```plaintext
+$ clitheme apply-theme clang-theme.clithemedef.txt
 ==> Generating data...
 Successfully generated data
 ==> Applying theme...Success
 Theme applied successfully
 ```
-```
-$ example-app install-files
-o(≧v≦)o Great! Found 2 files in current directory!
-(>^ω^<) Installing "example-file"...
-(>^ω^<) Installing "example-file-2:"...
-o(≧v≦)o Successfully installed 2 files!
-$ example-app install-file foo-nonexist
-ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+```plaintext
+$ clitheme-exec clang test.c
+test.c:1:1: Error! : unknown type name 'bool', you forgot to d……define it!~ಥ_ಥ
+bool *func(int *a) {
+^
+test.c:4:3: note: incompatible pointer types 'char *' and 'int *', they're so……so incompatible!~ [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated.
 ```
 
 ## Features
 
-- Multi-language (Internationalization) support
-- Supports applying multiple themes simultaneously
-- Clear and easy-to-understand theme definition file (`clithemedef`) syntax
-- The theme data can be easily accessed without the use of frontend module
+`clitheme` has these main features:
 
-Not only `clitheme` can customize the output of command-line applications, it can also:
-- Add support for another language for an application
-- Support GUI applications
+- Customize and modify the output of any command line application through defining substitution rules
+- Customize Unix/Linux manual pages (man pages)
+- A frontend API for applications similar to localization toolkits (like GNU gettext), which can help users better customize output messages
 
-# Basic usage
+Other characteristics:
 
-## Data hierarchy and path naming
+- Multi-language/internalization support
+    - This means that you can also use `clitheme` to add internalization support for command line applications
+- Easy-to-understand **theme definition file** syntax
+- The string entries in the current theme setting can be accessed without using the frontend API (easy-to-understand data structure)
 
-Applications use **path names** to specify the string definitions they want. Subsections in the path name is separated using spaces. The first two subsections are usually reserved for the developer and application name. Theme definition files will use this path name to adopt corresponding string definitions, achieving the effect of output customization.
+For more information, please see the project's Wiki documentation page. It can be accessed through the following links:
 
-For example, the path name `com.example example-app example-text` refers to the `example-text` string definition for the `example-app` application developed by `com.example`.
+- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme-wiki-repo
+- https://github.com/swiftycode256/clitheme-wiki-repo
 
-It is not required to always follow this path naming convention and specifying global definitions (not related to any specific application) is allowed. For example, `global-entry` and `global-example global-text` are also valid path names.
+# Feature examples and demos
 
-### Directly accessing the theme data hierarchy
+## Command line output substitution
 
-One of the key design principles of `clitheme` is that the use of frontend module is not needed to access the theme data hierarchy, and its method is easy to understand and implement. This is important especially in applications written in languages other than Python because Python is the only language supported by the frontend module.
+Get the command line output, including any terminal control characters:
 
-The data hierarchy is organized in a **subfolder structure**, meaning that every subsection in the path name represent a file or folder in the data hierarchy.
+```plaintext
+# --debug: Add a marker at the beginning of each line; contains information on whether the output is stdout/stderr ("o>" or "e>")
+# --debug-showchars: Show terminal control characters in the output
+# --debug-nosubst: Even if a theme is set, do not apply substitution rules (get original output content)
 
-For example, the contents of string definition `com.example example-app example-text` is stored in the directory `<datapath>/com.example/example-app`. `<datapath>` is `$XDG_DATA_HOME/clitheme/theme-data` or `~/.local/share/clitheme/theme-data` under Linux and macOS systems.
-
-Under Windows systems, `<datapath>` is `%USERPROFILE%\.local\share\clitheme\theme-data` or `C:\Users\<username>\.local\share\clitheme\theme-data`.
-
-To access a specific language of a string definition, add `__` plus the locale name to the end of the directory path. For example: `<datapath>/com.example/example-app/example-text__en_US`
-
-In conclusion, to directly access a specific string definition, convert the path name to a directory path and access the file located there.
-
-## Frontend implementation and writing theme definition files
-
-### Using the built-in frontend module
-
-Using the frontend module provided by `clitheme` is very easy and straightforward. To access a string definition in the current theme setting, create a new `frontend.FetchDescriptor` object and use the provided `retrieve_entry_or_fallback` function.
-
-You need to pass the path name and a fallback string to this function. If the current theme setting does not provide the specified path name and string definition, the function will return the fallback string.
-
-You can pass the `domain_name`, `app_name`, and `subsections` arguments when creating a new `frontend.FetchDescriptor` object. When specified, these arguments will be automatically appended in front of the path name provided when calling the `retrieve_entry_or_fallback` function.
-
-Let's demonstrate it using the previous examples:
-
-```py
-from clitheme import frontend
-
-# Create a new FetchDescriptor object
-f=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app")
-
-# Corresponds to "Found 2 files in current directory"
-fcount="[...]"
-f.retrieve_entry_or_fallback("found-file", "在当前目录找到了{}个文件".format(str(fcount)))
-
-# Corresponds to "-> Installing "example-file"..."
-filename="[...]"
-f.retrieve_entry_or_fallback("installing-file", "-> 正在安装\"{}\"...".format(filename))
-
-# Corresponds to "Successfully installed 2 files"
-f.retrieve_entry_or_fallback("install-success", "已成功安装{}个文件".format(str(fcount)))
-
-# Corresponds to "Error: File "foo-nonexist" not found"
-filename_err="[...]"
-f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
+$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
+e> bool *func(int *a) {\r\n
+e> {{ESC}}[0;1;32m^\r\n
+e> {{ESC}}[0m{{ESC}}[1mtest.c:4:3: {{ESC}}[0m{{ESC}}[0;1;35mwarning: {{ESC}}[0m{{ESC}}[1mincompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]{{ESC}}[0m\r\n
+e>         b=a;\r\n
+e> {{ESC}}[0;1;32m         ^~\r\n
+e> {{ESC}}[0m2 errors generated.\r\n
 ```
 
-### Using the fallback frontend module
+Write theme definition file and substitution rules based on the output:
 
-You can integrate the fallback frontend module provided by this project to better handle situations when `clitheme` does not exist on the system. This fallback module contains all the functions in the frontend module, and its functions will always return fallback values.
+```plaintext
+# Define basic information for this theme in header_section; required
+{header_section}
+    # It is recommended to include name and description at the minimum
+    name clang example theme
+    [description]
+        An example theme for clang (for demonstration purposes)
+    [/description]
+{/header_section}
 
-Import the `clitheme_fallback.py` file from the repository and insert the following code in your project to use it:
-
-```py
-try:
-    from clitheme import frontend
-except (ModuleNotFoundError, ImportError):
-    import clitheme_fallback as frontend
+{substrules_section}
+    # Set "substesc" option: "{{ESC}}" in content will be replaced with the ASCII Escape terminal control character
+    set_options substesc
+    # Command filter: following substitution rules will be applied only if these commands are invoked. It is recommended as it can prevent unwanted output substitutions.
+    [filter_commands]
+        clang
+        clang++
+        gcc
+        g++
+    [/filter_commands]
+    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+        # Use "locale:en_US" if you only want the substitution rule to applied when the system locale setting is English (en_US)
+        # Use "locale:default" to not apply any locale filters
+        locale:default \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
+    [/substitute_regex]
+    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+        locale:default \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
+    [/substitute_regex]
+{/substrules_section}
 ```
 
-The fallback module provided by this project will update accordingly with new versions. Therefore, it is recommended to import the latest version of this module to adopt the latest features.
+After applying the theme with `clitheme apply-theme <file>`, execute the command with `clitheme-exec` to apply the substitution rules onto the output: 
 
-### Information your application should provide
-
-To allow users to write theme definition files of your application, your application should provide information about supported string definitions with its path name and default string.
-
-For example, your app can implement a feature to output all supported string definitions:
-
-```
-$ example-app --clitheme-output-defs
-com.example example-app found-file
-Found {} files in current directory
-
-com.example example-app installing-file
--> Installing "{}"...
-
-com.example example-app install-success
-Successfully installed {} files
-
-com.example example-app file-not-found
-Error: file "{}" not found
+```plaintext
+$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme-exec clang test.c
+test.c:1:1: Error! : unknown type name 'bool', you forgot to d……define it!~ಥ_ಥ
+bool *func(int *a) {
+^
+test.c:4:3: note: incompatible pointer types 'char *' and 'int *', they're so……so incompatible!~ [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated.
 ```
 
-You can also include this information in your project's official documentation. The demo application in this repository provides an example of it and the corresponding README file is located in the folder `example-clithemedef`.
+## Custom man pages
 
-### Writing theme definition files
+Write/edit the source code of the man page and save it into a location:
 
-Consult the Wiki pages and documentation for detailed syntax of theme definition files. An example is provided below:
-
-```
-begin_header
-    name Example theme
-    version 1.0
-    locales en_US
-    supported_apps clitheme_demo
-end_header
-
-begin_main
-    in_domainapp com.example example-app
-        entry found-file
-            locale default o(≧v≦)o Great! Found {} files in current directory!
-            locale en_US o(≧v≦)o Great! Found {} files in current directory!
-        end_entry
-        entry installing-file
-            locale default (>^ω^<) Installing "{}"...
-            locale en_US (>^ω^<) Installing "{}"...
-        end_entry
-        entry install-success
-            locale default o(≧v≦)o Successfully installed {} files!
-            locale en_US o(≧v≦)o Successfully installed {} files!
-        end_entry
-        entry file-not-found
-            locale default ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
-            locale en_US ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
-        end_entry
-end_main
+```plaintext
+$ nano man-pages/1/ls-custom.txt
+# <edit file>
+$ nano man-pages/1/cat-custom.txt
+# <edit file>
 ```
 
-Use the command `clitheme apply-theme <file>` to apply the theme definition file onto the system. Supported applications will start using the string definitions listed in this file.
+Write a theme definition file:
 
-# Installation
+```plaintext
+{header_section}
+    name Example manual page theme
+    description An example man page theme
+{/header_section}
 
-Installing `clitheme` is very easy. You can use the provided Arch Linux, Debian, or pip package to install it.
+{manpage_section}
+    # Add the file path *separated by spaces* after "include_file" (with the directory the theme definition file is placed as the parent directory)
+    # Add the target file path (e.g. where the file is placed under `/usr/share/man`) *separated by spaces* after "as"
+    include_file man-pages 1 ls-custom.txt
+        as man1 ls.1
+    include_file man-pages 1 cat-custom.txt
+        as man1 cat.1
+{/manpage_section}
+```
 
-### Install using pip
+After applying the theme with `clitheme apply-theme <file>`, use `clitheme-man` to view these custom man pages (arguments and options are the same as `man`):
 
-Download the whl file from the latest release and install it using `pip`:
+```plaintext
+$ clitheme apply-theme manpage-theme.clithemedef.txt
+$ clitheme-man cat
+$ clitheme-man ls
+```
 
-    $ pip install clitheme-<version>-py3-none-any.whl
+## Application frontend API and string entries
+
+Please see [this article][todo]
+
+# Installing and building
+
+`clitheme` can be installed through pip package, Debian package, and Arch Linux package.
+
+### Install using pip package
+
+Download the `.whl` file from latest distribution page and install it using `pip`:
+    
+    $ pip install ./clitheme-<version>-py3-none-any.whl
 
 ### Install using Arch Linux package
 
-Because `pip` cannot be used to install Python packages onto an Arch Linux system, this project provides an Arch Linux package.
-
-Because the built package only supports a specific Python version and will stop working when Python is upgraded, this project only provides files needed to build the package. Please see **Build Arch Linux package** for more information.
+Because each build of the Arch Linux package only supports a specific Python version and upgrading Python will break the package, pre-built packages are not provided and you need to build the package. Please see **Building Arch Linux package** below.
 
 ### Install using Debian package
 
-Because `pip` cannot be used to install Python packages onto certain Debian Linux distributions, this project provides a Debian package.
-
-Download the `.deb` file from the latest release and install it using `apt`:
+Download the `.deb` file from the latest distribution page and install using `apt`:
 
     $ sudo apt install ./clitheme_<version>_all.deb
 
-## Building the installation package
+## Building packages
 
-You can also build the installation package from source code, which allows you to include the latest or custom changes. This is the only method to install the latest development version of `clitheme`.
+You can build the package from the repository source code, which includes any latest or custom changes. You can also use this method to install the latest development version.
 
 ### Build pip package
 
-`clitheme` uses the `hatchling` build backend, so installing it is required for building the package.
+`clitheme` uses the `setuptools` build system, so it needs to be installed beforehand.
 
-First, install the `hatch` package. You can use the software package provided by your Linux distribution, or install it using `pip`:
+First, install `setuptools` and `build` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
 
-    $ pip install hatch
+    $ pip install setuptools build
 
-Next, making sure that you are under the project directory, use `hatch build` to build the package:
+Then, switch to project directory and use the following command to build the package:
 
-    $ hatch build
+    $ python3 -m build --wheel --no-isolation
 
-If this command does not work, try using `hatchling build` instead.
-
-The corresponding pip package (whl file) can be found in the `dist` folder under the working directory.
+The package file can be found in the `dist` folder after build finishes.
 
 ### Build Arch Linux package
 
-Make sure that the `base-devel` package is installed before building the package. You can install it using the following command:
+Ensure that the `base-devel` package is installed before building. Use the following command to install:
 
     $ sudo pacman -S base-devel
 
-To build the package, run `makepkg` under the project directory. You can use the following commands:
+Before build the package, make sure that any changes in the repository are committed (git commit):
+
+    $ git add .
+    $ git commit
+
+Execute `makepkg` to build the package. Use the following commands to perform these operations:
 
 ```sh
-# Delete the temporary directories if makepkg has been run before. Issues will occur if you do not do so.
+# If makepkg is executed before, delete the temporary directories to prevent issues
 rm -rf buildtmp srctmp
 
 makepkg -si
-# -s: install dependencies required for building the package
-# -i: automatically install the built package
+# -s: Automatically install required build dependencies (e.g. python-setuptools, python-build)
+# -i：Automatically install the built package
 
-# You can remove the temporary directories after you are finished
+# You can delete the temporary directories after it completes
 rm -rf buildtmp srctmp
 ```
 
-**Warning:** You must rebuild the package every time Python is upgraded, because the package only works under the Python version when the package is built.
+**Note:** The package must be re-built every time Python is upgraded, because the package only works with the version of Python installed during build
 
 ### Build Debian package
 
-Because `pip` cannot be used to install Python packages onto certain Debian Linux distributions, this project provides a Debian package.
-
-The following packages are required prior to building the package:
+Install the following packages before building:
 
 - `debhelper`
 - `dh-python`
-- `python3-hatchling`
+- `python3-setuptools`
 - `dpkg-dev`
 - `pybuild-plugin-pyproject`
 
-They can be installed using this command:
+You can use the following command to install:
 
-    sudo apt install debhelper dh-python python3-hatchling dpkg-dev pybuild-plugin-pyproject
+    sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
 
-Run `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated in the upper folder after the build process finishes.
+While in the repo directory, execute `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated at the parent directory (`..`) after build completes.
 
-## More information
+# More information
 
-- For more information, please reference the project's Wiki pages: https://gitee.com/swiftycode/clitheme/wikis/pages
-    - You can also access the pages in these repositories:
-    - https://gitee.com/swiftycode/clitheme-wiki-repo
-    - https://github.com/swiftycode256/clitheme-wiki-repo
 - This repository is also synced onto GitHub (using Gitee automatic sync feature): https://github.com/swiftycode256/clitheme
 - The latest developments, future plans, and in-development features of this project are detailed in the Issues section of the Gitee repository: https://gitee.com/swiftycode/clitheme/issues
-- You are welcome to propose suggestions and changes using Issues and Pull Requests
+- Feel free to propose suggestions and changes using Issues and Pull Requests
     - Use the Wiki repositories listed above for Wiki-related suggestions
