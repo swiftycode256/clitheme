@@ -82,6 +82,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     dir_name=f"clitheme-data-{local_path_hash}"
     _generator.generate_custom_path() # prepare _generator.path
     global _alt_path_dirname
+    global global_debugmode
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if _alt_path_dirname!=None and overlay==True: # overlay
         if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
@@ -90,11 +91,15 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     if not os.path.exists(path_name):
         _generator.silence_warn=True
         return_val: str
+        d_copy=global_debugmode
         try:
+            # Set this to prevent extra messages from being displayed
+            global_debugmode=False
             return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
             if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
+        finally: global_debugmode=d_copy
         # I GIVE UP on solving the callback cycle HELL on _generator.generate_data_hierarchy -> new GeneratorObject -> db_interface import -> set_local_themedef -> [generates data directory] so I'm going to add this CRAP fix
         if not os.path.exists(path_name):
             shutil.copytree(return_val, path_name)
