@@ -14,109 +14,115 @@
 
 {entries_section}
 in_domainapp swiftycode clitheme 
-in_subsection generator
-    # error strings
-    [entry] error-str
-        locale:zh_CN 语法错误：{msg}
-    [/entry]
-    [entry] subsection-conflict-err
-        locale:zh_CN 第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在
-    [/entry]
-    [entry] entry-conflict-err
-        locale:zh_CN 第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在
-    [/entry]
-    [entry] extra-arguments-err
-        locale:zh_CN 第{num}行："{phrase}"后的参数太多
-    [/entry]
-    [entry] repeated-section-err
-        locale:zh_CN 第{num}行：重复的{phrase}段落
-    [/entry]
-    [entry] invalid-phrase-err
-        locale:zh_CN 第{num}行：无效的"{phrase}"
-    [/entry]
-    [entry] not-enough-args-err
-        locale:zh_CN 第{num}行："{phrase}"后参数不够
-    [/entry]
-    [entry] incomplete-section-err
-        locale:zh_CN 文件缺少或包含不完整的header或内容段落
-    [/entry]
-    # Options error strings
-    [entry] option-not-allowed-err
-        locale:zh_CN 第{num}行：选项"{phrase}"不允许再这里指定
-    [/entry]
-    [entry] unknown-option-err
-        locale:zh_CN 第{num}行：未知选项"{phrase}"
-    [/entry]
-    [entry] option-without-value-err
-        locale:zh_CN 第{num}行：选项"{phrase}"未指定数值
-    [/entry]
-    [entry] optional-value-not-int-err 
-        locale:zh_CN 第{num}行：选项"{phrase}"指定的数值不是整数
-    [/entry]
-    [entry] option-conflict-err
-        locale:zh_CN 第{num}行：选项"{option1}"和"{option2}"不能同时指定
-    [/entry]
-    [entry] bad-match-pattern-err
-        locale:zh_CN 第{num}行：无效的匹配正则表达式（{error_msg}）
-    [/entry]
-    [entry] bad-subst-pattern-err
-        locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
-    [/entry]
-    [entry] bad-var-name-err
-        locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
-    [/entry]
-    [entry] manpage-subdir-file-conflict-err
-        locale:zh_CN 第{num}行：子路径和文件有冲突；请检查之前的定义
-    [/entry]
-    [entry] include-file-read-err
-        [locale] zh_CN
-            第{num}行：无法读取文件"{filepath}"：
-            {error_msg}
-        [/locale]
-    [/entry]
-    [entry] include-file-missing-phrase-err
-        locale:zh_CN 第{num}行：在下一行缺少"as <文件名>"语句
-    [/entry]
-    # warning strings
-    [entry] warning-str
-        locale:zh_CN 警告：{msg}
-    [/entry]
-    [entry] repeated-entry-warn
-        locale:zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
-    [/entry]
-    [entry] repeated-substrules-warn
-        locale:zh_CN 第{num}行：重复的substrules定义；之前的定义内容将会被覆盖
-    [/entry]
-    [entry] repeated-header-warn
-        locale:zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
-    [/entry]
-    [entry] syntax-phrase-deprecation-warn
-        locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
-    [/entry]
-    [entry] unknown-variable-warn
-        locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
-    [/entry]
-    [entry] repeated-manpage-warn
-        locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
-    [/entry]
-    # sanity check
-    [entry] sanity-check-entry-err
-        locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
-    [/entry]
-    [entry] sanity-check-domainapp-err
-        locale:zh_CN 第{num}行：开发者和应用程序名称{sanitycheck_msg}
-    [/entry]
-    [entry] sanity-check-subsection-err
-        locale:zh_CN 第{num}行：子路径名称{sanitycheck_msg}
-    [/entry]
-    [entry] sanity-check-manpage-err
-        locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
-    [/entry]
-    [entry] sanity-check-msg-banphrase-err
-        locale:zh_CN 不能包含'{char}'
-    [/entry]
-    [entry] sanity-check-msg-startswith-err
-        locale:zh_CN 不能以'{char}'开头
-    [/entry]
+    in_subsection generator
+        # 错误提示
+        # error messages
+        [entry] error-str
+            locale:zh_CN 语法错误：{msg}
+        [/entry]
+        [entry] subsection-conflict-err
+            locale:zh_CN 第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在
+        [/entry]
+        [entry] entry-conflict-err
+            locale:zh_CN 第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在
+        [/entry]
+        [entry] extra-arguments-err
+            locale:zh_CN 第{num}行："{phrase}"后的参数太多
+        [/entry]
+        [entry] repeated-section-err
+            locale:zh_CN 第{num}行：重复的{phrase}段落
+        [/entry]
+        [entry] invalid-phrase-err
+            locale:zh_CN 第{num}行：无效的"{phrase}"
+        [/entry]
+        [entry] not-enough-args-err
+            locale:zh_CN 第{num}行："{phrase}"后参数不够
+        [/entry]
+        [entry] incomplete-section-err
+            locale:zh_CN 文件缺少或包含不完整的header或内容段落
+        [/entry]
+        # 选项错误提示信息
+        # Options error messages
+        [entry] option-not-allowed-err
+            locale:zh_CN 第{num}行：选项"{phrase}"不允许再这里指定
+        [/entry]
+        [entry] unknown-option-err
+            locale:zh_CN 第{num}行：未知选项"{phrase}"
+        [/entry]
+        [entry] option-without-value-err
+            locale:zh_CN 第{num}行：选项"{phrase}"未指定数值
+        [/entry]
+        [entry] optional-value-not-int-err 
+            locale:zh_CN 第{num}行：选项"{phrase}"指定的数值不是整数
+        [/entry]
+        [entry] option-conflict-err
+            locale:zh_CN 第{num}行：选项"{option1}"和"{option2}"不能同时指定
+        [/entry]
+        [entry] bad-match-pattern-err
+            locale:zh_CN 第{num}行：无效的匹配正则表达式（{error_msg}）
+        [/entry]
+        [entry] bad-subst-pattern-err
+            locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
+        [/entry]
+        [entry] bad-var-name-err
+            locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
+        [/entry]
+        [entry] manpage-subdir-file-conflict-err
+            locale:zh_CN 第{num}行：子路径和文件有冲突；请检查之前的定义
+        [/entry]
+        [entry] include-file-read-err
+            [locale] zh_CN
+                第{num}行：无法读取文件"{filepath}"：
+                {error_msg}
+            [/locale]
+        [/entry]
+        [entry] include-file-missing-phrase-err
+            locale:zh_CN 第{num}行：在下一行缺少"as <文件名>"语句
+        [/entry]
+        # 警告提示
+        # Warning messages
+        [entry] warning-str
+            locale:zh_CN 警告：{msg}
+        [/entry]
+        [entry] repeated-entry-warn
+            locale:zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
+        [/entry]
+        [entry] repeated-substrules-warn
+            locale:zh_CN 第{num}行：重复的substrules定义；之前的定义内容将会被覆盖
+        [/entry]
+        [entry] repeated-header-warn
+            locale:zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
+        [/entry]
+        [entry] syntax-phrase-deprecation-warn
+            locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
+        [/entry]
+        [entry] unknown-variable-warn
+            locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
+        [/entry]
+        [entry] repeated-manpage-warn
+            locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
+        [/entry]
+        # 路径检查功能提示
+        # Sanity check feature messages
+        [entry] sanity-check-entry-err
+            locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
+        [/entry]
+        [entry] sanity-check-domainapp-err
+            locale:zh_CN 第{num}行：开发者和应用程序名称{sanitycheck_msg}
+        [/entry]
+        [entry] sanity-check-subsection-err
+            locale:zh_CN 第{num}行：子路径名称{sanitycheck_msg}
+        [/entry]
+        [entry] sanity-check-manpage-err
+            locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
+        [/entry]
+        # 以下提示会是上方定义中"{sanitycheck_msg}"的内容
+        # The following messages are the contents of "{sanitycheck_msg}" in the above entries
+        [entry] sanity-check-msg-banphrase-err
+            locale:zh_CN 不能包含'{char}'
+        [/entry]
+        [entry] sanity-check-msg-startswith-err
+            locale:zh_CN 不能以'{char}'开头
+        [/entry]
 {/entries_section}
     

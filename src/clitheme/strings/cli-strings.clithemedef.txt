@@ -13,7 +13,6 @@
 
 {entries_section}
 in_domainapp swiftycode clitheme 
-    # 命令行指令
     in_subsection cli
         [entry] no-command
             locale:zh_CN 错误：没有提供指令或选项
@@ -37,6 +36,7 @@ in_domainapp swiftycode clitheme
             locale:zh_CN clitheme 版本：{ver}
         [/entry]
         # apply-theme 和 generate-data 指令
+        # apply-theme and generate-data commands
         in_subsection cli apply-theme
             [entry] generate-data-msg
                 locale:zh_CN 主题定义数据将会从以下顺序的主题定义文件生成：
@@ -102,6 +102,7 @@ in_domainapp swiftycode clitheme
                 [/locale]
             [/entry]
         # unset-current-theme 指令
+        # unset-current-theme command
         in_subsection cli unset-current-theme
             [entry] no-data-found
                 locale:zh_CN 错误：当前没有设定主题
@@ -116,6 +117,7 @@ in_domainapp swiftycode clitheme
                 locale:zh_CN 已成功移除当前主题数据
             [/entry]
         # get-current-theme-info 指令
+        # get-current-theme-info command
         in_subsection cli get-current-theme-info
             [entry] no-theme
                 locale:zh_CN 当前没有设定任何主题
@@ -139,6 +141,7 @@ in_domainapp swiftycode clitheme
                 locale:zh_CN 支持的应用程序：
             [/entry]
         # update-theme 指令
+        # update-theme command
         in_subsection cli update-theme
             [entry] not-available-err
                 [locale] zh_CN
