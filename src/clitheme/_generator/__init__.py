@@ -57,7 +57,12 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             _manpage_parser.handle_manpage_section(obj, first_phrase)
         else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(obj.lineindex+1)))
 
-    if obj.section_parsing or not "header" in obj.parsed_sections or (not "entries" in obj.parsed_sections and not "substrules" in obj.parsed_sections and not "manpage" in obj.parsed_sections):
+    def is_content_parsed() -> bool:
+        content_sections=["entries", "substrules", "manpage"]
+        for section in content_sections:
+            if section in obj.parsed_sections: return True
+        return False
+    if obj.section_parsing or not "header" in obj.parsed_sections or not is_content_parsed():
         obj.handle_error(obj.fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
     obj.write_infofile(obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, "file_content", obj.file_content, obj.lineindex+1, "<file_content>")
@@ -69,7 +74,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     path=obj.path
     return obj.path
 
-# prevent circular import error
+# prevent circular import error by placing these statements at the end
 from .. import _globalvar
 from . import _dataclass
 from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
