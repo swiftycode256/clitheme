@@ -60,10 +60,10 @@ def init_db(file_path: str):
     connection.execute(f"INSERT INTO {_globalvar.db_data_tablename}_version (value) VALUES (?)", (_globalvar.db_version,)) 
     connection.commit()
 def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
-    if not os.path.exists(path):
-        raise FileNotFoundError("No theme set or theme does not contain substrules")
     global db_path
     db_path=path
+    if not os.path.exists(path):
+        raise FileNotFoundError("No theme set or theme does not contain substrules")
     global connection
     connection=sqlite3.connect(db_path)
     # check db version

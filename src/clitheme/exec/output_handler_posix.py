@@ -20,6 +20,7 @@ import signal
 import struct
 import copy
 import re
+import sqlite3
 import concurrent.futures
 from .._generator import db_interface
 from .. import _globalvar, frontend
@@ -63,7 +64,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     do_subst=subst
     if do_subst==True: 
         try: db_interface.connect_db()
-        except FileNotFoundError: do_subst=False
+        except FileNotFoundError: pass
     stdout_fd, stdout_slave=pty.openpty()
     stderr_fd, stderr_slave=pty.openpty()
 
@@ -136,6 +137,8 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                         try: 
                             subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
                         except TimeoutError: failed=True
+                        # Happens when no theme is set/no subst-data.db
+                        except sqlite3.OperationalError: pass
                     if db_interface.enable_multiprocessing:
                         # First implementation (A): use the separate process in db_interface
                         # No additional actions required
@@ -179,10 +182,10 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
         except KeyboardInterrupt:
             try: process.send_signal(signal.SIGINT)
             except KeyboardInterrupt: pass
-        except Exception as exc:
+        except:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
             print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
             _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
-            raise exc
+            raise
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     return process.poll()

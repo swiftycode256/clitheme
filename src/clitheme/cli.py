@@ -90,7 +90,7 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
             index+=1
         except SyntaxError:
             print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
-                index=str(i+1), message=str(sys.exc_info()[1]) ))
+                index=str(i+1), message=str(sys.exc_info()[1])))
             return 1
     if len(file_contents)>1: 
         print("    "+f.reof("all-finished", "> All finished"))
@@ -106,21 +106,26 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
 
     print(f.reof("applying-theme", "==> Applying theme..."))
     # remove the current data, ignoring directory not found error
-    try: shutil.rmtree(_globalvar.clitheme_root_data_path)
+    try:
+        try: shutil.rmtree(_globalvar.clitheme_root_data_path)
+        except OSError as exc:
+            # Prevent errors when executing "clitheme apply-theme" in clitheme-exec
+            if exc.errno==66: pass # Directory not empty error when rmtree executes os.rmdir after removing files
+            else: raise
     except FileNotFoundError: pass
     except Exception:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
         return 1
 
     try:
-        shutil.copytree(final_path, _globalvar.clitheme_root_data_path) 
+        shutil.copytree(final_path, _globalvar.clitheme_root_data_path, dirs_exist_ok=True) 
     except Exception:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
         return 1
     print(f.reof("apply-theme-success", "Theme applied successfully"))
     if not preserve_temp:
         try: shutil.rmtree(final_path)
-        except Exception: pass
+        except: pass
     return 0
 
 def unset_current_theme():
