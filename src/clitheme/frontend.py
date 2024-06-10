@@ -50,8 +50,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     
     This function returns True if successful, otherwise returns False.
     """
-    try: from . import _generator
-    except ImportError: import _generator
+    from . import _generator
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
     d=h.hexdigest(6) # length of 12 (6*2)

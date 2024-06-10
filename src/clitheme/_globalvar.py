@@ -76,8 +76,7 @@ startswith_error_message_orig=copy(startswith_error_message)
 sanity_check_error_message=""
 # retrieve the entry only once to avoid dead loop in frontend.FetchDescriptor callbacks
 msg_retrieved=False
-try: from . import frontend, _get_resource
-except ImportError: import frontend, _get_resource
+from . import frontend, _get_resource
 def sanity_check(path: str, use_orig: bool=False) -> bool:
     def retrieve_entry():
         # retrieve the entry (only for the first time)
