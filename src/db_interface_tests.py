@@ -1,6 +1,8 @@
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
 import shutil
+import os
+import unittest
 
 # sample input for testing
 sample_inputs=[("rm: missing operand", "rm"),
@@ -19,6 +21,24 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
                ("example_app: using list options", "/usr/bin/example_app -rlc"), # test smartcmdmatch and command basename handling
+]
+expected_outputs=[
+    ("rm says: missing arguments and options (>﹏<)", "rm 说：缺少参数和选项 (>﹏<)"),
+    ("For more information, use rm --help (｡ì _ í｡)", "关于更多信息，请使用rm --help (｡ì _ í｡)"),
+    ("rm says: Access denied to /etc/folder! ಥ_ಥ", "rm 说：文件\"/etc/folder\"拒绝访问！ಥ_ಥ"),
+    ("rm: /etc/file: Permission denied",),
+    ("cat says: Access denied to /dev/mem! ಥ_ಥ", "cat 说：文件\"/dev/mem\"拒绝访问！ಥ_ಥ"),
+    ("bash says: Access denied to /etc/secret! ಥ_ಥ", "bash 说：文件\"/etc/secret\"拒绝访问！ಥ_ಥ"),
+    ("ls says: Access denied to /etc/secret! ಥ_ಥ", "ls 说：文件\"/etc/secret\"拒绝访问！ಥ_ಥ"),
+    ("ls: /etc/secret: Permission denied",),
+    ("ls says: option \"--help\" not known! (ToT)/~~~", "ls 说：未知选项\"--help\"！(ToT)/~~~"),
+    ("o(≧v≦)o Note: input is invalid! ಥ_ಥ", "o(≧v≦)o 提示： 无效输入！ಥ_ಥ"),
+    ("(ToT)/~~~ Error: input is invalid! ಥ_ಥ", "(ToT)/~~~ 错误：无效输入！ಥ_ಥ"),
+    ("(ToT)/~~~ Error: sample message", "(ToT)/~~~ 错误：sample message"),
+    ("Error: sample message! (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("rm says: Operation not permitted! ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
+    ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)", "o(≧v≦)o example_app 说： 正在使用子路径！(｡ì _ í｡)"),
+    ("o(≧v≦)o example_app says: using list options! (⊙ω⊙)", "o(≧v≦)o example_app 说： 正在使用列表选项！(⊙ω⊙)"),
 ]
 # substitute patterns
 substrules_file=r"""
@@ -83,7 +103,7 @@ substrules_file=r"""
     filter_command rm file.ban
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
             locale:default \g<shell> says: Operation not permitted! ಥ_ಥ
-            locale:zh_CN \g<shell> 说：缺少操作参数！ಥ_ಥ
+            locale:zh_CN \g<shell> 说：不允许的操作！ಥ_ಥ
         [/substitute_regex]
     
     set_options normalcmdmatch
@@ -112,8 +132,14 @@ generator_path=_generator.generate_data_hierarchy(substrules_file)
 db_interface.connect_db(generator_path+"/"+_globalvar.db_filename)
 
 print("Successfully recorded data\nTesting sample outputs: ")
-for inp in sample_inputs:
-    print(db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8'))
+for x in range(len(sample_inputs)):
+    inp=sample_inputs[x]
+    expected=expected_outputs[x]
+    content=db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8')
+    if content in expected:
+        print("\x1b[1;32mOK\x1b[0m: "+content)
+    else:
+        print("\x1b[1;31mMismatch\x1b[0m: "+content)
 
 try: shutil.rmtree(generator_path)
 except: pass
