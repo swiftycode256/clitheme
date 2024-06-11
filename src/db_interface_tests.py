@@ -109,7 +109,7 @@ substrules_file=r"""
 
 db_interface.debug_mode=True
 generator_path=_generator.generate_data_hierarchy(substrules_file)
-db_interface.connection=db_interface.sqlite3.connect(generator_path+"/"+_globalvar.db_filename)
+db_interface.connect_db(generator_path+"/"+_globalvar.db_filename)
 
 print("Successfully recorded data\nTesting sample outputs: ")
 for inp in sample_inputs:
