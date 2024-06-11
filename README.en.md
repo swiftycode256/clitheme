@@ -1,5 +1,9 @@
 # clitheme - Command line customization utility
 
+[**中文**](./README.md) | **English**
+
+---
+
 `clitheme` allows you to customize the output of command line applications, giving them the style and personality you want.
 
 Example:
