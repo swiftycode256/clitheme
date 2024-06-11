@@ -286,7 +286,7 @@ class GeneratorObject(_handlers.DataHandlers):
                         self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 self.check_enough_args(phrases, 2)
-                locales=phrases[1:]
+                locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
                 content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
                 for this_locale in locales:
                     for each_name in entryNames:
