@@ -62,10 +62,12 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
         except:
             sys.stdout=sys.__stdout__
             _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+            _globalvar.handle_exception()
             return False
     except FileNotFoundError: pass
     except: 
         _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+        _globalvar.handle_exception()
         return False
     return True
 

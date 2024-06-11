@@ -155,6 +155,11 @@ def get_locale(debug_mode: bool=False):
             if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
     return lang
 
+def handle_exception():
+    env_var="CLITHEME_SHOW_TRACEBACK"
+    if env_var in os.environ and os.environ[env_var]=="1":
+        raise
+
 def handle_set_themedef(fr, debug_name: str):
     prev_mode=False
     try:
@@ -171,4 +176,4 @@ def handle_set_themedef(fr, debug_name: str):
         sys.stdout=sys.__stdout__
         fr.global_debugmode=prev_mode
         if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]))
-        pass
+        handle_exception()
