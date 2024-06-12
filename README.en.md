@@ -193,9 +193,9 @@ You can build the package from the repository source code, which includes any la
 
 `clitheme` uses the `setuptools` build system, so it needs to be installed beforehand.
 
-First, install `setuptools` and `build` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
+First, install `setuptools`, `build`, and `wheel` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
 
-    $ pip install setuptools build
+    $ pip install setuptools build wheel
 
 Then, switch to project directory and use the following command to build the package:
 

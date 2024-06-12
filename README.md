@@ -192,9 +192,9 @@ $ clitheme-man ls
 
 `clitheme`使用的是`setuptools`构建器，所以构建软件包前需要安装它。
 
-首先，安装`setuptools`和`build`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
+首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 
-    $ pip install setuptools build
+    $ pip install setuptools build wheel
 
 然后，切换到项目目录，使用以下命令构建软件包：
 
