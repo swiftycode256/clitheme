@@ -5,6 +5,8 @@ dist
 dist/*
 build
 build/*
+venv
+venv/*
 src/*.egg-info
 .vscode
 .vscode/*
