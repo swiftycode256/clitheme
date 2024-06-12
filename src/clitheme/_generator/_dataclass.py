@@ -257,6 +257,8 @@ class GeneratorObject(_handlers.DataHandlers):
             if phrases[0]==start_phrase and not names_processed:
                 self.check_enough_args(phrases, 2)
                 pattern=_globalvar.extract_content(line_content)
+                if is_substrules: pattern=self.handle_singleline_content(pattern)
+                else: pattern=self.subst_variable_content(pattern)
                 check_valid_pattern(pattern)
                 entryNames.append((pattern, uuid.uuid4()))
             elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
