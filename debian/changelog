@@ -1,8 +1,23 @@
-clitheme (2.0-dev20240611-1) UNRELEASED; urgency=low
+clitheme (2.0-beta1-1) unstable; urgency=low
 
-  * In development, please see commit logs for changes
+  Known issues (Beta version)
 
- -- swiftycode <3291929745@qq.com>  Tue, 11 Jun 2024 21:52:00 +0800
+  * Because redirecting stdout and stderr to separate streams cannot guarantee original output order as of now:
+      * The `subststdoutonly` and `subststderronly` options in theme definition file is currently unavailable
+      * The output marker will always show that output is stdout (`o>`) when using `clitheme-exec --debug`
+  * When executing certain commands using `clitheme-exec`, error messages such as `No access to TTY` or `No job control` might appear
+      * When executing `fish`, the error message `Inappropriate ioctl for device` will appear and will not run properly
+      * When executing `vim` and suspending the program (using `:suspend` or `^Z`), terminal settings/attributes will not be restored to normal
+  * Command line output substitution feature does not currently support Windows systems
+      * This feature might be delayed for version `v2.1`
+
+  Code repository and latest code changes: https://gitee.com/swiftycode/clitheme/tree/v1.2_dev
+
+  Documentation: https://gitee.com/swiftycode/clitheme-wiki-repo/tree/v1.2_dev
+
+  Full release notes for v2.0: [please see v2.0-beta1 release page]
+
+ -- swiftycode <3291929745@qq.com>  Thu, 13 Jun 2024 08:44:00 +0800
  
 clitheme (1.1-r2-1) unstable; urgency=medium
 
