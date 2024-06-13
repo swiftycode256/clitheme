@@ -194,7 +194,7 @@ $ clitheme-man ls
 
 首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 
-    $ pip install setuptools build wheel
+    $ pip install --upgrade setuptools build wheel
 
 然后，切换到项目目录，使用以下命令构建软件包：
 
