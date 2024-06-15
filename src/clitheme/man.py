@@ -39,13 +39,27 @@ def main(args: list[str]):
         _labeled_print(fd.reof("man-not-installed", "Error: \"man\" is not installed on this system"))
         return 1
     env=os.environ
+    prev_manpath=env.get('MANPATH')
     # check if theme is set
+    theme_set=True
     if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.generator_manpage_pathname}"):
         _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not contain manpages"))
+        theme_set=False
     # set MANPATH
-    env['MANPATH']=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_manpage_pathname+":"+(os.environ['MANPATH'] if 'MANPATH' in os.environ else '')
+    if theme_set: env['MANPATH']=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_manpage_pathname
+    # Only try "man" with fallback settings if content arguments are specified
+    for x in range(1,len(args)):
+        arg=args[x]
+        # Specified '--' and contains following content arguments
+        if arg=='--' and len(args)>x+1: break
+        if not arg.startswith('-'): break
+    else: theme_set=False
     # invoke man
     results=subprocess.run([man_executable]+args[1:], env=env)
+    if results.returncode!=0 and theme_set:
+        _labeled_print(fd.reof("prev-command-fail", "Executing \"man\" with custom path failed, trying execution with normal settings"))
+        env["MANPATH"]=prev_manpath if prev_manpath!=None else ''
+        results=subprocess.run([man_executable]+args[1:], env=os.environ)
     return results.returncode
 
 def _script_main(): # for script

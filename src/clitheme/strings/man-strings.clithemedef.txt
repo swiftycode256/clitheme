@@ -26,5 +26,8 @@ in_domainapp swiftycode clitheme
             # locale:default Error: Windows platform not supported
             locale:zh_CN 错误：不支持Windows平台
         [/entry]
+        [entry] prev-command-fail
+            locale:zh_CN 设定自定义路径执行"man"时发生错误，正在尝试以正常设定执行
+        [/entry]
 {/entries_section}
 
