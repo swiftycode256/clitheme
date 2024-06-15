@@ -1,3 +1,9 @@
+clitheme (2.0-beta1-2) unstable; urgency=low
+
+  * Fixed an issue where clitheme-man might use system man pages instead of custom defined man pages
+
+ -- swiftycode <3291929745@qq.com>  Sat, 15 Jun 2024 23:55:00 +0800
+
 clitheme (2.0-beta1-1) unstable; urgency=low
 
   Known issues (Beta version)
