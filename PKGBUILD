@@ -1,7 +1,7 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
-pkgver='2.0_beta1'
-pkgrel=2
+pkgver=2.0_dev20240617
+pkgrel=1
 pkgdesc="A text theming library for command line applications"
 arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
@@ -17,7 +17,7 @@ backup=()
 options=()
 install=
 changelog='debian/changelog'
-source=("srctmp::git+file://$PWD#branch=v1.2_dev") # REMOVE "#branch=v1.2_dev" WHEN MERGING WITH STABLE BRANCH!!
+source=("srctmp::git+file://$PWD") # Commit any active changes before building the package!
 noextract=()
 md5sums=('SKIP')
 validpgpkeys=()
