@@ -1,4 +1,4 @@
-.TH clitheme 1 2024-05-07
+.TH clitheme 1 2024-06-17
 .SH NAME 
 clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
@@ -19,6 +19,11 @@ Outputs detailed information about the currently applied theme. If multiple them
 .TP
 .B unset-current-theme
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
+.TP
+.B update-theme
+Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if \fB--overlay\fR is used)
+
+Calling this command is equivalent to calling "clitheme apply-theme" with previously-specified files.
 .TP
 .B generate-data [themedef-file(s)] [--overlay]
 Generates the data hierarchy for the given theme definition file(s). This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
