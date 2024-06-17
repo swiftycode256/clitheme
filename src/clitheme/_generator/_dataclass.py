@@ -213,7 +213,7 @@ class GeneratorObject(_handlers.DataHandlers):
             got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=True)
             specified_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False)
         for option in got_options.keys():
-            def is_specified_in_block() -> bool: return option in specified_options.keys() and specified_options[option]==True
+            def is_specified_in_block() -> bool: return option in specified_options.keys()
             def check_whether_explicitly_specified(pass_condition: bool):
                 if not pass_condition and is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option))
             if option=="leadtabindents": 
