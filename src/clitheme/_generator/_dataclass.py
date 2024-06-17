@@ -73,8 +73,6 @@ class GeneratorObject(_handlers.DataHandlers):
         for each_option in options_data:
             option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
-            if allowed_options!=None and option_name not in allowed_options:
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option_name))
             if option_name_preserve_no in self.value_options: # must not begin with "no"
                 # get value
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)+$", each_option)
@@ -102,6 +100,8 @@ class GeneratorObject(_handlers.DataHandlers):
                         break
                 else: # executed when no break occurs
                     self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=option_name_preserve_no))
+            if allowed_options!=None and option_name not in allowed_options:
+                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option_name))
         return final_options 
     def handle_set_global_options(self, options_data: list[str], really_really_global: bool=False):
         # set options globally
