@@ -14,6 +14,8 @@ import sys
 import os
 import subprocess
 import shutil
+import signal
+import time
 from . import _globalvar, frontend
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)
@@ -55,12 +57,18 @@ def main(args: list[str]):
         if not arg.startswith('-'): break
     else: theme_set=False
     # invoke man
-    results=subprocess.run([man_executable]+args[1:], env=env)
-    if results.returncode!=0 and theme_set:
+    def run_process(env) -> int:
+        process=subprocess.Popen([man_executable]+args[1:], env=env)
+        while process.poll()==None:
+            try: time.sleep(0.001)
+            except KeyboardInterrupt: process.send_signal(signal.SIGINT)
+        return process.poll() # type: ignore
+    returncode=run_process(env)
+    if returncode!=0 and theme_set:
         _labeled_print(fd.reof("prev-command-fail", "Executing \"man\" with custom path failed, trying execution with normal settings"))
         env["MANPATH"]=prev_manpath if prev_manpath!=None else ''
-        results=subprocess.run([man_executable]+args[1:], env=os.environ)
-    return results.returncode
+        returncode=run_process(os.environ)
+    return returncode
 
 def _script_main(): # for script
     return main(sys.argv)
