@@ -113,7 +113,7 @@ class GeneratorObject(_handlers.DataHandlers):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
         self.global_variables=copy.copy(self.really_really_global_variables)
-    def subst_variable_content(self, content: str, override_check: bool=False) -> str:
+    def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None) -> str:
         if not override_check and (not "substvar" in self.global_options or self.global_options["substvar"]==False): return content
         # get all variables used in content
         new_content=copy.copy(content)
@@ -125,7 +125,8 @@ class GeneratorObject(_handlers.DataHandlers):
                 try: 
                     var_content=self.global_variables[var_name]
                 except KeyError: 
-                    self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", num=str(self.lineindex+1), name=var_name))
+                    self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
+                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=var_name))
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
         return new_content
@@ -163,6 +164,9 @@ class GeneratorObject(_handlers.DataHandlers):
         self.section_parsing=False
     def handle_substesc(self, content: str) -> str:
         return content.replace("{{ESC}}", "\x1b")
+    def handle_linenumber_range(self, begin: int, end: int) -> str:
+        if begin==end: return str(end)
+        else: return f"{begin}-{end}"
     def handle_singleline_content(self, content: str) -> str:
         target_content=copy.copy(content)
         target_content=self.subst_variable_content(target_content)
@@ -175,6 +179,7 @@ class GeneratorObject(_handlers.DataHandlers):
     def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True, disable_substesc: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
+        begin_line_number=self.lineindex+1+1
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             # read line
@@ -229,7 +234,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 # substitute {{ESC}} with escape literal
                 if got_options['substesc']==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
             elif option=="substvar":
-                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, True)
+                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
             elif disallow_cmdmatch_options:
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option))
         return blockinput_data
@@ -237,8 +242,7 @@ class GeneratorObject(_handlers.DataHandlers):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
         entryNames: list[tuple]=[(entry_name, uuid.uuid4())] # For supporting specifying multiple entries at once (name, uuid)
         names_processed=False # Set to True when no more entry names are being specified
-        substrules_entries=[] # (match_content, substitute_content, locale, uuid)
-        substrules_entries_linenumber=[]
+        substrules_entries=[] # (match_content, substitute_content, locale, uuid, linenumber_str)
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0
         def check_valid_pattern(pattern: str):
@@ -279,8 +283,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 content=self.handle_singleline_content(content) # handle substesc and substvar
                 for each_name in entryNames:
                     if is_substrules:
-                        substrules_entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1]))
-                        substrules_entries_linenumber.append(self.lineindex+1)
+                        substrules_entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1)))
                     else:
                         target_entry=copy.copy(each_name[0])
                         if locale!="default":
@@ -289,12 +292,12 @@ class GeneratorObject(_handlers.DataHandlers):
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 self.check_enough_args(phrases, 2)
                 locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
+                begin_line_number=self.lineindex+1+1
                 content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
                 for this_locale in locales:
                     for each_name in entryNames:
                         if is_substrules:
-                            substrules_entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1]))
-                            substrules_entries_linenumber.append(self.lineindex+1)
+                            substrules_entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)))
                         else:
                             target_entry=copy.copy(each_name[0])
                             if this_locale!="default":
@@ -315,5 +318,16 @@ class GeneratorObject(_handlers.DataHandlers):
         if is_substrules:
             for x in range(len(substrules_entries)):
                 entry=substrules_entries[x]
-                try: self.db_interface.add_subst_entry(match_pattern=entry[0], substitute_pattern=entry[1], effective_commands=substrules_options['effective_commands'], effective_locale=entry[2], is_regex=substrules_options['is_regex'], command_match_strictness=substrules_options['strictness'], end_match_here=substrules_endmatchhere, stdout_stderr_matchoption=substrules_stdout_stderr_option, line_number_debug=substrules_entries_linenumber[x], unique_id=entry[3])
-                except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=str(substrules_entries_linenumber[x]), error_msg=sys.exc_info()[1]))
+                try: 
+                    self.db_interface.add_subst_entry(
+                        match_pattern=entry[0], \
+                        substitute_pattern=entry[1], \
+                        effective_commands=substrules_options['effective_commands'], \
+                        effective_locale=entry[2], \
+                        is_regex=substrules_options['is_regex'], \
+                        command_match_strictness=substrules_options['strictness'], \
+                        end_match_here=substrules_endmatchhere, \
+                        stdout_stderr_matchoption=substrules_stdout_stderr_option, \
+                        line_number_debug=entry[4], \
+                        unique_id=entry[3])
+                except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))

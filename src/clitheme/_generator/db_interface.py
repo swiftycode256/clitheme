@@ -71,7 +71,7 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
     if version!=_globalvar.db_version:
         raise need_db_regenerate
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, unique_id: uuid.UUID=uuid.uuid4(), line_number_debug: int=-1):
+def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, unique_id: uuid.UUID=uuid.uuid4(), line_number_debug: str="-1"):
     cmdlist: list[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
