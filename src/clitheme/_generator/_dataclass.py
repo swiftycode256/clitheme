@@ -71,11 +71,11 @@ class GeneratorObject(_handlers.DataHandlers):
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
         for each_option in options_data:
-            option_name=re.sub(r"^(no)*(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
-            option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)*$", r"\g<name>", each_option)
+            option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
+            option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             if option_name_preserve_no in self.value_options: # must not begin with "no"
                 # get value
-                results=re.search(r"^(?P<name>.+?):(?P<value>.+)+$", each_option)
+                results=re.search(r"^(?P<name>.+?):(?P<value>.+)$", each_option)
                 value: int
                 if results==None: # no value specified
                     self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=option_name))
