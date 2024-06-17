@@ -15,6 +15,7 @@ import os
 import sys
 import shutil
 import re
+import io
 from . import _globalvar, _generator, frontend
 
 # spell-checker:ignore pathnames lsdir inpstr
@@ -79,23 +80,34 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
     final_path: str
+    line_prefix="\x1b[2K\r    " # clear current line content and move cursor to beginning
+    print_progress=len(file_contents)>1
+    orig_stdout=sys.stdout # Prevent interference with other code piping stdout
     for i in range(len(file_contents)):
-        if len(file_contents)>1: 
-            print("    "+f.feof("processing-file", "> Processing file {filename}...", filename=str(i+1)))
+        if print_progress:
+            print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='')
         file_content=file_contents[i]
         # Generate data hierarchy, erase current data, copy it to data path
         try:
             _generator.silence_warn=False
+            # Output the warning messages correctly (make sure that they start on new line if any exists)
+            generator_msgs=io.StringIO()
+            sys.stdout=generator_msgs
             final_path=_generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             generate_path=False # Don't generate another temp folder after first one
             index+=1
+            sys.stdout=orig_stdout # restore standard output
+            if generator_msgs.getvalue()!='':
+                print(("\n" if print_progress else "")+generator_msgs.getvalue(), end='')
         except SyntaxError:
-            print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
+            sys.stdout=orig_stdout
+            print(("\n" if print_progress else "")+f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
                 index=str(i+1), message=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return 1
-    if len(file_contents)>1: 
-        print("    "+f.reof("all-finished", "> All finished"))
+        finally: sys.stdout=orig_stdout
+    if print_progress:
+        print(line_prefix+f.reof("all-finished", "> All finished"))
     print(f.reof("generate-data-success", "Successfully generated data"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
