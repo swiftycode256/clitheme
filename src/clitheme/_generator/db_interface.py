@@ -143,7 +143,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 strictness: int=tp[1] # strictness setting
                 success=True
                 if strictness==1: # must start with pattern in terms of space-separated phrases
-                    condition=len(match_cmd.split())<len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
+                    condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
                     if not condition==True: success=False
                 elif strictness==2: # must equal to pattern
                     if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False

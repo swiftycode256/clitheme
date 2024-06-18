@@ -18,6 +18,7 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: invalid input   ","input anything"), # test extra spaces
                ("Error: sample message", "example_app --this install-stuff"), # test strictcmdmatch (substitution should not happen)
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
+               ("Error: sample message", "example_app install-stuff"), # test strictcmdmatch with SAME command as defined in filter
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
                ("example_app: using list options", "/usr/bin/example_app -rlc"), # test smartcmdmatch and command basename handling
@@ -35,6 +36,7 @@ expected_outputs=[
     ("o(≧v≦)o Note: input is invalid! ಥ_ಥ", "o(≧v≦)o 提示： 无效输入！ಥ_ಥ"),
     ("(ToT)/~~~ Error: input is invalid! ಥ_ಥ", "(ToT)/~~~ 错误：无效输入！ಥ_ಥ"),
     ("(ToT)/~~~ Error: sample message", "(ToT)/~~~ 错误：sample message"),
+    ("Error: sample message! (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("Error: sample message! (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: Operation not permitted! ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
     ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)", "o(≧v≦)o example_app 说： 正在使用子路径！(｡ì _ í｡)"),
@@ -137,9 +139,9 @@ for x in range(len(sample_inputs)):
     expected=expected_outputs[x]
     content=db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8')
     if content in expected:
-        print("\x1b[1;32mOK\x1b[0m: "+content)
+        print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
     else:
-        print("\x1b[1;31mMismatch\x1b[0m: "+content)
+        print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+content)
 
 try: shutil.rmtree(generator_path)
 except: pass
