@@ -122,7 +122,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
 
 ## Convenience functions
 
-def splitarray_to_string(split_content):
+def splitarray_to_string(split_content) -> str:
     final=""
     for phrase in split_content:
         final+=phrase+" "
@@ -131,46 +131,47 @@ def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
     results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
-def get_locale(debug_mode: bool=False):
+def get_locale(debug_mode: bool=False) -> list[str]:
     lang=[]
+    def add_language(target_lang: str):
+        nonlocal lang
+        if not sanity_check(target_lang, use_orig=True)==False:
+            no_encoding=re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", target_lang)
+            lang.append(target_lang)
+            if no_encoding!=target_lang: lang.append(no_encoding)
+        else:
+            if debug_mode: print("[Debug] Locale \"{0}\": sanity check failed ({1})".format(target_lang, sanity_check_error_message))
+
     # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
-    skip_LANGUAGE=False
     LANG_value=os.environ["LANG"] if "LANG" in os.environ and os.environ["LANG"].strip()!='' else "C"
     LC_ALL_value=os.environ["LC_ALL"] if "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!='' else "C"
-    if (LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C.")): skip_LANGUAGE=True
+    skip_LANGUAGE=(LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C."))
     # $LANGUAGE (list of languages separated by colons)
     if "LANGUAGE" in os.environ and not skip_LANGUAGE:
+        if debug_mode: print("[Debug] Using LANGUAGE variable")
         target_str=os.environ['LANGUAGE']
         for language in target_str.split(":"):
             each_language=language.strip()
             if each_language=="": continue
-            # avoid exploit of accessing top-level folders
-            if sanity_check(each_language)==False: continue
             # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
             if each_language!="en" and each_language!="en_US":
                 # Treat C as en_US also
-                if re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)=="C":
-                    lang.append(re.sub(r".+[\.]", "en_US.", each_language))
-                    lang.append("en_US")
-                lang.append(each_language)
-                # no encoding
-                lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language))
+                if re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", each_language)=="C":
+                    for item in ["en_US", "en"]:
+                        with_encoding=re.subn(r"^.+[\.]", f"{item}.", each_language) # (content, num_of_substitutions)
+                        if with_encoding[1]>0: add_language(with_encoding[0])
+                        else: add_language(item)
+                add_language(each_language)
     # $LC_ALL
     elif "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!="":
+        if debug_mode: print("[Debug] Using LC_ALL variable")
         target_str=os.environ["LC_ALL"].strip()
-        if not sanity_check(target_str, use_orig=True)==False:
-            lang.append(target_str)
-            lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
-        else:
-            if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
+        add_language(target_str)
     # $LANG
     elif "LANG" in os.environ and os.environ["LANG"].strip()!="":
+        if debug_mode: print("[Debug] Using LANG variable")
         target_str=os.environ["LANG"].strip()
-        if not sanity_check(target_str, use_orig=True)==False:
-            lang.append(target_str)
-            lang.append(re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str))
-        else:
-            if debug_mode: print("[Debug] Locale: sanity check failed ({})".format(sanity_check_error_message))
+        add_language(target_str)
     return lang
 
 def handle_exception():
