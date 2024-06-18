@@ -1,5 +1,7 @@
 # clitheme - A CLI application framework for output customization
 
+**Note:** This repository branch contains the contents for version `v1.1`. To view the contents for version `v2.0` (latest version), please see the `v1.2_dev` branch in this repository.
+
 [中文](README.md) | **English**
 
 `clitheme` allows you to customize the output of command line applications, giving them the style and personality you want.
