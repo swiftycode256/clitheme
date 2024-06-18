@@ -13,7 +13,7 @@ import re
 import math
 import copy
 import uuid
-from typing import Optional
+from typing import Optional, Union
 from .. import _globalvar
 from . import _handlers
 # spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
@@ -66,7 +66,8 @@ class GeneratorObject(_handlers.DataHandlers):
         else: not_pass=len(phrases)>count
         if not_pass:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=phrases[0]))
-    def parse_options(self, options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
+    def parse_options(self, options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict[str, Union[int, bool]]:
+        # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
@@ -113,7 +114,7 @@ class GeneratorObject(_handlers.DataHandlers):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
         self.global_variables=copy.copy(self.really_really_global_variables)
-    def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None) -> str:
+    def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
         if not override_check and (not "substvar" in self.global_options or self.global_options["substvar"]==False): return content
         # get all variables used in content
         new_content=copy.copy(content)
@@ -125,7 +126,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 try: 
                     var_content=self.global_variables[var_name]
                 except KeyError: 
-                    self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
+                    if not silence_warnings: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
                         num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=var_name))
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
@@ -240,9 +241,12 @@ class GeneratorObject(_handlers.DataHandlers):
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
-        entryNames: list[tuple]=[(entry_name, uuid.uuid4())] # For supporting specifying multiple entries at once (name, uuid)
+        entryNames: list[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)] # For supporting specifying multiple entries at once (name, uuid, debug_linenumber)
+        entry_name_substesc=False; entry_name_substvar=False
         names_processed=False # Set to True when no more entry names are being specified
-        substrules_entries=[] # (match_content, substitute_content, locale, uuid, linenumber_str)
+        # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
+        # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
+        entries: list[tuple]=[]
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0
         def check_valid_pattern(pattern: str):
@@ -261,10 +265,8 @@ class GeneratorObject(_handlers.DataHandlers):
             if phrases[0]==start_phrase and not names_processed:
                 self.check_enough_args(phrases, 2)
                 pattern=_globalvar.extract_content(line_content)
-                if is_substrules: pattern=self.handle_singleline_content(pattern)
-                else: pattern=self.subst_variable_content(pattern)
                 check_valid_pattern(pattern)
-                entryNames.append((pattern, uuid.uuid4()))
+                entryNames.append((pattern, uuid.uuid4(), self.lineindex+1))
             elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
                 content: str
                 locale: str
@@ -283,12 +285,12 @@ class GeneratorObject(_handlers.DataHandlers):
                 content=self.handle_singleline_content(content) # handle substesc and substvar
                 for each_name in entryNames:
                     if is_substrules:
-                        substrules_entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1)))
+                        entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1), each_name[2]))
                     else:
                         target_entry=copy.copy(each_name[0])
                         if locale!="default":
                             target_entry+="__"+locale
-                        self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
+                        entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
             elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
                 self.check_enough_args(phrases, 2)
                 locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
@@ -297,15 +299,18 @@ class GeneratorObject(_handlers.DataHandlers):
                 for this_locale in locales:
                     for each_name in entryNames:
                         if is_substrules:
-                            substrules_entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)))
+                            entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.lineindex+1-1), each_name[2]))
                         else:
                             target_entry=copy.copy(each_name[0])
                             if this_locale!="default":
                                 target_entry+="__"+this_locale
-                            self.add_entry(self.datapath, target_entry, content, self.lineindex+1)
+                            entries.append((target_entry, content, begin_line_number, each_name[1], each_name[2]))
             elif phrases[0]==end_phrase:
-                if not is_substrules: self.check_extra_args(phrases, 1, use_exact_count=True)
-                got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, allowed_options=self.subst_limiting_options+["endmatchhere"])
+                got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, \
+                        allowed_options=\
+                            (self.subst_limiting_options+["endmatchhere"] if is_substrules else []) \
+                            +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
+                        )
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
                         substrules_endmatchhere=True
@@ -313,14 +318,24 @@ class GeneratorObject(_handlers.DataHandlers):
                         substrules_stdout_stderr_option=1
                     elif option=="subststderronly" and got_options['subststderronly']==True:
                         substrules_stdout_stderr_option=2
+                    elif option=="substesc" and got_options['substesc']==True:
+                        entry_name_substesc=True
+                    elif option=="substvar" and got_options['substvar']==True:
+                        entry_name_substvar=True
                 break
             else: self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(self.lineindex+1)))
-        if is_substrules:
-            for x in range(len(substrules_entries)):
-                entry=substrules_entries[x]
+        # For silence_warning in subst_variable_content
+        encountered_ids=set()
+        for x in range(len(entries)):
+            entry=entries[x]
+            match_pattern=entry[0]
+            if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
+            if entry_name_substvar: match_pattern=self.subst_variable_content(match_pattern, override_check=True, line_number_debug=entry[5] if is_substrules else entry[4], silence_warnings=entry[3] in encountered_ids)
+            encountered_ids.add(entry[3])
+            if is_substrules:
                 try: 
                     self.db_interface.add_subst_entry(
-                        match_pattern=entry[0], \
+                        match_pattern=match_pattern, \
                         substitute_pattern=entry[1], \
                         effective_commands=substrules_options['effective_commands'], \
                         effective_locale=entry[2], \
@@ -331,3 +346,5 @@ class GeneratorObject(_handlers.DataHandlers):
                         line_number_debug=entry[4], \
                         unique_id=entry[3])
                 except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
+            else:
+                self.add_entry(self.datapath, match_pattern, entry[1], entry[2])
