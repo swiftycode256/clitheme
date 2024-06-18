@@ -10,6 +10,8 @@ venv/*
 src/*.egg-info
 .vscode
 .vscode/*
+# Vim swap file
+**/*.sw?
 # excluded files (ex)
 debian/*.ex 
 debian/clitheme
