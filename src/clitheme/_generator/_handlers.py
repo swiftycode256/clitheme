@@ -39,7 +39,8 @@ class DataHandlers:
                     num=str(line_number_debug), name=current_entry))
             elif os.path.isdir(str(current_path))==False: # directory does not exist
                 os.mkdir(current_path) 
-    def add_entry(self, path: str, entry_name: str, entry_content: str, line_number_debug: int): # add entry to where it belongs (assuming recursive_mkdir already completed)
+    def add_entry(self, path: str, entry_name: str, entry_content: str, line_number_debug: int): # add entry to where it belongs
+        self.recursive_mkdir(path, entry_name, line_number_debug)
         target_path=path
         for x in entry_name.split():
             target_path+="/"+x

@@ -48,6 +48,9 @@ class GeneratorObject(_handlers.DataHandlers):
         self.really_really_global_options={} # options defined outside any sections
         self.global_variables={}
         self.really_really_global_variables={} # variables defined outside any sections
+        # For in_domainapp and in_subsection in {entries_section}
+        self.in_domainapp=""
+        self.in_subsection=""
 
         self.custom_infofile_name=custom_infofile_name
         self.filename=filename
@@ -241,19 +244,23 @@ class GeneratorObject(_handlers.DataHandlers):
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
-        entryNames: list[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)] # For supporting specifying multiple entries at once (name, uuid, debug_linenumber)
+
         entry_name_substesc=False; entry_name_substvar=False
         names_processed=False # Set to True when no more entry names are being specified
+
+        # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
+        entryNames: list[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)]
         # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
         # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
         entries: list[tuple]=[]
+
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0
-        def check_valid_pattern(pattern: str):
+
+        def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
             # check if patterns are valid
             try: re.compile(pattern)
-            except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(self.lineindex+1), error_msg=sys.exc_info()[1]))
-        if is_substrules: check_valid_pattern(entry_name)
+            except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             if self.is_ignore_line(): continue
@@ -262,10 +269,22 @@ class GeneratorObject(_handlers.DataHandlers):
             # Support specifying multiple match pattern/entry names in one definition block
             if phrases[0]!=start_phrase:
                 names_processed=True # Prevent specifying it after other definition syntax
+                # --Process entry names--
+                for x in range(len(entryNames)):
+                    each_entry=entryNames[x]
+                    name=each_entry[0]
+                    if is_substrules: check_valid_pattern(name, each_entry[2])
+                    else:
+                        # Prevent leading . & prevent /,\ in entry name
+                        if _globalvar.sanity_check(name)==False:
+                            self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(each_entry[2]), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                        if self.in_subsection!="": name=self.in_subsection+" "+name
+                        if self.in_domainapp!="": name=self.in_domainapp+" "+name
+                    entryNames[x]=(name, each_entry[1], each_entry[2])
+                        
             if phrases[0]==start_phrase and not names_processed:
                 self.check_enough_args(phrases, 2)
                 pattern=_globalvar.extract_content(line_content)
-                check_valid_pattern(pattern)
                 entryNames.append((pattern, uuid.uuid4(), self.lineindex+1))
             elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
                 content: str
@@ -282,7 +301,6 @@ class GeneratorObject(_handlers.DataHandlers):
                     self.check_enough_args(phrases, 3)
                     content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                     locale=phrases[1]
-                content=self.handle_singleline_content(content) # handle substesc and substvar
                 for each_name in entryNames:
                     if is_substrules:
                         entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1), each_name[2]))
@@ -330,7 +348,11 @@ class GeneratorObject(_handlers.DataHandlers):
             entry=entries[x]
             match_pattern=entry[0]
             if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
-            if entry_name_substvar: match_pattern=self.subst_variable_content(match_pattern, override_check=True, line_number_debug=entry[5] if is_substrules else entry[4], silence_warnings=entry[3] in encountered_ids)
+            if entry_name_substvar: 
+                match_pattern=self.subst_variable_content(match_pattern, override_check=True, \
+                        line_number_debug=entry[5] if is_substrules else entry[4], \
+                        # Don't show warnings for the same match_pattern
+                        silence_warnings=entry[3] in encountered_ids)
             encountered_ids.add(entry[3])
             if is_substrules:
                 try: 
