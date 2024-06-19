@@ -21,6 +21,9 @@ in_domainapp swiftycode clitheme
             # locale:default Syntax error: {msg}
             locale:zh_CN 语法错误：{msg}
         [/entry]
+        
+        # 以下定义会是上方定义"{msg}"中的内容
+        # The following definitions are the contents of "{msg}" in the above definition
         [entry] subsection-conflict-err
             # locale:default Line {num}: cannot create subsection "{name}" because an entry with the same name already exists
             locale:zh_CN 第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在
@@ -111,6 +114,9 @@ in_domainapp swiftycode clitheme
             # locale:default Warning: {msg}
             locale:zh_CN 警告：{msg}
         [/entry]
+        
+        # 以下定义会是上方定义"{msg}"中的内容
+        # The following definitions are the contents of "{msg}" in the above definition
         [entry] repeated-entry-warn
             # locale:default Line {num}: repeated entry "{name}", overwriting
             locale:zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
