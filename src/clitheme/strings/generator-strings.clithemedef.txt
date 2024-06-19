@@ -39,7 +39,7 @@ in_domainapp swiftycode clitheme
         [/entry]
         [entry] invalid-phrase-err
             # locale:default Unexpected "{phrase}" on line {num}
-            locale:zh_CN 第{num}行：无效的"{phrase}"
+            locale:zh_CN 第{num}行：无效的"{phrase}"语句
         [/entry]
         [entry] not-enough-args-err
             # locale:default Not enough arguments for "{phrase}" at line {num}
