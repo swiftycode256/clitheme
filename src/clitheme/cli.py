@@ -17,6 +17,7 @@ import shutil
 import re
 import io
 from . import _globalvar, _generator, frontend
+from ._globalvar import make_printable as fmt # A shorter alias of the function
 
 # spell-checker:ignore pathnames lsdir inpstr
 
@@ -118,9 +119,9 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":
-            print(f.feof("view-temp-dir", "View at {path}", path=re.sub(r"/", r"\\", final_path))) # make the output look pretty
+            print(f.feof("view-temp-dir", "View at {path}", path=fmt(re.sub(r"/", r"\\", final_path)))) # make the output look pretty
         else:
-            print(f.feof("view-temp-dir", "View at {path}", path=final_path))
+            print(f.feof("view-temp-dir", "View at {path}", path=fmt(final_path)))
     if generate_only: return 0 
     # ---Stop here if generate_only is set---
 
@@ -134,14 +135,14 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
             else: raise
     except FileNotFoundError: pass
     except Exception:
-        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
+        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
 
     try:
         shutil.copytree(final_path, _globalvar.clitheme_root_data_path, dirs_exist_ok=True) 
     except Exception:
-        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=str(sys.exc_info()[1])))
+        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
     print(f.reof("apply-theme-success", "Theme applied successfully"))
@@ -162,7 +163,7 @@ def unset_current_theme():
         print(f.reof("no-data-found", "Error: No theme data present (no theme was set)"))
         return 1
     except Exception:
-        print(f.feof("remove-data-error", "An error occurred while removing the data:\n{message}", message=str(sys.exc_info()[1])))
+        print(f.feof("remove-data-error", "An error occurred while removing the data:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
     print(f.reof("remove-data-success", "Successfully removed the current theme data"))
@@ -201,7 +202,7 @@ def get_current_theme_info():
         version="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="version")):
             version=open(target_path+"/"+_globalvar.generator_info_filename.format(info="version"), 'r', encoding="utf-8").read().strip()
-            print(f.feof("version-str", "Version: {ver}", ver=version))
+            print(f.feof("version-str", "Version: {ver}", ver=fmt(version)))
         # description
         description="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="description")):
@@ -216,12 +217,12 @@ def get_current_theme_info():
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.splitlines():
                 if locale.strip()!="":
-                    print(f.feof("list-item", "• {content}", content=locale.strip()))
+                    print(f.feof("list-item", "• {content}", content=fmt(locale.strip())))
         elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="locales")):
             locales=open(target_path+"/"+_globalvar.generator_info_filename.format(info="locales"), 'r', encoding="utf-8").read().strip()
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.split():
-                print(f.feof("list-item", "• {content}", content=locale.strip()))
+                print(f.feof("list-item", "• {content}", content=fmt(locale.strip())))
         # supported_apps
         supported_apps="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps")):
@@ -229,12 +230,12 @@ def get_current_theme_info():
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.splitlines():
                 if app.strip()!="":
-                    print(f.feof("list-item", "• {content}", content=app.strip()))
+                    print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
         elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps")):
             supported_apps=open(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps"), 'r', encoding="utf-8").read().strip()
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
-                print(f.feof("list-item", "• {content}", content=app.strip()))
+                print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
     return 0
 
 def update_theme():
@@ -279,7 +280,7 @@ def update_theme():
         _globalvar.handle_exception()
         return 1
     except:
-        print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again"))
+        print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
     return apply_theme(file_contents, file_paths, overlay=False)
@@ -324,7 +325,7 @@ def _get_file_contents(file_paths: list[str]) -> list[str]:
             content_list.append(open(path, 'r', encoding="utf-8").read())
         except:
             print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
-                index=str(i+1), message=path+": "+str(sys.exc_info()[1])))
+                index=str(i+1), message=path+": "+fmt(str(sys.exc_info()[1]))))
             raise
     return content_list
 
@@ -360,7 +361,7 @@ def main(cli_args: list[str]):
             if _is_option(arg):
                 if arg.strip()=="--overlay": overlay=True
                 elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
-                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=arg), arg_first)
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
             else:
                 paths.append(arg)
         fi=frontend.FetchDescriptor(subsections="cli apply-theme")
@@ -387,7 +388,7 @@ def main(cli_args: list[str]):
             check_extra_args(2)
             _handle_help_message(full_help=True)
         else:
-            return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=cli_args[1]), arg_first)
+            return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
     return 0
 def _script_main(): # for script
     return main(sys.argv)
