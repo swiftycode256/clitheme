@@ -9,6 +9,7 @@ Functions for data processing and others (internal module)
 """
 import os
 import gzip
+import re
 from typing import Optional
 from .. import _globalvar, frontend
 
@@ -24,10 +25,13 @@ class DataHandlers:
         self.datapath=self.path+"/"+_globalvar.generator_data_pathname
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
         self.fd=self.frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+        self.fmt=_globalvar.make_printable # alias for the make_printable function
     def handle_error(self, message: str):
-        raise SyntaxError(self.fd.feof("error-str", "Syntax error: {msg}", msg=message))
+        output=self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
+        raise SyntaxError(output)
     def handle_warning(self, message: str):
-        if not self.silence_warn: print(self.fd.feof("warning-str", "Warning: {msg}", msg=message))
+        output=self.fd.feof("warning-str", "Warning: {msg}", msg=message)
+        if not self.silence_warn: print(output)
     def recursive_mkdir(self, path: str, entry_name: str, line_number_debug: int): # recursively generate directories (excluding file itself)
         current_path=path
         current_entry="" # for error output
@@ -36,7 +40,7 @@ class DataHandlers:
             current_path+="/"+x
             if os.path.isfile(current_path): # conflict with entry file
                 self.handle_error(self.fd.feof("subsection-conflict-err", "Line {num}: cannot create subsection \"{name}\" because an entry with the same name already exists", \
-                    num=str(line_number_debug), name=current_entry))
+                    num=str(line_number_debug), name=self.fmt(current_entry)))
             elif os.path.isdir(str(current_path))==False: # directory does not exist
                 os.mkdir(current_path) 
     def add_entry(self, path: str, entry_name: str, entry_content: str, line_number_debug: int): # add entry to where it belongs
@@ -46,10 +50,10 @@ class DataHandlers:
             target_path+="/"+x
         if os.path.isdir(target_path):
             self.handle_error(self.fd.feof("entry-conflict-err", "Line {num}: cannot create entry \"{name}\" because a subsection with the same name already exists", \
-                num=str(line_number_debug), name=entry_name))
+                num=str(line_number_debug), name=self.fmt(entry_name)))
         elif os.path.isfile(target_path):
             self.handle_warning(self.fd.feof("repeated-entry-warn", "Line {num}: repeated entry \"{name}\", overwriting", \
-                num=str(line_number_debug), name=entry_name))
+                num=str(line_number_debug), name=self.fmt(entry_name)))
         f=open(target_path,'w', encoding="utf-8")
         f.write(entry_content+"\n")
     def write_infofile(self, path: str, filename: str, content: str, line_number_debug: int, header_name_debug: str):
@@ -58,7 +62,7 @@ class DataHandlers:
         target_path=path+"/"+filename
         if os.path.isfile(target_path):
             self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: repeated header info \"{name}\", overwriting", \
-                num=str(line_number_debug), name=header_name_debug))
+                num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         f.write(content+'\n')
     def write_infofile_newlines(self, path: str, filename: str, content_phrases: list[str], line_number_debug: int, header_name_debug: str):
@@ -67,7 +71,7 @@ class DataHandlers:
         target_path=path+"/"+filename
         if os.path.isfile(target_path):
             self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: repeated header info \"{name}\", overwriting", \
-                num=str(line_number_debug), name=header_name_debug))
+                num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         for line in content_phrases:
             f.write(line+"\n")

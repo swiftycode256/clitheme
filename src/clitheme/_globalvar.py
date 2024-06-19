@@ -12,6 +12,7 @@ import io
 import os
 import sys
 import re
+import string
 from copy import copy
 from . import _version
 
@@ -131,6 +132,16 @@ def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
     results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
+def make_printable(content: str) -> str:
+    final_str=""
+    for character in content:
+        if character.isprintable() or character in string.whitespace: final_str+=character
+        else:
+            exp=repr(character)
+            # Remove quotes in repr(character)
+            exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
+            final_str+=exp
+    return final_str
 def get_locale(debug_mode: bool=False) -> list[str]:
     lang=[]
     def add_language(target_lang: str):

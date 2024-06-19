@@ -62,13 +62,13 @@ class GeneratorObject(_handlers.DataHandlers):
         return self.lines_data[self.lineindex].strip()=="" or self.lines_data[self.lineindex].strip().startswith('#')
     def check_enough_args(self, phrases: list[str], count: int):
         if len(phrases)<count:
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=phrases[0], num=str(self.lineindex+1)))
+            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
     def check_extra_args(self, phrases: list[str], count: int, use_exact_count: bool):
         not_pass: bool
         if use_exact_count: not_pass=len(phrases)!=count
         else: not_pass=len(phrases)>count
         if not_pass:
-            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=phrases[0]))
+            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
     def parse_options(self, options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict[str, Union[int, bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
@@ -82,10 +82,10 @@ class GeneratorObject(_handlers.DataHandlers):
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)$", each_option)
                 value: int
                 if results==None: # no value specified
-                    self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=option_name))
+                    self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
                 else: 
                     try: value=int(results.groupdict()['value'])
-                    except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=str(self.lineindex+1), phrase=option_name))
+                    except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
                 # set option
                 final_options[option_name]=value
             elif option_name in self.bool_options:
@@ -96,16 +96,16 @@ class GeneratorObject(_handlers.DataHandlers):
                     if option_name_preserve_no in option_group:
                         for opt in options_data:
                             if opt!=option_name_preserve_no and opt in option_group:
-                                self.handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(self.lineindex+1), option1=option_name_preserve_no, option2=opt))
+                                self.handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(self.lineindex+1), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
                         # set all other options to false
                         for opt in option_group: final_options[opt]=False
                         # set the option
                         final_options[option_name_preserve_no]=True
                         break
                 else: # executed when no break occurs
-                    self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=option_name_preserve_no))
+                    self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name_preserve_no)))
             if allowed_options!=None and option_name not in allowed_options:
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option_name))
+                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
         return final_options 
     def handle_set_global_options(self, options_data: list[str], really_really_global: bool=False):
         # set options globally
@@ -130,7 +130,7 @@ class GeneratorObject(_handlers.DataHandlers):
                     var_content=self.global_variables[var_name]
                 except KeyError: 
                     if not silence_warnings: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
-                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=var_name))
+                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
                     continue
                 new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
         return new_content
@@ -144,7 +144,7 @@ class GeneratorObject(_handlers.DataHandlers):
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=str(self.lineindex+1)))
         else: var_name=results.groupdict()['name']
         # sanity check var_name
-        def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=var_name, num=str(self.lineindex+1)))
+        def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=str(self.lineindex+1)))
         if var_name=='ESC': bad_var()
         banphrases=['{', '}', '[', ']', '(', ')']
         for char in banphrases:
@@ -224,7 +224,7 @@ class GeneratorObject(_handlers.DataHandlers):
         for option in got_options.keys():
             def is_specified_in_block() -> bool: return option in specified_options.keys()
             def check_whether_explicitly_specified(pass_condition: bool):
-                if not pass_condition and is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option))
+                if not pass_condition and is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
             if option=="leadtabindents": 
                 check_whether_explicitly_specified(pass_condition=preserve_indents)
                 # insert tabs at start of each line
@@ -240,7 +240,7 @@ class GeneratorObject(_handlers.DataHandlers):
             elif option=="substvar":
                 if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
             elif disallow_cmdmatch_options:
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=option))
+                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
@@ -341,7 +341,7 @@ class GeneratorObject(_handlers.DataHandlers):
                     elif option=="substvar" and got_options['substvar']==True:
                         entry_name_substvar=True
                 break
-            else: self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=phrases[0], num=str(self.lineindex+1)))
+            else: self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
         # For silence_warning in subst_variable_content
         encountered_ids=set()
         for x in range(len(entries)):

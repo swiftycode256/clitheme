@@ -55,7 +55,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             _substrules_parser.handle_substrules_section(obj, first_phrase)
         elif first_phrase==r"{manpage_section}":
             _manpage_parser.handle_manpage_section(obj, first_phrase)
-        else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=first_phrase, num=str(obj.lineindex+1)))
+        else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=obj.fmt(first_phrase), num=str(obj.lineindex+1)))
 
     def is_content_parsed() -> bool:
         content_sections=["entries", "substrules", "manpage"]
