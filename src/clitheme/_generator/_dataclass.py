@@ -301,6 +301,7 @@ class GeneratorObject(_handlers.DataHandlers):
                     self.check_enough_args(phrases, 3)
                     content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                     locale=phrases[1]
+                content=self.handle_singleline_content(content)
                 for each_name in entryNames:
                     if is_substrules:
                         entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1), each_name[2]))
