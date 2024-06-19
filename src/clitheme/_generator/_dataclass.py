@@ -347,12 +347,13 @@ class GeneratorObject(_handlers.DataHandlers):
         for x in range(len(entries)):
             entry=entries[x]
             match_pattern=entry[0]
-            if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
+            # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
             if entry_name_substvar: 
                 match_pattern=self.subst_variable_content(match_pattern, override_check=True, \
                         line_number_debug=entry[5] if is_substrules else entry[4], \
                         # Don't show warnings for the same match_pattern
                         silence_warnings=entry[3] in encountered_ids)
+            if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
             encountered_ids.add(entry[3])
             if is_substrules:
                 try: 
