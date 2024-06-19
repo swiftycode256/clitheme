@@ -24,7 +24,8 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
             obj.check_enough_args(phrases, 2)
             content=_globalvar.extract_content(obj.lines_data[obj.lineindex])
-            content=obj.subst_variable_content(content)
+            if phrases[0]=="description": content=obj.handle_singleline_content(content)
+            else: content=obj.subst_variable_content(content)
             obj.write_infofile( \
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
