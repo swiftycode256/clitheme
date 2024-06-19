@@ -28,10 +28,20 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="exec")
 
+# Prevent recursion dead loops and accurately simulate that regeneration is only triggered once
+db_already_regenerated=False
+
 def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path) -> bool:
-    try: db_interface.connect_db()
+    global db_already_regenerated
+    try:
+        # Support environment variable flag to force db regeneration (debug purposes)
+        if os.environ.get("CLITHEME_REGENERATE_DB")=="1" and not db_already_regenerated:
+            db_already_regenerated=True
+            raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
+        else: db_interface.connect_db()
     except db_interface.need_db_regenerate:
         _labeled_print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
+        orig_stdout=sys.stdout
         try:
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -54,13 +64,13 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             sys.stdout=cli_msg
             if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
                 raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
-            sys.stdout=sys.__stdout__
+            sys.stdout=orig_stdout
             try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
             except FileNotFoundError: raise
             shutil.copy(cli.last_data_path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
             _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
         except:
-            sys.stdout=sys.__stdout__
+            sys.stdout=orig_stdout
             _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return False
@@ -129,7 +139,8 @@ def main(arguments: list[str]):
     if subst:
         if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
             _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
-        if not _check_regenerate_db(): return 1
+        else: 
+            if not _check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
         from . import output_handler_posix
