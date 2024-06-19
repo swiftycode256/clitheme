@@ -88,24 +88,30 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
             print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='')
         file_content=file_contents[i]
         # Generate data hierarchy, erase current data, copy it to data path
+        generator_msgs=io.StringIO()
         try:
             _generator.silence_warn=False
             # Output the warning messages correctly (make sure that they start on new line if any exists)
-            generator_msgs=io.StringIO()
             sys.stdout=generator_msgs
             final_path=_generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             generate_path=False # Don't generate another temp folder after first one
             index+=1
-            sys.stdout=orig_stdout # restore standard output
-            if generator_msgs.getvalue()!='':
-                print(("\n" if print_progress else "")+generator_msgs.getvalue(), end='')
-        except SyntaxError:
+        except:
             sys.stdout=orig_stdout
-            print(("\n" if print_progress else "")+f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
+            print(("\n" if print_progress else ""), end='')
+            # Print any output messages if an error occurs
+            if generator_msgs.getvalue()!='':
+                # end='' because the pipe value already contains a newline due to the print statements
+                print(generator_msgs.getvalue(), end='')
+            print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
                 index=str(i+1), message=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return 1
-        finally: sys.stdout=orig_stdout
+        else: 
+            sys.stdout=orig_stdout # restore standard output
+            if generator_msgs.getvalue()!='':
+                print(("\n" if print_progress else "")+generator_msgs.getvalue(), end='')
+        finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
     if print_progress:
         print(line_prefix+f.reof("all-finished", "> All finished"))
     print(f.reof("generate-data-success", "Successfully generated data"))
