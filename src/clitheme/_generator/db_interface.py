@@ -21,7 +21,7 @@ import queue
 from typing import Optional
 from .. import _globalvar, frontend
 
-# spell-checker:ignore matchoption cmdlist exactmatch rowid
+# spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp
 
 connection=sqlite3.connect(":memory:") # placeholder
 db_path=""
@@ -53,6 +53,7 @@ def init_db(file_path: str):
                     effective_command TEXT, \
                     effective_locale TEXT, \
                     command_match_strictness INTEGER NOT NULL, \
+                    foreground_only INTEGER NOT NULL, \
                     end_match_here INTEGER NOT NULL, \
                     stdout_stderr_only INTEGER NOT NULL \
                     );")
@@ -71,14 +72,14 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
     if version!=_globalvar.db_version:
         raise need_db_regenerate
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, unique_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
+def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list[str]], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
     cmdlist: list[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except re.error: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
-    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id"]
+    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only"]
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
@@ -91,7 +92,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only))
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
@@ -102,10 +103,12 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id)))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only))
     connection.commit()
 
-def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False) -> bytes:
+def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: tuple[int, int]=(-1,-1)) -> bytes:
+    # pids: (main_pid, current_tcpgrp)
+
     # Match order:
     # 1. Match rules with exactcmdmatch option set
     # 2. Match rules with command filter having the same first phrase
@@ -120,15 +123,16 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     if command!=None and len(command.split())>0:
         # command without paths (e.g. /usr/bin/bash -> bash)
         stripped_command=os.path.basename(command.split()[0])+" "+(_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
+        cmdlist_items=["effective_command", "command_match_strictness"]
         # obtain a list of effective_command with the same first term
-        cmdlist=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
+        cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
         # also include one-phrase commands
-        cmdlist+=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
+        cmdlist+=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
         # sort by number of phrases (greatest to least)
         def split_len(obj: tuple) -> int: return len(obj[0].split())
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
-        cmdlist=_connection.execute(f"SELECT DISTINCT effective_command, command_match_strictness FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
+        cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
         def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
             match_cmd_phrases=[]
             for p in range(len(match_cmd.split())):
@@ -167,7 +171,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     content_str=copy.copy(content)
     matches=[]
     def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
-        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id"]
+        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only"]
         # get locales
         locales=_globalvar.get_locale()
         nonlocal matches
@@ -192,7 +196,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if len(_running_processes_ids)==0:
             _init_process()
         result_id=uuid.uuid4()
-        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id))
+        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id, pids))
         counter=0
         watchdog_timer=0
         while counter<match_timeout:
@@ -209,7 +213,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 watchdog_timer+=0.001
                 if watchdog_timer>=1.500:
                     _init_process()
-                    _input_values.put((matches, content_str, is_stderr, result_id))
+                    _input_values.put((matches, content_str, is_stderr, result_id, pids))
                     watchdog_timer=0
         else: # executed when no "break" happens
             try: del _return_values[result_id]
@@ -217,7 +221,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             _init_process() # restart the process
             raise TimeoutError("match operation timeout")
     else:
-        content_str=_handle_subst(matches, content_str, is_stderr)
+        content_str=_handle_subst(matches, content_str, is_stderr, pids)
     return content_str
 
 # --The following implementation (A) is for setting a timeout capacity on content match functions--
@@ -274,7 +278,7 @@ def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, pr
         try: content=input_vals.get_nowait()
         except queue.Empty: return
         return_vals[content[3]]=None # Processing
-        return_str=_handle_subst(content[0], content[1], content[2])
+        return_str=_handle_subst(content[0], content[1], content[2], content[4])
         return_vals[content[3]]=return_str
     while True:
         try: time.sleep(0.001)
@@ -285,13 +289,15 @@ def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, pr
         except KeyboardInterrupt: pass
         # except: break
 
-def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, ret: Optional[list[bytes]]=None):
+def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, pids: tuple[int, int], ret: Optional[list[bytes]]=None):
     content_str=copy.copy(content)
     encountered_ids=set()
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         if match_data[5] in encountered_ids: continue # check uuid
         else: encountered_ids.add(match_data[5])
+        if match_data[6]==True: # Foreground only
+            if pids[0]!=pids[1]: continue
         matched=False
         if match_data[2]==True: # is regex 
             try: 

@@ -20,6 +20,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
     end_phrase=r"{/substrules_section}"
     command_filters: Optional[list[str]]=None
     command_filter_strictness=0
+    command_filter_foreground_only=False
     # initialize the database
     if os.path.exists(obj.path+"/"+_globalvar.db_filename):
         try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
@@ -39,7 +40,8 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             # read commands
             command_strings=content.splitlines()
 
-            strictness=0 #1: strictcmdmatch, 2: exactcmdmatch
+            strictness=0
+            foreground_only=False
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
             got_options=copy.copy(obj.global_options)
             if len(obj.lines_data[obj.lineindex].split())>1:
@@ -51,15 +53,19 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
                     strictness=2
                 elif this_option=="smartcmdmatch" and got_options['smartcmdmatch']==True:
                     strictness=-1
+                elif this_option=="foregroundonly" and got_options['foregroundonly']==True:
+                    foreground_only=True
             command_filters=[]
             for cmd in command_strings:
                 command_filters.append(cmd.strip())
             command_filter_strictness=strictness
+            command_filter_foreground_only=foreground_only
         elif phrases[0]=="filter_command":
             obj.check_enough_args(phrases, 2) 
             content=_globalvar.splitarray_to_string(phrases[1:])
             content=obj.subst_variable_content(content)
             strictness=0
+            foreground_only=False
             for this_option in obj.global_options:
                 if this_option=="strictcmdmatch" and obj.global_options['strictcmdmatch']==True:
                     strictness=1
@@ -67,14 +73,17 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
                     strictness=2
                 elif this_option=="smartcmdmatch" and obj.global_options['smartcmdmatch']==True:
                     strictness=-1
+                elif this_option=="foregroundonly" and obj.global_options['foregroundonly']==True:
+                    foreground_only=True
             command_filters=[content]
             command_filter_strictness=strictness
+            command_filter_foreground_only=foreground_only
         elif phrases[0]=="unset_filter_command":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             command_filters=None
         elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
             obj.check_enough_args(phrases, 2)
-            options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness}
+            options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness, "foreground_only": command_filter_foreground_only}
             match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
         elif phrases[0]=="set_options":

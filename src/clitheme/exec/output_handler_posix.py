@@ -113,6 +113,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     # this mechanism prevents user input from being processed through substrules
     last_input_content=None
     executor=concurrent.futures.ThreadPoolExecutor()
+    last_tcgetpgrp=os.tcgetpgrp(stdout_fd)
     while True:
         try:
             # update terminal attributes from what the program sets
@@ -133,12 +134,14 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             except: pass
             fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
             readsize=io.DEFAULT_BUFFER_SIZE
+            # Handle user input from stdin
             if sys.stdin in fds:
                 data=os.read(sys.stdin.fileno(), readsize)
                 # if input from last iteration did not end with newlines, append new content
                 if last_input_content!=None: last_input_content+=data
                 else: last_input_content=data
                 os.write(stdout_fd, data)
+            # Handle output from stdout and stderr
             def handle_output(is_stderr: bool):
                 data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
                 do_subst_operation=True
@@ -155,6 +158,17 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             if stderr_fd in fds: handle_output(is_stderr=True)
 
             if process.poll()!=None and len(output_lines)==0: break
+
+            # Print message if foreground process changed
+            if "normal" in debug_mode:
+                foreground_pid=os.tcgetpgrp(stdout_fd)
+                if foreground_pid!=last_tcgetpgrp:
+                    if (foreground_pid==process.pid)!=(last_tcgetpgrp==process.pid):
+                        message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'}\x1b[0m\n"
+                        os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
+                    last_tcgetpgrp=foreground_pid
+
+            # Process outputs
             def process_line(line: bytes, line_data):
                 # subst operation
                 subst_line=copy.copy(line)
@@ -163,7 +177,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     def operation():
                         nonlocal subst_line, failed
                         try: 
-                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1])
+                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(process.pid, os.tcgetpgrp(stdout_fd)))
                         except TimeoutError: failed=True
                         # Happens when no theme is set/no subst-data.db
                         except sqlite3.OperationalError: pass
@@ -184,7 +198,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
             futures=[]
-            # Process outputs
             for x in range(len(output_lines)):
                 line_data=output_lines[x]
                 line: bytes=line_data[0]
@@ -202,9 +215,10 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                 else: last_input_content=None
                 # subst operation
                 if db_interface.enable_multiprocessing: futures.append(executor.submit(process_line, line, line_data))
+                # print output
                 else: os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
             else: output_lines=[] # happens when no 'break' statement occurs
-            # Print outputs
+            # Print outputs (if enable_multiprocessing)
             for thread in futures:
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
         except KeyboardInterrupt:

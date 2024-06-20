@@ -23,8 +23,8 @@ class GeneratorObject(_handlers.DataHandlers):
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
     content_subst_options=["substesc","substvar"]
-    command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]
-    subst_limiting_options=["subststdoutonly", "subststderronly", "substall"]
+    command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
+    subst_limiting_options=["subststdoutonly", "subststderronly", "substall"]+["endmatchhere"]
     
     # options used in handle_block_input
     block_input_options=lead_indent_options+content_subst_options
@@ -32,11 +32,11 @@ class GeneratorObject(_handlers.DataHandlers):
     # value options: options requiring an integer value
     value_options=lead_indent_options
     # on/off options (use no<...> to disable)
-    bool_options=content_subst_options+["endmatchhere"]
+    bool_options=content_subst_options+["endmatchhere", "foregroundonly"]
     # only one of these options can be set to true at the same time (specific to groups)
-    switch_options=[command_filter_options]
+    switch_options=[command_filter_options[:4]]
     # Disable these options for now (BETA)
-    # switch_options+=[subst_limiting_options]
+    # switch_options+=[subst_limiting_options[:3]]
 
     def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, silence_warn: bool):
         # data to keep track of
@@ -243,7 +243,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
-        # substrules_options: effective_commands: list[str], is_regex: bool, strictness: int
+        # substrules_options: {effective_commands: list[str], is_regex: bool, strictness: int, foreground_only: bool}
 
         entry_name_substesc=False; entry_name_substvar=False
         names_processed=False # Set to True when no more entry names are being specified
@@ -327,7 +327,7 @@ class GeneratorObject(_handlers.DataHandlers):
             elif phrases[0]==end_phrase:
                 got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, \
                         allowed_options=\
-                            (self.subst_limiting_options+["endmatchhere"] if is_substrules else []) \
+                            (self.subst_limiting_options if is_substrules else []) \
                             +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
                         )
                 for option in got_options:
@@ -367,6 +367,7 @@ class GeneratorObject(_handlers.DataHandlers):
                         command_match_strictness=substrules_options['strictness'], \
                         end_match_here=substrules_endmatchhere, \
                         stdout_stderr_matchoption=substrules_stdout_stderr_option, \
+                        foreground_only=substrules_options['foreground_only'], \
                         line_number_debug=entry[4], \
                         unique_id=entry[3])
                 except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
