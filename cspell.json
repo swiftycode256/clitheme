@@ -18,8 +18,8 @@
         "subststdoutonly", "subststderronly", "substall", 
         "substvar", "substesc", 
         "PKGBUILD", "MANPATH",
-        "tcgetattr", "tcsetattr", "getpid", "setitimer",
-        "TIOCGWINSZ", "TIOCSWINSZ", "TCSADRAIN", "SIGWINCH", "SIGALRM", "ITIMER",
+        "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer",
+        "TIOCGWINSZ", "TIOCSWINSZ", "TCSADRAIN", "SIGWINCH", "SIGALRM", "ITIMER", "SIGTSTP", "SIGSTOP", "SIGCONT",
         "showchars", "keepends",
         "appname", "domainapp",
         "sanitycheck", "debugmode", "splitarray", "disablelang"
