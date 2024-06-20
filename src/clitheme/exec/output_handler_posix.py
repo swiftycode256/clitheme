@@ -208,8 +208,11 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             for thread in futures:
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
         except KeyboardInterrupt:
-            try: process.send_signal(signal.SIGINT)
-            except KeyboardInterrupt: pass
+            os.write(stdout_fd, b'\x03') # '^C' character
+            # try: 
+            #     try: os.kill(os.tcgetpgrp(stdout_fd), signal.SIGINT) # Send signal to foreground process
+            #     except OSError: process.send_signal(signal.SIGINT)
+            # except KeyboardInterrupt: pass
         except:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
             print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
