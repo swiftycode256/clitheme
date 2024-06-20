@@ -26,7 +26,7 @@ from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
 
-# spell-checker:ignore cbreak ICANON readsize splitarray
+# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec
 
 _globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
@@ -72,14 +72,41 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
     prev_attrs=termios.tcgetattr(sys.stdin)
+    main_pid=os.getpid()
     process: subprocess.Popen
     # Redirect stderr to stdout for now (BETA)
         # need to find a method to preserve exact order when using separated stdout and stderr pipes
-    try: process=subprocess.Popen(command, stdin=stdout_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env)
+    
+    # Since a new session is started with os.setsid() in child process:
+    # - Suspend and continue signals must be manually relayed to the child process
+    # [Not implemented yet] - Suspend signal from child process must be manually relayed to the parent process
+    def signal_handler(sig, frame):
+        if sig==signal.SIGCONT: # continue signal
+            process.send_signal(sig)
+            signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
+        if sig==signal.SIGTSTP: # suspend signal
+            process.send_signal(signal.SIGSTOP) # Stop the process
+            signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
+            os.kill(main_pid, signal.SIGTSTP) # Suspend itself
+    try:
+        def child_init():
+            # Must start new session or some programs might not work properly
+            os.setsid()
+
+            # Make controlling terminal so programs can access TTY properly
+            # [Explicitly open the tty to make it become a controlling tty.]
+            # --This code and above description are from the source code of pty.fork()--
+            tmp_fd = os.open(os.ttyname(stdout_slave), os.O_RDWR)
+            tmp_fd2 = os.open(os.ttyname(stderr_slave), os.O_RDWR)
+            os.close(tmp_fd);os.close(tmp_fd2)
+        process=subprocess.Popen(command, stdin=stdout_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env, preexec_fn=child_init)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
+    else:
+        signal.signal(signal.SIGTSTP, signal_handler)
+        signal.signal(signal.SIGCONT, signal_handler)
     output_lines=[] # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
