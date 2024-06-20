@@ -60,13 +60,13 @@ f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\""
 
 You can integrate the fallback frontend module provided by this project to better handle situations when `clitheme` does not exist on the system. This fallback module contains all the functions in the frontend module, and its functions will always return fallback values.
 
-Import the `clitheme_fallback.py` file from the repository and insert the following code in your project to use it:
+Import the `frontend_fallback.py` file from the repository and insert the following code in your project to use it:
 
 ```py
 try:
     from clitheme import frontend
 except (ModuleNotFoundError, ImportError):
-    import clitheme_fallback as frontend
+    import frontend_fallback as frontend
 ```
 
 The fallback module provided by this project will update accordingly with new versions. Therefore, it is recommended to import the latest version of this module to adopt the latest features.
@@ -103,7 +103,7 @@ begin_header
     name Example theme
     version 1.0
     locales en_US
-    supported_apps clitheme_demo
+    supported_apps frontend_demo
 end_header
 
 begin_main

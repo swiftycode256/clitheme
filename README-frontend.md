@@ -60,13 +60,13 @@ f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\""
 
 应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理`clitheme`模块不存在时的情况。该fallback模块包括了frontend模块中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
 
-如需使用，请在你的项目文件中导入`clitheme_fallback.py`文件，并且在你的程序中包括以下代码：
+如需使用，请在你的项目文件中导入`frontend_fallback.py`文件，并且在你的程序中包括以下代码：
 
 ```py
 try:
     from clitheme import frontend
 except (ModuleNotFoundError, ImportError):
-    import clitheme_fallback as frontend
+    import frontend_fallback as frontend
 ```
 
 本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以适配最新的功能。
@@ -103,7 +103,7 @@ com.example example-app file-not-found
     name 样例主题
     version 1.0
     locales zh_CN
-    supported_apps clitheme_demo
+    supported_apps frontend_demo
 {/header_section}
 
 {entries_section}
