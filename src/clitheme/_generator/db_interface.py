@@ -113,6 +113,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # 3. Match rules without command filter
 
     # retrieve a list of effective commands matching first argument
+    if not os.path.exists(db_path): raise sqlite3.OperationalError("file at db_path does not exist")
     _connection=sqlite3.connect(db_path)
     final_cmdlist=[]
     final_cmdlist_exactmatch=[]
