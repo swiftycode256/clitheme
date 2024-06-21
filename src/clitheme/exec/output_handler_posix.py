@@ -122,7 +122,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     def handle_debug_pgrp(foreground_pid: int):
         nonlocal last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
-            # if (foreground_pid==process.pid)!=(last_tcgetpgrp==process.pid):
             message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'} ({foreground_pid})\x1b[0m\n"
             os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
@@ -175,7 +174,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                             orig_data=output_lines[-1]
                             orig_line=orig_data[0]
                             output_lines.pop()
-                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, orig_data[3]))
+                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, foreground_pid))
                         else: output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
                 if stdout_fd in fds: handle_output(is_stderr=False)
                 if stderr_fd in fds: handle_output(is_stderr=True)
