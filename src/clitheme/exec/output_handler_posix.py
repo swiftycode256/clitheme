@@ -85,9 +85,12 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             process.send_signal(sig)
             signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
         if sig==signal.SIGTSTP: # suspend signal
-            process.send_signal(signal.SIGSTOP) # Stop the process
-            signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
-            os.kill(main_pid, signal.SIGTSTP) # Suspend itself
+            if os.tcgetpgrp(stdout_fd)!=process.pid: # e.g. A shell running another process
+                os.write(stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
+            else: 
+                process.send_signal(signal.SIGSTOP) # Stop the process
+                signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
+                os.kill(main_pid, signal.SIGTSTP) # Suspend itself
     try:
         def child_init():
             # Must start new session or some programs might not work properly

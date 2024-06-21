@@ -237,13 +237,13 @@ enable_multiprocessing=False
 # timeout value for each match operation
 match_timeout=_globalvar.output_subst_timeout
 
-_manager=multiprocessing.Manager()
+_manager=multiprocessing.Manager() if enable_multiprocessing else None
 _process: Optional[multiprocessing.Process]=None
 _input_values=multiprocessing.Queue() # (matches, content, is_stderr, uuid)
-_return_values=_manager.dict() # uuid : content_str (uuid:None means processing)
+_return_values=_manager.dict() if _manager else {} # uuid : content_str (uuid:None means processing)
 
 _watchdog_process: Optional[multiprocessing.Process]=None
-_running_processes_ids=_manager.list()
+_running_processes_ids=_manager.list() if _manager else []
 
 def _init_process():
     global _process, _input_values, _return_values, _watchdog_process, _running_processes_ids
