@@ -84,13 +84,14 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
 def _handle_help_message(full_help: bool=False):
     fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
-    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [--debug-nosubst] [command]")
+    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [--debug-foreground] [--debug-nosubst] [command]")
     if not full_help: return
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
     print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
     print("\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
     print("\t"+fd2.reof("options-debug-showchars", "--debug-showchars: Display various control characters in plain text"))
+    print("\t"+fd2.reof("options-debug-foreground", "--debug-foreground: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
     print("\t"+fd2.reof("options-debug-nosubst", "--debug-nosubst: Do not perform any output substitutions even if a theme is set"))
 
 def _handle_error(message: str):
@@ -121,6 +122,8 @@ def main(arguments: list[str]):
             debug_mode.append("newlines")
         elif arg=="--debug-showchars":
             debug_mode.append("showchars")
+        elif arg=="--debug-foreground":
+            debug_mode.append("foreground")
         elif arg=="--debug-nosubst":
             subst=False
         elif arg=="--help":

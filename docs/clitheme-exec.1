@@ -1,4 +1,4 @@
-.TH clitheme-exec 1 2024-05-07
+.TH clitheme-exec 1 2024-06-21
 .SH NAME
 clitheme\-exec \- match and substitute output of a command
 .SH SYNOPSIS
@@ -38,5 +38,17 @@ Display various control characters in plain text. The following characters will 
 
 - Bell character (\\x07)
 .RE
+.TP 
+.B --debug-foreground
+When the foreground status of the main process changes (determined using value of \fItcgetpgrp(3)\fR system call), output a message showing this change.
+
+Such change happens when running a shell in \fIclitheme-exec\fR and running another command in that shell.
+.P
+.RS 14
+- "! Foreground: False (<PID>)": Process exits foreground state
+
+- "! Foreground: True (<PID>)": Process enters (re-enters) foreground state
+.RE
+
 .SH SEE ALSO
 \fIclitheme(1)\fR

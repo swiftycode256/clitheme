@@ -42,6 +42,10 @@ in_domainapp swiftycode clitheme
             # locale:default --debug-showchars: Display various control characters in plain text
             locale:zh_CN --debug-showchars：使用明文显示终端控制符号
         [/entry]
+        [entry] options-debug-foreground
+            # locale:default --debug-foreground: Display message when the foreground status of the process changes (value of tcgetpgrp)
+            locale:zh_CN --debug-foreground: 当进程的前台状态（tcgetpgrp的返回值）变动时，显示提示信息
+        [/entry]
         [entry] options-debug-nosubst
             # locale:default --debug-nosubst: Do not perform any output substitutions even if a theme is set
             locale:zh_CN --debug-nosubst：不进行任何输出替换，即使已设定主题
