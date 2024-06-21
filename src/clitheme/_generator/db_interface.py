@@ -106,6 +106,33 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only))
     connection.commit()
 
+def _check_strictness(match_cmd: str, strictness: int, target_command: str):
+    def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
+        match_cmd_phrases=[]
+        for p in range(len(match_cmd.split())):
+            ph=match_cmd.split()[p]
+            results=re.search(r"^-([^-]+)$",ph)
+            if p>0 and results!=None:
+                for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
+            else: match_cmd_phrases.append(ph)
+        return match_cmd_phrases
+    success=True
+    if strictness==1: # must start with pattern in terms of space-separated phrases
+        condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
+        if not condition==True: success=False
+    elif strictness==2: # must equal to pattern
+        if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
+    elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
+        # process both phrases
+        match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
+        command_phrases=process_smartcmdmatch_phrases(target_command)
+        for phrase in match_cmd_phrases:
+            if phrase not in command_phrases: success=False
+    else: # implying strictness==0; must contain all phrases in pattern
+        for phrase in match_cmd.split():
+            if phrase not in target_command.split(): success=False
+    return success
+
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: tuple[int, int]=(-1,-1)) -> bytes:
     # pids: (main_pid, current_tcpgrp)
 
@@ -122,7 +149,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     final_cmdlist_exactmatch=[]
     if command!=None and len(command.split())>0:
         # command without paths (e.g. /usr/bin/bash -> bash)
-        stripped_command=os.path.basename(command.split()[0])+" "+(_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
+        stripped_command=os.path.basename(command.split()[0])+(" "+_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
         cmdlist_items=["effective_command", "command_match_strictness"]
         # obtain a list of effective_command with the same first term
         cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
@@ -133,36 +160,12 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         cmdlist.sort(key=split_len, reverse=True)
         # prioritize effective_command with exact match requirement
         cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
-        def process_smartcmdmatch_phrases(match_cmd: str) -> list[str]:
-            match_cmd_phrases=[]
-            for p in range(len(match_cmd.split())):
-                ph=match_cmd.split()[p]
-                results=re.search(r"^-([^-]+)$",ph)
-                if p>0 and results!=None:
-                    for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
-                else: match_cmd_phrases.append(ph)
-            return match_cmd_phrases
         # attempt to find matching command 
         for target_command in [command, stripped_command]:
             for tp in cmdlist:
-                match_cmd: str=tp[0].strip() # extract value from tuple
-                strictness: int=tp[1] # strictness setting
-                success=True
-                if strictness==1: # must start with pattern in terms of space-separated phrases
-                    condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
-                    if not condition==True: success=False
-                elif strictness==2: # must equal to pattern
-                    if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
-                elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
-                    # process both phrases
-                    match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
-                    command_phrases=process_smartcmdmatch_phrases(target_command)
-                    for phrase in match_cmd_phrases:
-                        if phrase not in command_phrases: success=False
-                else: # implying strictness==0; must contain all phrases in pattern
-                    for phrase in match_cmd.split():
-                        if phrase not in target_command.split(): success=False
-                if success:
+                match_cmd=tp[0].strip()
+                strictness=tp[1]
+                if _check_strictness(match_cmd, strictness, target_command)==True:
                     # if found matching target_command
                     if match_cmd not in final_cmdlist: 
                         final_cmdlist.append(match_cmd)
@@ -171,7 +174,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     content_str=copy.copy(content)
     matches=[]
     def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
-        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only"]
+        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only", "effective_command", "command_match_strictness"]
         # get locales
         locales=_globalvar.get_locale()
         nonlocal matches
@@ -196,7 +199,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if len(_running_processes_ids)==0:
             _init_process()
         result_id=uuid.uuid4()
-        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id, pids))
+        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id, pids, command))
         counter=0
         watchdog_timer=0
         while counter<match_timeout:
@@ -213,7 +216,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 watchdog_timer+=0.001
                 if watchdog_timer>=1.500:
                     _init_process()
-                    _input_values.put((matches, content_str, is_stderr, result_id, pids))
+                    _input_values.put((matches, content_str, is_stderr, result_id, pids, command))
                     watchdog_timer=0
         else: # executed when no "break" happens
             try: del _return_values[result_id]
@@ -221,7 +224,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             _init_process() # restart the process
             raise TimeoutError("match operation timeout")
     else:
-        content_str=_handle_subst(matches, content_str, is_stderr, pids)
+        content_str=_handle_subst(matches, content_str, is_stderr, pids, command)
     return content_str
 
 # --The following implementation (A) is for setting a timeout capacity on content match functions--
@@ -278,7 +281,7 @@ def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, pr
         try: content=input_vals.get_nowait()
         except queue.Empty: return
         return_vals[content[3]]=None # Processing
-        return_str=_handle_subst(content[0], content[1], content[2], content[4])
+        return_str=_handle_subst(content[0], content[1], content[2], content[4], content[5])
         return_vals[content[3]]=return_str
     while True:
         try: time.sleep(0.001)
@@ -289,13 +292,17 @@ def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, pr
         except KeyboardInterrupt: pass
         # except: break
 
-def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, pids: tuple[int, int], ret: Optional[list[bytes]]=None):
+def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, pids: tuple[int, int], target_command: Optional[str]):
     content_str=copy.copy(content)
     encountered_ids=set()
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         if match_data[5] in encountered_ids: continue # check uuid
         else: encountered_ids.add(match_data[5])
+        # Check strictness
+        if target_command!=None and match_data[7]!=None and \
+            _check_strictness(match_data[7], match_data[8], \
+            os.path.basename(target_command.split()[0])+(" "+_globalvar.splitarray_to_string(target_command.split()[1:]) if len(target_command.split())>1 else ''))==False: continue
         if match_data[6]==True: # Foreground only
             if pids[0]!=pids[1]: continue
         matched=False
@@ -317,5 +324,4 @@ def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, pids: t
                 content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
         if match_data[3]==True and matched: # endmatchhere is set
             break
-    if ret!=None: ret.append(content_str)
     return content_str
