@@ -21,6 +21,7 @@ import struct
 import copy
 import re
 import sqlite3
+import time
 import concurrent.futures
 from .._generator import db_interface
 from .. import _globalvar, frontend
@@ -117,6 +118,15 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     last_input_content=None
     executor=concurrent.futures.ThreadPoolExecutor()
     last_tcgetpgrp=os.tcgetpgrp(stdout_fd)
+
+    def handle_debug_pgrp(foreground_pid: int):
+        nonlocal last_tcgetpgrp
+        if "normal" in debug_mode and foreground_pid!=last_tcgetpgrp:
+            if (foreground_pid==process.pid)!=(last_tcgetpgrp==process.pid):
+                message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'}\x1b[0m\n"
+                os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
+            last_tcgetpgrp=foreground_pid
+
     while True:
         try:
             # update terminal attributes from what the program sets
@@ -135,52 +145,56 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
                     process.send_signal(signal.SIGWINCH)
             except: pass
-            fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
             readsize=io.DEFAULT_BUFFER_SIZE
-            # Handle user input from stdin
-            if sys.stdin in fds:
-                data=os.read(sys.stdin.fileno(), readsize)
-                # if input from last iteration did not end with newlines, append new content
-                if last_input_content!=None: last_input_content+=data
-                else: last_input_content=data
-                os.write(stdout_fd, data)
-            # Handle output from stdout and stderr
-            def handle_output(is_stderr: bool):
-                data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
-                do_subst_operation=True
-                lines=data.splitlines(keepends=True)
-                for x in range(len(lines)):
-                    line=lines[x]
-                    # if last input did not end with newlines, append new content to it
-                    if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
-                        orig_line=output_lines[-1][0]
-                        output_lines.pop()
-                        output_lines.append((orig_line+line,is_stderr,do_subst_operation))
-                    else: output_lines.append((line,is_stderr,do_subst_operation))
-            if stdout_fd in fds: handle_output(is_stderr=False)
-            if stderr_fd in fds: handle_output(is_stderr=True)
+            
+            start_time=time.perf_counter()
+            while time.perf_counter()-start_time<0.1:
+                fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
+                if fds==[]:
+                    # Output the debug message if no outputs are written
+                    handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
+                    break
+                # Handle user input from stdin
+                if sys.stdin in fds:
+                    data=os.read(sys.stdin.fileno(), readsize)
+                    # if input from last iteration did not end with newlines, append new content
+                    if last_input_content!=None: last_input_content+=data
+                    else: last_input_content=data
+                    os.write(stdout_fd, data)
+                # Handle output from stdout and stderr
+                def handle_output(is_stderr: bool):
+                    data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                    foreground_pid=os.tcgetpgrp(stdout_fd)
+                    do_subst_operation=True
+                    lines=data.splitlines(keepends=True)
+                    for x in range(len(lines)):
+                        line=lines[x]
+                        # if last output did not end with newlines, append new content to it
+                        if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
+                            orig_data=output_lines[-1]
+                            orig_line=orig_data[0]
+                            output_lines.pop()
+                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, orig_data[3]))
+                        else: output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+                if stdout_fd in fds: handle_output(is_stderr=False)
+                if stderr_fd in fds: handle_output(is_stderr=True)
 
             if process.poll()!=None and len(output_lines)==0: break
 
-            # Print message if foreground process changed
-            if "normal" in debug_mode:
-                foreground_pid=os.tcgetpgrp(stdout_fd)
-                if foreground_pid!=last_tcgetpgrp:
-                    if (foreground_pid==process.pid)!=(last_tcgetpgrp==process.pid):
-                        message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'}\x1b[0m\n"
-                        os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
-                    last_tcgetpgrp=foreground_pid
-
             # Process outputs
             def process_line(line: bytes, line_data):
+                nonlocal last_tcgetpgrp
                 # subst operation
                 subst_line=copy.copy(line)
                 failed=False
+                foreground_pid=line_data[3]
+                # Print message if foreground process changed
+                if line_data[2]==True: handle_debug_pgrp(foreground_pid)
                 if do_subst and line_data[2]==True:
                     def operation():
-                        nonlocal subst_line, failed
+                        nonlocal subst_line, failed, foreground_pid
                         try: 
-                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(process.pid, os.tcgetpgrp(stdout_fd)))
+                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(process.pid, foreground_pid))
                         except TimeoutError: failed=True
                         # Happens when no theme is set/no subst-data.db
                         except sqlite3.OperationalError: pass
@@ -206,14 +220,14 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                 line: bytes=line_data[0]
                 # if does not end with newlines, leave it for the next iteration
                 if x==len(output_lines)-1 and not line.endswith(newlines):
-                    if not len(line_data)>=4: # not from previous iteration
+                    if not len(line_data)>=5: # not from previous iteration
                         output_lines=[line_data+(True,)] # add another entry to signal it's from previous iteration
                         break
                 # check if the output is user input. if yes, skip
                 # print(last_input_content, line) # DEBUG
-                if line==last_input_content: line_data=(line_data[0],line_data[1],False); last_input_content=None
+                if line==last_input_content: line_data=(line_data[0],line_data[1],False, line_data[3]); last_input_content=None
                 elif last_input_content!=None and last_input_content.startswith(line): 
-                    line_data=(line_data[0],line_data[1],False)
+                    line_data=(line_data[0],line_data[1],False, line_data[3])
                     last_input_content=last_input_content[len(line):]
                 else: last_input_content=None
                 # subst operation
