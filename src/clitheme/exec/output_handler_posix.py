@@ -160,7 +160,8 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     # if input from last iteration did not end with newlines, append new content
                     if last_input_content!=None: last_input_content+=data
                     else: last_input_content=data
-                    os.write(stdout_fd, data)
+                    try: os.write(stdout_fd, data)
+                    except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
                 def handle_output(is_stderr: bool):
                     data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
