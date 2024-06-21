@@ -49,6 +49,11 @@ Such change happens when running a shell in \fIclitheme-exec\fR and running anot
 
 - "! Foreground: True (<PID>)": Process enters (re-enters) foreground state
 .RE
+.TP
+.B --debug-nosubst
+Even if a theme is set, do not perform any output substitution operations. 
+
+This is useful if you are trying to get the original output of the command with control characters displayed on-screen using \fI--debug-showchars\fR.
 
 .SH SEE ALSO
 \fIclitheme(1)\fR
