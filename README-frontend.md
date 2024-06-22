@@ -124,7 +124,7 @@ com.example example-app file-not-found
             locale:default ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
             locale:zh_CN ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
         [/entry]
-end_main
+{/entries_section}
 ```
 
 编写好主题文件后，使用 `clitheme apply-theme <file>`来应用主题。应用程序会直接采用主题中适配的字符串。

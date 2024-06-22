@@ -99,32 +99,32 @@ You can also include this information in your project's official documentation. 
 Consult the Wiki pages and documentation for detailed syntax of theme definition files. An example is provided below:
 
 ```
-begin_header
+{header_section}
     name Example theme
     version 1.0
     locales en_US
     supported_apps frontend_demo
-end_header
+{/header_section}
 
-begin_main
+{entries_section}
     in_domainapp com.example example-app
-        entry found-file
-            locale default o(≧v≦)o Great! Found {} files in current directory!
-            locale en_US o(≧v≦)o Great! Found {} files in current directory!
-        end_entry
-        entry installing-file
-            locale default (>^ω^<) Installing "{}"...
-            locale en_US (>^ω^<) Installing "{}"...
-        end_entry
-        entry install-success
-            locale default o(≧v≦)o Successfully installed {} files!
-            locale en_US o(≧v≦)o Successfully installed {} files!
-        end_entry
-        entry file-not-found
-            locale default ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
-            locale en_US ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
-        end_entry
-end_main
+        [entry] found-file
+            locale:default o(≧v≦)o Great! Found {} files in current directory!
+            locale:en_US o(≧v≦)o Great! Found {} files in current directory!
+        [/entry]
+        [entry] installing-file
+            locale:default (>^ω^<) Installing "{}"...
+            locale:en_US (>^ω^<) Installing "{}"...
+        [/entry]
+        [entry] install-success
+            locale:default o(≧v≦)o Successfully installed {} files!
+            locale:en_US o(≧v≦)o Successfully installed {} files!
+        [/entry]
+        [entry] file-not-found
+            locale:default ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+            locale:en_US ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+        [/entry]
+{/entries_section}
 ```
 
 Use the command `clitheme apply-theme <file>` to apply the theme definition file onto the system. Supported applications will start using the string definitions listed in this file.
