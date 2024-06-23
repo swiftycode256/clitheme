@@ -240,7 +240,7 @@ class GeneratorObject(_handlers.DataHandlers):
             elif option=="substvar":
                 if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
             elif disallow_cmdmatch_options:
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
+                if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
         # substrules_options: {effective_commands: list[str], is_regex: bool, strictness: int, foreground_only: bool}
