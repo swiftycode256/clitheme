@@ -76,7 +76,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
     cmdlist: list[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
-    except re.error: raise bad_pattern(str(sys.exc_info()[1]))
+    except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
     insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only"]

@@ -260,7 +260,7 @@ class GeneratorObject(_handlers.DataHandlers):
         def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
             # check if patterns are valid
             try: re.compile(pattern)
-            except re.error: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
+            except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             if self.is_ignore_line(): continue
