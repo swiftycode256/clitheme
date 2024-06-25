@@ -250,4 +250,9 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
             raise
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-    return process.poll()
+    exit_code=process.poll()
+    try:
+        if exit_code!=None and exit_code<0: # Terminated by signal
+            os.kill(os.getpid(), abs(exit_code))
+    except: pass
+    return exit_code
