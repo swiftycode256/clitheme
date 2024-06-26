@@ -127,18 +127,22 @@ class GeneratorObject(_handlers.DataHandlers):
         if not override_check and (not "substvar" in self.global_options or self.global_options["substvar"]==False): return content
         # get all variables used in content
         new_content=copy.copy(content)
-        variables=re.findall(r"{{(.+?)}}", content)
-        if len(variables)>0:
-            for var_name in variables:
-                if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
-                var_content: str
-                try: 
-                    var_content=self.global_variables[var_name]
-                except KeyError: 
-                    if not silence_warnings: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
-                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
-                    continue
-                new_content=new_content.replace(r"{{"+var_name+r"}}", var_content)
+        encountered_variables=set()
+        offset=0
+        for match in re.finditer(r"{{(.+?)??}}", content):
+            var_name=match.group(1)
+            if var_name.strip()=='': continue
+            if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
+            var_content: str
+            try: 
+                var_content=self.global_variables[var_name]
+            except KeyError: 
+                if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
+                    num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
+                continue
+            new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
+            offset+=len(var_content)-(match.end()-match.start())
+            encountered_variables.add(var_name)
         return new_content
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
