@@ -272,17 +272,13 @@ class GeneratorObject(_handlers.DataHandlers):
             phrases=self.lines_data[self.lineindex].split()
             line_content=self.lines_data[self.lineindex]
             # Support specifying multiple match pattern/entry names in one definition block
-            if phrases[0]!=start_phrase:
+            if phrases[0]!=start_phrase and not names_processed:
                 names_processed=True # Prevent specifying it after other definition syntax
                 # --Process entry names--
                 for x in range(len(entryNames)):
                     each_entry=entryNames[x]
                     name=each_entry[0]
-                    if is_substrules: check_valid_pattern(name, each_entry[2])
-                    else:
-                        # Prevent leading . & prevent /,\ in entry name
-                        if _globalvar.sanity_check(name)==False:
-                            self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(each_entry[2]), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    if not is_substrules:
                         if self.in_subsection!="": name=self.in_subsection+" "+name
                         if self.in_domainapp!="": name=self.in_domainapp+" "+name
                     entryNames[x]=(name, each_entry[1], each_entry[2])
@@ -360,6 +356,12 @@ class GeneratorObject(_handlers.DataHandlers):
                         # Don't show warnings for the same match_pattern
                         silence_warnings=entry[3] in encountered_ids)
             if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
+
+            if is_substrules: check_valid_pattern(match_pattern, entry[5])
+            else:
+                # Prevent leading . & prevent /,\ in entry name
+                if _globalvar.sanity_check(match_pattern)==False:
+                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(entry[5]), sanitycheck_msg=_globalvar.sanity_check_error_message))
             encountered_ids.add(entry[3])
             if is_substrules:
                 try: 
