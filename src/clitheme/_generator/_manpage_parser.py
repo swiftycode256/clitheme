@@ -19,8 +19,7 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("manpage")
     end_phrase="{/manpage_section}"
     while obj.lineindex<len(obj.lines_data)-1:
-        obj.lineindex+=1
-        if obj.is_ignore_line(): continue
+        if not obj.goto_next_line(): break
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="[file_content]":
             obj.check_enough_args(phrases, 2)
@@ -46,9 +45,8 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             except: obj.handle_error(obj.fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(obj.lineindex+1), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]))
             # write manpage files in theme-info for db migration feature to work successfully
             obj.write_manpage_file(filepath, filecontent, obj.lineindex+1, custom_parent_path=obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name+"/manpage_data")
-            # expect "as" clause right on next line
-            obj.lineindex+=1
-            if obj.lineindex<len(obj.lines_data) and len(obj.lines_data[obj.lineindex].split())>0 and obj.lines_data[obj.lineindex].split()[0]=="as":
+            # expect "as" clause on next line
+            if obj.goto_next_line() and len(obj.lines_data[obj.lineindex].split())>0 and obj.lines_data[obj.lineindex].split()[0]=="as":
                 target_file=obj.subst_variable_content(_globalvar.splitarray_to_string(obj.lines_data[obj.lineindex].split()[1:])).split()
                 if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
                     obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))

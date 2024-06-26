@@ -21,8 +21,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.in_domainapp=""
     obj.in_subsection=""
     while obj.lineindex<len(obj.lines_data)-1:
-        obj.lineindex+=1
-        if obj.is_ignore_line(): continue
+        if not obj.goto_next_line(): break
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="in_domainapp":
             this_phrases=obj.subst_variable_content(obj.lines_data[obj.lineindex].strip()).split()

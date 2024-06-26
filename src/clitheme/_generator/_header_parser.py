@@ -18,8 +18,7 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("header")
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     while obj.lineindex<len(obj.lines_data)-1:
-        obj.lineindex+=1
-        if obj.is_ignore_line(): continue
+        if not obj.goto_next_line(): break
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
             obj.check_enough_args(phrases, 2)

@@ -36,9 +36,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
 
     ## Main code
     while obj.lineindex<len(obj.lines_data)-1:
-        obj.lineindex+=1
-        # ignore empty and comment lines
-        if obj.is_ignore_line(): continue
+        if not obj.goto_next_line(): break
         first_phrase=obj.lines_data[obj.lineindex].split()[0]
         # process header and main sections here
         if first_phrase=="set_options":

@@ -60,6 +60,12 @@ class GeneratorObject(_handlers.DataHandlers):
         self.db_interface=db_interface
     def is_ignore_line(self) -> bool:
         return self.lines_data[self.lineindex].strip()=="" or self.lines_data[self.lineindex].strip().startswith('#')
+    def goto_next_line(self) -> bool:
+        while self.lineindex<len(self.lines_data)-1:
+            self.lineindex+=1
+            # stop at non-empty or non-comment line
+            if not self.is_ignore_line(): return True
+        else: return False # End of file
     def check_enough_args(self, phrases: list[str], count: int):
         if len(phrases)<count:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
@@ -262,8 +268,7 @@ class GeneratorObject(_handlers.DataHandlers):
             try: re.compile(pattern)
             except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
         while self.lineindex<len(self.lines_data)-1:
-            self.lineindex+=1
-            if self.is_ignore_line(): continue
+            if not self.goto_next_line(): break
             phrases=self.lines_data[self.lineindex].split()
             line_content=self.lines_data[self.lineindex]
             # Support specifying multiple match pattern/entry names in one definition block
