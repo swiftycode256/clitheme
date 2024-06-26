@@ -34,6 +34,7 @@ for line in expected_data.splitlines():
         except FileNotFoundError:
             print("[File] file "+rootpath+"/"+current_path+" does not exist")
             errorcount+=1
+            current_path=""
         if contents=="": continue
         if contents.strip()!=line.strip():
             print("[Content] Content mismatch on file "+rootpath+"/"+current_path)
