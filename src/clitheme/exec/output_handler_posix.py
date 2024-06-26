@@ -85,13 +85,15 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
         if sig==signal.SIGCONT: # continue signal
             process.send_signal(sig)
             signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
-        if sig==signal.SIGTSTP: # suspend signal
+        elif sig==signal.SIGTSTP: # suspend signal
             if os.tcgetpgrp(stdout_fd)!=process.pid: # e.g. A shell running another process
                 os.write(stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
             else: 
                 process.send_signal(signal.SIGSTOP) # Stop the process
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
                 os.kill(main_pid, signal.SIGTSTP) # Suspend itself
+        elif sig==signal.SIGINT:
+            os.write(stdout_fd, b'\x03') # '^C' character
     try:
         def child_init():
             # Must start new session or some programs might not work properly
@@ -111,6 +113,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     else:
         signal.signal(signal.SIGTSTP, signal_handler)
         signal.signal(signal.SIGCONT, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
     output_lines=[] # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
@@ -238,12 +241,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             # Print outputs (if enable_multiprocessing)
             for thread in futures:
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
-        except KeyboardInterrupt:
-            os.write(stdout_fd, b'\x03') # '^C' character
-            # try: 
-            #     try: os.kill(os.tcgetpgrp(stdout_fd), signal.SIGINT) # Send signal to foreground process
-            #     except OSError: process.send_signal(signal.SIGINT)
-            # except KeyboardInterrupt: pass
         except:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
             print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
