@@ -97,7 +97,7 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
             final_path=_generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             generate_path=False # Don't generate another temp folder after first one
             index+=1
-        except:
+        except Exception as exc:
             sys.stdout=orig_stdout
             print(("\n" if print_progress else ""), end='')
             # Print any output messages if an error occurs
@@ -106,7 +106,8 @@ def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, p
                 print(generator_msgs.getvalue(), end='')
             print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
                 index=str(i+1), message=str(sys.exc_info()[1])))
-            _globalvar.handle_exception()
+            if type(exc)==SyntaxError: _globalvar.handle_exception()
+            else: raise # Always raise exception if other error occurred in _generator
             return 1
         else: 
             sys.stdout=orig_stdout # restore standard output
