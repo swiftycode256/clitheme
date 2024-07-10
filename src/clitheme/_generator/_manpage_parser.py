@@ -32,7 +32,7 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
             except: obj.handle_error(obj.fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(obj.lineindex+1), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]))
             # write manpage files in theme-info for db migration feature to work successfully
-            obj.write_manpage_file(filepath, filecontent, obj.lineindex+1, custom_parent_path=obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name+"/manpage_data")
+            obj.write_manpage_file(filepath, filecontent, -1, custom_parent_path=obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name+"/manpage_data")
             return filecontent
         if phrases[0]=="[file_content]":
             def handle(p: list[str]) -> list[str]:
