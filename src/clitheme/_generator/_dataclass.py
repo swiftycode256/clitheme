@@ -129,9 +129,9 @@ class GeneratorObject(_handlers.DataHandlers):
         new_content=copy.copy(content)
         encountered_variables=set()
         offset=0
-        for match in re.finditer(r"{{(.+?)??}}", content):
+        for match in re.finditer(r"{{([^\s]+?)??}}", content):
             var_name=match.group(1)
-            if var_name.strip()=='': continue
+            if var_name==None or var_name.strip()=='': continue
             if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
             var_content: str
             try: 
