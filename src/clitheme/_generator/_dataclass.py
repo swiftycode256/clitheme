@@ -75,6 +75,8 @@ class GeneratorObject(_handlers.DataHandlers):
         else: not_pass=len(phrases)>count
         if not_pass:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
+    def handle_invalid_phrase(self, name: str):
+        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
     def parse_options(self, options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict[str, Union[int, bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
@@ -346,7 +348,7 @@ class GeneratorObject(_handlers.DataHandlers):
                     elif option=="substvar" and got_options['substvar']==True:
                         entry_name_substvar=True
                 break
-            else: self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
+            else: self.handle_invalid_phrase(phrases[0])
         # For silence_warning in subst_variable_content
         encountered_ids=set()
         for x in range(len(entries)):

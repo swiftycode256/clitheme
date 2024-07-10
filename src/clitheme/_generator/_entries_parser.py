@@ -59,4 +59,4 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             if phrases[0]=="end_main":
                 obj.handle_warning(obj.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(obj.lineindex+1), old_phrase="end_main", new_phrase=r"{/entries_section}"))
             break
-        else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=obj.fmt(phrases[0]), num=str(obj.lineindex+1)))
+        else: obj.handle_invalid_phrase(phrases[0])

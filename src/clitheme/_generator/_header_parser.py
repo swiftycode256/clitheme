@@ -61,4 +61,4 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("header")
             break
-        else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=obj.fmt(phrases[0]), num=str(obj.lineindex+1)))
+        else: obj.handle_invalid_phrase(phrases[0])

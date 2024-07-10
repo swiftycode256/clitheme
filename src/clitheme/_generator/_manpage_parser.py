@@ -88,7 +88,7 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
                 elif p[0]=="[/include_file]":
                     obj.check_extra_args(p, 1, use_exact_count=True)
                     break
-                else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=obj.fmt(phrases[0]), num=str(obj.lineindex+1)))
+                else: obj.handle_invalid_phrase(phrases[0])
         elif phrases[0]=="set_options":
             obj.check_enough_args(phrases, 2)
             obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
@@ -99,4 +99,4 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("manpage")
             break
-        else: obj.handle_error(obj.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=obj.fmt(phrases[0]), num=str(obj.lineindex+1)))
+        else: obj.handle_invalid_phrase(phrases[0])
