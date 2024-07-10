@@ -139,10 +139,10 @@ class GeneratorObject(_handlers.DataHandlers):
             except KeyError: 
                 if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
                     num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
-                continue
-            new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
-            offset+=len(var_content)-(match.end()-match.start())
-            encountered_variables.add(var_name)
+            else:
+                new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
+                offset+=len(var_content)-(match.end()-match.start())
+            encountered_variables.add(var_name) # Prevent repeated warnings
         return new_content
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
