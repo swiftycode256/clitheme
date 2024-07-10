@@ -18,8 +18,7 @@ from . import _dataclass
 def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("manpage")
     end_phrase="{/manpage_section}"
-    while obj.lineindex<len(obj.lines_data)-1:
-        if not obj.goto_next_line(): break
+    while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="[file_content]":
             obj.check_enough_args(phrases, 2)

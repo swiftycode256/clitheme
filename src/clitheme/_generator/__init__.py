@@ -35,8 +35,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     obj=_dataclass.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
     ## Main code
-    while obj.lineindex<len(obj.lines_data)-1:
-        if not obj.goto_next_line(): break
+    while obj.goto_next_line():
         first_phrase=obj.lines_data[obj.lineindex].split()[0]
         # process header and main sections here
         if first_phrase=="set_options":

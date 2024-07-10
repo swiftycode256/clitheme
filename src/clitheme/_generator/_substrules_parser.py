@@ -30,8 +30,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
     else: obj.db_interface.init_db(obj.path+"/"+_globalvar.db_filename)
     obj.db_interface.debug_mode=not obj.silence_warn
-    while obj.lineindex<len(obj.lines_data)-1:
-        if not obj.goto_next_line(): break
+    while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="[filter_commands]":
             obj.check_extra_args(phrases, 1, use_exact_count=True)

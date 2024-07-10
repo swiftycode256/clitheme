@@ -20,8 +20,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         obj.handle_warning(obj.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=str(obj.lineindex+1), old_phrase="begin_main", new_phrase=r"{entries_section}"))
     obj.in_domainapp=""
     obj.in_subsection=""
-    while obj.lineindex<len(obj.lines_data)-1:
-        if not obj.goto_next_line(): break
+    while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="in_domainapp":
             this_phrases=obj.subst_variable_content(obj.lines_data[obj.lineindex].strip()).split()

@@ -271,8 +271,7 @@ class GeneratorObject(_handlers.DataHandlers):
             # check if patterns are valid
             try: re.compile(pattern)
             except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
-        while self.lineindex<len(self.lines_data)-1:
-            if not self.goto_next_line(): break
+        while self.goto_next_line():
             phrases=self.lines_data[self.lineindex].split()
             line_content=self.lines_data[self.lineindex]
             # Support specifying multiple match pattern/entry names in one definition block
