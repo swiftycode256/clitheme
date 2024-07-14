@@ -173,7 +173,7 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     for x in range(len(lines)):
                         line=lines[x]
                         # if last output did not end with newlines, append new content to it
-                        if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines):
+                        if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines) and output_lines[-1][3]==foreground_pid:
                             orig_data=output_lines[-1]
                             orig_line=orig_data[0]
                             output_lines.pop()
