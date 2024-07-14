@@ -23,6 +23,7 @@ import re
 import sqlite3
 import time
 import concurrent.futures
+import threading
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
@@ -129,8 +130,10 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
 
-    while True:
-        try:
+    def output_read_loop():
+        nonlocal last_terminal_size, last_input_content, output_lines
+        unfinished_output=None
+        while True:
             # update terminal attributes from what the program sets
             try: 
                 attrs=termios.tcgetattr(stdout_fd)
@@ -147,41 +150,58 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
                     process.send_signal(signal.SIGWINCH)
             except: pass
-            readsize=io.DEFAULT_BUFFER_SIZE
-            
-            start_time=time.perf_counter()
-            while time.perf_counter()-start_time<0.1:
-                fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.01)[0]
-                if fds==[]:
-                    # Output the debug message if no outputs are written
-                    handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
-                    break
-                # Handle user input from stdin
-                if sys.stdin in fds:
-                    data=os.read(sys.stdin.fileno(), readsize)
-                    # if input from last iteration did not end with newlines, append new content
-                    if last_input_content!=None: last_input_content+=data
-                    else: last_input_content=data
-                    try: os.write(stdout_fd, data)
-                    except OSError: pass # Handle input/output error that might occur after program terminates
-                # Handle output from stdout and stderr
-                def handle_output(is_stderr: bool):
-                    data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
-                    foreground_pid=os.tcgetpgrp(stdout_fd)
-                    do_subst_operation=True
-                    lines=data.splitlines(keepends=True)
-                    for x in range(len(lines)):
-                        line=lines[x]
-                        # if last output did not end with newlines, append new content to it
-                        if x==0 and len(output_lines)>0 and not output_lines[-1][0].endswith(newlines) and output_lines[-1][3]==foreground_pid:
-                            orig_data=output_lines[-1]
-                            orig_line=orig_data[0]
-                            output_lines.pop()
-                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, foreground_pid))
-                        else: output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
-                if stdout_fd in fds: handle_output(is_stderr=False)
-                if stderr_fd in fds: handle_output(is_stderr=True)
 
+            readsize=io.DEFAULT_BUFFER_SIZE
+            fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
+            # Handle user input from stdin
+            if sys.stdin in fds:
+                data=os.read(sys.stdin.fileno(), readsize)
+                # if input from last iteration did not end with newlines, append new content
+                if last_input_content!=None: last_input_content+=data
+                else: last_input_content=data
+                try: os.write(stdout_fd, data)
+                except OSError: pass # Handle input/output error that might occur after program terminates
+            # Handle output from stdout and stderr
+            output_handled=False
+            def handle_output(is_stderr: bool):
+                nonlocal unfinished_output, output_lines, output_handled
+                output_handled=True
+
+                data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                foreground_pid=os.tcgetpgrp(stdout_fd)
+                do_subst_operation=True
+                lines=data.splitlines(keepends=True)
+                for x in range(len(lines)):
+                    line=lines[x]
+                    # if unfinished output exists, append new content to it
+                    if x==0 and unfinished_output!=None:
+                        orig_data=unfinished_output
+                        orig_line=orig_data[0]
+                        if unfinished_output[3]==foreground_pid:
+                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, foreground_pid))
+                        else:
+                            output_lines.append(unfinished_output)
+                            output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+                        unfinished_output=None
+                    # if last line of output did not end with newlines, leave for next iteration
+                    elif x==len(lines)-1 and not line.endswith(newlines):
+                        unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
+                    else:
+                        output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+
+            if stdout_fd in fds: handle_output(is_stderr=False)
+            if stderr_fd in fds: handle_output(is_stderr=True)
+            # if no handle_output is called, append the unfinished output if exists
+            if not output_handled and unfinished_output!=None:
+                output_lines.append(unfinished_output)
+                unfinished_output=None
+
+            if process.poll()!=None: break
+    
+    thread=threading.Thread(target=output_read_loop, daemon=True)
+    thread.start()
+    while True:
+        try:
             if process.poll()!=None and len(output_lines)==0: break
 
             # Process outputs
@@ -217,15 +237,13 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                         signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
+            time.sleep(0.001) # Prevent high CPU usage
             futures=[]
-            for x in range(len(output_lines)):
-                line_data=output_lines[x]
+            if len(output_lines)==0:
+                handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
+            while not len(output_lines)==0:
+                line_data=output_lines.pop(0)
                 line: bytes=line_data[0]
-                # if does not end with newlines, leave it for the next iteration
-                if x==len(output_lines)-1 and not line.endswith(newlines):
-                    if not len(line_data)>=5: # not from previous iteration
-                        output_lines=[line_data+(True,)] # add another entry to signal it's from previous iteration
-                        break
                 # check if the output is user input. if yes, skip
                 # print(last_input_content, line) # DEBUG
                 if line==last_input_content: line_data=(line_data[0],line_data[1],False, line_data[3]); last_input_content=None
@@ -237,7 +255,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                 if db_interface.enable_multiprocessing: futures.append(executor.submit(process_line, line, line_data))
                 # print output
                 else: os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
-            else: output_lines=[] # happens when no 'break' statement occurs
             # Print outputs (if enable_multiprocessing)
             for thread in futures:
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
