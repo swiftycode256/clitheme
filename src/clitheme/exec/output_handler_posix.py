@@ -22,13 +22,12 @@ import copy
 import re
 import sqlite3
 import time
-import concurrent.futures
 import threading
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
 
-# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec
+# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp
 
 _globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
@@ -120,7 +119,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     # this mechanism prevents user input from being processed through substrules
     last_input_content=None
-    executor=concurrent.futures.ThreadPoolExecutor()
     last_tcgetpgrp=os.tcgetpgrp(stdout_fd)
 
     def handle_debug_pgrp(foreground_pid: int):
@@ -221,24 +219,15 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                         except TimeoutError: failed=True
                         # Happens when no theme is set/no subst-data.db
                         except sqlite3.OperationalError: pass
-                    if db_interface.enable_multiprocessing:
-                        # First implementation (A): use the separate process in db_interface
-                        # No additional actions required
-                        operation()
-                    else:
-                        # Alternative implementation (B): use signal handlers to force exception in execution when catastrophic backtracking happens (timeout)
-                        # --Multithreading cannot be used in implementation B--
-                            # This means that only one line is processed at the same time; not ideal if multiple output lines are experiencing catastrophic backtracking
-                        def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
-                        signal.signal(signal.SIGALRM, raise_error)
-                        signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
-                        operation()
-                        # remove the interval timer to prevent exception when function finishes before timeout
-                        signal.setitimer(signal.ITIMER_REAL, 0)
+                    def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
+                    signal.signal(signal.SIGALRM, raise_error)
+                    signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
+                    operation()
+                    # remove the interval timer to prevent exception when function finishes before timeout
+                    signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
             time.sleep(0.001) # Prevent high CPU usage
-            futures=[]
             if len(output_lines)==0:
                 handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
             while not len(output_lines)==0:
@@ -251,13 +240,8 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                     line_data=(line_data[0],line_data[1],False, line_data[3])
                     last_input_content=last_input_content[len(line):]
                 else: last_input_content=None
-                # subst operation
-                if db_interface.enable_multiprocessing: futures.append(executor.submit(process_line, line, line_data))
-                # print output
-                else: os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
-            # Print outputs (if enable_multiprocessing)
-            for thread in futures:
-                os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), thread.result())
+                # subst operation and print output
+                os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
         except:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
             print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting

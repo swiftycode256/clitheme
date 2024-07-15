@@ -14,10 +14,6 @@ import sqlite3
 import re
 import copy
 import uuid
-import time
-import signal
-import multiprocessing, concurrent.futures
-import queue
 from typing import Optional
 from .. import _globalvar, frontend
 
@@ -28,8 +24,6 @@ db_path=""
 debug_mode=False
 _globalvar.handle_set_themedef(frontend, "db_interface")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
-try: multiprocessing.set_start_method('fork', force=True)
-except: pass
 
 class need_db_regenerate(Exception):
     pass
@@ -193,104 +187,11 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             # also append matches with other strictness
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
-    global enable_multiprocessing, match_timeout
-    if enable_multiprocessing:
-        global _running_processes_ids
-        if len(_running_processes_ids)==0:
-            _init_process()
-        result_id=uuid.uuid4()
-        global _input_values; _input_values.put((matches, content_str, is_stderr, result_id, pids, command))
-        counter=0
-        watchdog_timer=0
-        while counter<match_timeout:
-            time.sleep(0.001)
-            if result_id in _return_values.keys():
-                if _return_values[result_id]==None: # Processing
-                    counter+=0.001
-                else: 
-                    content_str=_return_values[result_id]
-                    del _return_values[result_id]
-                    break
-            else:
-                # Handle cases when the data didn't get processed at all
-                watchdog_timer+=0.001
-                if watchdog_timer>=1.500:
-                    _init_process()
-                    _input_values.put((matches, content_str, is_stderr, result_id, pids, command))
-                    watchdog_timer=0
-        else: # executed when no "break" happens
-            try: del _return_values[result_id]
-            except: pass
-            _init_process() # restart the process
-            raise TimeoutError("match operation timeout")
-    else:
-        content_str=_handle_subst(matches, content_str, is_stderr, pids, command)
+    content_str=_handle_subst(matches, content_str, is_stderr, pids, command)
     return content_str
 
-# --The following implementation (A) is for setting a timeout capacity on content match functions--
-    # - A main loop is started for handling substitution requests and returns the corresponding content based on UUID
-    # - If the main loop times out due to catastrophic backtracking or other issues, match_content terminates the loop
-    # - The main loop is checked and restored (if needed) every time match_content is called, while preserving input queue and return values (resumes seamlessly)
-    # ** May impact performance and is currently prone to random hangs, especially under Linux **
-# --An alternative implementation (B) is available in output_handler_posix, but multithreading can't be used and doesn't work under Windows--
-
-# Flag to determine whether implementation A is used
-# If False, implementation B is used in output_handler_posix under Unix/Linux
-enable_multiprocessing=False
 # timeout value for each match operation
 match_timeout=_globalvar.output_subst_timeout
-
-_manager=multiprocessing.Manager() if enable_multiprocessing else None
-_process: Optional[multiprocessing.Process]=None
-_input_values=multiprocessing.Queue() # (matches, content, is_stderr, uuid)
-_return_values=_manager.dict() if _manager else {} # uuid : content_str (uuid:None means processing)
-
-_watchdog_process: Optional[multiprocessing.Process]=None
-_running_processes_ids=_manager.list() if _manager else []
-
-def _init_process():
-    global _process, _input_values, _return_values, _watchdog_process, _running_processes_ids
-    # if _process!=None and _process.is_alive(): _process.terminate()
-    if _watchdog_process==None:
-        _watchdog_process=multiprocessing.Process(name="process_watchdog", target=__process_watchdog, args=(_running_processes_ids,), daemon=True)
-        _watchdog_process.start()
-    _process=multiprocessing.Process(name="subst_content_handler", target=__process_main_loop, args=(_input_values, _return_values, _running_processes_ids), daemon=True)
-    try: _process.start()
-    except AssertionError: _init_process();return # handle "cannot start a process twice" error by trying again
-    # _running_processes_ids.append(_process.pid)
-# watchdog to terminate any processes other than the current one
-def __process_watchdog(running_ids):
-    while True:
-        try: 
-            time.sleep(0.01)
-            # kill all processes except the most recently started one (last in list)
-            l=running_ids[:-1]
-            for pid in l:
-                try: 
-                    os.kill(pid, signal.SIGTERM)
-                    running_ids.remove(pid)
-                except: pass
-        except KeyboardInterrupt: pass
-def __process_main_loop(input_vals: multiprocessing.Queue, return_vals: dict, process_ids: list):
-    process_ids.append(os.getpid())
-    executor=concurrent.futures.ThreadPoolExecutor(max_workers=32)
-    def handler():
-        nonlocal return_vals, input_vals
-        # the function might be called extra times if operation is queued, so a check is performed
-        content: tuple
-        try: content=input_vals.get_nowait()
-        except queue.Empty: return
-        return_vals[content[3]]=None # Processing
-        return_str=_handle_subst(content[0], content[1], content[2], content[4], content[5])
-        return_vals[content[3]]=return_str
-    while True:
-        try: time.sleep(0.001)
-        except KeyboardInterrupt: pass
-        try:
-                executor.submit(handler)
-                # handler()
-        except KeyboardInterrupt: pass
-        # except: break
 
 def _handle_subst(matches: list[tuple], content: bytes, is_stderr: bool, pids: tuple[int, int], target_command: Optional[str]):
     content_str=copy.copy(content)
