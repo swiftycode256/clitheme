@@ -163,7 +163,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
             output_handled=False
             def handle_output(is_stderr: bool):
                 nonlocal unfinished_output, output_lines, output_handled
-                output_handled=True
 
                 data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
                 foreground_pid=os.tcgetpgrp(stdout_fd)
@@ -181,15 +180,17 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
                             output_lines.append(unfinished_output)
                             output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
                         unfinished_output=None
+                        output_handled=True
                     # if last line of output did not end with newlines, leave for next iteration
                     elif x==len(lines)-1 and not line.endswith(newlines):
                         unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
+                        output_handled=True
                     else:
                         output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
 
             if stdout_fd in fds: handle_output(is_stderr=False)
             if stderr_fd in fds: handle_output(is_stderr=True)
-            # if no handle_output is called, append the unfinished output if exists
+            # if no unfinished_output is handled by handle_output, append the unfinished output if exists
             if not output_handled and unfinished_output!=None:
                 output_lines.append(unfinished_output)
                 unfinished_output=None
