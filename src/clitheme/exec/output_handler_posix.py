@@ -132,23 +132,6 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
         nonlocal last_terminal_size, last_input_content, output_lines
         unfinished_output=None
         while True:
-            # update terminal attributes from what the program sets
-            try: 
-                attrs=termios.tcgetattr(stdout_fd)
-                # disable canonical and echo mode (enable cbreak) no matter what
-                attrs[3] &= ~(termios.ICANON | termios.ECHO)
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, attrs)
-            except termios.error: pass
-            # update terminal size
-            try:
-                new_term_size=get_terminal_size()
-                if new_term_size!=last_terminal_size:
-                    last_terminal_size=new_term_size
-                    fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
-                    fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
-                    process.send_signal(signal.SIGWINCH)
-            except: pass
-
             readsize=io.DEFAULT_BUFFER_SIZE
             fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
             # Handle user input from stdin
@@ -202,6 +185,23 @@ def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True)
     while True:
         try:
             if process.poll()!=None and len(output_lines)==0: break
+            
+            # update terminal attributes from what the program sets
+            try: 
+                attrs=termios.tcgetattr(stdout_fd)
+                # disable canonical and echo mode (enable cbreak) no matter what
+                attrs[3] &= ~(termios.ICANON | termios.ECHO)
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, attrs)
+            except termios.error: pass
+            # update terminal size
+            try:
+                new_term_size=get_terminal_size()
+                if new_term_size!=last_terminal_size:
+                    last_terminal_size=new_term_size
+                    fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
+                    fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
+                    process.send_signal(signal.SIGWINCH)
+            except: pass
 
             # Process outputs
             def process_line(line: bytes, line_data):
