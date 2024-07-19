@@ -18,7 +18,7 @@ from . import _dataclass
 def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("substrules")
     end_phrase=r"{/substrules_section}"
-    command_filters: Optional[list[str]]=None
+    command_filters: Optional[list]=None
     command_filter_strictness=0
     command_filter_foreground_only=False
     # initialize the database

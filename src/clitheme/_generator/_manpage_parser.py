@@ -20,7 +20,7 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     end_phrase="{/manpage_section}"
     while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
-        def get_file_content(filepath: list[str]) -> str:
+        def get_file_content(filepath: list) -> str:
             # determine file path
             parent_dir=""
             # if no filename provided, use current working directory as parent path; else, use the directory the file is in as the parent path
@@ -35,7 +35,7 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.write_manpage_file(filepath, filecontent, -1, custom_parent_path=obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name+"/manpage_data")
             return filecontent
         if phrases[0]=="[file_content]":
-            def handle(p: list[str]) -> list[str]:
+            def handle(p: list) -> list:
                 obj.check_enough_args(p, 2)
                 filepath=obj.subst_variable_content(_globalvar.splitarray_to_string(p[1:])).split()
                 # sanity check the file path

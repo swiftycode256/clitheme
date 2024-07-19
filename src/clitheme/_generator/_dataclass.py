@@ -66,10 +66,10 @@ class GeneratorObject(_handlers.DataHandlers):
             # stop at non-empty or non-comment line
             if not self.is_ignore_line(): return True
         else: return False # End of file
-    def check_enough_args(self, phrases: list[str], count: int):
+    def check_enough_args(self, phrases: list, count: int):
         if len(phrases)<count:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
-    def check_extra_args(self, phrases: list[str], count: int, use_exact_count: bool):
+    def check_extra_args(self, phrases: list, count: int, use_exact_count: bool):
         not_pass: bool
         if use_exact_count: not_pass=len(phrases)!=count
         else: not_pass=len(phrases)>count
@@ -77,7 +77,7 @@ class GeneratorObject(_handlers.DataHandlers):
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
-    def parse_options(self, options_data: list[str], merge_global_options: int, allowed_options: Optional[list]=None) -> dict[str, Union[int, bool]]:
+    def parse_options(self, options_data: list, merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
@@ -115,7 +115,7 @@ class GeneratorObject(_handlers.DataHandlers):
             if allowed_options!=None and option_name not in allowed_options:
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
         return final_options 
-    def handle_set_global_options(self, options_data: list[str], really_really_global: bool=False):
+    def handle_set_global_options(self, options_data: list, really_really_global: bool=False):
         # set options globally
         if really_really_global: 
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)
@@ -255,16 +255,16 @@ class GeneratorObject(_handlers.DataHandlers):
                 if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
-        # substrules_options: {effective_commands: list[str], is_regex: bool, strictness: int, foreground_only: bool}
+        # substrules_options: {effective_commands: list, is_regex: bool, strictness: int, foreground_only: bool}
 
         entry_name_substesc=False; entry_name_substvar=False
         names_processed=False # Set to True when no more entry names are being specified
 
         # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
-        entryNames: list[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)]
+        entryNames: list=[(entry_name, uuid.uuid4(), self.lineindex+1)]
         # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
         # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
-        entries: list[tuple]=[]
+        entries: list=[]
 
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0

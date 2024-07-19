@@ -34,7 +34,7 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
-def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=False, matched: bool=False, failed: bool=False) -> list[bytes]:
+def _process_debug(lines: list, debug_mode: list, is_stderr: bool=False, matched: bool=False, failed: bool=False) -> list:
     final_lines=[]
     for x in range(len(lines)):
         line=lines[x]
@@ -61,7 +61,7 @@ def _process_debug(lines: list[bytes], debug_mode: list[str], is_stderr: bool=Fa
         final_lines.append(line)
     return final_lines
 
-def handler_main(command: list[str], debug_mode: list[str]=[], subst: bool=True):
+def handler_main(command: list, debug_mode: list=[], subst: bool=True):
     do_subst=subst
     if do_subst==True: 
         try: db_interface.connect_db()

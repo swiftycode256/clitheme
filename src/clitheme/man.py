@@ -25,7 +25,7 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="man")
 
-def main(args: list[str]):
+def main(args: list):
     """
     Invoke clitheme-man using the given command line arguments
 

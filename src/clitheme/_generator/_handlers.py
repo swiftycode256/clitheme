@@ -65,7 +65,7 @@ class DataHandlers:
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         f.write(content+'\n')
-    def write_infofile_newlines(self, path: str, filename: str, content_phrases: list[str], line_number_debug: int, header_name_debug: str):
+    def write_infofile_newlines(self, path: str, filename: str, content_phrases: list, line_number_debug: int, header_name_debug: str):
         if not os.path.isdir(path):
             os.makedirs(path)
         target_path=path+"/"+filename
@@ -75,7 +75,7 @@ class DataHandlers:
         f=open(target_path,'w', encoding="utf-8")
         for line in content_phrases:
             f.write(line+"\n")
-    def write_manpage_file(self, file_path: list[str], content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
+    def write_manpage_file(self, file_path: list, content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
         parent_path=custom_parent_path if custom_parent_path!=None else self.path+"/"+_globalvar.generator_manpage_pathname
         parent_path+='/'+os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
         # create the parent directory

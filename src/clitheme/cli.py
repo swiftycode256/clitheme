@@ -28,9 +28,9 @@ frontend.global_subsections="cli"
 _globalvar.handle_set_themedef(frontend, "cli")
 
 last_data_path=""
-def apply_theme(file_contents: list[str], filenames: list[str], overlay: bool, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_temp=False, generate_only=False):
     """
-    Apply the theme using the provided definition file contents and file pathnames in a list[str] object. 
+    Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
     (Invokes 'clitheme apply-theme')
 
@@ -246,8 +246,8 @@ def update_theme():
     (Invokes 'clitheme update-theme')
     """
     class invalid_theme(Exception): pass
-    file_contents: list[str]
-    file_paths: list[str]
+    file_contents: list
+    file_paths: list
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
         search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -317,7 +317,7 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Display this help message"))
 
-def _get_file_contents(file_paths: list[str]) -> list[str]:
+def _get_file_contents(file_paths: list) -> list:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")
     content_list=[]
     for i in range(len(file_paths)):
@@ -330,7 +330,7 @@ def _get_file_contents(file_paths: list[str]) -> list[str]:
             raise
     return content_list
 
-def main(cli_args: list[str]):
+def main(cli_args: list):
     """
     Use this function invoke 'clitheme' with command line arguments
     
@@ -366,7 +366,7 @@ def main(cli_args: list[str]):
             else:
                 paths.append(arg)
         fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-        content_list: list[str]
+        content_list: list
         try: content_list=_get_file_contents(paths)
         except: 
             _globalvar.handle_exception()

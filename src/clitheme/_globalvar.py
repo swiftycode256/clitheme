@@ -142,7 +142,7 @@ def make_printable(content: str) -> str:
             exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
             final_str+=exp
     return final_str
-def get_locale(debug_mode: bool=False) -> list[str]:
+def get_locale(debug_mode: bool=False) -> list:
     lang=[]
     def add_language(target_lang: str):
         nonlocal lang
