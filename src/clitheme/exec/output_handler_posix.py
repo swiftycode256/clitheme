@@ -72,7 +72,9 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
     env=copy.copy(os.environ)
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
-    prev_attrs=termios.tcgetattr(sys.stdin)
+    prev_attrs=None
+    try: prev_attrs=termios.tcgetattr(sys.stdin)
+    except termios.error: pass
     main_pid=os.getpid()
     process: subprocess.Popen
     # Redirect stderr to stdout for now (BETA)
@@ -129,7 +131,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
             last_tcgetpgrp=foreground_pid
 
     def output_read_loop():
-        nonlocal last_terminal_size, last_input_content, output_lines
+        nonlocal last_input_content, output_lines
         unfinished_output=None
         while True:
             readsize=io.DEFAULT_BUFFER_SIZE
@@ -244,11 +246,11 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 # subst operation and print output
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
         except:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+            if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
             print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
             _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
             raise
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+    if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     exit_code=process.poll()
     try:
         if exit_code!=None and exit_code<0: # Terminated by signal
