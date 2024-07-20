@@ -1,199 +1,184 @@
-# clitheme - 命令行应用文本主题框架
+# clitheme - 命令行自定义工具
 
-**注意：** 该仓库分支包含了版本`v1.1`的内容。如需查看`v2.0`版本（最新版本）的内容，请切换到`v1.2_dev`分支进行查看。
+**中文** | [English](./README.en.md)
 
-**中文** | [English](README.en.md)
+---
 
-`clitheme` 允许你定制命令行应用程序的输出，给它们一个你想要的风格和个性。
+`clitheme`允许你对命令行输出进行个性化定制，给它们一个你想要的风格和个性。
 
 样例：
+```plaintext
+$ clang test.c
+test.c:1:1: error: unknown type name 'bool'
+bool *func(int *a) {
+^
+test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated
 ```
-$ example-app install-files
-在当前目录找到了2个文件
--> 正在安装 "example-file"...
--> 正在安装 "example-file-2"...
-已成功安装2个文件
-$ example-app install-file foo-nonexist
-错误：找不到文件 "foo-nonexist"
-```
-```
-$ clitheme apply-theme example-app-theme_clithemedef.txt
+```plaintext
+$ clitheme apply-theme clang-theme.clithemedef.txt
 ==> Generating data...
 Successfully generated data
 ==> Applying theme...Success
 Theme applied successfully
 ```
-```
-$ example-app install-files
-o(≧v≦)o 太好了，在当前目录找到了2个文件！
-(>^ω^<) 正在安装 "example-file"...
-(>^ω^<) 正在安装 "example-file-2:"...
-o(≧v≦)o 已成功安装2个文件！
-$ example-app install-file foo-nonexist
-ಥ_ಥ 糟糕，出错啦！找不到文件 "foo-nonexist"
+```plaintext
+$ clitheme-exec clang test.c
+test.c:1:1: 错误！: 未知的类型名'bool',忘记定义了～ಥ_ಥ
+bool *func(int *a) {
+^
+test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者怎么都……都说不过去！^^; [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated.
 ```
 
 ## 功能
 
+`clitheme`包含以下主要功能：
+
+- 对任何命令行应用程序的输出通过定义替换规则进行修改和自定义
+- 自定义Unix/Linux文档手册（manpage）
+- 包含类似于本地化套件（如GNU gettext）的应用程序API，帮助用户更好的自定义提示信息的内容
+
+其他特性：
+
 - 多语言支持
-- 支持同时应用多个主题
-- 简洁易懂的主题信息文件（`clithemedef`）语法
-- 无需frontend模块也可访问当前主题数据（易懂的数据结构）
+    - 这意味着你也可以用`clitheme`来为应用程序添加多语言支持
+- 简洁易懂的**主题定义文件**语法
+- 无需应用程序API也可以访问当前主题中的字符串定义（易懂的数据结构）
 
-`clitheme` 不仅可以定制命令行应用的输出，它还可以：
-- 为应用程序添加多语言支持
-- 支持图形化应用
+更多信息请见本项目的Wiki文档页面。你可以通过以下位置访问这些文档：
+- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme-wiki-repo
+- https://github.com/swiftycode256/clitheme-wiki-repo
 
-# 基本用法
+# 功能样例和示范
 
-## 数据结构和路径名称
+## 命令行输出自定义
 
-应用程序是主要通过**路径名称**来指定所需的字符串。这个路径由空格来区别子路径（`subsections`）。大部分时候路径的前两个名称是用来指定开发者和应用名称的。主题文件会通过该路径名称来适配对应的字符串，从而达到自定义输出的效果。
+获取包含终端控制符号的原始输出内容：
 
-比如`com.example example-app example-text`指的是`com.example`开发的`example-app`中的`example-text`字符串。
+```plaintext
+# --debug：在每一行的输出前添加标记；包含输出是否为stdout或stderr的信息（"o>"或"e>"）
+# --debug-showchars：显示输出中的终端控制符号
+# --debug-nosubst：即使设定了主题，不对输出应用替换规则（获取原始输出）
 
-当然，路径名称也可以是全局的（不和任何应用信息关联），如`global-entry`或`global-example global-text`。
-
-### 直接访问主题数据结构
-
-`clitheme`的核心设计理念之一包括无需使用frontend模块就可以访问主题数据，并且访问方法直观易懂。这一点在使用其他语言编写的程序中尤其重要，因为frontend模块目前只提供Python程序的支持。
-
-`clitheme`的数据结构采用了**子文件夹**的结构，意味着路径中的每一段代表着数据结构中的一个文件夹/文件。
-
-比如说，`com.example example-app example-text` 的字符串会被存储在`<datapath>/com.example/example-app/example-text`。在Linux和macOS系统下，`<datapath>`是 `$XDG_DATA_HOME/clitheme/theme-data`或`~/.local/share/clitheme/theme-data`。
-
-在Windows系统下，`<datapath>`是`%USERPROFILE%\.local\share\clitheme\theme-data`。（`C:\Users\<用户名称>\.local\share\clitheme\theme-data`）
-
-如果需要访问该字符串的其他语言，直接在路径的最后添加`__`加上locale名称就可以了。比如：`<datapath>/com.example/example-app/example-text__zh_CN`
-
-所以说，如果需要直接访问字符串信息，只需要访问对应的文件路径就可以了。
-
-## 前端实施和编写主题文件
-
-### 使用内置frontend模块
-
-使用`clitheme`的frontend模块非常简单。只需要新建一个`frontend.FetchDescriptor`实例然后调用该实例中的`retrieve_entry_or_fallback`即可。
-
-该函数需要提供路径名称和默认字符串。如果当前主题设定没有适配该字符串，则函数会返回提供的默认字符串。
-
-如果新建`FetchDescriptor`时提供了`domain_name`，`app-name`，或`subsections`，则调用函数时会自动把它添加到路径名称前。
-
-我们拿上面的样例来示范：
-
-```py
-from clitheme import frontend
-
-# 新建FetchDescriptor实例
-f=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app")
-
-# 对应 “在当前目录找到了2个文件”
-fcount="[...]"
-f.retrieve_entry_or_fallback("found-file", "在当前目录找到了{}个文件".format(str(fcount)))
-
-# 对应 “-> 正在安装 "example-file"...”
-filename="[...]"
-f.retrieve_entry_or_fallback("installing-file", "-> 正在安装\"{}\"...".format(filename))
-
-# 对应 “已成功安装2个文件”
-f.retrieve_entry_or_fallback("install-success", "已成功安装{}个文件".format(str(fcount)))
-
-# 对应 “错误：找不到文件 "foo-nonexist"”
-filename_err="[...]"
-f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
+$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
+e> bool *func(int *a) {\r\n
+e> {{ESC}}[0;1;32m^\r\n
+e> {{ESC}}[0m{{ESC}}[1mtest.c:4:3: {{ESC}}[0m{{ESC}}[0;1;35mwarning: {{ESC}}[0m{{ESC}}[1mincompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]{{ESC}}[0m\r\n
+e>         b=a;\r\n
+e> {{ESC}}[0;1;32m         ^~\r\n
+e> {{ESC}}[0m2 errors generated.\r\n
 ```
 
-### 使用fallback模块
+根据输出内容编写主题定义文件和替换规则：
 
-应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理`clitheme`模块不存在时的情况。该fallback模块包括了frontend模块中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
+```plaintext
+# 在header_section中定义一些关于该主题定义的基本信息；必须包括
+{header_section}
+    # 这里建议至少包括name和description信息
+    name clang样例主题
+    [description]
+        一个为clang打造的的样例主题，为了演示作用
+    [/description]
+{/header_section}
 
-如需使用，请在你的项目文件中导入`clitheme_fallback.py`文件，并且在你的程序中包括以下代码：
-
-```py
-try:
-    from clitheme import frontend
-except (ModuleNotFoundError, ImportError):
-    import clitheme_fallback as frontend
+{substrules_section}
+    # 设定"substesc"选项：内容中的"{{ESC}}"字样会被替换成ASCII Escape终端控制符号
+    set_options substesc
+    # 命令限制条件：以下的替换规则仅会在以下命令被调用时被应用。建议设定这个条件，因为可以尽量防止不应该的输出替换。
+    [filter_commands]
+        clang
+        clang++
+        gcc
+        g++
+    [/filter_commands]
+    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+        # 如果你想仅在系统语言设定为中文（zh_CN）时应用这个替换规则，你可以使用"locale:zh_CN"
+        # 使用"locale:default"时不会添加系统语言限制
+        locale:default \g<prefix>提示: \g<esc>'\g<name1>'从不兼容的指针类型赋值为'\g<name2>',两者怎么都……都说不过去！^^;
+    [/substitute_regex]
+    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+        locale:default \g<prefix>错误！: \g<esc>未知的类型名'\g<type>',忘记定义了～ಥ_ಥ
+    [/substitute_regex]
+{/substrules_section}
 ```
 
-本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以适配最新的功能。
+使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-exec`执行命令以对输出应用这些替换规则：
 
-### 应用程序应该提供的信息
-
-为了让用户更容易编写主题文件，应用程序应该加入输出字符串定义的功能。该输出信息应该包含路径名称和默认字符串。
-
-比如说，应用程序可以通过`--clitheme-output-defs`来输出所有的字符串定义：
-
-```
-$ example-app --clitheme-output-defs
-com.example example-app found-file
-在当前目录找到了{}个文件
-
-com.example example-app installing-file
--> 正在安装"{}"...
-
-com.example example-app install-success
-已成功安装{}个文件
-
-com.example example-app file-not-found
-错误：找不到文件 "{}"
+```plaintext
+$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme-exec clang test.c
+test.c:1:1: 错误！: 未知的类型名'bool',忘记定义了～ಥ_ಥ
+bool *func(int *a) {
+^
+test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者怎么都……都说不过去！^^; [-Wincompatible-pointer-types]
+        b=a;
+         ^~
+2 errors generated.
 ```
 
-应用程序还可以在对应的官方文档中包括此信息。如需样例，请参考本仓库中`example-clithemedef`文件夹的[README文件](example-clithemedef/README.zh-CN.md)。
+## 自定义manpage文档
 
-### 编写主题文件
+编写/编辑manpage文档的源代码，并且保存在一个位置中：
 
-关于主题文件的详细语法请见Wiki文档，下面将展示一个样例：
-
-```
-begin_header
-    name 样例主题
-    version 1.0
-    locales zh_CN
-    supported_apps clitheme_demo
-end_header
-
-begin_main
-    in_domainapp com.example example-app
-        entry found-file
-            locale default o(≧v≦)o 太好了，在当前目录找到了{}个文件！
-            locale zh_CN o(≧v≦)o 太好了，在当前目录找到了{}个文件！
-        end_entry
-        entry installing-file
-            locale default (>^ω^<) 正在安装 "{}"...
-            locale zh_CN (>^ω^<) 正在安装 "{}"...
-        end_entry
-        entry install-success
-            locale default o(≧v≦)o 已成功安装{}个文件！
-            locale zh_CN o(≧v≦)o 已成功安装{}个文件！
-        end_entry
-        entry file-not-found
-            locale default ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
-            locale zh_CN ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
-        end_entry
-end_main
+```plaintext
+$ nano man-pages/1/ls-custom.txt
+# <编辑文件>
+$ nano man-pages/1/cat-custom.txt
+# <编辑文件>
 ```
 
-编写好主题文件后，使用 `clitheme apply-theme <file>`来应用主题。应用程序会直接采用主题中适配的字符串。
+编写主题定义文件：
 
-# 安装
+```plaintext
+{header_section}
+    name 样例文档手册主题
+    description 一个manpage文档手册样例主题
+{/header_section}
 
-安装`clitheme`非常简单，您可以通过Arch Linux软件包，Debian软件包，或者pip软件包安装。
+{manpage_section}
+    # 在"include_file"后添加*由空格分开*的文件路径（以主题定义文件所在的路径为父路径）
+    # 在"as"后添加*由空格分开*的目标文件路径（放在如`/usr/share/man`文件夹下的文件路径）
+    include_file man-pages 1 ls-custom.txt
+        as man1 ls.1
+    include_file man-pages 1 cat-custom.txt
+        as man1 cat.1
+{/manpage_section}
+```
+
+使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-man`查看这些自定义文档（使用方法和选项和`man`一样）：
+
+```plaintext
+$ clitheme apply-theme manpage-theme.clithemedef.txt
+$ clitheme-man cat
+$ clitheme-man ls
+```
+
+## 应用程序API和字符串定义
+
+请见[此文档](./README-frontend.md)
+
+# 安装与构建
+
+安装`clitheme`非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
 
 ### 通过pip软件包安装
 
-从最新发行版页面下载whl文件，使用`pip`直接安装即可：
+从最新发行版页面下载`.whl`文件，使用`pip`直接安装即可：
     
-    $ pip install clitheme-<version>-py3-none-any.whl
+    $ pip install ./clitheme-<version>-py3-none-any.whl
 
 ### 通过Arch Linux软件包安装
-
-因为Arch Linux上无法使用`pip`往系统里直接安装pip软件包，所以本项目支持通过Arch Linux软件包安装。
 
 因为构建的Arch Linux软件包只兼容特定的Python版本，并且升级Python版本后会导致原软件包失效，本项目仅提供构建软件包的方式，不提供构建好的软件包。详细请见下方的**构建Arch Linux软件包**。
 
 ### 通过Debian软件包安装
-
-因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
 如需在Debian系统上安装，请从最新发行版页面下载`.deb`文件，使用`apt`安装即可：
 
@@ -205,17 +190,15 @@ end_main
 
 ### 构建pip软件包
 
-`clitheme`使用的是`hatchling`构建器，所以构建软件包前需要安装它。
+`clitheme`使用的是`setuptools`构建器，所以构建软件包前需要安装它。
 
-首先，安装`hatch`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
+首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 
-    $ pip install hatch
+    $ pip install --upgrade setuptools build wheel
 
-然后，切换到项目目录，使用`hatch build`构建软件包：
+然后，切换到项目目录，使用以下命令构建软件包：
 
-    $ hatch build
-
-如果这个指令无法正常运行，请尝试运行`hatchling build`。
+    $ python3 -m build --wheel --no-isolation
 
 构建完成后，相应的安装包文件可以在当前目录中的`dist`文件夹中找到。
 
@@ -224,6 +207,11 @@ end_main
 构建Arch Linux软件包前，请确保`base-devel`软件包已安装。如需安装，请使用以下命令：
 
     $ sudo pacman -S base-devel
+
+构建软件包前，请先确保任何对仓库文件的更改以被提交（git commit）：
+
+    $ git add .
+    $ git commit
 
 构建软件包只需要在仓库目录中执行`makepkg`指令就可以了。你可以通过以下一系列命令来完成这些操作：
 
@@ -239,31 +227,27 @@ makepkg -si
 rm -rf buildtmp srctmp
 ```
 
-**注意：** 每次升级Python版本时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
+**注意：** 每次升级Python时，你需要重新构建并安装软件包，因为软件包只兼容构建时使用的Python版本。
 
 ### 构建Debian软件包
-
-因为部分Debian系统（如Ubuntu）上无法使用`pip`往系统里直接安装pip软件包，所以本项目提供Debian软件包。
 
 构建Debian软件包前，你需要安装以下用于构建的系统组件：
 
 - `debhelper`
 - `dh-python`
-- `python3-hatchling`
+- `python3-setuptools`
 - `dpkg-dev`
+- `pybuild-plugin-pyproject`
 
 你可以使用以下命令安装：
 
-    sudo apt install debhelper dh-python python3-hatchling dpkg-dev
+    sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
 
 安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
 
-## 更多信息
+# 更多信息
 
-- 更多的详细信息和文档请参考本项目Wiki页面：https://gitee.com/swiftycode/clitheme/wikis/pages
-    - 你也可以通过以下仓库访问这些Wiki页面：
-    - https://gitee.com/swiftycode/clitheme-wiki-repo
-    - https://github.com/swiftycode256/clitheme-wiki-repo
 - 本仓库中的代码也同步在GitHub上（使用Gitee仓库镜像功能自动同步）：https://github.com/swiftycode256/clitheme
+- 该项目的最新进展、未来计划、和开发中的新功能会在这里Gitee仓库中的Issues里列出：https://gitee.com/swiftycode/clitheme/issues
 - 欢迎通过Issues和Pull Requests提交建议和改进。
     - Wiki页面也可以；你可以在上方列出的仓库中提交Issues和Pull Requests

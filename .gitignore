@@ -3,8 +3,15 @@ __pycache__
 __pycache__/*
 dist
 dist/*
+build
+build/*
+venv
+venv/*
+src/*.egg-info
 .vscode
 .vscode/*
+# Vim swap file
+**/*.sw?
 # excluded files (ex)
 debian/*.ex 
 debian/clitheme
@@ -18,4 +25,5 @@ buildtmp
 buildtmp/*
 srctmp
 srctmp/*
+*.pkg.tar.zst
 .DS_Store

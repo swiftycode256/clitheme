@@ -1,5 +1,15 @@
+# Copyright © 2023-2024 swiftycode
+
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 """
-clitheme front-end interface for accessing entries
+clitheme frontend interface for accessing entries
+
+- Create a FetchDescriptor instance and optionally pass information such as domain&app name and subsections
+- Use the 'retrieve_entry_or_fallback' or 'reof' function in the instance to retrieve content of an entry definition
+- Use the 'format_entry_or_fallback' or 'feof' function in the instance to retrieve and format content of entry definition using str.format
 """
 
 import os,sys
@@ -9,10 +19,10 @@ import re
 import hashlib
 import shutil
 from typing import Optional
-try:
-    from . import _globalvar
-except ImportError: # for test program
-    import _globalvar
+from . import _globalvar
+
+# spell-checker:ignore newhash numorig numcur
+
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 global_domain=""
@@ -22,9 +32,9 @@ global_debugmode=False
 global_lang="" # Override locale
 global_disablelang=False
 
-alt_path=None
-alt_path_dirname=None
-alt_path_hash=None
+_alt_path=None
+_alt_path_dirname=None
+_alt_path_hash=None
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
@@ -40,16 +50,16 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     
     This function returns True if successful, otherwise returns False.
     """
-    try: from . import _generator
-    except ImportError: import _generator
+    from . import _generator
     # Determine directory name
     h=hashlib.shake_256(bytes(file_content, "utf-8"))
-    d=h.hexdigest(6)
-    global alt_path_hash
+    d=h.hexdigest(6) # length of 12 (6*2)
+    global _alt_path_hash
+    local_path_hash=_alt_path_hash
     # if overlay, update hash with new contents of file
-    if alt_path_hash!=None and overlay==True:
+    if _alt_path_hash!=None and overlay==True:
         newhash=""
-        for x in range(len(alt_path_hash)):
+        for x in range(len(_alt_path_hash)):
             chart=string.ascii_uppercase+string.ascii_lowercase+string.digits
             numorig=0
             numcur=0
@@ -59,45 +69,54 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
                 numorig=(ord(d[x])-ord('a'))+len(string.ascii_uppercase)
             elif d[x]>='0' and d[x]<='9': #digit
                 numorig=ord(d[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
-            if alt_path_hash[x]>='A' and alt_path_hash[x]<='Z': #uppercase letters
-                numcur=ord(alt_path_hash[x])-ord('A')
-            elif alt_path_hash[x]>='a' and alt_path_hash[x]<='z': #lowercase letters
-                numcur=(ord(alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
-            elif alt_path_hash[x]>='0' and alt_path_hash[x]<='9': #digit
-                numcur=ord(alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
+            if _alt_path_hash[x]>='A' and _alt_path_hash[x]<='Z': #uppercase letters
+                numcur=ord(_alt_path_hash[x])-ord('A')
+            elif _alt_path_hash[x]>='a' and _alt_path_hash[x]<='z': #lowercase letters
+                numcur=(ord(_alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
+            elif _alt_path_hash[x]>='0' and _alt_path_hash[x]<='9': #digit
+                numcur=ord(_alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
             newhash+=chart[(numorig+numcur)%len(chart)]
-        alt_path_hash=newhash
-    else: alt_path_hash=d # else, use generated hash
-    global alt_path_dirname
-    dir_name=f"clitheme-data-{alt_path_hash}" # length of 12 (6*2)
-    overlay_cont=False
-    if alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(_globalvar.clitheme_temp_root+"/"+dir_name):
-            overlay_cont=True
-            shutil.copytree(_globalvar.clitheme_temp_root+"/"+alt_path_dirname, _globalvar.clitheme_temp_root+"/"+dir_name)
+        local_path_hash=newhash
+    else: local_path_hash=d # else, use generated hash
+    dir_name=f"clitheme-data-{local_path_hash}"
+    _generator.generate_custom_path() # prepare _generator.path
+    global _alt_path_dirname
+    global global_debugmode
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
+    if _alt_path_dirname!=None and overlay==True: # overlay
+        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     if global_debugmode: print("[Debug] "+path_name)
     # Generate data hierarchy as needed
-    if overlay_cont or not os.path.exists(path_name):
-        _generator.path=path_name
+    if not os.path.exists(path_name):
         _generator.silence_warn=True
+        return_val: str
+        d_copy=global_debugmode
         try:
-            _generator.generate_data_hierarchy(file_content, custom_path_gen=False)
+            # Set this to prevent extra messages from being displayed
+            global_debugmode=False
+            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
             if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
-    global alt_path
-    alt_path=path_name+"/"+_globalvar.generator_data_pathname
-    alt_path_dirname=dir_name
+        finally: global_debugmode=d_copy
+        # I GIVE UP on solving the callback cycle HELL on _generator.generate_data_hierarchy -> new GeneratorObject -> db_interface import -> set_local_themedef -> [generates data directory] so I'm going to add this CRAP fix
+        if not os.path.exists(path_name):
+            shutil.copytree(return_val, path_name)
+        try: shutil.rmtree(return_val)
+        except: pass
+    global _alt_path
+    _alt_path_hash=local_path_hash
+    _alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    _alt_path_dirname=dir_name
     return True
 def unset_local_themedef():
     """
-    Unsets the local theme definition file for the current frontend instance.
+    Unset the local theme definition file for the current frontend instance.
     After this operation, FetchDescriptor functions will no longer use local definitions.
     """
-    global alt_path; alt_path=None
-    global alt_path_dirname; alt_path_dirname=None
-    global alt_path_hash; alt_path_hash=None
+    global _alt_path; _alt_path=None
+    global _alt_path_dirname; _alt_path_dirname=None
+    global _alt_path_hash; _alt_path_hash=None
 
 class FetchDescriptor():
     """
@@ -107,10 +126,10 @@ class FetchDescriptor():
         """
         Create a new instance of the object.
         
-        - Provide domain_name and app_name to automatically append them for retrieval functions.
+        - Provide domain_name and app_name to automatically append them for retrieval functions
         - Provide subsections to automatically append them after domain_name+app_name
         - Provide lang to override the automatically detected system locale information
-        - Set debug_mode=True to output underlying operations when retrieving entries.
+        - Set debug_mode=True to output underlying operations when retrieving entries (debug purposes only)
         - Set disable_lang=True to disable localization detection and use "default" entry for all retrieval operations
         """
         # Leave domain and app names blank for global reference
@@ -119,16 +138,21 @@ class FetchDescriptor():
             self.domain_name=global_domain.strip()
         else:
             self.domain_name=domain_name.strip()
+        if len(self.domain_name.split())>1:
+            raise SyntaxError("Only one phrase is allowed for domain_name")
 
         if app_name==None:
             self.app_name=global_appname.strip()
         else:
             self.app_name=app_name.strip()
+        if len(self.app_name.split())>1:
+            raise SyntaxError("Only one phrase is allowed for app_name")
 
         if subsections==None:
             self.subsections=global_subsections.strip()
         else:
             self.subsections=subsections.strip()
+        self.subsections=re.sub(" {2,}", " ", self.subsections)
 
         if lang==None:
             self.lang=global_lang.strip()
@@ -146,7 +170,7 @@ class FetchDescriptor():
             self.disable_lang=disable_lang
 
         # sanity check the domain, app, and subsections
-        if _globalvar.sanity_check(self.domain_name+" "+self.app_name+" "+self.subsections)==False:
+        if _globalvar.sanity_check(self.domain_name+" "+self.app_name+" "+self.subsections, use_orig=True)==False:
             raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
     def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str) -> str:
         """
@@ -156,78 +180,48 @@ class FetchDescriptor():
         # entry_path e.g. "class-a sample_text"
 
         # Sanity check the path
-        if _globalvar.sanity_check(entry_path)==False:
-            if self.debug_mode: print("[Debug] Error: entry names/subsections {}".format(_globalvar.sanity_check_error_message))
-            return fallback_string
-        lang=""
+        if entry_path.strip()=="":
+            raise SyntaxError("Empty entry name")
+        if _globalvar.sanity_check(entry_path, use_orig=True)==False:
+            raise SyntaxError("Entry names and subsections {}".format(_globalvar.sanity_check_error_message))
+        lang=[]
         # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
         if not self.disable_lang:
             if self.lang!="":
                 if self.debug_mode: print("[Debug] Locale: Using defined self.lang")
-                if not _globalvar.sanity_check(self.lang)==False:
-                    lang=self.lang
+                if not _globalvar.sanity_check(self.lang, use_orig=True)==False:
+                    lang=[self.lang]
                 else:
                     if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
             else:
                 if self.debug_mode: print("[Debug] Locale: Using environment variables")
-                # $LANGUAGE (list of languages separated by colons)
-                if os.environ.__contains__("LANGUAGE"):
-                    target_str=os.environ['LANGUAGE']
-                    for each_language in target_str.strip().split(":"):
-                        # avoid exploit of accessing top-level folders
-                        if _globalvar.sanity_check(each_language)==False: continue
-                        # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
-                        if each_language!="en" and each_language!="en_US":
-                            # Treat C as en_US also
-                            if re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)=="C":
-                                lang+=re.sub(r".+[\.]", "en_US.", each_language)+" "
-                                lang+="en_US"+" "
-                            lang+=each_language+" "
-                            # no encoding
-                            lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", each_language)+" "
-                    lang=lang.strip()
-                # $LC_ALL
-                elif os.environ.__contains__("LC_ALL"):
-                    target_str=os.environ["LC_ALL"].strip()
-                    if not _globalvar.sanity_check(target_str)==False:
-                        lang=target_str+" "
-                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
-                    else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
-                # $LANG
-                elif os.environ.__contains__("LANG"):
-                    target_str=os.environ["LANG"].strip()
-                    if not _globalvar.sanity_check(target_str)==False:
-                        lang=target_str+" "
-                        lang+=re.sub(r"(?P<locale>.+)[\.].+", r"\g<locale>", target_str)
-                    else:
-                        if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
+                lang=_globalvar.get_locale(debug_mode=self.debug_mode)
 
         if self.debug_mode: print(f"[Debug] lang: {lang}\n[Debug] entry_path: {entry_path}")
         # just being lazy here I don't want to check the variables before using ಥ_ಥ (because it doesn't matter) 
         path=data_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         path2=None
-        if alt_path!=None: path2=alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
+        if _alt_path!=None: path2=_alt_path+"/"+self.domain_name+"/"+self.app_name+"/"+re.sub(" ",r"/", self.subsections)
         for section in entry_path.split():
             path+="/"+section
             if path2!=None: path2+="/"+section
         # path with lang, path with lang but without e.g. .UTF-8, path with no lang
         possible_paths=[]
-        for l in lang.split():
+        for l in lang:
             possible_paths.append(path+"__"+l)
         possible_paths.append(path)
         if path2!=None:
-            for l in lang.split():
+            for l in lang:
                 possible_paths.append(path2+"__"+l)
             possible_paths.append(path2)
         for p in possible_paths:
-            if self.debug_mode: print("Trying "+p, end="...")
+            if self.debug_mode: print("Trying "+p, end=" ...")
             try:
                 f=open(p,'r', encoding="utf-8")
-                dat=f.read()
-                if self.debug_mode: print("Success:\n> "+dat)
                 # since the generator adds an extra newline in the entry data, we need to remove it
-                return re.sub(r"\n\Z", "", dat)
+                dat=re.sub(r"\n\Z", "", f.read())
+                if self.debug_mode: print("Success:\n> "+dat)
+                return dat
             except (FileNotFoundError, IsADirectoryError):
                 if self.debug_mode: print("Failed")
         return fallback_string
@@ -236,7 +230,7 @@ class FetchDescriptor():
 
     def format_entry_or_fallback(self, entry_path: str, fallback_string: str, *args, **kwargs) -> str:
         """
-        Attempt to retrieve and format the entry based on given entry path and arguments. 
+        Attempt to retrieve and format the entry using str.format based on given entry path and arguments. 
         If the entry does not exist or an error occurs while formatting the entry string, use the provided fallback string instead.
         """
         # retrieve the entry
@@ -261,6 +255,6 @@ class FetchDescriptor():
         fallback_string=""
         for x in range(30): 
             fallback_string+=random.choice(string.ascii_letters)
-        recieved_content=self.retrieve_entry_or_fallback(entry_path, fallback_string)
-        if recieved_content.strip()==fallback_string: return False
+        received_content=self.retrieve_entry_or_fallback(entry_path, fallback_string)
+        if received_content.strip()==fallback_string: return False
         else: return True

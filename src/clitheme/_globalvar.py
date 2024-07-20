@@ -1,21 +1,54 @@
+# Copyright © 2023-2024 swiftycode
+
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 """
-Global variable definitions for clitheme
+Global variable definitions and initialization operations for clitheme
 """
 
+import io
 import os
-try: from . import _version
-except ImportError: import _version
+import sys
+import re
+import string
+from copy import copy
+from . import _version
 
-clitheme_root_data_path=""
-if os.name=="posix": # Linux/macOS only
+# spell-checker:ignoreRegExp banphrase[s]{0,1}
+
+## Initialization operations
+
+# Enable processing of escape characters in Windows Command Prompt
+if os.name=="nt":
+    import ctypes
+    
     try:
-        clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
-    except KeyError: pass
+        handle=ctypes.windll.kernel32.GetStdHandle(-11) # standard output handle
+        console_mode=ctypes.c_long()
+        if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))==0: 
+            raise Exception("GetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
+        console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        if ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)==0:
+            raise Exception("SetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
+    except:
+        pass
+
 
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
 Please make sure that the {var} environment variable is set correctly.
 Try restarting your terminal session to fix this issue."""
+
+clitheme_version=_version.__version__
+
+## Core data paths
+clitheme_root_data_path=""
+if os.name=="posix": # Linux/macOS only: Try to get XDG_DATA_HOME if possible
+    try:
+        clitheme_root_data_path=os.environ["XDG_DATA_HOME"]+"/clitheme"
+    except KeyError: pass
 
 if clitheme_root_data_path=="": # prev did not succeed
     try: 
@@ -31,44 +64,149 @@ if clitheme_root_data_path=="": # prev did not succeed
             var=r"%USERPROFILE%"
         print(error_msg_str.format(var=var))
         exit(1)
-clitheme_temp_root="/tmp"
-if os.name=="nt":
-    clitheme_temp_root=os.environ['TEMP']
-clitheme_version=_version.__version__
+clitheme_temp_root="/tmp" if os.name!="nt" else os.environ['TEMP']
+
+## _generator file and folder names
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
 generator_data_pathname="theme-data" # e.g. ~/.local/share/clitheme/theme-data
-generator_index_filename="current_theme_index"
+generator_manpage_pathname="manpages" # e.g. ~/.local/share/clitheme/manpages
+generator_index_filename="current_theme_index" # e.g. [...]/theme-info/current_theme_index
+generator_info_filename="clithemeinfo_{info}" # e.g. [...]/theme-info/1/clithemeinfo_name
+generator_info_v2filename=generator_info_filename+"_v2" # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+
+## _generator.db_interface file and table names
+db_data_tablename="clitheme_subst_data"
+db_filename="subst-data.db" # e.g. ~/.local/share/clitheme/subst-data.db
+db_version=3
+
+## clitheme-exec timeout value for each output substitution operation
+output_subst_timeout=0.4
+
+## Sanity check function
 entry_banphrases=['/','\\']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
+banphrase_error_message_orig=copy(banphrase_error_message)
 startswith_error_message="cannot start with '{char}'"
+startswith_error_message_orig=copy(startswith_error_message)
 # function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
 sanity_check_error_message=""
-
 # retrieve the entry only once to avoid dead loop in frontend.FetchDescriptor callbacks
 msg_retrieved=False
-def sanity_check(path):
-    # retrieve the entry (only for the first time)
-    try: from . import frontend
-    except ImportError: import frontend
-    global msg_retrieved
-    if not msg_retrieved:
-        msg_retrieved=True
-        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
-        global banphrase_error_message
-        banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
-        global startswith_error_message
-        startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
+from . import frontend, _get_resource
+def sanity_check(path: str, use_orig: bool=False) -> bool:
+    def retrieve_entry():
+        # retrieve the entry (only for the first time)
+        global msg_retrieved
+        global sanity_check_error_message, banphrase_error_message, startswith_error_message
+        if not msg_retrieved:
+            handle_set_themedef(frontend, "_globalvar")
+            msg_retrieved=True
+            f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+            banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
+            startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
     global sanity_check_error_message
     for p in path.split():
         for b in startswith_banphrases:
             if p.startswith(b):
-                sanity_check_error_message=startswith_error_message.format(char=b)
+                if not use_orig: retrieve_entry()
+                sanity_check_error_message=startswith_error_message.format(char=b) if not use_orig else startswith_error_message_orig.format(char=b)
                 return False
         for b in entry_banphrases:
             if p.find(b)!=-1:
-                sanity_check_error_message=banphrase_error_message.format(char=b)
+                if not use_orig: retrieve_entry()
+                sanity_check_error_message=banphrase_error_message.format(char=b) if not use_orig else banphrase_error_message_orig.format(char=b)
                 return False
     return True
+
+## Convenience functions
+
+def splitarray_to_string(split_content) -> str:
+    final=""
+    for phrase in split_content:
+        final+=phrase+" "
+    return final.strip()
+def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
+    results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
+    if results==None: raise ValueError("Match content failed (no matches)")
+    else: return results.groupdict()['content']
+def make_printable(content: str) -> str:
+    final_str=""
+    for character in content:
+        if character.isprintable() or character in string.whitespace: final_str+=character
+        else:
+            exp=repr(character)
+            # Remove quotes in repr(character)
+            exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
+            final_str+=exp
+    return final_str
+def get_locale(debug_mode: bool=False) -> list:
+    lang=[]
+    def add_language(target_lang: str):
+        nonlocal lang
+        if not sanity_check(target_lang, use_orig=True)==False:
+            no_encoding=re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", target_lang)
+            lang.append(target_lang)
+            if no_encoding!=target_lang: lang.append(no_encoding)
+        else:
+            if debug_mode: print("[Debug] Locale \"{0}\": sanity check failed ({1})".format(target_lang, sanity_check_error_message))
+
+    # Skip $LANGUAGE if both $LANG and $LC_ALL is set to C (treat empty as C also)
+    LANG_value=os.environ["LANG"] if "LANG" in os.environ and os.environ["LANG"].strip()!='' else "C"
+    LC_ALL_value=os.environ["LC_ALL"] if "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!='' else "C"
+    skip_LANGUAGE=(LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C."))
+    # $LANGUAGE (list of languages separated by colons)
+    if "LANGUAGE" in os.environ and not skip_LANGUAGE:
+        if debug_mode: print("[Debug] Using LANGUAGE variable")
+        target_str=os.environ['LANGUAGE']
+        for language in target_str.split(":"):
+            each_language=language.strip()
+            if each_language=="": continue
+            # Ignore en and en_US (See https://wiki.archlinux.org/title/Locale#LANGUAGE:_fallback_locales)
+            if each_language!="en" and each_language!="en_US":
+                # Treat C as en_US also
+                if re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", each_language)=="C":
+                    for item in ["en_US", "en"]:
+                        with_encoding=re.subn(r"^.+[\.]", f"{item}.", each_language) # (content, num_of_substitutions)
+                        if with_encoding[1]>0: add_language(with_encoding[0])
+                        else: add_language(item)
+                add_language(each_language)
+    # $LC_ALL
+    elif "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!="":
+        if debug_mode: print("[Debug] Using LC_ALL variable")
+        target_str=os.environ["LC_ALL"].strip()
+        add_language(target_str)
+    # $LANG
+    elif "LANG" in os.environ and os.environ["LANG"].strip()!="":
+        if debug_mode: print("[Debug] Using LANG variable")
+        target_str=os.environ["LANG"].strip()
+        add_language(target_str)
+    return lang
+
+def handle_exception():
+    env_var="CLITHEME_SHOW_TRACEBACK"
+    if env_var in os.environ and os.environ[env_var]=="1":
+        raise
+
+def handle_set_themedef(fr, debug_name: str):
+    prev_mode=False
+    # Prevent interference with other code piping stdout
+    orig_stdout=sys.stdout
+    try:
+        files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt", "strings/man-strings.clithemedef.txt"]
+        for x in range(len(files)):
+            filename=files[x]
+            msg=io.StringIO()
+            sys.stdout=msg
+            fr.global_debugmode=True
+            if not fr.set_local_themedef(_get_resource.read_file(filename), overlay=not x==0): raise RuntimeError("Full log below: \n"+msg.getvalue())
+            fr.global_debugmode=prev_mode
+            sys.stdout=orig_stdout
+    except:
+        sys.stdout=orig_stdout
+        fr.global_debugmode=prev_mode
+        if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
+        handle_exception()
+    finally: sys.stdout=orig_stdout

@@ -1,0 +1,114 @@
+# Sample theme definition file for parser/generator testing
+
+# Header information
+{header_section}
+    name Example theem
+    version 0.1
+    locales en_US
+
+    # Testing repeated handling of entries
+    locales en_US zh_CN
+    version 1.0
+    name Example theme
+    supported_apps example-app example-app-two another-example shound_unset-app
+{/header_section}
+
+# Main block
+{entries_section}
+    [entry] com.example example-app text-one
+        locale:default Some example text one
+        locale:en_US Some example text one
+        locale:zh_CN 一些样例文字（一）
+    [/entry]
+    [entry] com.example example-app text-two
+        locale:default Some example text two
+        locale:en_US Some example text two
+        locale:zh_CN 一些样例文字（二）
+    [/entry]
+    
+    # Testing in_domainapp
+    in_domainapp com.example example-app-two
+        [entry] text_one
+            locale:default Some text
+            locale:en_US Some text
+            locale:zh_CN 一些文本
+        [/entry]
+
+        # Testing subsections
+        [entry] subsection-one text_one
+            locale:default Some text
+            locale:en_US Some text
+            locale:zh_CN 一些文本
+        [/entry]
+        [entry] subsection-one text_two
+            locale:default Some text two
+            locale:en_US Some text two
+            locale:zh_CN 一些文本（二）
+        [/entry]
+        
+        # Testing in_subsection
+        in_subsection subsection-two
+            [entry] text_one
+                locale:default Some text
+                locale:en_US Some text
+                locale:zh_CN 一些文本
+            [/entry]
+            [entry] text_two
+                locale:default Some text two
+                locale:en_US Some text two
+                locale:zh_CN 一些文本（二）
+            [/entry]
+        # Testing unset_subsection
+        unset_subsection
+        [entry] text_two
+            locale:default Some text two
+            locale:en_US Some text two
+            locale:zh_CN 一些文本（二）
+        [/entry]
+        
+    in_domainapp com.example-two another-example
+        # Ignore entries in here
+        [entry] repeat_test_text_one
+            locale:default Some text
+            locale:en_US Some text
+            locale:zh_CN 一些文本
+        [/entry]
+        [entry] repeat_test_text_two
+            locale:default Some text two
+            locale:en_US Some text two
+            locale:zh_CN 一些文本（二）
+        [/entry]
+        
+        # Testing handling of repeated entries
+        [entry] repeat_test_text_one
+            locale:default Some other text
+            locale:en_US Some other text
+            locale:zh_CN 一些其他文本
+        [/entry]
+        [entry] repeat_test_text_two
+            locale:default Some other text two
+            locale:en_US Some other text two
+            locale:zh_CN 一些其他文本（二）
+        [/entry]
+
+    # Testing unset_domainapp
+    unset_domainapp 
+    [entry] should_unset.example should_unset-app text
+        locale:default Should have reset
+        locale:en_US Should have reset
+        locale:zh_CN 应该已经重置
+    [/entry]
+    
+    # Testing global entries (without domain or/and app)
+    [entry] sample_global_entry
+        locale:default Some text
+        locale:en_US Some text
+        locale:zh_CN 一些文本
+    [/entry]
+    in_subsection global.example
+    [entry] global_entry
+        locale:default Global entry in app
+        locale:en_US Global entry in app
+        locale:zh_CN app内的通用实例
+    [/entry]
+{/entries_section}

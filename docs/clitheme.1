@@ -1,57 +1,47 @@
-.TH clitheme 1 2024-01-20
+.TH clitheme 1 2024-06-17
 .SH NAME 
 clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
 .B clitheme [COMMAND] [OPTIONS]
 .SH DESCRIPTION 
-clitheme is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
+\fIclitheme\fR is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
 .SH OPTIONS
-.P
+.TP
 .B apply-theme [themedef-file(s)] [--overlay] [--preserve-temp]
-.RS 7
 Applies the given theme definition file(s) into the current system. Supported applications will immediately start using the defined values after performing this operation.
 
 Specify \fB--overlay\fR to append value definitions in the file(s) onto the current data.
 
 Specify \fB--preserve-temp\fR to prevent the temporary directory from removed after the operation.
-.RE
-.P 
+.TP 
 .B get-current-theme-info
-.RS 7
 Outputs detailed information about the currently applied theme. If multiple themes are applied using the \fB--overlay\fR option, outputs detailed information for each applied theme.
-.RE
-.P
+.TP
 .B unset-current-theme
-.RS 7
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
-.RE
-.P
+.TP
+.B update-theme
+Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if \fB--overlay\fR is used)
+
+Calling this command is equivalent to calling "clitheme apply-theme" with previously-specified files.
+.TP
 .B generate-data [themedef-file(s)] [--overlay]
-.RS 7
 Generates the data hierarchy for the given theme definition file(s). This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
 
 This command is for debug purposes only.
-.RE
-.P
+.TP
 .B --help
-.RS 7
 Outputs a short help message consisting of available commands.
-.RE
-.P
+.TP
 .B --version
-.RS 7
 Outputs the current version of the program.
-.RE
 .SH SEE ALSO
-For more information, please see the 
-.UR https://gitee.com/swiftycode/clitheme
-project homepage
-.UE 
-and the
-.UR https://gitee.com/swiftycode/clitheme/wikis 
-project wiki:
-.UE
+\fIclitheme-exec(1)\fR, \fIclitheme-man(1)\fR
+
+For more information, please see the project homepage and the project wiki:
 .P
-https://gitee.com/swiftycode/clitheme
+.I https://gitee.com/swiftycode/clitheme
 .P
-https://gitee.com/swiftycode/clitheme/wikis
+.I https://gitee.com/swiftycode/clitheme/wikis/pages
+or
+.I https://gitee.com/swiftycode/clitheme-wiki-repo

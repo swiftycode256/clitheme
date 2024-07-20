@@ -1,0 +1,266 @@
+# Copyright © 2023-2024 swiftycode
+
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+{header_section}
+    name clitheme message text translations (cli)
+    version 2.0
+    locales zh_CN
+    supported_apps clitheme
+{/header_section}
+
+{entries_section}
+in_domainapp swiftycode clitheme 
+    in_subsection cli
+        [entry] no-command
+            # locale:default Error: no command or option specified
+            locale:zh_CN 错误：没有提供指令或选项
+        [/entry]
+        [entry] not-enough-arguments
+            # locale:default Error: not enough arguments
+            locale:zh_CN 错误：参数不够
+        [/entry]
+        [entry] unknown-option
+            # locale:default Error: unknown option "{option}"
+            locale:zh_CN 错误：未知选项"{option}"
+        [/entry]
+        [entry] unknown-command
+            # locale:default Error: unknown command "{cmd}"
+            locale:zh_CN 错误：未知指令"{cmd}"
+        [/entry]
+        [entry] too-many-arguments
+            # locale:default Error: too many arguments
+            locale:zh_CN 错误：参数太多
+        [/entry]
+        [entry] help-usage-prompt
+            # locale:default Run "{clitheme} --help" for usage information
+            locale:zh_CN 使用"{clitheme} --help"以获取使用方法
+        [/entry]
+        [entry] version-str
+            # locale:default clitheme version {ver}
+            locale:zh_CN clitheme 版本：{ver}
+        [/entry]
+        # apply-theme 和 generate-data 指令
+        # apply-theme and generate-data commands
+        in_subsection cli apply-theme
+            [entry] generate-data-msg
+                # locale:default The theme data will be generated from the following definition files in the following order:
+                locale:zh_CN 主题定义数据将会从以下顺序的主题定义文件生成：
+            [/entry]
+            [entry] apply-theme-msg
+                # locale:default The following definition files will be applied in the following order: 
+                locale:zh_CN 这些主题定义文件将会通过以下顺序被应用：
+            [/entry]
+            [entry] overwrite-notice
+                # locale:default The existing theme data will be overwritten if you continue.
+                locale:zh_CN 如果继续，当前的主题数据将会被覆盖。
+            [/entry]
+            [entry] overlay-notice
+                # locale:default The definition files will be appended on top of the existing theme data.
+                locale:zh_CN 这些主题定义文件会被叠加在当前的数据上。
+            [/entry]
+            [entry] confirm-prompt
+                # locale:default Do you want to continue? [y/n]
+                locale:zh_CN 是否继续操作？[y/n]
+            [/entry]
+            [entry] overlay-msg
+                # locale:default Overlay specified
+                locale:zh_CN 已使用数据叠加模式
+            [/entry]
+            [entry] generating-data
+                # locale:default ==> Generating data...
+                locale:zh_CN ==> 正在生成数据...
+            [/entry]
+            [entry] processing-file
+                # locale:default > Processing file {filename}...
+                locale:zh_CN > 正在处理文件{filename}
+            [/entry]
+            [entry] all-finished
+                # locale:default > All finished
+                locale:zh_CN > 已处理全部文件
+            [/entry]
+            [entry] generate-data-success
+                # locale:default Successfully generated data
+                locale:zh_CN 已成功生成数据
+            [/entry]
+            [entry] view-temp-dir
+                # locale:default View at {path}
+                locale:zh_CN 生成的数据可以在"{path}"查看
+            [/entry]
+            [entry] applying-theme
+                # locale:default ==> Applying theme...
+                locale:zh_CN ==> 正在应用主题...
+            [/entry]
+            [entry] apply-theme-success
+                # locale:default Theme applied successfully
+                locale:zh_CN 已成功应用主题
+            [/entry]
+            [entry] read-file-error
+                # [locale] default
+                #     [File {index}] An error occurred while reading the file: 
+                #     {message} 
+                # [/locale]
+                [locale] zh_CN
+                    [文件{index}] 读取文件时出现了错误：
+                    {message}
+                [/locale]
+            [/entry]
+            [entry] overlay-no-data
+                # [locale] default
+                #     Error: no theme set or the current data is corrupt
+                #     Try setting a theme first 
+                # [/locale]
+                [locale] zh_CN 
+                    错误：当前没有设定主题或当前数据损坏
+                    请尝试设定主题
+                [/locale]
+            [/entry]
+            [entry] overlay-data-error
+                # [locale] default
+                #     Error: the current data is corrupt
+                #     Remove the current theme, set the theme, and try again 
+                # [/locale]
+                [locale] zh_CN
+                    错误：当前主题数据损坏
+                    请移除当前数据和重新设定主题后重试
+                [/locale]
+            [/entry]
+            [entry] generate-data-error
+                # [locale] default
+                #     [File {index}] An error occurred while generating the data:
+                #     {message}
+                # [/locale]
+                [locale] zh_CN
+                    [文件{index}] 生成数据时发生了错误：
+                    {message}
+                [/locale]
+            [/entry]
+        # unset-current-theme 指令
+        # unset-current-theme command
+        in_subsection cli unset-current-theme
+            [entry] no-data-found
+                # locale:default Error: No theme data present (no theme was set)
+                locale:zh_CN 错误：当前没有设定主题
+            [/entry]
+            [entry] remove-data-error
+                # [locale] default
+                #     An error occurred while removing the data:
+                #     {message}
+                # [/locale]
+                [locale] zh_CN 
+                    移除当前数据时发生了错误：
+                    {message}
+                [/locale]
+            [/entry]
+            [entry] remove-data-success
+                # locale:default Successfully removed the current theme data
+                locale:zh_CN 已成功移除当前主题数据
+            [/entry]
+        # get-current-theme-info 指令
+        # get-current-theme-info command
+        in_subsection cli get-current-theme-info
+            [entry] no-theme
+                # locale:default No theme currently set
+                locale:zh_CN 当前没有设定任何主题
+            [/entry]
+            [entry] current-theme-msg
+                # locale:default Currently installed theme:
+                locale:zh_CN 当前设定的主题：
+            [/entry] 
+            [entry] overlay-history-msg
+                # locale:default Overlay history (sorted by latest installed):
+                locale:zh_CN 叠加历史记录（根据最新安装的主题排序）：
+            [/entry]
+            [entry] version-str
+                # locale:default Version: {ver}
+                locale:zh_CN 版本：{ver}
+            [/entry]
+            [entry] description-str
+                # locale:default Description: 
+                locale:zh_CN 详细说明：
+            [/entry]
+            [entry] locales-str
+                # locale:default Supported locales:
+                locale:zh_CN 支持的语言：
+            [/entry]
+            [entry] supported-apps-str
+                # locale:default Supported apps:
+                locale:zh_CN 支持的应用程序：
+            [/entry]
+        # update-theme 指令
+        # update-theme command
+        in_subsection cli update-theme
+            [entry] no-theme-err
+                # locale:default Error: no theme currently set
+                locale:zh_CN 错误：当前没有设定主题
+            [/entry]
+            [entry] not-available-err
+                # [locale] default
+                #     update-theme cannot be used with the current theme setting
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    update-theme在当前主题设定上无法使用
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] other-err
+                # [locale] default
+                #     An error occurred while processing file path information: {msg}
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    处理文件路径信息时发生错误：{msg}
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+        # 用于clitheme --help的字符串定义
+        # String entries used for "clitheme --help"
+        in_subsection cli help-message
+            [entry] usage-str
+                # locale:default Usage:
+                locale:zh_CN 使用方式：
+            [/entry]
+            [entry] options-str
+                # locale:default Options:
+                locale:zh_CN 选项：
+            [/entry]
+            [entry] options-apply-theme
+                # [locale] default
+                #     apply-theme: Applies the given theme definition file(s) into the current system.
+                #     Specify --overlay to append value definitions in the file(s) onto the current data.
+                #     Specify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)
+                # [/locale]
+                [locale] zh_CN
+                    apply-theme：将指定的主题定义文件应用到当前系统中
+                    指定"--overlay"选项以保留当前主题数据的情况下应用（添加到当前数据中）
+                    指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
+                [/locale]
+            [/entry]
+            [entry] options-get-current-theme-info
+                # locale:default get-current-theme-info: Outputs detailed information about the currently applied theme
+                locale:zh_CN get-current-theme-info：输出当前主题设定的详细信息
+            [/entry]
+            [entry] options-unset-current-theme
+                # locale:default unset-current-theme: Remove the current theme data from the system
+                locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
+            [/entry]
+            [entry] options-update-theme
+                # locale:default update-theme: Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if --overlay is used)
+                locale:zh_CN update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）
+            [/entry]
+            [entry] options-generate-data
+                # locale:default generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory
+                locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
+            [/entry]
+            [entry] options-version
+                # locale:default --version: Outputs the current version of clitheme
+                locale:zh_CN --version：输出clitheme的当前版本信息
+            [/entry]
+            [entry] options-help
+                # locale:default --help: Display this help message
+                locale:zh_CN --help：输出这个帮助提示
+            [/entry]
+{/entries_section}
