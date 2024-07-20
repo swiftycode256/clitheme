@@ -1,6 +1,6 @@
 # Maintainer: swiftycode <3291929745@qq.com>
 pkgname='clitheme'
-pkgver=2.0_dev20240717
+pkgver=2.0_beta2
 pkgrel=1
 pkgdesc="A text theming library for command line applications"
 arch=('any')

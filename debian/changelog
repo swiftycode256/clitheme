@@ -1,6 +1,34 @@
-clitheme (2.0-dev20240717-1) unstable; urgency=low
+clitheme (2.0-beta2-1) unstable; urgency=low
 
-  * In development, please see commit logs for changes
+  New features
+
+  * Support specifying multiple `[file_content]` phrases and filenames in `{manpage_section}`:
+  * New `[include_file]` syntax in `{manpage_section}`, supporting specifying multiple target file paths at once:
+  * New `foregroundonly` option for `filter_command` and `[filter_commands]` in `{substrules_section}`; only apply substitution rules if process is in foreground state
+      * Applicable for shell and other command interpreter applications that changes foreground state when executing processes
+  * `clitheme-exec`: new `--debug-foreground` option; outputs message when foreground state changes (shown as `! Foreground: False` and `! Foreground: True`)
+  * Support specifying `substesc` and `substvar` options on `[/substitute_string]` and `[/substitute_regex]` in `{substrules_section}`; affects match expression
+  * Support specifying `substvar` on `[/entry]` in `{entries_section}`; affects path name
+
+  Bug fixes and improvements
+
+  * Non-printable characters in CLI output messages will be displayed in its plain-text representation
+  * Fix compatibility issues with Python 3.8
+  * Fixes an issue where pressing CTRL-C in `clitheme-man` causes the program to unexpectedly terminate
+  * Fixes an issue where terminal control characters are unexpectedly displayed on screen in Windows Command Prompt
+  * Theme definition file `{substrules_section}`: Fixes and issue where substitution rules with `strictcmdmatch` option are not applied if executed command arguments are the same in command filter
+  * Fixes an issue where "specifying multiple `[entry]` phrases" feature in `{entries_section}` does not work properly
+  * Fix many compatibility issues with applications in `clitheme-exec`
+  * Theme definition file: Optimize processing of command filter definitions with same commands and different match options
+  * Theme definition file: Fix unexpected "Option not allowed here" error when using multi-line content blocks
+  * Theme definition file: Fix and optimize content variable processing
+  * Theme definition file: Fix missing "Unexpected phrase" error in `{manpage_section}` when encountering invalid file syntax
+
+  Latest code changes and development version: https://gitee.com/swiftycode/clitheme/tree/v1.2_dev
+
+  Documentation: https://gitee.com/swiftycode/clitheme-wiki-repo
+
+  Full release notes for v2.0: [please see v2.0-beta1 release page]
 
  -- swiftycode <3291929745@qq.com>  Thu, 18 Jul 2024 00:12:00 +0800
 
