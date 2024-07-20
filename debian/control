@@ -11,7 +11,7 @@ Vcs-Git: https://gitee.com/swiftycode/clitheme.git
 Package: clitheme
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}, python3 (> 3.7), man-db, sqlite3
+Depends: ${misc:Depends}, python3 (> 3.8), man-db, sqlite3
 Description: Application framework for text theming
  clitheme allows users to customize the output of supported programs, such as
  multi-language support or mimicking your favorite cartoon character. It has an

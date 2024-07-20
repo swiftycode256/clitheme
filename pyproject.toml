@@ -21,7 +21,7 @@ authors = [
 description = "A text theming library for command line applications"
 readme = "README.en.md"
 license = {text = "GNU General Public License v3 (GPLv3)"}
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
