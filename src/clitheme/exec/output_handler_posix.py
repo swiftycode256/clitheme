@@ -174,6 +174,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                     foreground_pid=os.tcgetpgrp(stdout_fd)
                     do_subst_operation=True
                     lines=data.splitlines(keepends=True)
+                    unfinished_cr_lines=None
                     for x in range(len(lines)):
                         line=lines[x]
                         # if unfinished output exists, append new content to it
@@ -190,12 +191,26 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                                 # Don't push the current line just yet; leave it for newline check
                             unfinished_output=None
                             output_handled=True
+                        if unfinished_cr_lines!=None: line=unfinished_cr_lines+line
+                        # If line ends with carriage return ('\r') and is not end of content, process them together 
+                        # to minimize visible cursor blinks due to delay in unfinished output processing
+                        if line.endswith(b'\r') and x!=len(lines)-1:
+                            unfinished_cr_lines=line
+                            continue
+                        else: unfinished_cr_lines=None
                         # if last line of output did not end with newlines, leave for next iteration
                         if x==len(lines)-1 and not line.endswith(newlines):
                             unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
                             output_handled=True
                         else:
-                            output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+                            last_index=0
+                            for x in range(len(line)):
+                                if line[x]==ord(b'\r') or x==len(line)-1:
+                                    try:
+                                        if line[x+1]==ord(b'\n'): continue
+                                    except IndexError: pass
+                                    output_lines.append((line[last_index:x+1], is_stderr, do_subst_operation, foreground_pid))
+                                    last_index=x+1
 
                 if stdout_fd in fds: handle_output(is_stderr=False)
                 if stderr_fd in fds: handle_output(is_stderr=True)
