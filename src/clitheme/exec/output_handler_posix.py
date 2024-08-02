@@ -241,11 +241,15 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 line: bytes=line_data[0]
                 # check if the output is user input. if yes, skip
                 # print(last_input_content, line) # DEBUG
-                if line==last_input_content: line_data=(line_data[0],line_data[1],False, line_data[3]); last_input_content=None
-                elif last_input_content!=None and last_input_content.startswith(line): 
-                    line_data=(line_data[0],line_data[1],False, line_data[3])
-                    last_input_content=last_input_content[len(line):]
-                else: last_input_content=None
+                if last_input_content!=None:
+                    input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
+                    input_startswith=b'^'+input_match_expression
+                    input_equals=input_startswith+b'$'
+                    if re.search(input_equals, line)!=None: line_data=(line_data[0],line_data[1],False, line_data[3]); last_input_content=None
+                    elif re.search(input_startswith, line)!=None: 
+                        line_data=(line_data[0],line_data[1],False, line_data[3])
+                        last_input_content=last_input_content[len(line):]
+                    else: last_input_content=None
                 # subst operation and print output
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
         except:
