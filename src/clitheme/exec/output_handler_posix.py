@@ -23,6 +23,7 @@ import re
 import sqlite3
 import time
 import threading
+from typing import Optional
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
@@ -56,7 +57,6 @@ def _process_debug(lines: list, debug_mode: list, is_stderr: bool=False, matched
             except UnicodeDecodeError: line=re.sub(bytes(match_pattern, 'utf-8'), bytes(sub_pattern, 'utf-8'), line)
             line+=b'\x1b[0m'
         if "normal" in debug_mode:
-            # e.g. o{ <line>; o> <start>
             line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';37;41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
         final_lines.append(line)
     return final_lines
@@ -129,68 +129,93 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
             message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'} ({foreground_pid})\x1b[0m\n"
             os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
+    thread_exception_handled=False
+    def handle_exception(exc: Optional[Exception]=None):
+        nonlocal thread_exception_handled; thread_exception_handled=True
+        if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
+        _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
+        if exc!=None: raise exc
+        else: raise
 
+    thread_debug=0
+    def thread_debug_handle(sig, frame):
+        nonlocal thread_debug
+        if sig==signal.SIGUSR1: thread_debug=1
+        elif sig==signal.SIGUSR2: thread_debug=2
+    signal.signal(signal.SIGUSR1, thread_debug_handle)
+    signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
         nonlocal last_input_content, output_lines
         unfinished_output=None
-        while True:
-            readsize=io.DEFAULT_BUFFER_SIZE
-            fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
-            # Handle user input from stdin
-            if sys.stdin in fds:
-                data=os.read(sys.stdin.fileno(), readsize)
-                # if input from last iteration did not end with newlines, append new content
-                if last_input_content!=None: last_input_content+=data
-                else: last_input_content=data
-                try: os.write(stdout_fd, data)
-                except OSError: pass # Handle input/output error that might occur after program terminates
-            # Handle output from stdout and stderr
-            output_handled=False
-            def handle_output(is_stderr: bool):
-                nonlocal unfinished_output, output_lines, output_handled
+        try:
+            while True:
+                # Testing thread exception handling
+                nonlocal thread_debug
+                if thread_debug==1: raise Exception
+                elif thread_debug==2: break
 
-                data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
-                foreground_pid=os.tcgetpgrp(stdout_fd)
-                do_subst_operation=True
-                lines=data.splitlines(keepends=True)
-                for x in range(len(lines)):
-                    line=lines[x]
-                    # if unfinished output exists, append new content to it
-                    if x==0 and unfinished_output!=None:
-                        orig_data=unfinished_output
-                        orig_line=orig_data[0]
-                        if unfinished_output[3]==foreground_pid:
-                            # Modify existing line data instead of directly pushing it
-                            # to better handle multiple fragments in a single line
-                            line=orig_line+line
+                readsize=io.DEFAULT_BUFFER_SIZE
+                fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
+                # Handle user input from stdin
+                if sys.stdin in fds:
+                    data=os.read(sys.stdin.fileno(), readsize)
+                    # if input from last iteration did not end with newlines, append new content
+                    if last_input_content!=None: last_input_content+=data
+                    else: last_input_content=data
+                    try: os.write(stdout_fd, data)
+                    except OSError: pass # Handle input/output error that might occur after program terminates
+                # Handle output from stdout and stderr
+                output_handled=False
+                def handle_output(is_stderr: bool):
+                    nonlocal unfinished_output, output_lines, output_handled
+
+                    data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                    foreground_pid=os.tcgetpgrp(stdout_fd)
+                    do_subst_operation=True
+                    lines=data.splitlines(keepends=True)
+                    for x in range(len(lines)):
+                        line=lines[x]
+                        # if unfinished output exists, append new content to it
+                        if x==0 and unfinished_output!=None:
+                            orig_data=unfinished_output
+                            orig_line=orig_data[0]
+                            if unfinished_output[3]==foreground_pid:
+                                # Modify existing line data instead of directly pushing it
+                                # to better handle multiple fragments in a single line
+                                line=orig_line+line
+                            else:
+                                # Shouldn't join them together in this case
+                                output_lines.append(unfinished_output)
+                                # Don't push the current line just yet; leave it for newline check
+                            unfinished_output=None
+                            output_handled=True
+                        # if last line of output did not end with newlines, leave for next iteration
+                        if x==len(lines)-1 and not line.endswith(newlines):
+                            unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
+                            output_handled=True
                         else:
-                            # Shouldn't join them together in this case
-                            output_lines.append(unfinished_output)
-                            # Don't push the current line just yet; leave it for newline check
-                        unfinished_output=None
-                        output_handled=True
-                    # if last line of output did not end with newlines, leave for next iteration
-                    if x==len(lines)-1 and not line.endswith(newlines):
-                        unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
-                        output_handled=True
-                    else:
-                        output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+                            output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
 
-            if stdout_fd in fds: handle_output(is_stderr=False)
-            if stderr_fd in fds: handle_output(is_stderr=True)
-            # if no unfinished_output is handled by handle_output, append the unfinished output if exists
-            if not output_handled and unfinished_output!=None:
-                output_lines.append(unfinished_output)
-                unfinished_output=None
+                if stdout_fd in fds: handle_output(is_stderr=False)
+                if stderr_fd in fds: handle_output(is_stderr=True)
+                # if no unfinished_output is handled by handle_output, append the unfinished output if exists
+                if not output_handled and unfinished_output!=None:
+                    output_lines.append(unfinished_output)
+                    unfinished_output=None
 
-            if process.poll()!=None: break
+                if process.poll()!=None: break
+        except: handle_exception()
     
-    thread=threading.Thread(target=output_read_loop, daemon=True)
+    thread=threading.Thread(target=output_read_loop, name="output-reader", daemon=True)
     thread.start()
     while True:
         try:
             if process.poll()!=None and len(output_lines)==0: break
-            
+            if not thread.is_alive():
+                if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
+                else: return 1
+            if thread_exception_handled: continue # Prevent conflict with setting terminal attributes
             # update terminal attributes from what the program sets
             try: 
                 attrs=termios.tcgetattr(stdout_fd)
@@ -252,11 +277,9 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                     else: last_input_content=None
                 # subst operation and print output
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
-        except:
-            if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-            print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
-            _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
-            raise
+        except: 
+            if not thread_exception_handled: handle_exception()
+            else: raise
     if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     exit_code=process.poll()
     try:
