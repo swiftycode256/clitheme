@@ -34,17 +34,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     global path
     obj=_dataclass.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
-    ## Main code
     while obj.goto_next_line():
         first_phrase=obj.lines_data[obj.lineindex].split()[0]
-        # process header and main sections here
-        if first_phrase=="set_options":
-            obj.check_enough_args(obj.lines_data[obj.lineindex].split(), 2)
-            obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(obj.lines_data[obj.lineindex].split()[1:])).split(), really_really_global=True)
-        elif first_phrase.startswith("setvar:"): 
-            obj.check_enough_args(obj.lines_data[obj.lineindex].split(), 2)
-            obj.handle_set_variable(obj.lines_data[obj.lineindex], really_really_global=True)
-        elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
+        if first_phrase=="begin_header" or first_phrase==r"{header_section}":
             _header_parser.handle_header_section(obj, first_phrase)
         elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
             _entries_parser.handle_entries_section(obj, first_phrase)
@@ -52,6 +44,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             _substrules_parser.handle_substrules_section(obj, first_phrase)
         elif first_phrase==r"{manpage_section}":
             _manpage_parser.handle_manpage_section(obj, first_phrase)
+        elif obj.handle_setters(really_really_global=True): pass
         else: obj.handle_invalid_phrase(first_phrase)
 
     def is_content_parsed() -> bool:

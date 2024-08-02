@@ -51,12 +51,7 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 file_name,\
                 content,obj.lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
-        elif phrases[0]=="set_options":
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
-        elif phrases[0].startswith("setvar:"): 
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_variable(obj.lines_data[obj.lineindex])
+        elif obj.handle_setters(): pass
         elif phrases[0]==end_phrase:
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("header")

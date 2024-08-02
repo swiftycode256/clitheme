@@ -46,12 +46,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
             obj.check_enough_args(phrases, 2)
             entry_name=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
-        elif phrases[0]=="set_options":
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
-        elif phrases[0].startswith("setvar:"): 
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_variable(obj.lines_data[obj.lineindex])
+        elif obj.handle_setters(): pass
         elif phrases[0]==end_phrase:
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("entries")
