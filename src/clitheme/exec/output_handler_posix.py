@@ -160,14 +160,17 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                         orig_data=unfinished_output
                         orig_line=orig_data[0]
                         if unfinished_output[3]==foreground_pid:
-                            output_lines.append((orig_line+line,is_stderr,do_subst_operation, foreground_pid))
+                            # Modify existing line data instead of directly pushing it
+                            # to better handle multiple fragments in a single line
+                            line=orig_line+line
                         else:
+                            # Shouldn't join them together in this case
                             output_lines.append(unfinished_output)
-                            output_lines.append((line,is_stderr,do_subst_operation, foreground_pid))
+                            # Don't push the current line just yet; leave it for newline check
                         unfinished_output=None
                         output_handled=True
                     # if last line of output did not end with newlines, leave for next iteration
-                    elif x==len(lines)-1 and not line.endswith(newlines):
+                    if x==len(lines)-1 and not line.endswith(newlines):
                         unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
                         output_handled=True
                     else:
