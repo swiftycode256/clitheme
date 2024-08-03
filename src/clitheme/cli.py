@@ -60,7 +60,7 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
             if not (inp=="y" or inp=="yes"):
                 return 1
     if overlay: print(f.reof("overlay-msg", "Overlay specified"))
-    print(f.reof("generating-data", "==> Generating data..."))
+    print(f.reof("processing-files", "==> Processing files..."))
     index=1
     generate_path=True
     if overlay:
@@ -116,7 +116,7 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
         finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
     if print_progress:
         print(line_prefix+f.reof("all-finished", "> All finished"))
-    print(f.reof("generate-data-success", "Successfully generated data"))
+    print(f.reof("process-files-success", "Successfully processed files"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":

@@ -19,9 +19,9 @@ test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int 
 ```
 ```plaintext
 $ clitheme apply-theme clang-theme.clithemedef.txt
-==> Generating data...
-Successfully generated data
-==> Applying theme...Success
+==> Processing files...
+Successfully processed files
+==> Applying theme...
 Theme applied successfully
 ```
 ```plaintext

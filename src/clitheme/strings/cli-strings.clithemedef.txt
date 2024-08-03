@@ -69,9 +69,9 @@ in_domainapp swiftycode clitheme
                 # locale:default Overlay specified
                 locale:zh_CN 已使用数据叠加模式
             [/entry]
-            [entry] generating-data
-                # locale:default ==> Generating data...
-                locale:zh_CN ==> 正在生成数据...
+            [entry] processing-files
+                # locale:default ==> Processing files...
+                locale:zh_CN ==> 正在处理文件...
             [/entry]
             [entry] processing-file
                 # locale:default > Processing file {filename}...
@@ -81,9 +81,9 @@ in_domainapp swiftycode clitheme
                 # locale:default > All finished
                 locale:zh_CN > 已处理全部文件
             [/entry]
-            [entry] generate-data-success
-                # locale:default Successfully generated data
-                locale:zh_CN 已成功生成数据
+            [entry] process-files-success
+                # locale:default Successfully processed files
+                locale:zh_CN 已成功处理文件
             [/entry]
             [entry] view-temp-dir
                 # locale:default View at {path}
