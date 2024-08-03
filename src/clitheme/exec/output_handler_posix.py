@@ -133,7 +133,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
     def handle_exception(exc: Optional[Exception]=None):
         nonlocal thread_exception_handled; thread_exception_handled=True
         if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l", end='') # reset color and mouse reporting
+        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
         _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
         if exc!=None: raise exc
         else: raise
