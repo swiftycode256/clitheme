@@ -238,6 +238,8 @@ def get_current_theme_info():
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
                 print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
+
+        print() # Separate each entry with an empty line
     return 0
 
 def update_theme():
