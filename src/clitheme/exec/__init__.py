@@ -15,6 +15,7 @@ import os
 import re
 import io
 import shutil
+import functools
 def _labeled_print(msg: str):
     print("[clitheme-exec] "+msg)
 
@@ -46,7 +47,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
             if not os.path.isdir(search_path): raise Exception(search_path+" not directory")
-            lsdir_result=os.listdir(search_path); lsdir_result.sort()
+            lsdir_result=os.listdir(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
             lsdir_num=0
             for x in lsdir_result: 
                 if os.path.isdir(search_path+"/"+x): lsdir_num+=1

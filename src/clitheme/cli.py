@@ -16,6 +16,7 @@ import sys
 import shutil
 import re
 import io
+import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
 
@@ -182,7 +183,7 @@ def get_current_theme_info():
         print(f.reof("no-theme", "No theme currently set"))
         return 1
     lsdir_result=os.listdir(search_path)
-    lsdir_result.sort(reverse=True) # sort by latest installed
+    lsdir_result.sort(reverse=True, key=functools.cmp_to_key(_globalvar.result_sort_cmp)) # sort by latest installed
     lsdir_num=0
     for x in lsdir_result: 
         if os.path.isdir(search_path+"/"+x):
@@ -254,7 +255,7 @@ def update_theme():
         if not os.path.isdir(search_path):
             print(fi.reof("no-theme-err", "Error: no theme currently set"))
             return 1
-        lsdir_result=os.listdir(search_path); lsdir_result.sort()
+        lsdir_result=os.listdir(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
         lsdir_num=0
         for x in lsdir_result: 
             if os.path.isdir(search_path+"/"+x): lsdir_num+=1

@@ -210,3 +210,12 @@ def handle_set_themedef(fr, debug_name: str):
         if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
         handle_exception()
     finally: sys.stdout=orig_stdout
+def result_sort_cmp(obj1,obj2) -> int:
+    cmp1='';cmp2=''
+    try:
+        cmp1=int(obj1); cmp2=int(obj2)
+    except ValueError:
+        cmp1=obj1; cmp2=obj2
+    if cmp1>cmp2: return 1
+    elif cmp1==cmp2: return 0
+    else: return -1
