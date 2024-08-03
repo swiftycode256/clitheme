@@ -181,7 +181,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                         if x==0 and unfinished_output!=None:
                             orig_data=unfinished_output
                             orig_line=orig_data[0]
-                            if unfinished_output[3]==foreground_pid:
+                            if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr:
                                 # Modify existing line data instead of directly pushing it
                                 # to better handle multiple fragments in a single line
                                 line=orig_line+line
