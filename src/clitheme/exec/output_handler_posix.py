@@ -73,7 +73,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
     # Prevent apps from using "less" or "more" as pager, as it won't work here
     env['PAGER']="cat"
     prev_attrs=None
-    try: prev_attrs=termios.tcgetattr(sys.stdin)
+    try: prev_attrs=termios.tcgetattr(sys.stdout)
     except termios.error: pass
     main_pid=os.getpid()
     process: subprocess.Popen
@@ -132,7 +132,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
     thread_exception_handled=False
     def handle_exception(exc: Optional[Exception]=None):
         nonlocal thread_exception_handled; thread_exception_handled=True
-        if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+        if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
         print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
         _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
         if exc!=None: raise exc
@@ -249,7 +249,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 attrs=termios.tcgetattr(stdout_fd)
                 # disable canonical and echo mode (enable cbreak) no matter what
                 attrs[3] &= ~(termios.ICANON | termios.ECHO)
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, attrs)
+                termios.tcsetattr(sys.stdout, termios.TCSADRAIN, attrs)
             except termios.error: pass
             # update terminal size
             try:
@@ -297,7 +297,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise
-    if prev_attrs!=None: termios.tcsetattr(sys.stdin, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+    if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
     exit_code=process.poll()
     try:
         if exit_code!=None and exit_code<0: # Terminated by signal
