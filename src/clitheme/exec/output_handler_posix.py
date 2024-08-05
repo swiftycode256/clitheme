@@ -168,11 +168,24 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 # Handle output from stdout and stderr
                 output_handled=False
                 def handle_output(is_stderr: bool):
-                    nonlocal unfinished_output, output_lines, output_handled
+                    nonlocal unfinished_output, output_lines, output_handled, last_input_content
 
                     data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
                     foreground_pid=os.tcgetpgrp(stdout_fd)
                     do_subst_operation=True
+                    # check if the output is user input. if yes, skip
+                    if last_input_content!=None:
+                        input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
+                        input_startswith=b'^'+input_match_expression
+                        input_equals=input_startswith+b'$'
+                        # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
+                        if re.search(input_equals, data)!=None:
+                            do_subst_operation=False
+                            last_input_content=None
+                        # elif re.search(input_startswith, data)!=None: 
+                        #     do_subst_operation=False
+                        #     last_input_content=last_input_content[len(data):]
+                        else: last_input_content=None
                     lines=data.splitlines(keepends=True)
                     unfinished_cr_lines=None
                     for x in range(len(lines)):
@@ -279,17 +292,6 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
             while not len(output_lines)==0:
                 line_data=output_lines.pop(0)
                 line: bytes=line_data[0]
-                # check if the output is user input. if yes, skip
-                # print(last_input_content, line) # DEBUG
-                if last_input_content!=None:
-                    input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
-                    input_startswith=b'^'+input_match_expression
-                    input_equals=input_startswith+b'$'
-                    if re.search(input_equals, line)!=None: line_data=(line_data[0],line_data[1],False, line_data[3]); last_input_content=None
-                    elif re.search(input_startswith, line)!=None: 
-                        line_data=(line_data[0],line_data[1],False, line_data[3])
-                        last_input_content=last_input_content[len(line):]
-                    else: last_input_content=None
                 # subst operation and print output
                 os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
         except: 
