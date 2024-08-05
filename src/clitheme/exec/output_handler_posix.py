@@ -15,6 +15,7 @@ import io
 import pty
 import select
 import termios
+import stat
 import fcntl
 import signal
 import struct
@@ -97,6 +98,13 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
         elif sig==signal.SIGINT:
             os.write(stdout_fd, b'\x03') # '^C' character
     try:
+        # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
+        stdin_fd=stdout_slave
+        if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
+            r,w=os.pipe()
+            os.write(w, open(sys.stdin.fileno(), 'rb').read())
+            os.close(w)
+            stdin_fd=r
         def child_init():
             # Must start new session or some programs might not work properly
             os.setsid()
@@ -107,7 +115,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
             tmp_fd = os.open(os.ttyname(stdout_slave), os.O_RDWR)
             tmp_fd2 = os.open(os.ttyname(stderr_slave), os.O_RDWR)
             os.close(tmp_fd);os.close(tmp_fd2)
-        process=subprocess.Popen(command, stdin=stdout_slave, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env, preexec_fn=child_init)
+        process=subprocess.Popen(command, stdin=stdin_fd, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env, preexec_fn=child_init)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
@@ -156,7 +164,8 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 elif thread_debug==2: break
 
                 readsize=io.DEFAULT_BUFFER_SIZE
-                fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
+                try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
+                except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], 0.002)[0]
                 # Handle user input from stdin
                 if sys.stdin in fds:
                     data=os.read(sys.stdin.fileno(), readsize)
