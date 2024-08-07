@@ -189,6 +189,8 @@ def handle_exception():
     env_var="CLITHEME_SHOW_TRACEBACK"
     if env_var in os.environ and os.environ[env_var]=="1":
         raise
+    # Let "exit" function calls work
+    if sys.exc_info()[0]==SystemExit: raise
 
 def handle_set_themedef(fr, debug_name: str):
     prev_mode=False
