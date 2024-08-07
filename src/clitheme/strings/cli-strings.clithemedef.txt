@@ -45,6 +45,18 @@ in_domainapp swiftycode clitheme
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands
         in_subsection cli apply-theme
+            [entry] reading-file
+                # locale:default ==> Reading file {filename}...
+                locale:zh_CN ==> 正在读取文件{filename}...
+            [/entry]
+            [entry] reading-stdin-note
+                # locale:default Reading from standard input
+                locale:zh_CN 正在从stdin读取文件
+            [/entry]
+            [entry] stdin-interactive-finish-prompt
+                # locale:default Input file content here and press {shortcut} to finish
+                locale:zh_CN 在此输入文件内容，并按下{shortcut}以结束
+            [/entry]
             [entry] generate-data-msg
                 # locale:default The theme data will be generated from the following definition files in the following order:
                 locale:zh_CN 主题定义数据将会从以下顺序的主题定义文件生成：
@@ -75,7 +87,7 @@ in_domainapp swiftycode clitheme
             [/entry]
             [entry] processing-file
                 # locale:default > Processing file {filename}...
-                locale:zh_CN > 正在处理文件{filename}
+                locale:zh_CN > 正在处理文件{filename}...
             [/entry]
             [entry] all-finished
                 # locale:default > All finished

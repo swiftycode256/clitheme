@@ -16,6 +16,7 @@ import sys
 import shutil
 import re
 import io
+import stat
 import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
@@ -323,14 +324,29 @@ def _handle_help_message(full_help: bool=False):
 def _get_file_contents(file_paths: list) -> list:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")
     content_list=[]
+    line_prefix="\x1b[2K\r" # clear current line content and move cursor to beginning
     for i in range(len(file_paths)):
         path=file_paths[i]
         try:
+            print(line_prefix+fi.feof("reading-file","==> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
+            # Detect standard input
+            is_stdin=False
+            try:
+                if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino:
+                    is_stdin=True
+                    print("\n"+fi.reof("reading-stdin-note", "Reading from standard input"))
+                    if not stat.S_ISFIFO(os.stat(path).st_mode):
+                        print(fi.feof("stdin-interactive-finish-prompt", "Input file content here and press {shortcut} to finish", shortcut="CTRL-D" if os.name=="posix" else "CTRL-Z+<Enter>"))
+            except: pass
             content_list.append(open(path, 'r', encoding="utf-8").read())
+            if is_stdin: print() # Print an extra newline
+        except KeyboardInterrupt: 
+            print();exit(130)
         except:
-            print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
+            print("\n"+fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
                 index=str(i+1), message=path+": "+fmt(str(sys.exc_info()[1]))))
             raise
+    print(line_prefix, end='')
     return content_list
 
 def main(cli_args: list):
