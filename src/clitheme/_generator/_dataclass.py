@@ -82,6 +82,7 @@ class GeneratorObject(_handlers.DataHandlers):
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
+        options_data=self.subst_variable_content(_globalvar.splitarray_to_string(options_data)).split()
         for each_option in options_data:
             option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
