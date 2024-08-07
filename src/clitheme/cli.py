@@ -106,7 +106,7 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
             if generator_msgs.getvalue()!='':
                 # end='' because the pipe value already contains a newline due to the print statements
                 print(generator_msgs.getvalue(), end='')
-            print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
+            print(f.feof("process-files-error", "[File {index}] An error occurred while processing files:\n{message}", \
                 index=str(i+1), message=str(sys.exc_info()[1])))
             if type(exc)==SyntaxError: _globalvar.handle_exception()
             else: raise # Always raise exception if other error occurred in _generator

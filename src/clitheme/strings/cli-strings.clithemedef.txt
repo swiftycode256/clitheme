@@ -139,13 +139,13 @@ in_domainapp swiftycode clitheme
                     请移除当前数据和重新设定主题后重试
                 [/locale]
             [/entry]
-            [entry] generate-data-error
+            [entry] process-files-error
                 # [locale] default
-                #     [File {index}] An error occurred while generating the data:
+                #     [File {index}] An error occurred while processing files:
                 #     {message}
                 # [/locale]
                 [locale] zh_CN
-                    [文件{index}] 生成数据时发生了错误：
+                    [文件{index}] 处理文件时发生了错误：
                     {message}
                 [/locale]
             [/entry]
