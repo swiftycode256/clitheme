@@ -129,7 +129,7 @@ def splitarray_to_string(split_content) -> str:
         final+=phrase+" "
     return final.strip()
 def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
-    results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
+    results=re.search(r"(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
 def make_printable(content: str) -> str:
