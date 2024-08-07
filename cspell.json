@@ -15,7 +15,7 @@
         "exactcmdmatch", "smartcmdmatch", "endmatchhere",
         "leadtabindents", "leadspaces", 
         "strictcmdmatch", "normalcmdmatch", "exactcmdmatch", "smartcmdmatch",
-        "subststdoutonly", "subststderronly", "substall", "foregroundonly",
+        "subststdoutonly", "subststderronly", "substallstreams", "foregroundonly",
         "substvar", "substesc", 
         "PKGBUILD", "MANPATH",
         "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer", "tcgetpgrp", "tcsetpgrp",

@@ -24,7 +24,7 @@ class GeneratorObject(_handlers.DataHandlers):
     lead_indent_options=["leadtabindents", "leadspaces"]
     content_subst_options=["substesc","substvar"]
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
-    subst_limiting_options=["subststdoutonly", "subststderronly", "substall"]+["endmatchhere"]
+    subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere"]
     
     # options used in handle_block_input
     block_input_options=lead_indent_options+content_subst_options
