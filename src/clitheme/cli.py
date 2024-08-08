@@ -371,9 +371,9 @@ def main(cli_args: list):
         if len(cli_args)>count:
             exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
 
-    if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy":
+    if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
         check_enough_args(3)
-        generate_only=(cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy")
+        generate_only=(cli_args[1] in ("generate-data", "generate-data-hierarchy"))
         paths=[]
         overlay=False
         preserve_temp=False

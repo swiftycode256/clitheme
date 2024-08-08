@@ -42,7 +42,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         elif phrases[0]=="unset_subsection":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.in_subsection=""
-        elif phrases[0]=="entry" or phrases[0]=="[entry]":
+        elif phrases[0] in ("entry", "[entry]"):
             obj.check_enough_args(phrases, 2)
             entry_name=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")

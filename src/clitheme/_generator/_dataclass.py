@@ -328,7 +328,7 @@ class GeneratorObject(_handlers.DataHandlers):
                         if locale!="default":
                             target_entry+="__"+locale
                         entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
-            elif phrases[0]=="locale_block" or phrases[0]=="[locale]":
+            elif phrases[0] in ("locale_block", "[locale]"):
                 self.check_enough_args(phrases, 2)
                 locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
                 begin_line_number=self.lineindex+1+1

@@ -79,7 +79,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
         elif phrases[0]=="unset_filter_command":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             command_filters=None
-        elif phrases[0]=="[substitute_string]" or phrases[0]=="[substitute_regex]":
+        elif phrases[0] in ("[substitute_string]", "[substitute_regex]"):
             obj.check_enough_args(phrases, 2)
             options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness, "foreground_only": command_filter_foreground_only}
             match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])

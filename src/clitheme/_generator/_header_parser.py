@@ -19,7 +19,7 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
-        if phrases[0]=="name" or phrases[0]=="version" or phrases[0]=="description":
+        if phrases[0] in ("name", "version", "description"):
             obj.check_enough_args(phrases, 2)
             content=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             if phrases[0]=="description": content=obj.handle_singleline_content(content)
@@ -28,20 +28,20 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
                 content,obj.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
-        elif phrases[0]=="locales" or phrases[0]=="supported_apps":
+        elif phrases[0] in ("locales", "supported_apps"):
             obj.check_enough_args(phrases, 2)
             content=obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
             obj.write_infofile_newlines( \
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 _globalvar.generator_info_v2filename.format(info=phrases[0]),\
                 content,obj.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
-        elif phrases[0]=="locales_block" or phrases[0]=="supported_apps_block" or phrases[0]=="description_block" or phrases[0]=="[locales]" or phrases[0]=="[supported_apps]" or phrases[0]=="[description]":
+        elif phrases[0] in ("locales_block", "supported_apps_block", "description_block", "[locales]", "[supported_apps]", "[description]"):
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             # handle block input
             content=""; file_name=""
             endphrase="end_block"
             if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
-            if phrases[0]=="description_block" or phrases[0]=="[description]":
+            if phrases[0] in ("description_block", "[description]"):
                 content=obj.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                 file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
             else:
