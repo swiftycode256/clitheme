@@ -83,8 +83,9 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
     final_path: str
-    line_prefix="\x1b[2K\r    " # clear current line content and move cursor to beginning
-    print_progress=len(file_contents)>1
+    line_prefix=f"\x1b[2K\r{' '*4}" # clear current line content and move cursor to beginning
+    print_progress=True #len(file_contents)>1
+    newline="\n" if print_progress else ""
     orig_stdout=sys.stdout # Prevent interference with other code piping stdout
     for i in range(len(file_contents)):
         if print_progress:
@@ -101,7 +102,7 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
             index+=1
         except Exception as exc:
             sys.stdout=orig_stdout
-            print(("\n" if print_progress else ""), end='')
+            print(newline, end='')
             # Print any output messages if an error occurs
             if generator_msgs.getvalue()!='':
                 # end='' because the pipe value already contains a newline due to the print statements
@@ -114,11 +115,9 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
         else: 
             sys.stdout=orig_stdout # restore standard output
             if generator_msgs.getvalue()!='':
-                print(("\n" if print_progress else "")+generator_msgs.getvalue(), end='')
+                print(newline+generator_msgs.getvalue(), end='')
         finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
-    if print_progress:
-        print(line_prefix+f.reof("all-finished", "> All finished"))
-    print(f.reof("process-files-success", "Successfully processed files"))
+    print((line_prefix.rstrip(' ') if print_progress else "")+f.reof("process-files-success", "Successfully processed files"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":
