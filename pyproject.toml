@@ -19,7 +19,7 @@ authors = [
   { name="swiftycode", email="3291929745@qq.com" },
 ]
 description = "A text theming library for command line applications"
-readme = "README.en.md"
+readme = ".github/README.md"
 license = {text = "GNU General Public License v3 (GPLv3)"}
 requires-python = ">=3.8"
 classifiers = [

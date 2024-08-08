@@ -1,6 +1,6 @@
 # clitheme - 命令行自定义工具
 
-**中文** | [English](./README.en.md)
+**中文** | [English](.github/README.md)
 
 ---
 
