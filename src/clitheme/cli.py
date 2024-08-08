@@ -313,13 +313,13 @@ def _handle_help_message(full_help: bool=False):
     if not full_help: return
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
-    "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Outputs detailed information about the currently applied theme"))
+    "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Show information about the currently applied theme(s)"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
-    print("\t"+fd.reof("options-update-theme", "update-theme: Re-applies the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
-    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory"))
-    print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
-    print("\t"+fd.reof("options-help", "--help: Display this help message"))
+    print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
+    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-version", "--version: Show the current version of clitheme"))
+    print("\t"+fd.reof("options-help", "--help: Show this help message"))
 
 def _get_file_contents(file_paths: list) -> list:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")

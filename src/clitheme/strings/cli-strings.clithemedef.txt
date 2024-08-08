@@ -241,38 +241,38 @@ in_domainapp swiftycode clitheme
             [/entry]
             [entry] options-apply-theme
                 # [locale] default
-                #     apply-theme: Applies the given theme definition file(s) into the current system.
-                #     Specify --overlay to append value definitions in the file(s) onto the current data.
-                #     Specify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)
+                #     apply-theme: Apply the given theme definition file(s).
+                #     Specify --overlay to add file(s) onto the current data.
+                #     Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)
                 # [/locale]
                 [locale] zh_CN
-                    apply-theme：将指定的主题定义文件应用到当前系统中
-                    指定"--overlay"选项以保留当前主题数据的情况下应用（添加到当前数据中）
+                    apply-theme：应用指定的主题定义文件
+                    指定"--overlay"选项以将文件添加到当前数据中
                     指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
                 [/locale]
             [/entry]
             [entry] options-get-current-theme-info
-                # locale:default get-current-theme-info: Outputs detailed information about the currently applied theme
-                locale:zh_CN get-current-theme-info：输出当前主题设定的详细信息
+                # locale:default get-current-theme-info: Show information about the currently applied theme(s)
+                locale:zh_CN get-current-theme-info：显示当前主题设定的详细信息
             [/entry]
             [entry] options-unset-current-theme
                 # locale:default unset-current-theme: Remove the current theme data from the system
                 locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
             [/entry]
             [entry] options-update-theme
-                # locale:default update-theme: Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if --overlay is used)
+                # locale:default update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)
                 locale:zh_CN update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）
             [/entry]
             [entry] options-generate-data
-                # locale:default generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory
+                # locale:default generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
             [/entry]
             [entry] options-version
-                # locale:default --version: Outputs the current version of clitheme
-                locale:zh_CN --version：输出clitheme的当前版本信息
+                # locale:default --version: Show the current version of clitheme
+                locale:zh_CN --version：显示clitheme的当前版本信息
             [/entry]
             [entry] options-help
-                # locale:default --help: Display this help message
-                locale:zh_CN --help：输出这个帮助提示
+                # locale:default --help: Show this help message
+                locale:zh_CN --help：显示这个帮助提示
             [/entry]
 {/entries_section}
