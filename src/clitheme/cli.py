@@ -50,7 +50,7 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
             print(f.reof("apply-theme-msg", "The following definition files will be applied in the following order: "))
         for i in range(len(filenames)):
             path=filenames[i]
-            print("\t{}: {}".format(str(i+1), path))
+            print("\t{}: {}".format(str(i+1), fmt(path)))
         if not generate_only:
             if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
                 print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
