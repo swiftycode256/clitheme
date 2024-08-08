@@ -2,7 +2,7 @@
 .SH NAME
 clitheme\-exec \- match and substitute output of a command
 .SH SYNOPSIS
-.B clitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] \fIcommand\fR
+.B clitheme-exec [--debug] [--debug-color] [--debug-newlines] [--showchars] \fIcommand\fR
 .SH DESCRIPTION
 \fIclitheme-exec\fR substitutes the output of the specified command with substitution rules defined through a theme definition file. The current theme definition on the system is controlled through \fIclitheme(1)\fR.
 .SH OPTIONS
@@ -24,7 +24,7 @@ For stdout, yellow color is applied. For stderr, red color is applied.
 .B --debug-newlines
 For output that does not end on a newline, display the output ending with newlines. 
 .TP
-.B --debug-showchars
+.B --showchars
 Display various control characters in plain text. The following characters will be displayed as its code name:
 .P
 .RS 14
@@ -39,7 +39,7 @@ Display various control characters in plain text. The following characters will 
 - Bell character (\\x07)
 .RE
 .TP 
-.B --debug-foreground
+.B --foreground-stat
 When the foreground status of the main process changes (determined using value of \fItcgetpgrp(3)\fR system call), output a message showing this change.
 
 Such change happens when running a shell in \fIclitheme-exec\fR and running another command in that shell.
@@ -50,10 +50,10 @@ Such change happens when running a shell in \fIclitheme-exec\fR and running anot
 - "! Foreground: True (<PID>)": Process enters (re-enters) foreground state
 .RE
 .TP
-.B --debug-nosubst
+.B --nosubst
 Even if a theme is set, do not perform any output substitution operations. 
 
-This is useful if you are trying to get the original output of the command with control characters displayed on-screen using \fI--debug-showchars\fR.
+This is useful if you are trying to get the original output of the command with control characters displayed on-screen using \fI--showchars\fR.
 
 .SH SEE ALSO
 \fIclitheme(1)\fR

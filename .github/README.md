@@ -64,10 +64,10 @@ Get the command line output, including any terminal control characters:
 
 ```plaintext
 # --debug: Add a marker at the beginning of each line; contains information on whether the output is stdout/stderr ("o>" or "e>")
-# --debug-showchars: Show terminal control characters in the output
-# --debug-nosubst: Even if a theme is set, do not apply substitution rules (get original output content)
+# --showchars: Show terminal control characters in the output
+# --nosubst: Even if a theme is set, do not apply substitution rules (get original output content)
 
-$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+$ clitheme-exec --debug --showchars --nosubst clang test.c
 e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
 e> bool *func(int *a) {\r\n
 e> {{ESC}}[0;1;32m^\r\n

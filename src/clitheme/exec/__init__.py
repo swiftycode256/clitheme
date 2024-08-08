@@ -85,15 +85,15 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
 def _handle_help_message(full_help: bool=False):
     fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
-    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [--debug-foreground] [--debug-nosubst] [command]")
+    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--showchars] [--foreground-stat] [--nosubst] [command]")
     if not full_help: return
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
+    print("\t\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
     print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
-    print("\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
-    print("\t"+fd2.reof("options-debug-showchars", "--debug-showchars: Display various control characters in plain text"))
-    print("\t"+fd2.reof("options-debug-foreground", "--debug-foreground: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
-    print("\t"+fd2.reof("options-debug-nosubst", "--debug-nosubst: Do not perform any output substitutions even if a theme is set"))
+    print("\t"+fd2.reof("options-showchars", "--showchars: Display various control characters in plain text"))
+    print("\t"+fd2.reof("options-foreground-stat", "--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
+    print("\t"+fd2.reof("options-nosubst", "--nosubst: Do not perform any output substitutions even if a theme is set"))
 
 def _handle_error(message: str):
     print(message)
@@ -121,24 +121,25 @@ def main(arguments: list):
             debug_mode.append("color")
         elif arg=="--debug-newlines":
             debug_mode.append("newlines")
-        elif arg=="--debug-showchars":
+        elif arg in ("--showchars", "--debug-showchars"):
             debug_mode.append("showchars")
-        elif arg=="--debug-foreground":
+        elif arg in ("--foreground-stat", "--debug-foreground"):
             debug_mode.append("foreground")
-        elif arg=="--debug-nosubst":
+        elif arg in ("--nosubst", "--debug-nosubst"):
             subst=False
         elif arg=="--help":
             showhelp=True
         else: 
             return _handle_error(fd.feof("unknown-option-err", "Error: unknown option \"{phrase}\"", phrase=arg))
+    if "newlines" in debug_mode and not "normal" in debug_mode:
+        return _handle_error(fd.reof("debug-newlines-not-with-debug", "Error: \"--debug-newlines\" must be used with \"--debug\" option"))
     if len(arguments)<=1+argcount:
         if showhelp:
             _handle_help_message(full_help=True)
             return 0
         else: 
             _handle_help_message()
-            _handle_error(fd.reof("no-command-err", "Error: no command specified"))
-            return 1
+            return _handle_error(fd.reof("no-command-err", "Error: no command specified"))
     # check database
     if subst:
         if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):

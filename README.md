@@ -63,10 +63,10 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 
 ```plaintext
 # --debug：在每一行的输出前添加标记；包含输出是否为stdout或stderr的信息（"o>"或"e>"）
-# --debug-showchars：显示输出中的终端控制符号
-# --debug-nosubst：即使设定了主题，不对输出应用替换规则（获取原始输出）
+# --showchars：显示输出中的终端控制符号
+# --nosubst：即使设定了主题，不对输出应用替换规则（获取原始输出）
 
-$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+$ clitheme-exec --debug --showchars --nosubst clang test.c
 e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
 e> bool *func(int *a) {\r\n
 e> {{ESC}}[0;1;32m^\r\n
