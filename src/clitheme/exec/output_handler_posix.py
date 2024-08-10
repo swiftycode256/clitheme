@@ -102,8 +102,17 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
         stdin_fd=stdout_slave
         if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
             r,w=os.pipe()
-            os.write(w, open(sys.stdin.fileno(), 'rb').read())
-            os.close(w)
+            def pipe_forward():
+                # Background thread to forward stdin to subprocess pipe
+                nonlocal r,w
+                while True:
+                    select.select([sys.stdin], [], [])
+                    d=os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
+                    if d==b'': # stdin is closed
+                        os.close(w); break
+                    os.write(w,d)
+            t=threading.Thread(target=pipe_forward, daemon=True)
+            t.start()
             stdin_fd=r
         def child_init():
             # Must start new session or some programs might not work properly
