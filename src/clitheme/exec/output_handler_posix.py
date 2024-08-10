@@ -134,7 +134,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
         signal.signal(signal.SIGCONT, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
     output_lines=[] # (line_content, is_stderr, do_subst_operation)
-    def get_terminal_size(): return fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
+    def get_terminal_size(): return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     # this mechanism prevents user input from being processed through substrules
     last_input_content=None
