@@ -125,7 +125,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
             tmp_fd = os.open(os.ttyname(stdout_slave), os.O_RDWR)
             tmp_fd2 = os.open(os.ttyname(stderr_slave), os.O_RDWR)
             os.close(tmp_fd);os.close(tmp_fd2)
-        process=subprocess.Popen(command, stdin=stdin_fd, stdout=stdout_slave, stderr=stdout_slave, bufsize=0, close_fds=True, env=env, preexec_fn=child_init)
+        process=subprocess.Popen(command, stdin=stdin_fd, stdout=stdout_slave, stderr=stdout_slave, env=env, preexec_fn=child_init)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
