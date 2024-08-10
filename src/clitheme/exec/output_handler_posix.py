@@ -69,6 +69,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
         except FileNotFoundError: pass
     stdout_fd, stdout_slave=pty.openpty()
     stderr_fd, stderr_slave=pty.openpty()
+    readsize=io.DEFAULT_BUFFER_SIZE
 
     env=copy.copy(os.environ)
     # Prevent apps from using "less" or "more" as pager, as it won't work here
@@ -107,7 +108,7 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 nonlocal r,w
                 while True:
                     select.select([sys.stdin], [], [])
-                    d=os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
+                    d=os.read(sys.stdin.fileno(), readsize)
                     if d==b'': # stdin is closed
                         os.close(w); break
                     os.write(w,d)
@@ -172,7 +173,6 @@ def handler_main(command: list, debug_mode: list=[], subst: bool=True):
                 if thread_debug==1: raise Exception
                 elif thread_debug==2: break
 
-                readsize=io.DEFAULT_BUFFER_SIZE
                 try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
                 except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], 0.002)[0]
                 # Handle user input from stdin
