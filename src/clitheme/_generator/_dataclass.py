@@ -378,7 +378,7 @@ class GeneratorObject(_handlers.DataHandlers):
             else:
                 # Prevent leading . & prevent /,\ in entry name
                 if _globalvar.sanity_check(match_pattern)==False:
-                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(entry[5]), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(entry[4]), sanitycheck_msg=_globalvar.sanity_check_error_message))
             encountered_ids.add(entry[3])
             if is_substrules:
                 try: 
