@@ -83,7 +83,7 @@ db_version=3
 output_subst_timeout=0.4
 
 ## Sanity check function
-entry_banphrases=['/','\\']
+entry_banphrases=['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
 banphrase_error_message_orig=copy(banphrase_error_message)
