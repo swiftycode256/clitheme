@@ -276,6 +276,7 @@ def update_theme():
         if len(file_paths)==0: raise invalid_theme("file_paths empty")
         # Get file contents
         try: file_contents=_get_file_contents(file_paths)
+        except _direct_exit as exc: return exc.code
         except:
             _globalvar.handle_exception()
             return 1
@@ -340,13 +341,20 @@ def _get_file_contents(file_paths: list) -> list:
             content_list.append(open(path, 'r', encoding="utf-8").read())
             if is_stdin: print() # Print an extra newline
         except KeyboardInterrupt: 
-            print();exit(130)
+            print();raise _direct_exit(130)
         except:
             print("\n"+fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
                 index=str(i+1), message=path+": "+fmt(str(sys.exc_info()[1]))))
             raise
     print(line_prefix, end='')
     return content_list
+
+class _direct_exit(Exception):
+    def __init__(self, code):
+        """
+        Custom exception for handling return code inside another function callback
+        """
+        self.code=code
 
 def main(cli_args: list):
     """
@@ -365,49 +373,52 @@ def main(cli_args: list):
         for arg in cli_args:
             if not exclude_options or not _is_option(arg): c+=1
         if c<count:
-            exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
+            raise _direct_exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
     def check_extra_args(count: int):
         if len(cli_args)>count:
-            exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
+            raise _direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
 
-    if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
-        check_enough_args(3)
-        generate_only=(cli_args[1] in ("generate-data", "generate-data-hierarchy"))
-        paths=[]
-        overlay=False
-        preserve_temp=False
-        for arg in cli_args[2:]:
-            if _is_option(arg):
-                if arg.strip()=="--overlay": overlay=True
-                elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
-                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
-            else:
-                paths.append(arg)
-        fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-        content_list: list
-        try: content_list=_get_file_contents(paths)
-        except: 
-            _globalvar.handle_exception()
-            return 1
-        return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
-    elif cli_args[1]=="get-current-theme-info":
-        check_extra_args(2) # disabled additional options
-        return get_current_theme_info()
-    elif cli_args[1]=="unset-current-theme":
-        check_extra_args(2)
-        return unset_current_theme()
-    elif cli_args[1]=="update-theme":
-        check_extra_args(2)
-        return update_theme()
-    elif cli_args[1]=="--version":
-        check_extra_args(2)
-        print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
-    else:
-        if cli_args[1]=="--help":
+    try:
+        if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
+            check_enough_args(3)
+            generate_only=(cli_args[1] in ("generate-data", "generate-data-hierarchy"))
+            paths=[]
+            overlay=False
+            preserve_temp=False
+            for arg in cli_args[2:]:
+                if _is_option(arg):
+                    if arg.strip()=="--overlay": overlay=True
+                    elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
+                    else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+                else:
+                    paths.append(arg)
+            fi=frontend.FetchDescriptor(subsections="cli apply-theme")
+            content_list: list
+            try: content_list=_get_file_contents(paths)
+            except _direct_exit as exc: return exc.code
+            except: 
+                _globalvar.handle_exception()
+                return 1
+            return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
+        elif cli_args[1]=="get-current-theme-info":
+            check_extra_args(2) # disabled additional options
+            return get_current_theme_info()
+        elif cli_args[1]=="unset-current-theme":
             check_extra_args(2)
-            _handle_help_message(full_help=True)
+            return unset_current_theme()
+        elif cli_args[1]=="update-theme":
+            check_extra_args(2)
+            return update_theme()
+        elif cli_args[1]=="--version":
+            check_extra_args(2)
+            print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
         else:
-            return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
+            if cli_args[1]=="--help":
+                check_extra_args(2)
+                _handle_help_message(full_help=True)
+            else:
+                return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
+    except _direct_exit as exc: return exc.code
     return 0
 def _script_main(): # for script
     return main(sys.argv)
