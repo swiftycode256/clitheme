@@ -22,7 +22,6 @@ from .. import _globalvar, frontend
 connection=sqlite3.connect(":memory:") # placeholder
 db_path=""
 debug_mode=False
-_globalvar.handle_set_themedef(frontend, "db_interface")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
 class need_db_regenerate(Exception):

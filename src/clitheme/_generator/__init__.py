@@ -68,4 +68,3 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
 from .. import _globalvar
 from . import _dataclass
 from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
-_globalvar.handle_set_themedef(_dataclass.GeneratorObject.frontend, "generator")

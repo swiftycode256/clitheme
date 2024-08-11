@@ -20,7 +20,6 @@ from . import _globalvar, frontend
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)
 
-_globalvar.handle_set_themedef(frontend, "clitheme-man")
 frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="man")

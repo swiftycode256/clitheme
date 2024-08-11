@@ -24,7 +24,6 @@ from .._generator import db_interface
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
 
-_globalvar.handle_set_themedef(frontend, "clitheme-exec")
 frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="exec")

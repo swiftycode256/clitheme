@@ -102,7 +102,6 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
         global msg_retrieved
         global sanity_check_error_message, banphrase_error_message, startswith_error_message
         if not msg_retrieved:
-            handle_set_themedef(frontend, "_globalvar")
             msg_retrieved=True
             f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
             banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
@@ -210,6 +209,7 @@ def handle_set_themedef(fr, debug_name: str):
         if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
         handle_exception()
     finally: sys.stdout=orig_stdout
+handle_set_themedef(frontend, "global")
 def result_sort_cmp(obj1,obj2) -> int:
     cmp1='';cmp2=''
     try:

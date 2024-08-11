@@ -27,8 +27,6 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
 
-_globalvar.handle_set_themedef(frontend, "cli")
-
 last_data_path=""
 def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_temp=False, generate_only=False):
     """

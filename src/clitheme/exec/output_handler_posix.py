@@ -31,7 +31,6 @@ from . import _labeled_print
 
 # spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp
 
-_globalvar.handle_set_themedef(frontend, "output_handler_posix")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
