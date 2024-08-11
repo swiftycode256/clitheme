@@ -51,7 +51,7 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 - 无需应用程序API也可以访问当前主题中的字符串定义（易懂的数据结构）
 
 更多信息请见本项目的Wiki文档页面。你可以通过以下位置访问这些文档：
-- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme/wikis
 - https://gitee.com/swiftycode/clitheme-wiki-repo
 - https://github.com/swiftycode256/clitheme-wiki-repo
 

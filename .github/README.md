@@ -52,7 +52,7 @@ Other characteristics:
 
 For more information, please see the project's Wiki documentation page. It can be accessed through the following links:
 
-- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme/wikis
 - https://gitee.com/swiftycode/clitheme-wiki-repo
 - https://github.com/swiftycode256/clitheme-wiki-repo
 
