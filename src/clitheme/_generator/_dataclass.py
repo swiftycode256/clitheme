@@ -280,6 +280,7 @@ class GeneratorObject(_handlers.DataHandlers):
 
         substrules_endmatchhere=False
         substrules_stdout_stderr_option=0
+        substrules_foregroundonly=False
 
         def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
             # check if patterns are valid
@@ -345,8 +346,9 @@ class GeneratorObject(_handlers.DataHandlers):
             elif phrases[0]==end_phrase:
                 got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, \
                         allowed_options=\
-                            (self.subst_limiting_options if is_substrules else []) \
+                            (self.subst_limiting_options if is_substrules else [])
                             +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
+                            +(['foregroundonly'] if is_substrules else [])
                         )
                 for option in got_options:
                     if option=="endmatchhere" and got_options['endmatchhere']==True:
@@ -359,6 +361,8 @@ class GeneratorObject(_handlers.DataHandlers):
                         entry_name_substesc=True
                     elif option=="substvar" and got_options['substvar']==True:
                         entry_name_substvar=True
+                    elif option=="foregroundonly" and got_options['foregroundonly']==True:
+                        substrules_foregroundonly=True
                 break
             else: self.handle_invalid_phrase(phrases[0])
         # For silence_warning in subst_variable_content
@@ -391,7 +395,7 @@ class GeneratorObject(_handlers.DataHandlers):
                         command_match_strictness=substrules_options['strictness'], \
                         end_match_here=substrules_endmatchhere, \
                         stdout_stderr_matchoption=substrules_stdout_stderr_option, \
-                        foreground_only=substrules_options['foreground_only'], \
+                        foreground_only=substrules_foregroundonly, \
                         line_number_debug=entry[4], \
                         unique_id=entry[3])
                 except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))

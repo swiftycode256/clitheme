@@ -20,7 +20,16 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
     end_phrase=r"{/substrules_section}"
     command_filters: Optional[list]=None
     command_filter_strictness=0
-    command_filter_foreground_only=False
+    # If True, reset foregroundonly option to beforehand during next command filter
+    inline_foregroundonly=None
+    def reset_inline_foregroundonly():
+        """
+        Set foregroundonly option to false if foregroundonly option is "inline" and not enabled previously
+        """
+        nonlocal inline_foregroundonly
+        if inline_foregroundonly!=None:
+            obj.global_options['foregroundonly']=inline_foregroundonly
+            inline_foregroundonly=None
     # initialize the database
     if os.path.exists(obj.path+"/"+_globalvar.db_filename):
         try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
@@ -34,12 +43,12 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="[filter_commands]":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
+            reset_inline_foregroundonly()
             content=obj.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_cmdmatch_options=False, disable_substesc=True)
             # read commands
             command_strings=content.splitlines()
 
             strictness=0
-            foreground_only=False
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
             got_options=copy.copy(obj.global_options)
             if len(obj.lines_data[obj.lineindex].split())>1:
@@ -51,19 +60,19 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
                     strictness=2
                 elif this_option=="smartcmdmatch" and got_options['smartcmdmatch']==True:
                     strictness=-1
-                elif this_option=="foregroundonly" and got_options['foregroundonly']==True:
-                    foreground_only=True
+                elif this_option=="foregroundonly":
+                    inline_foregroundonly=obj.global_options.get('foregroundonly')==True
+                    obj.global_options['foregroundonly']=got_options['foregroundonly']
             command_filters=[]
             for cmd in command_strings:
                 command_filters.append(cmd.strip())
             command_filter_strictness=strictness
-            command_filter_foreground_only=foreground_only
         elif phrases[0]=="filter_command":
             obj.check_enough_args(phrases, 2) 
+            reset_inline_foregroundonly()
             content=_globalvar.splitarray_to_string(phrases[1:])
             content=obj.subst_variable_content(content)
             strictness=0
-            foreground_only=False
             for this_option in obj.global_options:
                 if this_option=="strictcmdmatch" and obj.global_options['strictcmdmatch']==True:
                     strictness=1
@@ -71,17 +80,18 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
                     strictness=2
                 elif this_option=="smartcmdmatch" and obj.global_options['smartcmdmatch']==True:
                     strictness=-1
-                elif this_option=="foregroundonly" and obj.global_options['foregroundonly']==True:
-                    foreground_only=True
             command_filters=[content]
             command_filter_strictness=strictness
-            command_filter_foreground_only=foreground_only
         elif phrases[0]=="unset_filter_command":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
+            reset_inline_foregroundonly()
             command_filters=None
         elif phrases[0] in ("[substitute_string]", "[substitute_regex]"):
             obj.check_enough_args(phrases, 2)
-            options={"effective_commands": copy.copy(command_filters), "is_regex": phrases[0]=="[substitute_regex]", "strictness": command_filter_strictness, "foreground_only": command_filter_foreground_only}
+            options={"effective_commands": copy.copy(command_filters),
+                      "is_regex": phrases[0]=="[substitute_regex]",
+                      "strictness": command_filter_strictness,
+                      "foreground_only": obj.global_options.get("foregroundonly")==True}
             match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
         elif obj.handle_setters(): pass
