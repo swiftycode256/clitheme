@@ -11,6 +11,9 @@ import os
 import string
 import random
 from typing import Optional
+from .. import _globalvar
+from . import _dataclass
+from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -63,8 +66,3 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     theme_index.write(obj.custom_infofile_name+"\n")
     path=obj.path
     return obj.path
-
-# prevent circular import error by placing these statements at the end
-from .. import _globalvar
-from . import _dataclass
-from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
