@@ -90,8 +90,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             obj.check_enough_args(phrases, 2)
             options={"effective_commands": copy.copy(command_filters),
                       "is_regex": phrases[0]=="[substitute_regex]",
-                      "strictness": command_filter_strictness,
-                      "foreground_only": obj.global_options.get("foregroundonly")==True}
+                      "strictness": command_filter_strictness}
             match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
         elif obj.handle_setters(): pass

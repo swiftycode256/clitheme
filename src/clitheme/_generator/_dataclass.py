@@ -267,7 +267,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         return blockinput_data
     def handle_entry(self, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
-        # substrules_options: {effective_commands: list, is_regex: bool, strictness: int, foreground_only: bool}
+        # substrules_options: {effective_commands: list, is_regex: bool, strictness: int}
 
         entry_name_substesc=False; entry_name_substvar=False
         names_processed=False # Set to True when no more entry names are being specified
