@@ -18,7 +18,7 @@ import string
 import re
 import hashlib
 import shutil
-from typing import Optional
+from typing import Optional, List
 from . import _globalvar
 
 # spell-checker:ignore newhash numorig numcur
@@ -99,7 +99,6 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
             if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
         finally: global_debugmode=d_copy
-        # I GIVE UP on solving the callback cycle HELL on _generator.generate_data_hierarchy -> new GeneratorObject -> db_interface import -> set_local_themedef -> [generates data directory] so I'm going to add this CRAP fix
         if not os.path.exists(path_name):
             shutil.copytree(return_val, path_name)
         try: shutil.rmtree(return_val)
@@ -109,6 +108,27 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     _alt_path=path_name+"/"+_globalvar.generator_data_pathname
     _alt_path_dirname=dir_name
     return True
+
+def set_local_themedefs(file_contents: List[str], overlay: bool=False):
+    """
+    Sets multiple local theme definition files for the current frontend instance.
+    When set, the FetchDescriptor functions will try the local definition before falling back to global theme data.
+
+    - Set overlay=True to overlay on top of existing local definition data (if exists)
+    
+    WARNING: Pass the file content in str to this function; DO NOT pass the path to the file.
+    
+    This function returns True if successful, otherwise returns False.
+    """
+    global _alt_path, _alt_path_hash, _alt_path_dirname
+    orig=(_alt_path, _alt_path_hash, _alt_path_dirname)
+    for x in range(len(file_contents)):
+        content=file_contents[x]
+        if not set_local_themedef(content, overlay=(x>0 or overlay)): 
+            _alt_path, _alt_path_hash, _alt_path_dirname=orig
+            return False
+    return True
+
 def unset_local_themedef():
     """
     Unset the local theme definition file for the current frontend instance.
