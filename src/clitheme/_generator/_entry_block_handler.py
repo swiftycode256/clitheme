@@ -2,11 +2,11 @@ import sys
 import re
 import copy
 import uuid
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict, Any
 from .. import _globalvar
 
 
-def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: dict={}):
+def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
     from . import _dataclass
     self: _dataclass.GeneratorObject=obj
@@ -16,10 +16,10 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
-    entryNames: list=[(entry_name, uuid.uuid4(), self.lineindex+1)]
+    entryNames: List[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)]
     # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
     # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
-    entries: list=[]
+    entries: List[tuple]=[]
 
     substrules_endmatchhere=False
     substrules_stdout_stderr_option=0

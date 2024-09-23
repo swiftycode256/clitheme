@@ -15,6 +15,7 @@ import re
 import string
 from copy import copy
 from . import _version
+from typing import List
 
 # spell-checker:ignoreRegExp banphrase[s]{0,1}
 
@@ -120,7 +121,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
 
 ## Convenience functions
 
-def splitarray_to_string(split_content) -> str:
+def splitarray_to_string(split_content: List[str]) -> str:
     final=""
     for phrase in split_content:
         final+=phrase+" "
@@ -139,7 +140,7 @@ def make_printable(content: str) -> str:
             exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
             final_str+=exp
     return final_str
-def get_locale(debug_mode: bool=False) -> list:
+def get_locale(debug_mode: bool=False) -> List[str]:
     lang=[]
     def add_language(target_lang: str):
         nonlocal lang

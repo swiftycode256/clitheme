@@ -13,7 +13,7 @@ import re
 import math
 import copy
 import uuid
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 from .. import _globalvar
 from . import _handlers, _entry_block_handler
 # spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
@@ -66,10 +66,10 @@ class GeneratorObject(_handlers.DataHandlers):
             # stop at non-empty or non-comment line
             if not self.is_ignore_line(): return True
         else: return False # End of file
-    def check_enough_args(self, phrases: list, count: int):
+    def check_enough_args(self, phrases: List[str], count: int):
         if len(phrases)<count:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
-    def check_extra_args(self, phrases: list, count: int, use_exact_count: bool):
+    def check_extra_args(self, phrases: List[str], count: int, use_exact_count: bool):
         not_pass: bool
         if use_exact_count: not_pass=len(phrases)!=count
         else: not_pass=len(phrases)>count
@@ -77,7 +77,7 @@ class GeneratorObject(_handlers.DataHandlers):
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
-    def parse_options(self, options_data: list, merge_global_options: int, allowed_options: Optional[list]=None) -> dict:
+    def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[list]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
@@ -116,7 +116,7 @@ class GeneratorObject(_handlers.DataHandlers):
             if allowed_options!=None and option_name not in allowed_options:
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
         return final_options 
-    def handle_set_global_options(self, options_data: list, really_really_global: bool=False):
+    def handle_set_global_options(self, options_data: List[str], really_really_global: bool=False):
         # set options globally
         if really_really_global: 
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)

@@ -17,6 +17,7 @@ import shutil
 import signal
 import time
 from . import _globalvar, frontend
+from typing import List
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)
 
@@ -24,7 +25,7 @@ frontend.global_domain="swiftycode"
 frontend.global_appname="clitheme"
 fd=frontend.FetchDescriptor(subsections="man")
 
-def main(args: list):
+def main(args: List[str]):
     """
     Invoke clitheme-man using the given command line arguments
 

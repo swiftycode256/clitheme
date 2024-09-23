@@ -14,7 +14,7 @@ import sqlite3
 import re
 import copy
 import uuid
-from typing import Optional
+from typing import Optional, List, Tuple
 from .. import _globalvar, frontend
 
 # spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp
@@ -67,7 +67,7 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
-    cmdlist: list=[]
+    cmdlist: List[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
@@ -100,7 +100,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
     connection.commit()
 
 def _check_strictness(match_cmd: str, strictness: int, target_command: str):
-    def process_smartcmdmatch_phrases(match_cmd: str) -> list:
+    def process_smartcmdmatch_phrases(match_cmd: str) -> List[str]:
         match_cmd_phrases=[]
         for p in range(len(match_cmd.split())):
             ph=match_cmd.split()[p]
@@ -126,7 +126,7 @@ def _check_strictness(match_cmd: str, strictness: int, target_command: str):
             if phrase not in target_command.split(): success=False
     return success
 
-def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: tuple=(-1,-1)) -> bytes:
+def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> bytes:
     # pids: (main_pid, current_tcpgrp)
 
     # Match order:
@@ -192,7 +192,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 # timeout value for each match operation
 match_timeout=_globalvar.output_subst_timeout
 
-def _handle_subst(matches: list, content: bytes, is_stderr: bool, pids: tuple, target_command: Optional[str]):
+def _handle_subst(matches: List[tuple], content: bytes, is_stderr: bool, pids: Tuple[int,int], target_command: Optional[str]):
     content_str=copy.copy(content)
     encountered_ids=set()
     for match_data in matches:

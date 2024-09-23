@@ -20,6 +20,7 @@ import stat
 import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
+from typing import List
 
 # spell-checker:ignore pathnames lsdir inpstr
 
@@ -28,7 +29,7 @@ frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
 
 last_data_path=""
-def apply_theme(file_contents: list, filenames: list, overlay: bool=False, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: List[str], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
@@ -247,8 +248,8 @@ def update_theme():
     (Invokes 'clitheme update-theme')
     """
     class invalid_theme(Exception): pass
-    file_contents: list
-    file_paths: list
+    file_contents: List[str]
+    file_paths: List[str]
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
         search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
@@ -319,7 +320,7 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd.reof("options-version", "--version: Show the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Show this help message"))
 
-def _get_file_contents(file_paths: list) -> list:
+def _get_file_contents(file_paths: List[str]) -> List[str]:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")
     content_list=[]
     line_prefix="\x1b[2K\r" # clear current line content and move cursor to beginning
@@ -354,7 +355,7 @@ class _direct_exit(Exception):
         """
         self.code=code
 
-def main(cli_args: list):
+def main(cli_args: List[str]):
     """
     Use this function invoke 'clitheme' with command line arguments
     
@@ -391,7 +392,7 @@ def main(cli_args: list):
                 else:
                     paths.append(arg)
             fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-            content_list: list
+            content_list: List[str]
             try: content_list=_get_file_contents(paths)
             except _direct_exit as exc: return exc.code
             except: 

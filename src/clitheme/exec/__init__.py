@@ -21,6 +21,7 @@ def _labeled_print(msg: str):
 
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
+from typing import List
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
 
@@ -99,7 +100,7 @@ def _handle_error(message: str):
     print(fd.reof("help-usage-prompt", "Run \"clitheme-exec --help\" for usage information"))
     return 1
 
-def main(arguments: list):
+def main(arguments: List[str]):
     """
     Invoke clitheme-exec using the given command line arguments
 
