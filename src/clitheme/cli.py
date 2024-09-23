@@ -28,7 +28,7 @@ frontend.global_appname="clitheme"
 frontend.global_subsections="cli"
 
 last_data_path=""
-def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: list, filenames: list, overlay: bool=False, preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
