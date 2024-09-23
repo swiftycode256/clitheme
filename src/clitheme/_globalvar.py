@@ -206,7 +206,6 @@ def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
         if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
         handle_exception()
     finally: sys.stdout=orig_stdout
-handle_set_themedef(frontend, "global")
 def result_sort_cmp(obj1,obj2) -> int:
     cmp1='';cmp2=''
     try:
