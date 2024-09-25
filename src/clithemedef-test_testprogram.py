@@ -85,10 +85,12 @@ if errorcount>0:
     exit(1)
 else:
     print("Generator test OK")
-    shutil.rmtree(generator_path) # remove the temp directory
 print("==> ",end='')
 if errorcount_frontend>0:
     print("Frontend test error: "+str(errorcount_frontend)+" errors found")
+    print("See "+generator_path+" for more details")
     exit(1)
 else:
     print("Frontend test OK")
+if errorcount>0 and errorcount_frontend>0:
+    shutil.rmtree(generator_path) # remove the temp directory
