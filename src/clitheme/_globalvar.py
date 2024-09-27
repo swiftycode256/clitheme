@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Global variable definitions and initialization operations for clitheme
+Global variable definitions for clitheme
 """
 
 import io
@@ -18,22 +18,6 @@ from . import _version
 from typing import List
 
 # spell-checker:ignoreRegExp banphrase[s]{0,1}
-
-# Enable processing of escape characters in Windows Command Prompt
-if os.name=="nt":
-    import ctypes
-    
-    try:
-        handle=ctypes.windll.kernel32.GetStdHandle(-11) # standard output handle
-        console_mode=ctypes.c_long()
-        if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))==0: 
-            raise Exception("GetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
-        console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
-        if ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)==0:
-            raise Exception("SetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
-    except:
-        pass
-
 
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
