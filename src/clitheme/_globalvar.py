@@ -181,13 +181,13 @@ def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
         file_contents=list(map(lambda name: _get_resource.read_file(name), files))
         msg=io.StringIO()
         sys.stdout=msg
-        fr.global_debugmode=True
+        fr.set_debugmode(True)
         if not fr.set_local_themedefs(file_contents): raise RuntimeError("Full log below: \n"+msg.getvalue())
-        fr.global_debugmode=prev_mode
+        fr.set_debugmode(prev_mode)
         sys.stdout=orig_stdout
     except:
         sys.stdout=orig_stdout
-        fr.global_debugmode=prev_mode
+        fr.set_debugmode(prev_mode)
         if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
         handle_exception()
     finally: sys.stdout=orig_stdout

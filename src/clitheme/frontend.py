@@ -18,12 +18,55 @@ import string
 import re
 import hashlib
 import shutil
-from typing import Optional, List
+import inspect
+from typing import Optional, List, Union, Dict
 from . import _globalvar
 
 # spell-checker:ignore newhash numorig numcur
 
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
+
+_setting_defs: Dict[str, type]={
+    "domain": str,
+    "appname": str,
+    "subsections": str,
+    "debugmode": bool,
+    "lang": str,
+    "disablelang": bool,
+}
+
+_local_settings: Dict[str, Dict[str, Union[None,str,bool]]]={}
+
+for name in _setting_defs.keys():
+    _local_settings[name]={}
+
+def _get_caller() -> str:
+    assert len(inspect.stack())>=4, "Cannot determine filename from call stack"
+    # inspect.stack(): [0: this function, 1: update/get settings, 2: function in frontend module, 3: target calling function]
+    filename=inspect.stack()[3].filename
+    return filename
+
+def _update_local_settings(key: str, value: Union[None,str,bool]):
+    _local_settings[key][_get_caller()]=value
+    if _get_setting("debugmode", _get_caller())==True:
+        print(f"[Debug] Set {key}={value} for file \"{_get_caller()}\"")
+        
+
+_desc=\
+"""
+Set default value for `{}` option in future FetchDescriptor instances.
+This setting is valid for the module/code file that invokes this function.
+
+- Set value=None to unset the default value and use values defined in global variables
+- Change global variables (e.g. global_domain, global_debugmode) to set the default value for all files in an invoking module
+"""
+
+def set_domain(value: Optional[str]): _desc.format("domain_name");_update_local_settings("domain", value)
+def set_appname(value: Optional[str]): _desc.format("app_name");_update_local_settings("appname", value)
+def set_subsections(value: Optional[str]): _desc.format("subsections");_update_local_settings("subsections", value)
+def set_debugmode(value: Optional[bool]): _desc.format("debug_mode");_update_local_settings("debugmode", value)
+def set_lang(value: Optional[str]): _desc.format("lang");_update_local_settings("lang", value)
+def set_disablelang(value: Optional[bool]): _desc.format("disable_lang");_update_local_settings("disablelang", value)
 
 global_domain=""
 global_appname=""
@@ -31,6 +74,14 @@ global_subsections=""
 global_debugmode=False
 global_lang="" # Override locale
 global_disablelang=False
+
+def _get_setting(key: str, caller: Optional[str]=None) -> Union[str,bool]:
+    # Get local settings
+    value=_local_settings[key].get(caller if caller!=None else _get_caller())
+    if value!=None: return value
+    # Get global settings if not found
+    else:
+        return eval(f"global_{key}")
 
 _alt_path=None
 _alt_path_dirname=None
@@ -85,7 +136,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if _alt_path_dirname!=None and overlay==True: # overlay
         if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
-    if global_debugmode: print("[Debug] "+path_name)
+    if _get_setting("debugmode"): print("[Debug] "+path_name)
     # Generate data hierarchy as needed
     if not os.path.exists(path_name):
         _generator.silence_warn=True
@@ -96,7 +147,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
             global_debugmode=False
             return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False)
         except SyntaxError:
-            if global_debugmode: print("[Debug] Generator error: "+str(sys.exc_info()[1]))
+            if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
         finally: global_debugmode=d_copy
         if not os.path.exists(path_name):
@@ -155,37 +206,37 @@ class FetchDescriptor():
         # Leave domain and app names blank for global reference
 
         if domain_name==None:
-            self.domain_name=global_domain.strip()
+            self.domain_name: str=_get_setting("domain").strip() #type:ignore
         else:
             self.domain_name=domain_name.strip()
         if len(self.domain_name.split())>1:
             raise SyntaxError("Only one phrase is allowed for domain_name")
 
         if app_name==None:
-            self.app_name=global_appname.strip()
+            self.app_name: str=_get_setting("appname").strip() #type:ignore
         else:
             self.app_name=app_name.strip()
         if len(self.app_name.split())>1:
             raise SyntaxError("Only one phrase is allowed for app_name")
 
         if subsections==None:
-            self.subsections=global_subsections.strip()
+            self.subsections: str=_get_setting("subsections").strip() #type:ignore
         else:
             self.subsections=subsections.strip()
         self.subsections=re.sub(" {2,}", " ", self.subsections)
 
         if lang==None:
-            self.lang=global_lang.strip()
+            self.lang=_get_setting("lang").strip() #type:ignore
         else:
             self.lang=lang.strip()
         
         if debug_mode==None:
-            self.debug_mode=global_debugmode
+            self.debug_mode: bool=_get_setting("debugmode") #type:ignore
         else:
             self.debug_mode=debug_mode
 
         if disable_lang==None:
-            self.disable_lang=global_disablelang
+            self.disable_lang: bool=_get_setting("disablelang") #type:ignore
         else:
             self.disable_lang=disable_lang
 

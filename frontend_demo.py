@@ -50,8 +50,8 @@ com.example example-app helpmessage unknown-command
 错误：未知命令"{}"
 """
 
-frontend.global_domain="com.example"
-frontend.global_appname="example-app"
+frontend.set_domain("com.example")
+frontend.set_appname("example-app")
 f=frontend.FetchDescriptor()
 
 if len(sys.argv)>1 and sys.argv[1]=="install-files":

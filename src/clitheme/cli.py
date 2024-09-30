@@ -24,9 +24,9 @@ from typing import List
 
 # spell-checker:ignore pathnames lsdir inpstr
 
-frontend.global_domain="swiftycode"
-frontend.global_appname="clitheme"
-frontend.global_subsections="cli"
+frontend.set_domain("swiftycode")
+frontend.set_appname("clitheme")
+frontend.set_subsections("cli")
 
 last_data_path=""
 def apply_theme(file_contents: List[str], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False):

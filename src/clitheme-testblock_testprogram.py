@@ -57,7 +57,7 @@ begin_main
 end_main
 """
 
-frontend.global_debugmode=True
+frontend.set_debugmode(True)
 if frontend.set_local_themedef(file_data)==False:
     print("Error: set_local_themedef failed")
     exit(1)

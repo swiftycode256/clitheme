@@ -50,8 +50,8 @@ for line in expected_data.splitlines():
 # Test frontend
 print("Testing frontend...")
 from clitheme import frontend
-frontend.global_lang="en_US.UTF-8"
-frontend.global_debugmode=True
+frontend.set_debugmode(True)
+frontend.set_lang("en_US.UTF-8")
 frontend.data_path=generator_path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open(root_directory+"/testprogram-data/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
