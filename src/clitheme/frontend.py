@@ -141,7 +141,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     if not os.path.exists(path_name):
         _generator.silence_warn=True
         return_val: str
-        d_copy=global_debugmode
+        d_copy=(global_debugmode, _generator.silence_warn)
         try:
             # Set this to prevent extra messages from being displayed
             global_debugmode=False
@@ -149,7 +149,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
         except SyntaxError:
             if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
-        finally: global_debugmode=d_copy
+        finally: global_debugmode, _generator.silence_warn=d_copy
         if not os.path.exists(path_name):
             shutil.copytree(return_val, path_name)
         try: shutil.rmtree(return_val)
