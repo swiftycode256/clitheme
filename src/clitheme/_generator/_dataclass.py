@@ -91,7 +91,7 @@ class GeneratorObject(_handlers.DataHandlers):
                 self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_version.__version__+ \
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
-                        req_ver=self.fmt(version_str)))
+                        req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[list]=None) -> Dict[str, Union[int,bool]]:

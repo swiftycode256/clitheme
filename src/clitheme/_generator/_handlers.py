@@ -26,8 +26,8 @@ class DataHandlers:
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
         self.fd=self.frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
         self.fmt=_globalvar.make_printable # alias for the make_printable function
-    def handle_error(self, message: str):
-        output=self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
+    def handle_error(self, message: str, not_syntax_error: bool=False):
+        output=message if not_syntax_error else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
         raise SyntaxError(output)
     def handle_warning(self, message: str):
         output=self.fd.feof("warning-str", "Warning: {msg}", msg=message)
@@ -81,7 +81,7 @@ class DataHandlers:
         # create the parent directory
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)
         full_path=parent_path+"/"+file_path[-1]
         if os.path.isfile(full_path):
             if line_number_debug!=-1: self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: repeated manpage file, overwriting", num=str(line_number_debug)))
@@ -90,4 +90,4 @@ class DataHandlers:
             open(full_path, "w", encoding="utf-8").write(content)
             open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
         except IsADirectoryError:
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)

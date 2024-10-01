@@ -35,7 +35,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
         try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
         except obj.db_interface.need_db_regenerate:
             from ..exec import _check_regenerate_db
-            if not _check_regenerate_db(obj.path): raise RuntimeError(obj.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""))
+            if not _check_regenerate_db(obj.path): obj.handle_error(obj.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
             obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
     else: obj.db_interface.init_db(obj.path+"/"+_globalvar.db_filename)
     obj.db_interface.debug_mode=not obj.silence_warn
