@@ -21,15 +21,15 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
     command_filters: Optional[list]=None
     command_filter_strictness=0
     # If True, reset foregroundonly option to beforehand during next command filter
-    inline_foregroundonly=None
-    def reset_inline_foregroundonly():
+    outline_foregroundonly=None
+    def reset_outline_foregroundonly():
         """
         Set foregroundonly option to false if foregroundonly option is "inline" and not enabled previously
         """
-        nonlocal inline_foregroundonly
-        if inline_foregroundonly!=None:
-            obj.global_options['foregroundonly']=inline_foregroundonly
-            inline_foregroundonly=None
+        nonlocal outline_foregroundonly
+        if outline_foregroundonly!=None:
+            obj.global_options['foregroundonly']=outline_foregroundonly
+            outline_foregroundonly=None
     # initialize the database
     if os.path.exists(obj.path+"/"+_globalvar.db_filename):
         try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
@@ -43,7 +43,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="[filter_commands]":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
-            reset_inline_foregroundonly()
+            reset_outline_foregroundonly()
             content=obj.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_cmdmatch_options=False, disable_substesc=True)
             # read commands
             command_strings=content.splitlines()
@@ -51,8 +51,10 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             strictness=0
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
             got_options=copy.copy(obj.global_options)
+            inline_options={}
             if len(obj.lines_data[obj.lineindex].split())>1:
                 got_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=True, allowed_options=obj.block_input_options+obj.command_filter_options)
+                inline_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=False, allowed_options=obj.block_input_options+obj.command_filter_options)
             for this_option in got_options:
                 if this_option=="strictcmdmatch" and got_options['strictcmdmatch']==True:
                     strictness=1
@@ -60,16 +62,16 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
                     strictness=2
                 elif this_option=="smartcmdmatch" and got_options['smartcmdmatch']==True:
                     strictness=-1
-                elif this_option=="foregroundonly":
-                    inline_foregroundonly=obj.global_options.get('foregroundonly')==True
-                    obj.global_options['foregroundonly']=got_options['foregroundonly']
+                elif this_option=="foregroundonly" and "foregroundonly" in inline_options.keys():
+                    outline_foregroundonly=obj.global_options.get('foregroundonly')==True
+                    obj.global_options['foregroundonly']=inline_options['foregroundonly']
             command_filters=[]
             for cmd in command_strings:
                 command_filters.append(cmd.strip())
             command_filter_strictness=strictness
         elif phrases[0]=="filter_command":
             obj.check_enough_args(phrases, 2) 
-            reset_inline_foregroundonly()
+            reset_outline_foregroundonly()
             content=_globalvar.splitarray_to_string(phrases[1:])
             content=obj.subst_variable_content(content)
             strictness=0
@@ -84,7 +86,7 @@ def handle_substrules_section(obj: _dataclass.GeneratorObject, first_phrase: str
             command_filter_strictness=strictness
         elif phrases[0]=="unset_filter_command":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
-            reset_inline_foregroundonly()
+            reset_outline_foregroundonly()
             command_filters=None
         elif phrases[0] in ("[substitute_string]", "[substitute_regex]"):
             obj.check_enough_args(phrases, 2)
