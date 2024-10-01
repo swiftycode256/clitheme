@@ -28,9 +28,14 @@ def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
                 parent_dir+=os.path.dirname(obj.filename)
             file_dir=parent_dir+("/" if parent_dir!="" else "")+_globalvar.splitarray_to_string(filepath).replace(" ","/")
             # get file content
+            orig_stdout=sys.stdout
+            sys.stdout=sys.__stdout__
+            is_stdin=_globalvar.handle_stdin_prompt(file_dir)
             filecontent: str
             try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
-            except: obj.handle_error(obj.fd.feof("include-file-read-error", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(obj.lineindex+1), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]), not_syntax_error=True)
+            except: obj.handle_error(obj.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(obj.lineindex+1), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]), not_syntax_error=True)
+            if is_stdin: print()
+            sys.stdout=orig_stdout
             # write manpage files in theme-info for db migration feature to work successfully
             obj.write_manpage_file(filepath, filecontent, -1, custom_parent_path=obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name+"/manpage_data")
             return filecontent

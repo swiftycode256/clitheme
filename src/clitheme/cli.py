@@ -329,14 +329,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
         try:
             print(line_prefix+fi.feof("reading-file","==> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
             # Detect standard input
-            is_stdin=False
-            try:
-                if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino:
-                    is_stdin=True
-                    print("\n"+fi.reof("reading-stdin-note", "Reading from standard input"))
-                    if not stat.S_ISFIFO(os.stat(path).st_mode):
-                        print(fi.feof("stdin-interactive-finish-prompt", "Input file content here and press {shortcut} to finish", shortcut="CTRL-D" if os.name=="posix" else "CTRL-Z+<Enter>"))
-            except: pass
+            is_stdin=_globalvar.handle_stdin_prompt(path)
             content_list.append(open(path, 'r', encoding="utf-8").read())
             if is_stdin: print() # Print an extra newline
         except KeyboardInterrupt: 

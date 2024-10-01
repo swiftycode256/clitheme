@@ -13,6 +13,7 @@ import os
 import sys
 import re
 import string
+import stat
 from copy import copy
 from . import _version
 from typing import List
@@ -171,6 +172,18 @@ def handle_exception():
     env_var="CLITHEME_SHOW_TRACEBACK"
     if env_var in os.environ and os.environ[env_var]=="1":
         raise
+
+def handle_stdin_prompt(path: str) -> bool:
+    fi=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="cli apply-theme")
+    is_stdin=False
+    try:
+        if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino:
+            is_stdin=True
+            print("\n"+fi.reof("reading-stdin-note", "Reading from standard input"))
+            if not stat.S_ISFIFO(os.stat(path).st_mode):
+                print(fi.feof("stdin-interactive-finish-prompt", "Input file content here and press {shortcut} to finish", shortcut="CTRL-D" if os.name=="posix" else "CTRL-Z+<Enter>"))
+    except: pass
+    return is_stdin
 
 def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
     prev_mode=False
