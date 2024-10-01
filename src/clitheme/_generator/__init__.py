@@ -37,8 +37,11 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     global path
     obj=_dataclass.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
+    before_content_lines=True
     while obj.goto_next_line():
-        first_phrase=obj.lines_data[obj.lineindex].split()[0]
+        phrases=obj.lines_data[obj.lineindex].split()
+        first_phrase=phrases[0]
+        is_content=True
         if first_phrase in ("begin_header", r"{header_section}"):
             _header_parser.handle_header_section(obj, first_phrase)
         elif first_phrase in ("begin_main", r"{entries_section}"):
@@ -48,7 +51,16 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         elif first_phrase==r"{manpage_section}":
             _manpage_parser.handle_manpage_section(obj, first_phrase)
         elif obj.handle_setters(really_really_global=True): pass
+        elif first_phrase=="!require_version":
+            is_content=False
+            obj.check_enough_args(phrases, 2)
+            obj.check_extra_args(phrases, 2, use_exact_count=True)
+            if not before_content_lines:
+                obj.handle_error(obj.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=str(obj.lineindex+1), phrase=first_phrase))
+            obj.check_version(phrases[1])
         else: obj.handle_invalid_phrase(first_phrase)
+
+        if is_content: before_content_lines=False
 
     def is_content_parsed() -> bool:
         content_sections=["entries", "substrules", "manpage"]

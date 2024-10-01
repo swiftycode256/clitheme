@@ -56,6 +56,18 @@ in_domainapp swiftycode clitheme
             # locale:default Failed to migrate existing substrules database; try performing the operation without using "--overlay"
             locale:zh_CN 无法升级当前的substrules的数据库；请尝试不使用"--overlay"再次执行此操作
         [/entry]
+        [entry] invalid-version-err
+            # locale:default Invalid version information "{ver}" on line {num}
+            locale:zh_CN 第{num}行：无效版本信息"{ver}"
+        [/entry]
+        [entry] unsupported-version-err
+            # locale:default Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)
+            locale:zh_CN 当前版本的clitheme（{cur_ver}）不支持此文件（需要 {req_ver} 或更高版本）
+        [/entry]
+        [entry] phrase-precedence-err
+            # locale:default Line {num}: header macro "{phrase}" must be specified before other lines
+            locale:zh_CN 第{num}行：头定义"{phrase}"必须在其他行之前声明
+        [/entry]
         # 选项错误提示信息
         # Options error messages
         [entry] option-not-allowed-err

@@ -14,7 +14,7 @@ import math
 import copy
 import uuid
 from typing import Optional, Union, List, Dict
-from .. import _globalvar
+from .. import _globalvar, _version
 from . import _handlers, _entry_block_handler
 # spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
 
@@ -75,6 +75,23 @@ class GeneratorObject(_handlers.DataHandlers):
         else: not_pass=len(phrases)>count
         if not_pass:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
+    def check_version(self, version_str: str):
+        match_result=re.match(r"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+))?(-beta(?P<beta_release>\d+))?$", version_str)
+        def invalid_version(): self.handle_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=str(self.lineindex+1)))
+        if match_result==None: invalid_version()
+        elif int(match_result.groupdict()['major'])<2: invalid_version()
+        else:
+            version_ok= int(match_result.groupdict()['major'])<=_version.major \
+                        and int(match_result.groupdict()['minor'])<=_version.minor \
+                        and (int(match_result.groupdict()['bugfix']) if match_result.groupdict().get("bugfix")!=None else -1)<=_version.release
+            if match_result.groupdict().get("beta_release")!=None and _version.beta_release!=None:
+                version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+
+            if not version_ok:
+                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
+                        cur_ver=_version.__version__+ \
+                            (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
+                        req_ver=self.fmt(version_str)))
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[list]=None) -> Dict[str, Union[int,bool]]:
