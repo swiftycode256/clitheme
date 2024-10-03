@@ -37,9 +37,11 @@ class GeneratorObject(_handlers.DataHandlers):
     switch_options=[command_filter_options[:4]]
     # Disable these options for now (BETA)
     # switch_options+=[subst_limiting_options[:3]]
+    substvar_banphrases=['{', '}', '[', ']', '(', ')']
 
     def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, silence_warn: bool):
         # data to keep track of
+        self.substvar_warning=True
         self.section_parsing=False
         self.parsed_sections=[]
         self.lines_data=file_content.splitlines()
@@ -138,17 +140,30 @@ class GeneratorObject(_handlers.DataHandlers):
         if really_really_global: 
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)
         self.global_options=self.parse_options(options_data, merge_global_options=1) 
+        # if manually disabled, show substvar warning again next time
+        if self.global_options.get("substvar")!=True: self.substvar_warning=True
     def handle_setup_global_options(self):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
+        # if manually disabled, show substvar warning again next time
+        if self.global_options.get("substvar")!=True: self.substvar_warning=True
         self.global_variables=copy.copy(self.really_really_global_variables)
     def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
-        if not override_check and (not "substvar" in self.global_options or self.global_options["substvar"]==False): return content
+        pattern=r"{{([^\s]+?)??}}"
+        if not override_check and self.global_options.get("substvar")!=True:
+            # Handle substvar warning
+            if self.substvar_warning:
+                for match in re.finditer(pattern, content):
+                    if self.global_variables.get(match.group(1))!=None:
+                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: Attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug))
+                        self.substvar_warning=False
+                        break
+            return content
         # get all variables used in content
         new_content=copy.copy(content)
         encountered_variables=set()
         offset=0
-        for match in re.finditer(r"{{([^\s]+?)??}}", content):
+        for match in re.finditer(pattern, content):
             var_name=match.group(1)
             if var_name==None or var_name.strip()=='': continue
             if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
@@ -175,8 +190,7 @@ class GeneratorObject(_handlers.DataHandlers):
         # sanity check var_name
         def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=str(self.lineindex+1)))
         if var_name=='ESC': bad_var()
-        banphrases=['{', '}', '[', ']', '(', ')']
-        for char in banphrases:
+        for char in self.substvar_banphrases:
             if char in var_name: bad_var()
 
         var_content=_globalvar.extract_content(line_content)
@@ -276,8 +290,11 @@ class GeneratorObject(_handlers.DataHandlers):
                 # substitute {{ESC}} with escape literal
                 if got_options['substesc']==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
             elif option=="substvar":
-                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
+                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
             elif disallow_cmdmatch_options:
                 if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
+        if "substvar" not in specified_options:
+            # Let the function show the substvar warning
+            self.subst_variable_content(blockinput_data, override_check=False, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
         return blockinput_data
     handle_entry=_entry_block_handler.handle_entry
