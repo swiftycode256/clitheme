@@ -137,8 +137,7 @@ class GeneratorObject(_handlers.DataHandlers):
         # set options globally
         if really_really_global: 
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)
-        else:
-            self.global_options=self.parse_options(options_data, merge_global_options=1) 
+        self.global_options=self.parse_options(options_data, merge_global_options=1) 
     def handle_setup_global_options(self):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
@@ -182,12 +181,10 @@ class GeneratorObject(_handlers.DataHandlers):
 
         var_content=_globalvar.extract_content(line_content)
         # subst variable references
-        check_list=self.really_really_global_options if really_really_global else self.global_options
-        if "substvar" in check_list and check_list["substvar"]==True: 
-            var_content=self.subst_variable_content(var_content, override_check=True)
+        var_content=self.subst_variable_content(var_content)
         # set variable
         if really_really_global: self.really_really_global_variables[var_name]=var_content
-        else: self.global_variables[var_name]=var_content
+        self.global_variables[var_name]=var_content
     def handle_begin_section(self, section_name: str):
         if section_name in self.parsed_sections: 
             self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(self.lineindex+1), section=section_name))
