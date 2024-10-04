@@ -137,7 +137,7 @@ in_domainapp swiftycode clitheme
             [/entry]
             [entry] process-files-error
                 # [locale] default
-                #     [File {index}] An error occurred while processing files:
+                #     [File {index}] An error occurred while processing the file:
                 #     {message}
                 # [/locale]
                 [locale] zh_CN
