@@ -209,7 +209,7 @@ class GeneratorObject(_handlers.DataHandlers):
         phrases=self.lines_data[self.lineindex].split()
         if phrases[0]=="set_options":
             self.check_enough_args(phrases, 2)
-            self.handle_set_global_options(self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split(), really_really_global)
+            self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
         elif phrases[0].startswith("setvar:"): 
             self.check_enough_args(phrases, 2)
             self.handle_set_variable(self.lines_data[self.lineindex], really_really_global)
