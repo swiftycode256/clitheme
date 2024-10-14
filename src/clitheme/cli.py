@@ -181,7 +181,7 @@ def get_current_theme_info():
     if not os.path.isdir(search_path):
         print(f.reof("no-theme", "No theme currently set"))
         return 1
-    lsdir_result=os.listdir(search_path)
+    lsdir_result=_globalvar.list_directory(search_path)
     lsdir_result.sort(reverse=True, key=functools.cmp_to_key(_globalvar.result_sort_cmp)) # sort by latest installed
     lsdir_num=0
     for x in lsdir_result: 
@@ -256,7 +256,7 @@ def update_theme():
         if not os.path.isdir(search_path):
             print(fi.reof("no-theme-err", "Error: no theme currently set"))
             return 1
-        lsdir_result=os.listdir(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
+        lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
         lsdir_num=0
         for x in lsdir_result: 
             if os.path.isdir(search_path+"/"+x): lsdir_num+=1

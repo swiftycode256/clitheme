@@ -115,6 +115,13 @@ def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
     results=re.search(r"(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
+def list_directory(dirname: str):
+    lsdir_result=os.listdir(dirname)
+    final_result=[]
+    for name in lsdir_result:
+        if not name.startswith('.'):
+            final_result.append(name)
+    return final_result
 def make_printable(content: str) -> str:
     final_str=""
     for character in content:
