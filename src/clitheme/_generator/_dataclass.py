@@ -141,7 +141,9 @@ class GeneratorObject(_handlers.DataHandlers):
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)
         self.global_options=self.parse_options(options_data, merge_global_options=1) 
         # if manually disabled, show substvar warning again next time
-        if self.global_options.get("substvar")!=True: self.substvar_warning=True
+        if self.global_options.get("substvar")!=True \
+            and "substvar" in self.parse_options(options_data, merge_global_options=False):
+            self.substvar_warning=True
     def handle_setup_global_options(self):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
@@ -155,7 +157,7 @@ class GeneratorObject(_handlers.DataHandlers):
             if self.substvar_warning:
                 for match in re.finditer(pattern, content):
                     if self.global_variables.get(match.group(1))!=None:
-                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: Attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug))
+                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: Attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
                         self.substvar_warning=False
                         break
             return content
