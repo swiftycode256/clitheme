@@ -17,6 +17,7 @@ from . import _dataclass
 def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("header")
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
+    specified_info=[]
     while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0] in ("name", "version", "description"):
@@ -54,6 +55,9 @@ def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         elif obj.handle_setters(): pass
         elif phrases[0]==end_phrase:
             obj.check_extra_args(phrases, 1, use_exact_count=True)
+            if not "name" in specified_info:
+                obj.handle_error(obj.fd.feof("missing-info-err", "{sect_name} section missing required entries: {entries}", sect_name="header", entries="name"))
             obj.handle_end_section("header")
             break
         else: obj.handle_invalid_phrase(phrases[0])
+        specified_info.append(phrases[0])

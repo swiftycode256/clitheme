@@ -82,7 +82,7 @@ Write theme definition file and substitution rules based on the output:
 ```plaintext
 # Define basic information for this theme in header_section; required
 {header_section}
-    # It is recommended to include name and description at the minimum
+    # `name` is a required entry in header_section
     name clang example theme
     [description]
         An example theme for clang (for demonstration purposes)

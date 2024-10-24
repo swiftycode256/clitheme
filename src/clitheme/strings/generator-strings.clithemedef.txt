@@ -120,6 +120,10 @@ in_domainapp swiftycode clitheme
             # locale:default Missing "as <filename>" phrase on next line of line {num}
             locale:zh_CN 第{num}行：在下一行缺少"as <文件名>"语句
         [/entry]
+        [entry] missing-info-err
+            # locale:default {sect_name} section missing required entries: {entries}
+            locale:zh_CN {sect_name}段落缺少必要条目：{entries}
+        [/entry]
         # 警告提示
         # Warning messages
         [entry] warning-str

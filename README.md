@@ -81,7 +81,7 @@ e> {{ESC}}[0m2 errors generated.\r\n
 ```plaintext
 # 在header_section中定义一些关于该主题定义的基本信息；必须包括
 {header_section}
-    # 这里建议至少包括name和description信息
+    # 在header_section中必须定义`name`条目
     name clang样例主题
     [description]
         一个为clang打造的的样例主题，为了演示作用
