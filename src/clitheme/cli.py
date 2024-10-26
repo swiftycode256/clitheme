@@ -20,7 +20,7 @@ import stat
 import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
-from typing import List
+from typing import List, Optional
 
 # spell-checker:ignore pathnames lsdir inpstr
 
@@ -29,16 +29,23 @@ frontend.set_appname("clitheme")
 frontend.set_subsections("cli")
 
 last_data_path=""
-def apply_theme(file_contents: List[str], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False):
     """
     Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
     (Invokes 'clitheme apply-theme')
 
+    - Set file_contents=None to read file contents from specified filenames
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
     - Set generate_only=True to generate the data hierarchy only (invokes 'clitheme generate-data' instead)
     """
+    if file_contents==None:
+        try: file_contents=_get_file_contents(filenames)
+        except _direct_exit as exc: return exc.code
+        except: 
+            _globalvar.handle_exception()
+            return 1
     if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
         raise ValueError("file_contents and filenames have different lengths")
     f=frontend.FetchDescriptor(subsections="cli apply-theme")
@@ -248,7 +255,6 @@ def update_theme():
     (Invokes 'clitheme update-theme')
     """
     class invalid_theme(Exception): pass
-    file_contents: List[str]
     file_paths: List[str]
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
@@ -273,12 +279,6 @@ def update_theme():
             except: raise invalid_theme("Read error: "+str(sys.exc_info()[1]))
             file_paths.append(got_path)
         if len(file_paths)==0: raise invalid_theme("file_paths empty")
-        # Get file contents
-        try: file_contents=_get_file_contents(file_paths)
-        except _direct_exit as exc: return exc.code
-        except:
-            _globalvar.handle_exception()
-            return 1
     except invalid_theme:
         print(fi.reof("not-available-err", "update-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
         _globalvar.handle_exception()
@@ -287,7 +287,7 @@ def update_theme():
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    return apply_theme(file_contents, file_paths, overlay=False)
+    return apply_theme(None, file_paths, overlay=False)
 
 def _is_option(arg):
     return arg.strip()[0:1]=="-"
@@ -384,14 +384,7 @@ def main(cli_args: List[str]):
                     else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
                 else:
                     paths.append(arg)
-            fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-            content_list: List[str]
-            try: content_list=_get_file_contents(paths)
-            except _direct_exit as exc: return exc.code
-            except: 
-                _globalvar.handle_exception()
-                return 1
-            return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
+            return apply_theme(file_contents=None, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
         elif cli_args[1]=="get-current-theme-info":
             check_extra_args(2) # disabled additional options
             return get_current_theme_info()
