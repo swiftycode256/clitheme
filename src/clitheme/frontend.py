@@ -86,6 +86,7 @@ def _get_setting(key: str, caller: Optional[str]=None) -> Union[str,bool]:
 _alt_path=None
 _alt_path_dirname=None
 _alt_path_hash=None
+_alt_info_index: int=1
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
@@ -131,7 +132,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     else: local_path_hash=d # else, use generated hash
     dir_name=f"clitheme-data-{local_path_hash}"
     _generator.generate_custom_path() # prepare _generator.path
-    global _alt_path_dirname
+    global _alt_path_dirname, _alt_info_index
     global global_debugmode
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if _alt_path_dirname!=None and overlay==True: # overlay
@@ -145,7 +146,8 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
         try:
             # Set this to prevent extra messages from being displayed
             global_debugmode=False
-            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False)
+            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+            _alt_info_index+=1
         except SyntaxError:
             if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
             return False
@@ -188,6 +190,7 @@ def unset_local_themedef():
     global _alt_path; _alt_path=None
     global _alt_path_dirname; _alt_path_dirname=None
     global _alt_path_hash; _alt_path_hash=None
+    global _alt_info_index; _alt_info_index=1
 
 class FetchDescriptor():
     """
