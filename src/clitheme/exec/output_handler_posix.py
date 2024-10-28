@@ -24,12 +24,13 @@ import re
 import sqlite3
 import time
 import threading
+import queue
 from typing import Optional, List
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
 
-# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp
+# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp pids
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
@@ -133,7 +134,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         signal.signal(signal.SIGTSTP, signal_handler)
         signal.signal(signal.SIGCONT, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
-    output_lines=[] # (line_content, is_stderr, do_subst_operation)
+    output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     # this mechanism prevents user input from being processed through substrules
@@ -172,8 +173,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if thread_debug==1: raise Exception
                 elif thread_debug==2: break
 
-                try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], 0.002)[0]
-                except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], 0.002)[0]
+                # Set a short timeout value if there are unfinished outputs
+                # Else, don't timeout and wait for data
+                timeout=0.002 if unfinished_output!=None else None
+                try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], timeout)[0]
+                except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], timeout)[0]
                 # Handle user input from stdin
                 if sys.stdin in fds:
                     data=os.read(sys.stdin.fileno(), readsize)
@@ -217,7 +221,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                                 line=orig_line+line
                             else:
                                 # Shouldn't join them together in this case
-                                output_lines.append(unfinished_output)
+                                output_lines.put(unfinished_output)
                                 # Don't push the current line just yet; leave it for newline check
                             unfinished_output=None
                             output_handled=True
@@ -239,25 +243,42 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                                     try:
                                         if line[x+1]==ord(b'\n'): continue
                                     except IndexError: pass
-                                    output_lines.append((line[last_index:x+1], is_stderr, do_subst_operation, foreground_pid))
+                                    output_lines.put((line[last_index:x+1], is_stderr, do_subst_operation, foreground_pid))
                                     last_index=x+1
 
                 if stdout_fd in fds: handle_output(is_stderr=False)
                 if stderr_fd in fds: handle_output(is_stderr=True)
                 # if no unfinished_output is handled by handle_output, append the unfinished output if exists
                 if not output_handled and unfinished_output!=None:
-                    output_lines.append(unfinished_output)
+                    output_lines.put(unfinished_output)
                     unfinished_output=None
 
-                if process.poll()!=None: break
+                if process.poll()!=None: 
+                    # Send termination signal
+                    output_lines.put(None)
+                    break
         except: handle_exception()
     
     thread=threading.Thread(target=output_read_loop, name="output-reader", daemon=True)
     thread.start()
+
+    def update_window_size(*args):
+        # update terminal size
+        nonlocal last_terminal_size
+        try:
+            new_term_size=get_terminal_size()
+            if new_term_size!=last_terminal_size:
+                last_terminal_size=new_term_size
+                fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
+                fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
+                process.send_signal(signal.SIGWINCH)
+        except: pass
+    signal.signal(signal.SIGWINCH, update_window_size)
+    # Call this function for the first time to set initial window size
+    update_window_size()
     while True:
         try:
-            if process.poll()!=None and len(output_lines)==0: break
-            if not thread.is_alive():
+            if not thread.is_alive() and not process.poll()!=None:
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
             if thread_exception_handled: continue # Prevent conflict with setting terminal attributes
@@ -268,15 +289,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 attrs[3] &= ~(termios.ICANON | termios.ECHO)
                 termios.tcsetattr(sys.stdout, termios.TCSADRAIN, attrs)
             except termios.error: pass
-            # update terminal size
-            try:
-                new_term_size=get_terminal_size()
-                if new_term_size!=last_terminal_size:
-                    last_terminal_size=new_term_size
-                    fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
-                    fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
-                    process.send_signal(signal.SIGWINCH)
-            except: pass
 
             # Process outputs
             def process_line(line: bytes, line_data):
@@ -303,14 +315,14 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
-            time.sleep(0.001) # Prevent high CPU usage
-            if len(output_lines)==0:
+            if output_lines.empty():
                 handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
-            while not len(output_lines)==0:
-                line_data=output_lines.pop(0)
-                line: bytes=line_data[0]
-                # subst operation and print output
-                os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
+            line_data=output_lines.get(block=True)
+            # None: termination signal
+            if line_data==None: break
+            line: bytes=line_data[0]
+            # subst operation and print output
+            os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise
