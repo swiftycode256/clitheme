@@ -14,8 +14,8 @@ from .. import _globalvar
 
 def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
-    from . import _dataclass
-    self: _dataclass.GeneratorObject=obj
+    from . import _parser_handlers
+    self: _parser_handlers.GeneratorObject=obj
     # substrules_options: {effective_commands: list, is_regex: bool, strictness: int}
 
     entry_name_substesc=False; entry_name_substvar=False

@@ -10,11 +10,11 @@ header_section parser function (internal module)
 import re
 from typing import Optional
 from .. import _globalvar
-from . import _dataclass
+from . import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_header_section(obj: _dataclass.GeneratorObject, first_phrase: str):
+def handle_header_section(obj: _parser_handlers.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("header")
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     specified_info=[]

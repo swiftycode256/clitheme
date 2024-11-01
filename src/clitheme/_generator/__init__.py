@@ -12,7 +12,7 @@ import string
 import random
 from typing import Optional
 from .. import _globalvar
-from . import _dataclass
+from . import _parser_handlers
 from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
@@ -35,7 +35,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if custom_path_gen:
         generate_custom_path()
     global path
-    obj=_dataclass.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
+    obj=_parser_handlers.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
     before_content_lines=True
     while obj.goto_next_line():

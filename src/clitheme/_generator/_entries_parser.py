@@ -9,11 +9,11 @@ entries_section parser function (internal module)
 """
 from typing import Optional
 from .. import _globalvar
-from . import _dataclass
+from . import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
+def handle_entries_section(obj: _parser_handlers.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("entries")
     end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
     if first_phrase=="begin_main":

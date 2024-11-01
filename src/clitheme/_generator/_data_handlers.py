@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Functions for data processing and others (internal module)
+Functions for data processing and error handling (internal module)
 """
 import os
 import gzip

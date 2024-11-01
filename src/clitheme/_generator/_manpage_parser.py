@@ -11,11 +11,11 @@ import os
 import sys
 from typing import Optional, List
 from .. import _globalvar
-from . import _dataclass
+from . import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_manpage_section(obj: _dataclass.GeneratorObject, first_phrase: str):
+def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("manpage")
     end_phrase="{/manpage_section}"
     while obj.goto_next_line():
