@@ -174,8 +174,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 elif thread_debug==2: break
 
                 # Set a short timeout value if there are unfinished outputs
-                # Else, don't timeout and wait for data
-                timeout=0.002 if unfinished_output!=None else None
+                # Else, wait longer to reduce CPU usage
+                timeout=0.002 if unfinished_output!=None else 0.5
                 try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], timeout)[0]
                 except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], timeout)[0]
                 # Handle user input from stdin
@@ -317,7 +317,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 return subst_line
             if output_lines.empty():
                 handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
-            line_data=output_lines.get(block=True)
+            try: line_data=output_lines.get(block=True, timeout=0.5)
+            except queue.Empty: continue
             # None: termination signal
             if line_data==None: break
             line: bytes=line_data[0]
