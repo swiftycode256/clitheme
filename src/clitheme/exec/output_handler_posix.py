@@ -175,7 +175,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
 
                 # Set a short timeout value if there are unfinished outputs
                 # Else, wait longer to reduce CPU usage
-                timeout=0.002 if unfinished_output!=None else 0.5
+                timeout=0.002 if unfinished_output!=None or last_input_content!=None else 0.5
                 try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], timeout)[0]
                 except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], timeout)[0]
                 # Handle user input from stdin
@@ -252,6 +252,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if not output_handled and unfinished_output!=None:
                     output_lines.put(unfinished_output)
                     unfinished_output=None
+                # Reset last input content if no output is made within timeout
+                if not sys.stdin in fds and last_input_content!=None:
+                    last_input_content=None
 
                 if process.poll()!=None: 
                     # Send termination signal
