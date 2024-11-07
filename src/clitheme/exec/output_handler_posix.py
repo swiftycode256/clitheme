@@ -98,6 +98,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 os.kill(main_pid, signal.SIGTSTP) # Suspend itself
         elif sig==signal.SIGINT:
             os.write(stdout_fd, b'\x03') # '^C' character
+        elif sig==signal.SIGQUIT:
+            os.write(stdout_fd, b'\x1c') # '^\' character
     try:
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=stdout_slave
@@ -131,9 +133,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         _globalvar.handle_exception()
         return 1
     else:
-        signal.signal(signal.SIGTSTP, signal_handler)
-        signal.signal(signal.SIGCONT, signal_handler)
-        signal.signal(signal.SIGINT, signal_handler)
+        handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
+        for sig in handle_signals:
+            signal.signal(sig, signal_handler)
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation)
     def get_terminal_size(): return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
@@ -334,6 +336,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     exit_code=process.poll()
     try:
         if exit_code!=None and exit_code<0: # Terminated by signal
+            signal.signal(signal.SIGQUIT, signal.SIG_DFL) # Unset SIGQUIT custom handler
             os.kill(os.getpid(), abs(exit_code))
     except: pass
     return exit_code
