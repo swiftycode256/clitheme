@@ -217,7 +217,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_singleline_content(self, content: str) -> str:
         target_content=copy.copy(content)
         target_content=self.subst_variable_content(target_content)
-        if "substesc" in self.global_options.keys() and self.global_options['substesc']==True:
+        if self.global_options.get("substesc")==True:
             target_content=self.handle_substesc(target_content)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
@@ -287,12 +287,15 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 check_whether_explicitly_specified(pass_condition=preserve_indents)
                 # insert spaces at start of each line
                 if preserve_indents: blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
-            elif option=="substesc":
+            elif option=="substesc" and not "substvar" in got_options:
+                # Only handle substesc independently if substvar is not specified
                 check_whether_explicitly_specified(pass_condition=not disable_substesc)
                 # substitute {{ESC}} with escape literal
                 if got_options['substesc']==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
             elif option=="substvar":
                 if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
+                # If substvar, substesc must be handled after that, or "{{ESC}}" in variable content will be ignored
+                if got_options.get('substesc')==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
             elif disallow_cmdmatch_options:
                 if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         if "substvar" not in specified_options:
