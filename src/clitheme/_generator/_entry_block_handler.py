@@ -69,15 +69,17 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 self.check_enough_args(phrases, 3)
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
+            locales=self.subst_variable_content(locale).split()
             content=self.handle_singleline_content(content)
-            for each_name in entryNames:
-                if is_substrules:
-                    entries.append((each_name[0], content, None if locale=="default" else locale, each_name[1], str(self.lineindex+1), each_name[2]))
-                else:
-                    target_entry=copy.copy(each_name[0])
-                    if locale!="default":
-                        target_entry+="__"+locale
-                    entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
+            for this_locale in locales:
+                for each_name in entryNames:
+                    if is_substrules:
+                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], str(self.lineindex+1), each_name[2]))
+                    else:
+                        target_entry=copy.copy(each_name[0])
+                        if this_locale!="default":
+                            target_entry+="__"+this_locale
+                        entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
             locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
