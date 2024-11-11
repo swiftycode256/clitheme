@@ -199,16 +199,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     # check if the output is user input. if yes, skip
                     if last_input_content!=None:
                         input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
-                        input_startswith=b'^'+input_match_expression
-                        input_equals=input_startswith+b'$'
+                        input_equals=b'^'+input_match_expression+b'$'
                         # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
                         if re.search(input_equals, data)!=None:
                             do_subst_operation=False
-                            last_input_content=None
-                        # elif re.search(input_startswith, data)!=None: 
-                        #     do_subst_operation=False
-                        #     last_input_content=last_input_content[len(data):]
-                        else: last_input_content=None
+                        last_input_content=None
                     lines=data.splitlines(keepends=True)
                     unfinished_cr_lines=None
                     for x in range(len(lines)):
