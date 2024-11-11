@@ -167,7 +167,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
         nonlocal last_input_content, output_lines
-        unfinished_output=None
+        unfinished_output=None # (line,is_stderr,do_subst_operation,foreground_pid,initial_time)
         try:
             while True:
                 # Testing thread exception handling
@@ -206,16 +206,18 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         last_input_content=None
                     lines=data.splitlines(keepends=True)
                     unfinished_cr_lines=None
+                    unfinished_output_time=time.perf_counter()
                     for x in range(len(lines)):
                         line=lines[x]
                         # if unfinished output exists, append new content to it
                         if x==0 and unfinished_output!=None:
                             orig_data=unfinished_output
                             orig_line=orig_data[0]
-                            if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr:
+                            if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr and time.perf_counter()-unfinished_output[4]<=0.1:
                                 # Modify existing line data instead of directly pushing it
                                 # to better handle multiple fragments in a single line
                                 line=orig_line+line
+                                unfinished_output_time=unfinished_output[4]
                             else:
                                 # Shouldn't join them together in this case
                                 output_lines.put(unfinished_output)
@@ -231,7 +233,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         else: unfinished_cr_lines=None
                         # if last line of output did not end with newlines, leave for next iteration
                         if x==len(lines)-1 and not line.endswith(newlines):
-                            unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid)
+                            unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid, unfinished_output_time)
                             output_handled=True
                         else:
                             last_index=0
