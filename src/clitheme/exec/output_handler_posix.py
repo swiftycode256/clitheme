@@ -25,7 +25,7 @@ import sqlite3
 import time
 import threading
 import queue
-from typing import Optional, List
+from typing import Optional, List, Union
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _labeled_print
@@ -136,7 +136,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
         for sig in handle_signals:
             signal.signal(sig, signal_handler)
-    output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation)
+    output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)
     def get_terminal_size(): return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
     # this mechanism prevents user input from being processed through substrules
@@ -167,7 +167,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
         nonlocal last_input_content, output_lines
-        unfinished_output=None # (line,is_stderr,do_subst_operation,foreground_pid,initial_time)
+        unfinished_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time)
         try:
             while True:
                 # Testing thread exception handling
@@ -189,67 +189,67 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     try: os.write(stdout_fd, data)
                     except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
-                output_handled=False
+                unfinished_output_handled=False
+                def process_block(data: tuple):
+                    output_lines.put(data)
+                    # lines=data[0].splitlines(keepends=True)
+                    # for line in lines:
+                    #     output_lines.put((line,)+data[1:])
                 def handle_output(is_stderr: bool):
-                    nonlocal unfinished_output, output_lines, output_handled, last_input_content
+                    nonlocal unfinished_output, output_lines, unfinished_output_handled, last_input_content
 
                     data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                    # If pipe closed and returns empty data, ignore
+                    if data==b'': return
+                    try:
+                        term_attrs=termios.tcgetattr(stdout_fd)
+                        # disable canonical and echo mode (enable cbreak) no matter what
+                        term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
+                    except termios.error: term_attrs=None
                     foreground_pid=os.tcgetpgrp(stdout_fd)
+
                     do_subst_operation=True
                     # check if the output is user input. if yes, skip
-                    if last_input_content!=None:
+                    if last_input_content!=None and not (unfinished_output!=None and unfinished_output[2]==True):
                         input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
                         input_equals=b'^'+input_match_expression+b'$'
                         # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
                         if re.search(input_equals, data)!=None:
                             do_subst_operation=False
                         last_input_content=None
-                    lines=data.splitlines(keepends=True)
-                    unfinished_cr_lines=None
                     unfinished_output_time=time.perf_counter()
-                    for x in range(len(lines)):
-                        line=lines[x]
-                        # if unfinished output exists, append new content to it
-                        if x==0 and unfinished_output!=None:
-                            orig_data=unfinished_output
-                            orig_line=orig_data[0]
-                            if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr and time.perf_counter()-unfinished_output[4]<=0.1:
+                    if unfinished_output!=None:
+                        orig_data=unfinished_output[0]
+                        if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr:
+                            # If exceeds maximum time or differing terminal attributes, append first line of data into unfinished output and process it
+                            if time.perf_counter()-unfinished_output[5]>0.05 or term_attrs!=unfinished_output[4]:
+                                lines=data.splitlines(keepends=True)
+                                process_block((unfinished_output[0]+lines[0],)+unfinished_output[1:])
+                                data=data[len(lines[0]):] # Remove first line from data
+                            else:
                                 # Modify existing line data instead of directly pushing it
                                 # to better handle multiple fragments in a single line
-                                line=orig_line+line
-                                unfinished_output_time=unfinished_output[4]
-                            else:
-                                # Shouldn't join them together in this case
-                                output_lines.put(unfinished_output)
-                                # Don't push the current line just yet; leave it for newline check
-                            unfinished_output=None
-                            output_handled=True
-                        if unfinished_cr_lines!=None: line=unfinished_cr_lines+line
-                        # If line ends with carriage return ('\r') and is not end of content, process them together 
-                        # to minimize visible cursor blinks due to delay in unfinished output processing
-                        if line.endswith(b'\r') and x!=len(lines)-1:
-                            unfinished_cr_lines=line
-                            continue
-                        else: unfinished_cr_lines=None
-                        # if last line of output did not end with newlines, leave for next iteration
-                        if x==len(lines)-1 and not line.endswith(newlines):
-                            unfinished_output=(line,is_stderr,do_subst_operation, foreground_pid, unfinished_output_time)
-                            output_handled=True
+                                data=orig_data+data
+                                unfinished_output_time=unfinished_output[5]
                         else:
-                            last_index=0
-                            for x in range(len(line)):
-                                if line[x]==ord(b'\r') or x==len(line)-1:
-                                    try:
-                                        if line[x+1]==ord(b'\n'): continue
-                                    except IndexError: pass
-                                    output_lines.put((line[last_index:x+1], is_stderr, do_subst_operation, foreground_pid))
-                                    last_index=x+1
+                            # Shouldn't join them together in this case
+                            process_block(unfinished_output)
+                            # Don't push the current line just yet; leave it for newline check
+                        unfinished_output=None
+                        unfinished_output_handled=True
+                    # If all data was appended to previous unfinished output and pushed, don't do anything
+                    if data==b'': return
+                    # if last line of output did not end with newlines, leave for next iteration
+                    if not data.endswith(newlines):
+                        unfinished_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, unfinished_output_time)
+                        unfinished_output_handled=True
+                    else: process_block((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
 
                 if stdout_fd in fds: handle_output(is_stderr=False)
                 if stderr_fd in fds: handle_output(is_stderr=True)
                 # if no unfinished_output is handled by handle_output, append the unfinished output if exists
-                if not output_handled and unfinished_output!=None:
-                    output_lines.put(unfinished_output)
+                if not unfinished_output_handled and unfinished_output!=None:
+                    process_block(unfinished_output)
                     unfinished_output=None
                 # Reset last input content if no output is made within timeout
                 if not sys.stdin in fds and last_input_content!=None:
@@ -284,13 +284,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
             if thread_exception_handled: continue # Prevent conflict with setting terminal attributes
-            # update terminal attributes from what the program sets
-            try: 
-                attrs=termios.tcgetattr(stdout_fd)
-                # disable canonical and echo mode (enable cbreak) no matter what
-                attrs[3] &= ~(termios.ICANON | termios.ECHO)
-                termios.tcsetattr(sys.stdout, termios.TCSADRAIN, attrs)
-            except termios.error: pass
 
             # Process outputs
             def process_line(line: bytes, line_data):
@@ -299,8 +292,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 subst_line=copy.copy(line)
                 failed=False
                 foreground_pid=line_data[3]
-                # Print message if foreground process changed
-                if line_data[2]==True: handle_debug_pgrp(foreground_pid)
                 if do_subst and line_data[2]==True:
                     def operation():
                         nonlocal subst_line, failed, foreground_pid
@@ -323,9 +314,18 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             except queue.Empty: continue
             # None: termination signal
             if line_data==None: break
-            line: bytes=line_data[0]
+            # Process output line by line
+            output=b''
+            for line in line_data[0].splitlines(keepends=True):
+                output+=process_line(line, line_data)
+            # Print message if foreground process changed and not user input
+            if line_data[2]==True: handle_debug_pgrp(line_data[3])
+            # update terminal attributes from what the program sets
+            if line_data[4]!=None:
+                try: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, line_data[4])
+                except termios.error: pass
             # subst operation and print output
-            os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(), process_line(line, line_data))
+            os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(),output)
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise
