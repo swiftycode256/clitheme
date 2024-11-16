@@ -25,9 +25,10 @@ import sqlite3
 import time
 import threading
 import queue
-from typing import Optional, List, Union
+from typing import Optional, List
 from .._generator import db_interface
 from .. import _globalvar, frontend
+from .._globalvar import _direct_exit
 from . import _labeled_print
 
 # spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp pids
@@ -91,15 +92,24 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
         elif sig==signal.SIGTSTP: # suspend signal
             if os.tcgetpgrp(stdout_fd)!=process.pid: # e.g. A shell running another process
-                os.write(stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
+                if process.poll()==None: # Process is running
+                    os.write(stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
             else: 
                 process.send_signal(signal.SIGSTOP) # Stop the process
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
                 os.kill(main_pid, signal.SIGTSTP) # Suspend itself
         elif sig==signal.SIGINT:
-            os.write(stdout_fd, b'\x03') # '^C' character
+            if process.poll()==None:
+                os.write(stdout_fd, b'\x03') # '^C' character
+            else:
+                reset_terminal()
+                _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
+                # Prevent message being triggered multiple times
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+                raise _direct_exit(130) # Will be raised in main processing loop
         elif sig==signal.SIGQUIT:
-            os.write(stdout_fd, b'\x1c') # '^\' character
+            if process.poll()==None:
+                os.write(stdout_fd, b'\x1c') # '^\' character
     try:
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=stdout_slave
@@ -143,6 +153,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     last_input_content=None
     last_tcgetpgrp=os.tcgetpgrp(stdout_fd)
 
+    def reset_terminal():
+        if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
+        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
     def handle_debug_pgrp(foreground_pid: int):
         nonlocal last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
@@ -152,8 +165,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     thread_exception_handled=False
     def handle_exception(exc: Optional[Exception]=None):
         nonlocal thread_exception_handled; thread_exception_handled=True
-        if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
+        reset_terminal()
         _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
         if exc!=None: raise exc
         else: raise
@@ -326,6 +338,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 except termios.error: pass
             # subst operation and print output
             os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(),output)
+        except _direct_exit: break
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise

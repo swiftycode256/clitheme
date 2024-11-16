@@ -101,4 +101,8 @@ in_domainapp swiftycode clitheme
             # locale:default Error: an internal error has occurred while executing the command (execution halted):
             locale:zh_CN 错误：执行命令时发生内部错误（执行已终止）：
         [/entry]
+        [entry] output-interrupted-exit
+            # locale:default Output interrupted after command exit
+            locale:zh_CN 输出在命令退出后被中断
+        [/entry]
 {/entries_section}
