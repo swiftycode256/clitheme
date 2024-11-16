@@ -106,6 +106,12 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
 
 ## Convenience functions
 
+class _direct_exit(Exception):
+    def __init__(self, code):
+        """
+        Custom exception for handling return code inside another function callback
+        """
+        self.code=code
 def splitarray_to_string(split_content: List[str]) -> str:
     final=""
     for phrase in split_content:

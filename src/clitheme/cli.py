@@ -20,6 +20,7 @@ import stat
 import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
+from ._globalvar import _direct_exit
 from typing import List, Optional
 
 # spell-checker:ignore pathnames lsdir inpstr
@@ -340,13 +341,6 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             raise
     print(line_prefix, end='')
     return content_list
-
-class _direct_exit(Exception):
-    def __init__(self, code):
-        """
-        Custom exception for handling return code inside another function callback
-        """
-        self.code=code
 
 def main(cli_args: List[str]):
     """
