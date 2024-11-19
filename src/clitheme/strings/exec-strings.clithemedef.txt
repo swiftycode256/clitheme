@@ -89,6 +89,20 @@ in_domainapp swiftycode clitheme
                 请重新应用当前主题，然后重试
             [/locale]
         [/entry]
+        [entry] db-read-err
+            # [locale] default
+            #     An error occurred while reading the database: {msg}
+            #     Please re-apply the theme and try again
+            # [/locale]
+            [locale] zh_CN 
+                读取数据库时发生了错误：{msg}
+                请重新应用当前主题，然后重试
+            [/locale]
+        [/entry]
+        [entry] db-invalid-version
+            # locale:default Invalid database version information
+            locale:zh_CN 无效数据库版本信息
+        [/entry]
         [entry] db-migrate-success-msg
             # locale:default Successfully completed migration, proceeding execution
             locale:zh_CN 数据库迁移完成，继续执行命令

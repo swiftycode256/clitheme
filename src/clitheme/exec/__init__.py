@@ -17,7 +17,8 @@ import io
 import shutil
 import functools
 def _labeled_print(msg: str):
-    print("[clitheme-exec] "+msg)
+    for line in msg.splitlines():
+        print("[clitheme-exec] "+line)
 
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
@@ -76,8 +77,11 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             _globalvar.handle_exception()
             return False
     except FileNotFoundError: pass
-    except: 
-        _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+    except Exception as exc: 
+        msg=fd.reof("db-invalid-version", "Invalid database version information")\
+            if type(exc) in (ValueError, TypeError) else str(sys.exc_info()[1])
+            # ValueError: value is not an integer; TypeError: fetched value is None
+        _labeled_print(fd.feof("db-read-err", "An error occurred while reading the database: {msg}\nPlease re-apply the theme and try again", msg=msg))
         _globalvar.handle_exception()
         return False
     return True
