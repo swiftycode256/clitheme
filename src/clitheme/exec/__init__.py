@@ -42,7 +42,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
         else: db_interface.connect_db()
     except db_interface.need_db_regenerate:
-        _labeled_print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
+        _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
         orig_stdout=sys.stdout
         try:
             # gather files
@@ -65,15 +65,15 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
             if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
-                raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
+                raise Exception(fd.reof("db-update-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=orig_stdout
             try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
             except FileNotFoundError: raise
             shutil.copy(cli.last_data_path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
-            _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
+            _labeled_print(fd.reof("db-update-success-msg", "Successfully updated database, proceeding execution"))
         except:
             sys.stdout=orig_stdout
-            _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+            _labeled_print(fd.feof("db-update-err", "An error occurred while updating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return False
     except FileNotFoundError: pass

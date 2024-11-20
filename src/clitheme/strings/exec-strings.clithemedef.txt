@@ -71,21 +71,21 @@ in_domainapp swiftycode clitheme
             # locale:default Warning: no theme set or theme does not have substrules
             locale:zh_CN 警告：没有设定主题或当前主题没有substrules定义
         [/entry]
-        [entry] substrules-migrate-msg
-            # locale:default Migrating substrules database...
-            locale:zh_CN 正在迁移substrules数据库...
+        [entry] substrules-update-msg
+            # locale:default Updating database...
+            locale:zh_CN 正在更新数据库...
         [/entry]
-        [entry] db-migration-generator-err
+        [entry] db-update-generator-err
             # locale:default Failed to generate data (full log below):
             locale:zh_CN 无法生成数据（完整日志在此）：
         [/entry]
-        [entry] db-migration-err
+        [entry] db-update-err
             # [locale] default
-            #     An error occurred while migrating the database: {msg}
+            #     An error occurred while updating the database: {msg}
             #     Please re-apply the theme and try again
             # [/locale]
             [locale] zh_CN 
-                迁移数据库时发生了错误：{msg}
+                更新数据库时发生了错误：{msg}
                 请重新应用当前主题，然后重试
             [/locale]
         [/entry]
@@ -103,9 +103,9 @@ in_domainapp swiftycode clitheme
             # locale:default Invalid database version information
             locale:zh_CN 无效数据库版本信息
         [/entry]
-        [entry] db-migrate-success-msg
-            # locale:default Successfully completed migration, proceeding execution
-            locale:zh_CN 数据库迁移完成，继续执行命令
+        [entry] db-update-success-msg
+            # locale:default Successfully updated database, proceeding execution
+            locale:zh_CN 数据库更新完成，继续执行命令
         [/entry]
         [entry] command-fail-err
             # locale:default Error: failed to run command: {msg}
