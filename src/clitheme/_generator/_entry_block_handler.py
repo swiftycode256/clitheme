@@ -148,6 +148,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                     stdout_stderr_matchoption=substrules_stdout_stderr_option, \
                     foreground_only=substrules_foregroundonly, \
                     line_number_debug=entry[4], \
+                    file_id=self.file_id, \
                     unique_id=entry[3])
             except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
         else:
