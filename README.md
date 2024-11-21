@@ -168,11 +168,21 @@ $ clitheme-man ls
 
 安装`clitheme`非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
 
-### 通过pip软件包安装
+### 通过Python/pip软件包安装
+
+首先，确保Python 3已安装在系统中。`clitheme`需要Python 3.8或更高版本。
+
+- 在Linux发行版上，你可以通过对应的软件包管理器安装Python
+- 在macOS上，你可以通过Xcode命令行开发者工具安装Python（使用`xcode-select --install`命令），或者通过Python官网（ https://www.python.org/downloads ）下载
+- 在Windows上，你可以通过Microsoft Store安装Python（[Python 3.13链接](https://apps.microsoft.com/detail/9pnrbtzxmb4z)），或者通过Python官网（ https://www.python.org/downloads ）下载
+
+然后，确保`pip`软件包管理器已安装在Python中。以下命令将会通过本地安装`pip`，如果检测到没有安装。
+
+    $ python3 -m ensurepip
 
 从最新发行版页面下载`.whl`文件，使用`pip`直接安装即可：
     
-    $ pip install ./clitheme-<version>-py3-none-any.whl
+    $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
 ### 通过Arch Linux软件包安装
 
@@ -194,7 +204,7 @@ $ clitheme-man ls
 
 首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 
-    $ pip install --upgrade setuptools build wheel
+    $ python3 -m pip install --upgrade setuptools build wheel
 
 然后，切换到项目目录，使用以下命令构建软件包：
 

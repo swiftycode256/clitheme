@@ -169,11 +169,21 @@ Please see [this article](./README-frontend.en.md)
 
 `clitheme` can be installed through pip package, Debian package, and Arch Linux package.
 
-### Install using pip package
+### Install using Python/pip package
+
+First, ensure that Python 3 is installed on the system. `clitheme` requires Python 3.8 or higher.
+
+- On Linux distributions, you can use relevant package manager to install 
+- On macOS, you can install Python through Xcode command line developer tools (use `xcode-select --install` command), or through Python website ( https://www.python.org/downloads )
+- On Windows, you can install Python through Microsoft Store ([Python 3.13 link](https://apps.microsoft.com/detail/9pnrbtzxmb4z)), or through Python website ( https://www.python.org/downloads )
+
+Then, ensure that `pip` is installed within Python. The following command will perform an offline install of `pip` if it's not detected.
+
+    $ python3 -m ensurepip
 
 Download the `.whl` file from latest distribution page and install it using `pip`:
     
-    $ pip install ./clitheme-<version>-py3-none-any.whl
+    $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
 ### Install using Arch Linux package
 
@@ -195,7 +205,7 @@ You can build the package from the repository source code, which includes any la
 
 First, install `setuptools`, `build`, and `wheel` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
 
-    $ pip install --upgrade setuptools build wheel
+    $ python3 -m pip install --upgrade setuptools build wheel
 
 Then, switch to project directory and use the following command to build the package:
 
