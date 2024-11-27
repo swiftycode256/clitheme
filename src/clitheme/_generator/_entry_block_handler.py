@@ -69,8 +69,8 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 self.check_enough_args(phrases, 3)
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
-            locales=self.subst_variable_content(locale).split()
-            content=self.handle_singleline_content(content)
+            locales=self.parse_content(locale, pure_name=True).split()
+            content=self.parse_content(content)
             for this_locale in locales:
                 for each_name in entryNames:
                     if is_substrules:
@@ -82,7 +82,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                         entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
-            locales=self.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
+            locales=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             begin_line_number=self.lineindex+1+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
             for this_locale in locales:

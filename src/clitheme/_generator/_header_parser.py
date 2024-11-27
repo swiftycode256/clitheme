@@ -23,15 +23,14 @@ def handle_header_section(obj: _parser_handlers.GeneratorObject, first_phrase: s
         if phrases[0] in ("name", "version", "description"):
             obj.check_enough_args(phrases, 2)
             content=_globalvar.extract_content(obj.lines_data[obj.lineindex])
-            if phrases[0]=="description": content=obj.handle_singleline_content(content)
-            else: content=obj.subst_variable_content(content)
+            content=obj.parse_content(content, pure_name=phrases[0]!="description")
             obj.write_infofile( \
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
                 content,obj.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
         elif phrases[0] in ("locales", "supported_apps"):
             obj.check_enough_args(phrases, 2)
-            content=obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split()
+            content=obj.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             obj.write_infofile_newlines( \
                 obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, \
                 _globalvar.generator_info_v2filename.format(info=phrases[0]),\

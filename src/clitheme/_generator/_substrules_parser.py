@@ -73,7 +73,7 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
             obj.check_enough_args(phrases, 2) 
             reset_outline_foregroundonly()
             content=_globalvar.splitarray_to_string(phrases[1:])
-            content=obj.subst_variable_content(content)
+            content=obj.parse_content(content, pure_name=True)
             strictness=0
             for this_option in obj.global_options:
                 if this_option=="strictcmdmatch" and obj.global_options['strictcmdmatch']==True:

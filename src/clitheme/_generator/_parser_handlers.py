@@ -102,7 +102,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
-        options_data=self.subst_variable_content(_globalvar.splitarray_to_string(options_data)).split()
+        options_data=self.parse_content(_globalvar.splitarray_to_string(options_data), pure_name=True).split()
         for each_option in options_data:
             option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
@@ -197,8 +197,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if char in var_name: bad_var()
 
         var_content=_globalvar.extract_content(line_content)
-        # subst variable references
-        var_content=self.subst_variable_content(var_content)
+        # Parse content without substesc (subst variable content)
+        var_content=self.parse_content(var_content, pure_name=True)
         # set variable
         if really_really_global: self.really_really_global_variables[var_name]=var_content
         self.global_variables[var_name]=var_content
@@ -215,10 +215,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
-    def handle_singleline_content(self, content: str) -> str:
+    def parse_content(self, content: str, pure_name: bool=False) -> str:
         target_content=copy.copy(content)
         target_content=self.subst_variable_content(target_content)
-        if self.global_options.get("substesc")==True:
+        if pure_name==False and self.global_options.get("substesc")==True:
             target_content=self.handle_substesc(target_content)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:

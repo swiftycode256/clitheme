@@ -23,7 +23,7 @@ def handle_entries_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
     while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="in_domainapp":
-            this_phrases=obj.subst_variable_content(obj.lines_data[obj.lineindex].strip()).split()
+            this_phrases=obj.parse_content(obj.lines_data[obj.lineindex].strip(), pure_name=True).split()
             obj.check_enough_args(this_phrases, 3)
             obj.check_extra_args(this_phrases, 3, use_exact_count=False)
             obj.in_domainapp=this_phrases[1]+" "+this_phrases[2]
@@ -33,7 +33,7 @@ def handle_entries_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
         elif phrases[0]=="in_subsection":
             obj.check_enough_args(phrases, 2)
             obj.in_subsection=_globalvar.splitarray_to_string(phrases[1:])
-            obj.in_subsection=obj.subst_variable_content(obj.in_subsection)
+            obj.in_subsection=obj.parse_content(obj.in_subsection, pure_name=True)
             if _globalvar.sanity_check(obj.in_subsection)==False:
                 obj.handle_error(obj.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
         elif phrases[0]=="unset_domainapp":
