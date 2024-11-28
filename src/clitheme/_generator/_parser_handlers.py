@@ -210,6 +210,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_end_section(self, section_name: str):
         self.parsed_sections.append(section_name)
         self.section_parsing=False
+        self.handle_setup_global_options()
     def handle_substesc(self, content: str) -> str:
         return content.replace("{{ESC}}", "\x1b")
     def handle_linenumber_range(self, begin: int, end: int) -> str:
