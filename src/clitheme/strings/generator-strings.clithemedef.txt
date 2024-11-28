@@ -175,6 +175,15 @@ in_domainapp swiftycode clitheme
             # locale:default Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories
             locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
         [/entry]
+        [entry] set-substvar-warn
+            # locale:default Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled
+            locale:zh_CN 第{num}行：尝试引用定义的变量，但"substvar"选项未被启用
+        [/entry]
+        [entry] set-substesc-warn
+            # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
+            # locale:default Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled
+            locale:zh_CN Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用
+        [/entry]
         # 以下提示会是上方定义中"{sanitycheck_msg}"的内容
         # The following messages are the contents of "{sanitycheck_msg}" in the above entries
         [entry] sanity-check-msg-banphrase-err

@@ -122,12 +122,13 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         entry=entries[x]
         match_pattern=entry[0]
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
+        debug_linenumber=entry[5] if is_substrules else entry[4]
         if entry_name_substvar: 
             match_pattern=self.subst_variable_content(match_pattern, override_check=True, \
-                    line_number_debug=entry[5] if is_substrules else entry[4], \
+                    line_number_debug=debug_linenumber, \
                     # Don't show warnings for the same match_pattern
                     silence_warnings=entry[3] in encountered_ids)
-        if entry_name_substesc: match_pattern=self.handle_substesc(match_pattern)
+        match_pattern=self.handle_substesc(match_pattern, condition=entry_name_substesc==True, line_number_debug=debug_linenumber)
 
         if is_substrules: check_valid_pattern(match_pattern, entry[5])
         else:

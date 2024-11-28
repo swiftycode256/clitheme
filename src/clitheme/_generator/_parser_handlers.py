@@ -41,7 +41,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
     def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, silence_warn: bool):
         # data to keep track of
-        self.substvar_warning=True
+        self.warnings: Dict[str, bool]={}
         self.section_parsing=False
         self.parsed_sections=[]
         self.lines_data=file_content.splitlines()
@@ -141,25 +141,30 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if really_really_global: 
             self.really_really_global_options=self.parse_options(options_data, merge_global_options=2)
         self.global_options=self.parse_options(options_data, merge_global_options=1) 
+        specified_options=self.parse_options(options_data, merge_global_options=False)
         # if manually disabled, show substvar warning again next time
-        if self.global_options.get("substvar")!=True \
-            and "substvar" in self.parse_options(options_data, merge_global_options=False):
-            self.substvar_warning=True
+        for option in ("substvar", "substesc"):
+            if self.global_options.get(option)!=True \
+                and option in specified_options:
+                self.warnings[option]=True
     def handle_setup_global_options(self):
+        prev_options=copy.copy(self.global_options)
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
-        # if manually disabled, show substvar warning again next time
-        if self.global_options.get("substvar")!=True: self.substvar_warning=True
+        # if manually disabled, show warnings again next time
+        for option in ("substvar", "substesc"):
+            if self.global_options.get(option)!=True and prev_options.get(option)==True:
+                self.warnings[option]=True
         self.global_variables=copy.copy(self.really_really_global_variables)
     def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
         pattern=r"{{([^\s]+?)??}}"
         if not override_check and self.global_options.get("substvar")!=True:
             # Handle substvar warning
-            if self.substvar_warning:
+            if self.warnings.get('substvar') in (True,None):
                 for match in re.finditer(pattern, content):
                     if self.global_variables.get(match.group(1))!=None:
-                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: Attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
-                        self.substvar_warning=False
+                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                        self.warnings['substvar']=False
                         break
             return content
         # get all variables used in content
@@ -211,16 +216,23 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.parsed_sections.append(section_name)
         self.section_parsing=False
         self.handle_setup_global_options()
-    def handle_substesc(self, content: str) -> str:
-        return content.replace("{{ESC}}", "\x1b")
+    def handle_substesc(self, content: str, condition: bool, line_number_debug: Optional[str]=None) -> str:
+        if condition==True:
+            return content.replace("{{ESC}}", "\x1b")
+        else:
+            # Handle substesc warning
+            if self.warnings.get("substesc") in (True,None) and "{{ESC}}" in content:
+                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                self.warnings['substesc']=False
+            return content
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
     def parse_content(self, content: str, pure_name: bool=False) -> str:
         target_content=copy.copy(content)
         target_content=self.subst_variable_content(target_content)
-        if pure_name==False and self.global_options.get("substesc")==True:
-            target_content=self.handle_substesc(target_content)
+        if pure_name==False:
+            target_content=self.handle_substesc(target_content, condition=pure_name==False and self.global_options.get("substesc")==True)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
@@ -277,6 +289,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if len(self.lines_data[self.lineindex].split())>1:
             got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=True)
             specified_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False)
+        debug_linenumber=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)
         for option in got_options.keys():
             def is_specified_in_block() -> bool: return option in specified_options.keys()
             def check_whether_explicitly_specified(pass_condition: bool):
@@ -293,15 +306,15 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 # Only handle substesc independently if substvar is not specified
                 check_whether_explicitly_specified(pass_condition=not disable_substesc)
                 # substitute {{ESC}} with escape literal
-                if got_options['substesc']==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
+                blockinput_data=self.handle_substesc(blockinput_data, condition=got_options['substesc']==True and not disable_substesc, line_number_debug=debug_linenumber)
             elif option=="substvar":
-                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
+                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=debug_linenumber)
                 # If substvar, substesc must be handled after that, or "{{ESC}}" in variable content will be ignored
-                if got_options.get('substesc')==True and not disable_substesc: blockinput_data=self.handle_substesc(blockinput_data)
+                blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get('substesc')==True and not disable_substesc, line_number_debug=debug_linenumber)
             elif disallow_cmdmatch_options:
                 if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
         if "substvar" not in specified_options:
             # Let the function show the substvar warning
-            self.subst_variable_content(blockinput_data, override_check=False, line_number_debug=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1))
+            self.subst_variable_content(blockinput_data, override_check=False, line_number_debug=debug_linenumber)
         return blockinput_data
     handle_entry=_entry_block_handler.handle_entry
