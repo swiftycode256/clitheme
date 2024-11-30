@@ -16,7 +16,7 @@ import uuid
 from typing import Optional, Union, List, Dict
 from .. import _globalvar, _version
 from . import _data_handlers, _entry_block_handler
-# spell-checker:ignore lineindex banphrases cmdmatch minspaces blockinput optline datapath matchoption
+# spell-checker:ignore lineindex banphrases minspaces blockinput optline datapath matchoption
 
 class GeneratorObject(_data_handlers.DataHandlers):
 
@@ -97,7 +97,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
-    def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[list]=None) -> Dict[str, Union[int,bool]]:
+    def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
@@ -248,7 +248,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     
     ## sub-block processing functions
 
-    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_cmdmatch_options: bool=True, disable_substesc: bool=False) -> str:
+    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_other_options: bool=True, disable_substesc: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
         begin_line_number=self.lineindex+1+1
@@ -283,36 +283,28 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if preserve_indents:
             pattern=r"(?P<optline>\n|^)[ ]{"+str(minspaces)+"}"
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
-        # parse leadtabindents leadspaces, and substesc options
+        # parse leadtabindents, leadspaces, substesc, and substvar options here
         got_options=copy.copy(self.global_options)
         specified_options={}
         if len(self.lines_data[self.lineindex].split())>1:
-            got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=True)
+            got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:],
+                merge_global_options=True,
+                allowed_options=\
+                    None if not disallow_other_options else\
+                    (self.lead_indent_options if preserve_indents else []+\
+                     ["substesc"] if not disable_substesc else []+\
+                     ["substvar"])
+                    )
             specified_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False)
         debug_linenumber=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)
-        for option in got_options.keys():
-            def is_specified_in_block() -> bool: return option in specified_options.keys()
-            def check_whether_explicitly_specified(pass_condition: bool):
-                if not pass_condition and is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
-            if option=="leadtabindents": 
-                check_whether_explicitly_specified(pass_condition=preserve_indents)
-                # insert tabs at start of each line
-                if preserve_indents: blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
-            elif option=="leadspaces":
-                check_whether_explicitly_specified(pass_condition=preserve_indents)
-                # insert spaces at start of each line
-                if preserve_indents: blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
-            elif option=="substesc" and not "substvar" in got_options:
-                # Only handle substesc independently if substvar is not specified
-                check_whether_explicitly_specified(pass_condition=not disable_substesc)
-                # substitute {{ESC}} with escape literal
-                blockinput_data=self.handle_substesc(blockinput_data, condition=got_options['substesc']==True and not disable_substesc, line_number_debug=debug_linenumber)
-            elif option=="substvar":
-                if got_options['substvar']==True: blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=debug_linenumber)
-                # If substvar, substesc must be handled after that, or "{{ESC}}" in variable content will be ignored
-                blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get('substesc')==True and not disable_substesc, line_number_debug=debug_linenumber)
-            elif disallow_cmdmatch_options:
-                if is_specified_in_block(): self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option)))
+        if preserve_indents and got_options.get("leadtabindents")!=None:
+            blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
+        if preserve_indents and got_options.get("leadspaces")!=None:
+            blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
+        if got_options.get("substvar")==True:
+            blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=debug_linenumber)
+        if not disable_substesc: # Must come after substvar
+            blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get("substesc")==True, line_number_debug=debug_linenumber)
         if "substvar" not in specified_options:
             # Let the function show the substvar warning
             self.subst_variable_content(blockinput_data, override_check=False, line_number_debug=debug_linenumber)
