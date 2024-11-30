@@ -156,9 +156,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if self.global_options.get(option)!=True and prev_options.get(option)==True:
                 self.warnings[option]=True
         self.global_variables=copy.copy(self.really_really_global_variables)
-    def subst_variable_content(self, content: str, override_check: bool=False, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
+    def subst_variable_content(self, content: str, custom_condition: Optional[bool]=None, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
         pattern=r"{{([^\s]+?)??}}"
-        if not override_check and self.global_options.get("substvar")!=True:
+        # Check the condition here instead of respective if statements to better handle the warning
+        condition=self.global_options.get("substvar")==True if custom_condition==None else custom_condition
+        if condition==False:
             # Handle substvar warning
             if self.warnings.get('substvar') in (True,None):
                 for match in re.finditer(pattern, content):
@@ -301,12 +303,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
             blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
         if preserve_indents and got_options.get("leadspaces")!=None:
             blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
-        if got_options.get("substvar")==True:
-            blockinput_data=self.subst_variable_content(blockinput_data, override_check=True, line_number_debug=debug_linenumber)
+        # Process substvar
+        blockinput_data=self.subst_variable_content(blockinput_data, custom_condition=got_options.get("substvar")==True, line_number_debug=debug_linenumber)
         if not disable_substesc: # Must come after substvar
             blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get("substesc")==True, line_number_debug=debug_linenumber)
-        if "substvar" not in specified_options:
-            # Let the function show the substvar warning
-            self.subst_variable_content(blockinput_data, override_check=False, line_number_debug=debug_linenumber)
         return blockinput_data
     handle_entry=_entry_block_handler.handle_entry
