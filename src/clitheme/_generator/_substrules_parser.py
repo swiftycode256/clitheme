@@ -88,13 +88,13 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             reset_outline_foregroundonly()
             command_filters=None
-        elif phrases[0] in ("[substitute_string]", "[substitute_regex]"):
+        elif phrases[0] in ("[subst_string]", "[substitute_string]", "[subst_regex]", "[substitute_regex]"):
             obj.check_enough_args(phrases, 2)
             options={"effective_commands": copy.copy(command_filters),
-                      "is_regex": phrases[0]=="[substitute_regex]",
+                      "is_regex": phrases[0] in ("[subst_regex]", "[substitute_regex]"),
                       "strictness": command_filter_strictness}
             match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])
-            obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase="[/substitute_string]" if phrases[0]=="[substitute_string]" else "[/substitute_regex]", is_substrules=True, substrules_options=options)
+            obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
         elif obj.handle_setters(): pass
         elif phrases[0]==end_phrase:
             obj.check_extra_args(phrases, 1, use_exact_count=True)

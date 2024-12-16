@@ -98,14 +98,14 @@ e> {{ESC}}[0m2 errors generated.\r\n
         gcc
         g++
     [/filter_commands]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
         # 如果你想仅在系统语言设定为中文（zh_CN）时应用这个替换规则，你可以使用"locale:zh_CN"
         # 使用"locale:default"时不会添加系统语言限制
         locale:default \g<prefix>提示: \g<esc>'\g<name1>'从不兼容的指针类型赋值为'\g<name2>',两者怎么都……都说不过去！^^;
-    [/substitute_regex]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+    [/subst_regex]
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
         locale:default \g<prefix>错误！: \g<esc>未知的类型名'\g<type>',忘记定义了～ಥ_ಥ
-    [/substitute_regex]
+    [/subst_regex]
 {/substrules_section}
 ```
 
