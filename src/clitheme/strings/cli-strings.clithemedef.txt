@@ -174,13 +174,9 @@ in_domainapp swiftycode clitheme
                 locale:zh_CN 当前没有设定任何主题
             [/entry]
             [entry] current-theme-msg
-                # locale:default Currently installed theme:
+                # locale:default Currently installed theme(s):
                 locale:zh_CN 当前设定的主题：
             [/entry] 
-            [entry] overlay-history-msg
-                # locale:default Overlay history (sorted by latest installed):
-                locale:zh_CN 叠加历史记录（根据最新安装的主题排序）：
-            [/entry]
             [entry] version-str
                 # locale:default Version: {ver}
                 locale:zh_CN 版本：{ver}
@@ -248,8 +244,18 @@ in_domainapp swiftycode clitheme
                 [/locale]
             [/entry]
             [entry] options-get-current-theme-info
-                # locale:default get-current-theme-info: Show information about the currently applied theme(s)
-                locale:zh_CN get-current-theme-info：显示当前主题设定的详细信息
+                # [locale] default
+                #     get-current-theme-info: Show information about the currently applied theme(s)
+                #     Specify --name to only display the name of each theme
+                #     Specify --file-path to only display the source file path of each theme
+                #     (Both will be displayed when both specified)
+                # [/locale]
+                [locale] zh_CN 
+                    get-current-theme-info：显示当前主题设定的详细信息
+                    指定"--name"以仅显示每个主题的名称
+                    指定"--file-path"以仅显示每个主题的源文件路径
+                    （同时指定时，两者都会显示）
+                [/locale]
             [/entry]
             [entry] options-unset-current-theme
                 # locale:default unset-current-theme: Remove the current theme data from the system

@@ -178,9 +178,13 @@ def unset_current_theme():
     print(f.reof("remove-data-success", "Successfully removed the current theme data"))
     return 0
 
-def get_current_theme_info():
+def get_current_theme_info(name: bool=False, file_path=False):
     """
-    Get the current theme info
+    Displays the current theme info
+
+    - Set name=True to only display the name of each theme
+    - Set file_path=True to only display the source file path of each theme
+    - Both information are displayed when both options are set to True
 
     (Invokes 'clitheme get-current-theme-info')
     """
@@ -190,23 +194,28 @@ def get_current_theme_info():
         print(f.reof("no-theme", "No theme currently set"))
         return 1
     lsdir_result=_globalvar.list_directory(search_path)
-    lsdir_result.sort(reverse=True, key=functools.cmp_to_key(_globalvar.result_sort_cmp)) # sort by latest installed
+    lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
     lsdir_num=0
     for x in lsdir_result: 
         if os.path.isdir(search_path+"/"+x):
             lsdir_num+=1
-    if lsdir_num<=1: 
-        print(f.reof("current-theme-msg", "Currently installed theme:"))
-    else: 
-        print(f.reof("overlay-history-msg", "Overlay history (sorted by latest installed):"))
+    print(f.reof("current-theme-msg", "Currently installed theme(s):"))
+    minimal_info: bool=name==True or file_path==True
     for theme_pathname in lsdir_result:
         target_path=search_path+"/"+theme_pathname.strip()
         if (not os.path.isdir(target_path)) or re.search(r"^\d+$", theme_pathname.strip())==None: continue # skip current_theme_index file
         # name
-        name="(Unknown)"
-        if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
-            name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
-        print("[{}]: {}".format(theme_pathname, name))
+        if minimal_info==False or (minimal_info==True and name==True):
+            theme_name="(Unknown)"
+            if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
+                theme_name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
+            print("[{}]: {}".format(theme_pathname, theme_name))
+        if minimal_info==True and file_path==True:
+            theme_filepath="(Unknown)"
+            if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")):
+                theme_filepath=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), 'r', encoding="utf-8").read().strip()
+            print(theme_filepath)
+        if minimal_info==True: continue # --Stop here if either parameters are specified--
         # version
         version="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="version")):
@@ -303,7 +312,7 @@ def _handle_help_message(full_help: bool=False):
     print(fd.reof("usage-str", "Usage:"))
     print(
 """\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
-\t{0} get-current-theme-info
+\t{0} get-current-theme-info [--name] [--file-path]
 \t{0} unset-current-theme
 \t{0} update-theme
 \t{0} generate-data [themedef-file] [--overlay]
@@ -314,7 +323,7 @@ def _handle_help_message(full_help: bool=False):
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
     "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Show information about the currently applied theme(s)"))
+    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
     print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
@@ -380,8 +389,12 @@ def main(cli_args: List[str]):
                     paths.append(arg)
             return apply_theme(file_contents=None, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
         elif cli_args[1]=="get-current-theme-info":
-            check_extra_args(2) # disabled additional options
-            return get_current_theme_info()
+            name=False; file_path=False
+            for arg in cli_args[2:]:
+                if arg.strip()=="--name": name=True
+                elif arg.strip()=="--file-path": file_path=True
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+            return get_current_theme_info(name=name, file_path=file_path)
         elif cli_args[1]=="unset-current-theme":
             check_extra_args(2)
             return unset_current_theme()

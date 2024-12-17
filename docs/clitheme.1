@@ -1,4 +1,4 @@
-.TH clitheme 1 2024-06-17
+.TH clitheme 1 2024-12-17
 .SH NAME 
 clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
@@ -14,8 +14,15 @@ Specify \fB--overlay\fR to append value definitions in the file(s) onto the curr
 
 Specify \fB--preserve-temp\fR to prevent the temporary directory from removed after the operation.
 .TP 
-.B get-current-theme-info
+.B get-current-theme-info [--name] [--file-path]
 Outputs detailed information about the currently applied theme. If multiple themes are applied using the \fB--overlay\fR option, outputs detailed information for each applied theme.
+
+Specify \fB--name\fR to only display the name of each theme.
+
+Specify \fB--file-path\fR to only display the source file path of each theme.
+
+(Both will be displayed when both specified)
+
 .TP
 .B unset-current-theme
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
