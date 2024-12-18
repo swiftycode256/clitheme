@@ -122,7 +122,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     select.select([sys.stdin], [], [])
                     d=os.read(sys.stdin.fileno(), readsize)
                     if d==b'': # stdin is closed
-                        os.close(w); break
+                        os.close(w)
+                        # Duplicate stdout terminal onto stdin to read user input
+                        if os.isatty(sys.stdout.fileno()):
+                            os.dup2(sys.stdout.fileno(), sys.stdin.fileno())
+                        break
                     os.write(w,d)
             t=threading.Thread(target=pipe_forward, daemon=True)
             t.start()
