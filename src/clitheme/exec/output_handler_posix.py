@@ -294,6 +294,13 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     signal.signal(signal.SIGWINCH, update_window_size)
     # Call this function for the first time to set initial window size
     update_window_size()
+    # Initially set terminal attributes
+    try:
+        term_attrs=termios.tcgetattr(stdout_fd)
+        # disable canonical and echo mode (enable cbreak) no matter what
+        term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
+        termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
+    except termios.error: pass
     while True:
         try:
             if not thread.is_alive() and not process.poll()!=None:
