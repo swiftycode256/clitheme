@@ -269,6 +269,10 @@ in_domainapp swiftycode clitheme
                 # locale:default generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
             [/entry]
+            [entry] options-yes
+                # locale:default [For supported commands, specify --yes to skip the confirmation prompt]
+                locale:zh_CN 【在支持的指令中，指定"--yes"以跳过确认提示】
+            [/entry]
             [entry] options-version
                 # locale:default --version: Show the current version of clitheme
                 locale:zh_CN --version：显示clitheme的当前版本信息
