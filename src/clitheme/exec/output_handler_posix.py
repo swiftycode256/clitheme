@@ -110,6 +110,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         elif sig==signal.SIGQUIT:
             if process.poll()==None:
                 os.write(stdout_fd, b'\x1c') # '^\' character
+    handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
     try:
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=stdout_slave
@@ -147,7 +148,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         _globalvar.handle_exception()
         return 1
     else:
-        handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
         for sig in handle_signals:
             signal.signal(sig, signal_handler)
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)
@@ -357,7 +357,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     exit_code=process.poll()
     try:
         if exit_code!=None and exit_code<0: # Terminated by signal
-            signal.signal(signal.SIGQUIT, signal.SIG_DFL) # Unset SIGQUIT custom handler
+            # Block signal handlers before the kill operation to prevent unexpected behavior
+            for sig in handle_signals:
+                signal.signal(sig, signal.SIG_IGN)
             os.kill(os.getpid(), abs(exit_code))
     except: pass
     return exit_code
