@@ -301,6 +301,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
         termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
     except termios.error: pass
+    # If had output on the previous run, use shorter timeout to minimize delay in --foreground-stat output
+    had_output=False
     while True:
         try:
             if not thread.is_alive() and not process.poll()!=None:
@@ -333,8 +335,12 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 return subst_line
             if output_lines.empty():
                 handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
-            try: line_data=output_lines.get(block=True, timeout=0.5)
-            except queue.Empty: continue
+            try: line_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.5)
+            except queue.Empty: 
+                had_output=False
+                continue
+            # --Output processing--
+            had_output=True
             # None: termination signal
             if line_data==None: break
             # Process output line by line
