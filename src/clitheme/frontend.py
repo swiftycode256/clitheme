@@ -44,6 +44,11 @@ def _get_caller() -> str:
     assert len(inspect.stack())>=4, "Cannot determine filename from call stack"
     # inspect.stack(): [0: this function, 1: update/get settings, 2: function in frontend module, 3: target calling function]
     filename=inspect.stack()[3].filename
+    # Find the first function in the stack OUTSIDE of frontend module
+    # (The stack[3] may also be some function in frontend)
+    for s in inspect.stack()[3:]:
+        filename=s.filename
+        if filename!=__file__: break
     return filename
 
 def _update_local_settings(key: str, value: Union[None,str,bool]):
@@ -137,7 +142,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
     if _alt_path_dirname!=None and overlay==True: # overlay
         if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
-    if _get_setting("debugmode"): print("[Debug] "+path_name)
+    if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
     # Generate data hierarchy as needed
     if not os.path.exists(path_name):
         _generator.silence_warn=True
