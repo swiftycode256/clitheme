@@ -7,12 +7,12 @@ clitheme \- frontend to customize output of applications
 \fIclitheme\fR is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
 .SH OPTIONS
 .TP
-.B apply-theme [themedef-file(s)] [--overlay] [--preserve-temp] [--yes]
+.B apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
 Applies the given theme definition file(s) into the current system. Supported applications will immediately start using the defined values after performing this operation.
 
-Specify \fB--overlay\fR to append value definitions in the file(s) onto the current data.
+Specify \fB--overlay\fR to to add file(s) onto the current data.
 
-Specify \fB--preserve-temp\fR to prevent the temporary directory from removed after the operation.
+Specify \fB--preserve-temp\fR to preserve the temporary directory after the operation. (Debug purposes only)
 
 Specify \fB--yes\fR to skip the confirmation prompt.
 
@@ -38,7 +38,7 @@ Calling this command is equivalent to calling "clitheme apply-theme" with previo
 Specify \fB--yes\fR to skip the confirmation prompt.
 
 .TP
-.B generate-data [themedef-file(s)] [--overlay]
+.B generate-data [themedef-file] [--overlay]
 Generates the data hierarchy for the given theme definition file(s). This operation generates the same data as \fBapply-theme\fR, but does not apply it onto the system. 
 
 This command is for debug purposes only.
