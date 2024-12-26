@@ -367,5 +367,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             for sig in handle_signals:
                 signal.signal(sig, signal.SIG_IGN)
             os.kill(os.getpid(), abs(exit_code))
+            # Properly return exit code for corresponding signals
+            return 128+abs(exit_code)
     except: pass
     return exit_code

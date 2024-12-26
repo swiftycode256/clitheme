@@ -64,11 +64,13 @@ def main(args: List[str]):
             except KeyboardInterrupt: process.send_signal(signal.SIGINT)
         return process.poll() # type: ignore
     returncode=run_process(env)
-    if returncode!=0 and returncode != -signal.SIGINT and theme_set:
+    # Return code is negative when exited due to signal
+    if returncode>0 and theme_set:
         _labeled_print(fd.reof("prev-command-fail", "Executing \"man\" with custom path failed, trying execution with normal settings"))
         env["MANPATH"]=prev_manpath if prev_manpath!=None else ''
         returncode=run_process(os.environ)
-    return returncode
+    # If return code is a signal, handle the exit code properly
+    return 128+abs(returncode) if returncode<0 else returncode
 
 def _script_main(): # for script
     return main(sys.argv)
