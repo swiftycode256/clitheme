@@ -25,10 +25,9 @@ db_path=""
 debug_mode=False
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
-class need_db_regenerate(Exception):
-    pass
-class bad_pattern(Exception):
-    pass
+class need_db_regenerate(Exception): pass
+class bad_pattern(Exception): pass
+class db_not_found(Exception): pass
 
 def _handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
@@ -122,12 +121,12 @@ def _is_db_updated() -> bool:
 def _fetch_matches(command: Optional[str]) -> List[tuple]:
     global _matches_cache
     updated=_is_db_updated()
+    if _db_last_state==None: raise db_not_found("file at db_path does not exist")
     if updated or _matches_cache.get(command)==None:
         if updated:
             _matches_cache.clear()
             gc.collect() # Reduce memory leak
         _matches_cache[command]=_get_matches(command)
-    if _db_last_state==None: raise sqlite3.OperationalError("file at db_path does not exist")
     return _matches_cache[command]
 
 ## Output processing and matching

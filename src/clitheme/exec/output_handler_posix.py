@@ -324,7 +324,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(process.pid, foreground_pid))
                         except TimeoutError: failed=True
                         # Happens when no theme is set/no subst-data.db
-                        except sqlite3.OperationalError: pass
+                        except db_interface.db_not_found: pass
                     def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
                     signal.signal(signal.SIGALRM, raise_error)
                     signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
