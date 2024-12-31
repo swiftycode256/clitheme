@@ -11,7 +11,7 @@ Version information definition file
 
 # Version definition file; define the package version here
 # The __version__ variable must be a literal string; DO NOT use variables
-__version__="2.0-dev20241223"
+__version__="2.0-dev20241227"
 major=2
 minor=0
 release=-1 # -1 stands for "dev"
