@@ -97,8 +97,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
-    def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
+    def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None, ban_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
+        assert not (allowed_options!=None and ban_options!=None), "Cannot specify allowed and banned options at the same time"
+
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
@@ -133,7 +135,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
                         break
                 else: # executed when no break occurs
                     self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name_preserve_no)))
-            if allowed_options!=None and option_name not in allowed_options:
+            if (allowed_options!=None and option_name not in allowed_options) or\
+               (ban_options!=None and option_name in ban_options):
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
         return final_options 
     def handle_set_global_options(self, options_data: List[str], really_really_global: bool=False):
@@ -250,7 +253,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     
     ## sub-block processing functions
 
-    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str="end_block", disallow_other_options: bool=True, disable_substesc: bool=False) -> str:
+    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_substesc: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
         begin_line_number=self.lineindex+1+1
@@ -287,17 +290,21 @@ class GeneratorObject(_data_handlers.DataHandlers):
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
         # parse leadtabindents, leadspaces, substesc, and substvar options here
         got_options=copy.copy(self.global_options)
-        specified_options={}
         if len(self.lines_data[self.lineindex].split())>1:
+            # Process allowed/banned options
+            ban_options=None; allowed_options=None
+            if not disallow_other_options:
+                ban_options=[]
+                if not preserve_indents: ban_options+=self.lead_indent_options
+                if disable_substesc: ban_options+=["substesc"]
+            else:
+                allowed_options=[]
+                if preserve_indents: allowed_options+=self.lead_indent_options
+                if not disable_substesc: allowed_options+=["substesc"]
+                allowed_options+=["substvar"]
             got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:],
                 merge_global_options=True,
-                allowed_options=\
-                    None if not disallow_other_options else\
-                    (self.lead_indent_options if preserve_indents else []+\
-                     ["substesc"] if not disable_substesc else []+\
-                     ["substvar"])
-                    )
-            specified_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False)
+                allowed_options=allowed_options, ban_options=ban_options)
         debug_linenumber=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)
         if preserve_indents and got_options.get("leadtabindents")!=None:
             blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
