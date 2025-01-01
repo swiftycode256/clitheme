@@ -79,7 +79,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if not_pass:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
     def check_version(self, version_str: str):
-        match_result=re.match(r"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+))?(-beta(?P<beta_release>\d+))?$", version_str)
+        # allow_bugfix is disabled to allow interoperability with other release variants
+        allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
+        match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+)){{,{int(allow_bugfix)}}}(-beta(?P<beta_release>\d+))?$", version_str)
         def invalid_version(): self.handle_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=str(self.lineindex+1)))
         if match_result==None: invalid_version()
         elif int(match_result.groupdict()['major'])<2: invalid_version()
@@ -93,6 +95,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if not version_ok:
                 self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_version.__version__+ \
+                            # For "dev" versions: output corresponding beta milestone
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
