@@ -45,6 +45,18 @@ in_domainapp swiftycode clitheme
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands
         in_subsection cli apply-theme
+            [entry] reading-file
+                # locale:default ==> Reading file {filename}...
+                locale:zh_CN ==> 正在读取文件{filename}...
+            [/entry]
+            [entry] reading-stdin-note
+                # locale:default Reading from standard input
+                locale:zh_CN 正在从stdin读取文件
+            [/entry]
+            [entry] stdin-interactive-finish-prompt
+                # locale:default Input file content here and press {shortcut} to finish
+                locale:zh_CN 在此输入文件内容，并按下{shortcut}以结束
+            [/entry]
             [entry] generate-data-msg
                 # locale:default The theme data will be generated from the following definition files in the following order:
                 locale:zh_CN 主题定义数据将会从以下顺序的主题定义文件生成：
@@ -69,21 +81,17 @@ in_domainapp swiftycode clitheme
                 # locale:default Overlay specified
                 locale:zh_CN 已使用数据叠加模式
             [/entry]
-            [entry] generating-data
-                # locale:default ==> Generating data...
-                locale:zh_CN ==> 正在生成数据...
+            [entry] processing-files
+                # locale:default ==> Processing files...
+                locale:zh_CN ==> 正在处理文件...
             [/entry]
             [entry] processing-file
                 # locale:default > Processing file {filename}...
-                locale:zh_CN > 正在处理文件{filename}
+                locale:zh_CN > 正在处理文件{filename}...
             [/entry]
-            [entry] all-finished
-                # locale:default > All finished
-                locale:zh_CN > 已处理全部文件
-            [/entry]
-            [entry] generate-data-success
-                # locale:default Successfully generated data
-                locale:zh_CN 已成功生成数据
+            [entry] process-files-success
+                # locale:default Successfully processed files
+                locale:zh_CN 已成功处理文件
             [/entry]
             [entry] view-temp-dir
                 # locale:default View at {path}
@@ -127,13 +135,13 @@ in_domainapp swiftycode clitheme
                     请移除当前数据和重新设定主题后重试
                 [/locale]
             [/entry]
-            [entry] generate-data-error
+            [entry] process-files-error
                 # [locale] default
-                #     [File {index}] An error occurred while generating the data:
+                #     [File {index}] An error occurred while processing the file:
                 #     {message}
                 # [/locale]
                 [locale] zh_CN
-                    [文件{index}] 生成数据时发生了错误：
+                    [文件{index}] 处理文件时发生了错误：
                     {message}
                 [/locale]
             [/entry]
@@ -166,13 +174,9 @@ in_domainapp swiftycode clitheme
                 locale:zh_CN 当前没有设定任何主题
             [/entry]
             [entry] current-theme-msg
-                # locale:default Currently installed theme:
+                # locale:default Currently installed theme(s):
                 locale:zh_CN 当前设定的主题：
             [/entry] 
-            [entry] overlay-history-msg
-                # locale:default Overlay history (sorted by latest installed):
-                locale:zh_CN 叠加历史记录（根据最新安装的主题排序）：
-            [/entry]
             [entry] version-str
                 # locale:default Version: {ver}
                 locale:zh_CN 版本：{ver}
@@ -229,38 +233,52 @@ in_domainapp swiftycode clitheme
             [/entry]
             [entry] options-apply-theme
                 # [locale] default
-                #     apply-theme: Applies the given theme definition file(s) into the current system.
-                #     Specify --overlay to append value definitions in the file(s) onto the current data.
-                #     Specify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)
+                #     apply-theme: Apply the given theme definition file(s).
+                #     Specify --overlay to add file(s) onto the current data.
+                #     Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)
                 # [/locale]
                 [locale] zh_CN
-                    apply-theme：将指定的主题定义文件应用到当前系统中
-                    指定"--overlay"选项以保留当前主题数据的情况下应用（添加到当前数据中）
+                    apply-theme：应用指定的主题定义文件
+                    指定"--overlay"选项以将文件添加到当前数据中
                     指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
                 [/locale]
             [/entry]
             [entry] options-get-current-theme-info
-                # locale:default get-current-theme-info: Outputs detailed information about the currently applied theme
-                locale:zh_CN get-current-theme-info：输出当前主题设定的详细信息
+                # [locale] default
+                #     get-current-theme-info: Show information about the currently applied theme(s)
+                #     Specify --name to only display the name of each theme
+                #     Specify --file-path to only display the source file path of each theme
+                #     (Both will be displayed when both specified)
+                # [/locale]
+                [locale] zh_CN 
+                    get-current-theme-info：显示当前主题设定的详细信息
+                    指定"--name"以仅显示每个主题的名称
+                    指定"--file-path"以仅显示每个主题的源文件路径
+                    （同时指定时，两者都会显示）
+                [/locale]
             [/entry]
             [entry] options-unset-current-theme
                 # locale:default unset-current-theme: Remove the current theme data from the system
                 locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
             [/entry]
             [entry] options-update-theme
-                # locale:default update-theme: Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if --overlay is used)
+                # locale:default update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)
                 locale:zh_CN update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）
             [/entry]
             [entry] options-generate-data
-                # locale:default generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory
+                # locale:default generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
             [/entry]
+            [entry] options-yes
+                # locale:default [For supported commands, specify --yes to skip the confirmation prompt]
+                locale:zh_CN 【在支持的指令中，指定"--yes"以跳过确认提示】
+            [/entry]
             [entry] options-version
-                # locale:default --version: Outputs the current version of clitheme
-                locale:zh_CN --version：输出clitheme的当前版本信息
+                # locale:default --version: Show the current version of clitheme
+                locale:zh_CN --version：显示clitheme的当前版本信息
             [/entry]
             [entry] options-help
-                # locale:default --help: Display this help message
-                locale:zh_CN --help：输出这个帮助提示
+                # locale:default --help: Show this help message
+                locale:zh_CN --help：显示这个帮助提示
             [/entry]
 {/entries_section}

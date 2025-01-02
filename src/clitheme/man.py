@@ -17,15 +17,15 @@ import shutil
 import signal
 import time
 from . import _globalvar, frontend
+from typing import List
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)
 
-_globalvar.handle_set_themedef(frontend, "clitheme-man")
-frontend.global_domain="swiftycode"
-frontend.global_appname="clitheme"
+frontend.set_domain("swiftycode")
+frontend.set_appname("clitheme")
 fd=frontend.FetchDescriptor(subsections="man")
 
-def main(args: list):
+def main(args: List[str]):
     """
     Invoke clitheme-man using the given command line arguments
 
@@ -64,11 +64,13 @@ def main(args: list):
             except KeyboardInterrupt: process.send_signal(signal.SIGINT)
         return process.poll() # type: ignore
     returncode=run_process(env)
-    if returncode!=0 and theme_set:
+    # Return code is negative when exited due to signal
+    if returncode>0 and theme_set:
         _labeled_print(fd.reof("prev-command-fail", "Executing \"man\" with custom path failed, trying execution with normal settings"))
         env["MANPATH"]=prev_manpath if prev_manpath!=None else ''
         returncode=run_process(os.environ)
-    return returncode
+    # If return code is a signal, handle the exit code properly
+    return 128+abs(returncode) if returncode<0 else returncode
 
 def _script_main(): # for script
     return main(sys.argv)

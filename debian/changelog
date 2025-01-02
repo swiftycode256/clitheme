@@ -1,9 +1,45 @@
-clitheme (2.0-beta2-1) unstable; urgency=low
+clitheme (2.0-beta3-1) unstable; urgency=medium
 
   New features
 
-  * Support specifying multiple `[file_content]` phrases and filenames in `{manpage_section}`:
-  * New `[include_file]` syntax in `{manpage_section}`, supporting specifying multiple target file paths at once:
+  * Support using content variables in option definitions
+  * Show prompt when reading files and message when reading from standard input in CLI interface
+  * CLI interface: `get-current-theme-info` supports only displaying theme name and source file path for a more concise output
+  * Rename certain options in `clitheme-exec`
+  * A warning is now displayed when trying to reference a content variable without enabling the `substvar` option
+  * Add new functions for modifying global default settings only for current file in `frontend` module, keeping separate settings for different files
+  * Add `set_local_themedefs` function in `frontend` module, supporting specifying multiple files at once
+  * Add `!require_version` definition in theme definition file, requiring minimum `clitheme` version
+  * Support specifying content variables in `locale:<locale>` syntax
+  * Support using more concise `[subst_regex]` and `[subst_string]` syntax
+  * Support `--name` and `--file-path` options in `clitheme get-current-theme-info` command
+  * Support using `--yes` option to skip confirmation prompt in `clitheme apply-theme` and `clitheme update-theme` commands
+
+  Bug fixes and improvements
+
+  * clitheme-exec: Specifying `--debug-newlines` option requires `--debug` option to be specified at the same time
+  * Add more restricted characters to string entry pathnames
+  * Change how the `foregroundonly` option work: it now applies to individual substitution rules
+      - If specified in a command filter rule (specified after `[/filter_commands]`), it will reset to previous global setting after exiting current rule
+  * Fix an issue where read segments repeatedly occur at non-newline positions
+  * `clitheme-exec`: Ignore backspace characters with identical user input from output substitution processing
+  * Rename "Generating data" prompt to "Processing files"
+  * Fix an issue where outputs of `clitheme get-current-theme-info` and `clitheme update-theme` command have incorrect file ordering
+  * `clitheme-exec`: Properly handle piped standard input
+  * `{header_section}` now requires defining `name` entry
+  * `clitheme-exec`: Fix high idle CPU usage
+  * `clitheme-exec`: Database fetches are now cached in memory, significantly improving performance
+  * Fix an issue when in multi-line block content and `substesc` option is enabled, `{{ESC}}` in content variables might not be processed
+  * Important change: `endmatchhere` option only applies to substitution rules in the current file; other files are not affected
+
+ -- swiftycode <3291929745@qq.com>  Wed, 01 Jan 2025 11:54:00 +0800
+
+clitheme (2.0-beta2-1) unstable; urgency=medium
+
+  New features
+
+  * Support specifying multiple `[file_content]` phrases and filenames in `{manpage_section}`
+  * New `[include_file]` syntax in `{manpage_section}`, supporting specifying multiple target file paths at once
   * New `foregroundonly` option for `filter_command` and `[filter_commands]` in `{substrules_section}`; only apply substitution rules if process is in foreground state
       * Applicable for shell and other command interpreter applications that changes foreground state when executing processes
   * `clitheme-exec`: new `--debug-foreground` option; outputs message when foreground state changes (shown as `! Foreground: False` and `! Foreground: True`)

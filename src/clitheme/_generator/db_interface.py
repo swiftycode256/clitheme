@@ -14,7 +14,8 @@ import sqlite3
 import re
 import copy
 import uuid
-from typing import Optional
+import gc
+from typing import Optional, List, Tuple, Dict
 from .. import _globalvar, frontend
 
 # spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp
@@ -22,13 +23,11 @@ from .. import _globalvar, frontend
 connection=sqlite3.connect(":memory:") # placeholder
 db_path=""
 debug_mode=False
-_globalvar.handle_set_themedef(frontend, "db_interface")
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
-class need_db_regenerate(Exception):
-    pass
-class bad_pattern(Exception):
-    pass
+class need_db_regenerate(Exception): pass
+class bad_pattern(Exception): pass
+class db_not_found(Exception): pass
 
 def _handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
@@ -44,6 +43,7 @@ def init_db(file_path: str):
                     substitute_pattern TEXT NOT NULL, \
                     is_regex INTEGER NOT NULL, \
                     unique_id TEXT NOT NULL, \
+                    file_id TEXT NOT NULL, \
                     effective_command TEXT, \
                     effective_locale TEXT, \
                     command_match_strictness INTEGER NOT NULL, \
@@ -66,14 +66,14 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
     if version!=_globalvar.db_version:
         raise need_db_regenerate
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
+def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), file_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
-    cmdlist: list=[]
+    cmdlist: List[str]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="AND effective_locale=?" if effective_locale!=None else "AND typeof(effective_locale)=typeof(?)"
-    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only"]
+    insert_values=["match_pattern", "substitute_pattern", "effective_command", "is_regex", "command_match_strictness", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only", "file_id"]
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
@@ -86,7 +86,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, None, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
@@ -97,47 +97,41 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, cmd, is_regex, command_match_strictness, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
     connection.commit()
 
-def _check_strictness(match_cmd: str, strictness: int, target_command: str):
-    def process_smartcmdmatch_phrases(match_cmd: str) -> list:
-        match_cmd_phrases=[]
-        for p in range(len(match_cmd.split())):
-            ph=match_cmd.split()[p]
-            results=re.search(r"^-([^-]+)$",ph)
-            if p>0 and results!=None:
-                for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
-            else: match_cmd_phrases.append(ph)
-        return match_cmd_phrases
-    success=True
-    if strictness==1: # must start with pattern in terms of space-separated phrases
-        condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
-        if not condition==True: success=False
-    elif strictness==2: # must equal to pattern
-        if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
-    elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
-        # process both phrases
-        match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
-        command_phrases=process_smartcmdmatch_phrases(target_command)
-        for phrase in match_cmd_phrases:
-            if phrase not in command_phrases: success=False
-    else: # implying strictness==0; must contain all phrases in pattern
-        for phrase in match_cmd.split():
-            if phrase not in target_command.split(): success=False
-    return success
+## Database fetch caching
 
-def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: tuple=(-1,-1)) -> bytes:
-    # pids: (main_pid, current_tcpgrp)
+_db_last_state: Optional[float]=None
+_matches_cache: Dict[Optional[str],List[tuple]]={}
 
-    # Match order:
-    # 1. Match rules with exactcmdmatch option set
-    # 2. Match rules with command filter having the same first phrase
-    #   - Command filters with greater number of phrases are prioritized over others
-    # 3. Match rules without command filter
+def _is_db_updated() -> bool:
+    global _db_last_state
+    cur_state: Optional[float]
+    try:
+        # Check modification time
+        cur_state=os.stat(db_path).st_mtime
+    except FileNotFoundError: cur_state=None
+    updated=False
+    if cur_state!=_db_last_state:
+        updated=True
+        _db_last_state=cur_state
+    return updated
 
-    # retrieve a list of effective commands matching first argument
-    if not os.path.exists(db_path): raise sqlite3.OperationalError("file at db_path does not exist")
+def _fetch_matches(command: Optional[str]) -> List[tuple]:
+    global _matches_cache
+    updated=_is_db_updated()
+    if _db_last_state==None: raise db_not_found("file at db_path does not exist")
+    if updated or _matches_cache.get(command)==None:
+        if updated:
+            _matches_cache.clear()
+            gc.collect() # Reduce memory leak
+        _matches_cache[command]=_get_matches(command)
+    return _matches_cache[command]
+
+## Output processing and matching
+
+def _get_matches(command: Optional[str]) -> List[tuple]:
     _connection=sqlite3.connect(db_path)
     final_cmdlist=[]
     final_cmdlist_exactmatch=[]
@@ -164,11 +158,9 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                     if match_cmd not in final_cmdlist: 
                         final_cmdlist.append(match_cmd)
                         final_cmdlist_exactmatch.append(strictness==2)
-
-    content_str=copy.copy(content)
     matches=[]
     def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
-        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only", "effective_command", "command_match_strictness"]
+        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only", "effective_command", "command_match_strictness", "file_id"]
         # get locales
         locales=_globalvar.get_locale()
         nonlocal matches
@@ -187,19 +179,63 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             # also append matches with other strictness
             fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
     fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
+    return matches
+
+def _check_strictness(match_cmd: str, strictness: int, target_command: str):
+    def process_smartcmdmatch_phrases(match_cmd: str) -> List[str]:
+        match_cmd_phrases=[]
+        for p in range(len(match_cmd.split())):
+            ph=match_cmd.split()[p]
+            results=re.search(r"^-([^-]+)$",ph)
+            if p>0 and results!=None:
+                for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
+            else: match_cmd_phrases.append(ph)
+        return match_cmd_phrases
+    success=True
+    if strictness==1: # must start with pattern in terms of space-separated phrases
+        condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
+        if not condition==True: success=False
+    elif strictness==2: # must equal to pattern
+        if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
+    elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
+        # process both phrases
+        match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
+        command_phrases=process_smartcmdmatch_phrases(target_command)
+        for phrase in match_cmd_phrases:
+            if phrase not in command_phrases: success=False
+    else: # implying strictness==0; must contain all phrases in pattern
+        for phrase in match_cmd.split():
+            if phrase not in target_command.split(): success=False
+    return success
+
+def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> bytes:
+    # pids: (main_pid, current_tcpgrp)
+
+    # Match order:
+    # 1. Match rules with exactcmdmatch option set
+    # 2. Match rules with command filter having the same first phrase
+    #   - Command filters with greater number of phrases are prioritized over others
+    # 3. Match rules without command filter
+
+    # retrieve a list of effective commands matching first argument
+    matches=_fetch_matches(command)
+    content_str=copy.copy(content)
     content_str=_handle_subst(matches, content_str, is_stderr, pids, command)
     return content_str
 
 # timeout value for each match operation
 match_timeout=_globalvar.output_subst_timeout
 
-def _handle_subst(matches: list, content: bytes, is_stderr: bool, pids: tuple, target_command: Optional[str]):
+def _handle_subst(matches: List[tuple], content: bytes, is_stderr: bool, pids: Tuple[int,int], target_command: Optional[str]) -> bytes:
     content_str=copy.copy(content)
     encountered_ids=set()
+    skipped_files=set() # File ids skipped with endmatchhere option
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         if match_data[5] in encountered_ids: continue # check uuid
         else: encountered_ids.add(match_data[5])
+        # check if corresponding file is skipped due to endmatchhere
+        if match_data[9] in skipped_files: continue 
         # Check strictness
         if target_command!=None and match_data[7]!=None and \
             _check_strictness(match_data[7], match_data[8], \
@@ -224,5 +260,5 @@ def _handle_subst(matches: list, content: bytes, is_stderr: bool, pids: tuple, t
                 matched=bytes(match_data[0], 'utf-8') in content_str
                 content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
         if match_data[3]==True and matched: # endmatchhere is set
-            break
+            skipped_files.add(match_data[9])
     return content_str

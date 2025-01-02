@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Global variable definitions and initialization operations for clitheme
+Global variable definitions for clitheme
 """
 
 import io
@@ -13,28 +13,12 @@ import os
 import sys
 import re
 import string
+import stat
 from copy import copy
 from . import _version
+from typing import List
 
 # spell-checker:ignoreRegExp banphrase[s]{0,1}
-
-## Initialization operations
-
-# Enable processing of escape characters in Windows Command Prompt
-if os.name=="nt":
-    import ctypes
-    
-    try:
-        handle=ctypes.windll.kernel32.GetStdHandle(-11) # standard output handle
-        console_mode=ctypes.c_long()
-        if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))==0: 
-            raise Exception("GetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
-        console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
-        if ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)==0:
-            raise Exception("SetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
-    except:
-        pass
-
 
 error_msg_str= \
 """[clitheme] Error: unable to get your home directory or invalid home directory information.
@@ -77,13 +61,13 @@ generator_info_v2filename=generator_info_filename+"_v2" # e.g. [...]/theme-info/
 ## _generator.db_interface file and table names
 db_data_tablename="clitheme_subst_data"
 db_filename="subst-data.db" # e.g. ~/.local/share/clitheme/subst-data.db
-db_version=3
+db_version=4
 
 ## clitheme-exec timeout value for each output substitution operation
 output_subst_timeout=0.4
 
 ## Sanity check function
-entry_banphrases=['/','\\']
+entry_banphrases=['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
 banphrase_error_message_orig=copy(banphrase_error_message)
@@ -102,7 +86,6 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
         global msg_retrieved
         global sanity_check_error_message, banphrase_error_message, startswith_error_message
         if not msg_retrieved:
-            handle_set_themedef(frontend, "_globalvar")
             msg_retrieved=True
             f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
             banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
@@ -123,15 +106,28 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
 
 ## Convenience functions
 
-def splitarray_to_string(split_content) -> str:
+class _direct_exit(Exception):
+    def __init__(self, code):
+        """
+        Custom exception for handling return code inside another function callback
+        """
+        self.code=code
+def splitarray_to_string(split_content: List[str]) -> str:
     final=""
     for phrase in split_content:
         final+=phrase+" "
     return final.strip()
 def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
-    results=re.search(r"(?:[ \t]*.+?[ \t]+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
+    results=re.search(r"(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
+def list_directory(dirname: str):
+    lsdir_result=os.listdir(dirname)
+    final_result=[]
+    for name in lsdir_result:
+        if not name.startswith('.'):
+            final_result.append(name)
+    return final_result
 def make_printable(content: str) -> str:
     final_str=""
     for character in content:
@@ -142,7 +138,7 @@ def make_printable(content: str) -> str:
             exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
             final_str+=exp
     return final_str
-def get_locale(debug_mode: bool=False) -> list:
+def get_locale(debug_mode: bool=False) -> List[str]:
     lang=[]
     def add_language(target_lang: str):
         nonlocal lang
@@ -190,23 +186,45 @@ def handle_exception():
     if env_var in os.environ and os.environ[env_var]=="1":
         raise
 
-def handle_set_themedef(fr, debug_name: str):
+def handle_stdin_prompt(path: str) -> bool:
+    fi=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="cli apply-theme")
+    is_stdin=False
+    try:
+        if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino:
+            is_stdin=True
+            print("\n"+fi.reof("reading-stdin-note", "Reading from standard input"))
+            if not stat.S_ISFIFO(os.stat(path).st_mode):
+                print(fi.feof("stdin-interactive-finish-prompt", "Input file content here and press {shortcut} to finish", shortcut="CTRL-D" if os.name=="posix" else "CTRL-Z+<Enter>"))
+    except: pass
+    return is_stdin
+
+def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
     prev_mode=False
     # Prevent interference with other code piping stdout
     orig_stdout=sys.stdout
     try:
         files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt", "strings/man-strings.clithemedef.txt"]
-        for x in range(len(files)):
-            filename=files[x]
-            msg=io.StringIO()
-            sys.stdout=msg
-            fr.global_debugmode=True
-            if not fr.set_local_themedef(_get_resource.read_file(filename), overlay=not x==0): raise RuntimeError("Full log below: \n"+msg.getvalue())
-            fr.global_debugmode=prev_mode
-            sys.stdout=orig_stdout
+        file_contents=list(map(lambda name: _get_resource.read_file(name), files))
+        msg=io.StringIO()
+        sys.stdout=msg
+        fr.set_debugmode(True)
+        if not fr.set_local_themedefs(file_contents): raise RuntimeError("Full log below: \n"+msg.getvalue())
+        fr.set_debugmode(prev_mode)
+        sys.stdout=orig_stdout
     except:
         sys.stdout=orig_stdout
-        fr.global_debugmode=prev_mode
-        if _version.release<0: print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
-        handle_exception()
+        fr.set_debugmode(prev_mode)
+        # If pre-release build or manual environment variable flag set, display error
+        if _version.release<0 or os.environ.get("CLITHEME_SHOW_TRACEBACK")=='1':
+            print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
+            handle_exception()
     finally: sys.stdout=orig_stdout
+def result_sort_cmp(obj1,obj2) -> int:
+    cmp1='';cmp2=''
+    try:
+        cmp1=int(obj1); cmp2=int(obj2)
+    except ValueError:
+        cmp1=obj1; cmp2=obj2
+    if cmp1>cmp2: return 1
+    elif cmp1==cmp2: return 0
+    else: return -1

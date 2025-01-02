@@ -1,6 +1,8 @@
 # clitheme - Command line customization utility
 
-[中文](./README.md) | **English**
+[中文](../README.md) | **English**
+
+**Disclaimer:** Please do not use this tool to create harmful or illegal content. The author of this software does not take any responsibility for content and definition files created by others.
 
 ---
 
@@ -19,9 +21,9 @@ test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int 
 ```
 ```plaintext
 $ clitheme apply-theme clang-theme.clithemedef.txt
-==> Generating data...
-Successfully generated data
-==> Applying theme...Success
+==> Processing files...
+Successfully processed files
+==> Applying theme...
 Theme applied successfully
 ```
 ```plaintext
@@ -52,7 +54,7 @@ Other characteristics:
 
 For more information, please see the project's Wiki documentation page. It can be accessed through the following links:
 
-- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme/wikis
 - https://gitee.com/swiftycode/clitheme-wiki-repo
 - https://github.com/swiftycode256/clitheme-wiki-repo
 
@@ -64,10 +66,10 @@ Get the command line output, including any terminal control characters:
 
 ```plaintext
 # --debug: Add a marker at the beginning of each line; contains information on whether the output is stdout/stderr ("o>" or "e>")
-# --debug-showchars: Show terminal control characters in the output
-# --debug-nosubst: Even if a theme is set, do not apply substitution rules (get original output content)
+# --showchars: Show terminal control characters in the output
+# --nosubst: Even if a theme is set, do not apply substitution rules (get original output content)
 
-$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+$ clitheme-exec --debug --showchars --nosubst clang test.c
 e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
 e> bool *func(int *a) {\r\n
 e> {{ESC}}[0;1;32m^\r\n
@@ -82,7 +84,7 @@ Write theme definition file and substitution rules based on the output:
 ```plaintext
 # Define basic information for this theme in header_section; required
 {header_section}
-    # It is recommended to include name and description at the minimum
+    # `name` is a required entry in header_section
     name clang example theme
     [description]
         An example theme for clang (for demonstration purposes)
@@ -99,14 +101,14 @@ Write theme definition file and substitution rules based on the output:
         gcc
         g++
     [/filter_commands]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
         # Use "locale:en_US" if you only want the substitution rule to applied when the system locale setting is English (en_US)
         # Use "locale:default" to not apply any locale filters
         locale:default \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
-    [/substitute_regex]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+    [/subst_regex]
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
         locale:default \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
-    [/substitute_regex]
+    [/subst_regex]
 {/substrules_section}
 ```
 
@@ -169,11 +171,21 @@ Please see [this article](./README-frontend.en.md)
 
 `clitheme` can be installed through pip package, Debian package, and Arch Linux package.
 
-### Install using pip package
+### Install using Python/pip package
+
+First, ensure that Python 3 is installed on the system. `clitheme` requires Python 3.8 or higher.
+
+- On Linux distributions, you can use relevant package manager to install 
+- On macOS, you can install Python through Xcode command line developer tools (use `xcode-select --install` command), or through Python website ( https://www.python.org/downloads )
+- On Windows, you can install Python through Microsoft Store ([Python 3.13 link](https://apps.microsoft.com/detail/9pnrbtzxmb4z)), or through Python website ( https://www.python.org/downloads )
+
+Then, ensure that `pip` is installed within Python. The following command will perform an offline install of `pip` if it's not detected.
+
+    $ python3 -m ensurepip
 
 Download the `.whl` file from latest distribution page and install it using `pip`:
     
-    $ pip install ./clitheme-<version>-py3-none-any.whl
+    $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
 ### Install using Arch Linux package
 
@@ -195,7 +207,7 @@ You can build the package from the repository source code, which includes any la
 
 First, install `setuptools`, `build`, and `wheel` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
 
-    $ pip install --upgrade setuptools build wheel
+    $ python3 -m pip install --upgrade setuptools build wheel
 
 Then, switch to project directory and use the following command to build the package:
 

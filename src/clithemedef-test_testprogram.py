@@ -1,3 +1,9 @@
+# Copyright © 2023-2024 swiftycode
+
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import shutil
 from clitheme import _generator
 from clitheme import _globalvar
@@ -44,8 +50,8 @@ for line in expected_data.splitlines():
 # Test frontend
 print("Testing frontend...")
 from clitheme import frontend
-frontend.global_lang="en_US.UTF-8"
-frontend.global_debugmode=True
+frontend.set_debugmode(True)
+frontend.set_lang("en_US.UTF-8")
 frontend.data_path=generator_path+"/"+_globalvar.generator_data_pathname
 expected_data_frontend=open(root_directory+"/testprogram-data/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
@@ -85,10 +91,12 @@ if errorcount>0:
     exit(1)
 else:
     print("Generator test OK")
-    shutil.rmtree(generator_path) # remove the temp directory
 print("==> ",end='')
 if errorcount_frontend>0:
     print("Frontend test error: "+str(errorcount_frontend)+" errors found")
+    print("See "+generator_path+" for more details")
     exit(1)
 else:
     print("Frontend test OK")
+if errorcount>0 and errorcount_frontend>0:
+    shutil.rmtree(generator_path) # remove the temp directory

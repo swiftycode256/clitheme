@@ -9,11 +9,11 @@ entries_section parser function (internal module)
 """
 from typing import Optional
 from .. import _globalvar
-from . import _dataclass
+from . import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
+def handle_entries_section(obj: _parser_handlers.GeneratorObject, first_phrase: str):
     obj.handle_begin_section("entries")
     end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
     if first_phrase=="begin_main":
@@ -23,7 +23,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
     while obj.goto_next_line():
         phrases=obj.lines_data[obj.lineindex].split()
         if phrases[0]=="in_domainapp":
-            this_phrases=obj.subst_variable_content(obj.lines_data[obj.lineindex].strip()).split()
+            this_phrases=obj.parse_content(obj.lines_data[obj.lineindex].strip(), pure_name=True).split()
             obj.check_enough_args(this_phrases, 3)
             obj.check_extra_args(this_phrases, 3, use_exact_count=False)
             obj.in_domainapp=this_phrases[1]+" "+this_phrases[2]
@@ -33,7 +33,7 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         elif phrases[0]=="in_subsection":
             obj.check_enough_args(phrases, 2)
             obj.in_subsection=_globalvar.splitarray_to_string(phrases[1:])
-            obj.in_subsection=obj.subst_variable_content(obj.in_subsection)
+            obj.in_subsection=obj.parse_content(obj.in_subsection, pure_name=True)
             if _globalvar.sanity_check(obj.in_subsection)==False:
                 obj.handle_error(obj.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
         elif phrases[0]=="unset_domainapp":
@@ -42,16 +42,11 @@ def handle_entries_section(obj: _dataclass.GeneratorObject, first_phrase: str):
         elif phrases[0]=="unset_subsection":
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.in_subsection=""
-        elif phrases[0]=="entry" or phrases[0]=="[entry]":
+        elif phrases[0] in ("entry", "[entry]"):
             obj.check_enough_args(phrases, 2)
             entry_name=_globalvar.extract_content(obj.lines_data[obj.lineindex])
             obj.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
-        elif phrases[0]=="set_options":
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(phrases[1:])).split())
-        elif phrases[0].startswith("setvar:"): 
-            obj.check_enough_args(phrases, 2)
-            obj.handle_set_variable(obj.lines_data[obj.lineindex])
+        elif obj.handle_setters(): pass
         elif phrases[0]==end_phrase:
             obj.check_extra_args(phrases, 1, use_exact_count=True)
             obj.handle_end_section("entries")

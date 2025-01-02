@@ -1,6 +1,8 @@
 # clitheme - 命令行自定义工具
 
-**中文** | [English](./README.en.md)
+**中文** | [English](.github/README.md)
+
+**免责声明：** 请不要利用该软件传播有害或违法内容。本软件作者对其他人制作的内容和定义文件不负任何责任。
 
 ---
 
@@ -19,9 +21,9 @@ test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int 
 ```
 ```plaintext
 $ clitheme apply-theme clang-theme.clithemedef.txt
-==> Generating data...
-Successfully generated data
-==> Applying theme...Success
+==> Processing files...
+Successfully processed files
+==> Applying theme...
 Theme applied successfully
 ```
 ```plaintext
@@ -51,7 +53,7 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 - 无需应用程序API也可以访问当前主题中的字符串定义（易懂的数据结构）
 
 更多信息请见本项目的Wiki文档页面。你可以通过以下位置访问这些文档：
-- https://gitee.com/swiftycode/clitheme/wikis/pages
+- https://gitee.com/swiftycode/clitheme/wikis
 - https://gitee.com/swiftycode/clitheme-wiki-repo
 - https://github.com/swiftycode256/clitheme-wiki-repo
 
@@ -63,10 +65,10 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 
 ```plaintext
 # --debug：在每一行的输出前添加标记；包含输出是否为stdout或stderr的信息（"o>"或"e>"）
-# --debug-showchars：显示输出中的终端控制符号
-# --debug-nosubst：即使设定了主题，不对输出应用替换规则（获取原始输出）
+# --showchars：显示输出中的终端控制符号
+# --nosubst：即使设定了主题，不对输出应用替换规则（获取原始输出）
 
-$ clitheme-exec --debug --debug-showchars --debug-nosubst clang test.c
+$ clitheme-exec --debug --showchars --nosubst clang test.c
 e> {{ESC}}[1mtest.c:1:1: {{ESC}}[0m{{ESC}}[0;1;31merror: {{ESC}}[0m{{ESC}}[1munknown type name 'bool'{{ESC}}[0m\r\n
 e> bool *func(int *a) {\r\n
 e> {{ESC}}[0;1;32m^\r\n
@@ -81,7 +83,7 @@ e> {{ESC}}[0m2 errors generated.\r\n
 ```plaintext
 # 在header_section中定义一些关于该主题定义的基本信息；必须包括
 {header_section}
-    # 这里建议至少包括name和description信息
+    # 在header_section中必须定义`name`条目
     name clang样例主题
     [description]
         一个为clang打造的的样例主题，为了演示作用
@@ -98,14 +100,14 @@ e> {{ESC}}[0m2 errors generated.\r\n
         gcc
         g++
     [/filter_commands]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
         # 如果你想仅在系统语言设定为中文（zh_CN）时应用这个替换规则，你可以使用"locale:zh_CN"
         # 使用"locale:default"时不会添加系统语言限制
         locale:default \g<prefix>提示: \g<esc>'\g<name1>'从不兼容的指针类型赋值为'\g<name2>',两者怎么都……都说不过去！^^;
-    [/substitute_regex]
-    [substitute_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+    [/subst_regex]
+    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
         locale:default \g<prefix>错误！: \g<esc>未知的类型名'\g<type>',忘记定义了～ಥ_ಥ
-    [/substitute_regex]
+    [/subst_regex]
 {/substrules_section}
 ```
 
@@ -168,11 +170,21 @@ $ clitheme-man ls
 
 安装`clitheme`非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
 
-### 通过pip软件包安装
+### 通过Python/pip软件包安装
+
+首先，确保Python 3已安装在系统中。`clitheme`需要Python 3.8或更高版本。
+
+- 在Linux发行版上，你可以通过对应的软件包管理器安装Python
+- 在macOS上，你可以通过Xcode命令行开发者工具安装Python（使用`xcode-select --install`命令），或者通过Python官网（ https://www.python.org/downloads ）下载
+- 在Windows上，你可以通过Microsoft Store安装Python（[Python 3.13链接](https://apps.microsoft.com/detail/9pnrbtzxmb4z)），或者通过Python官网（ https://www.python.org/downloads ）下载
+
+然后，确保`pip`软件包管理器已安装在Python中。以下命令将会通过本地安装`pip`，如果检测到没有安装。
+
+    $ python3 -m ensurepip
 
 从最新发行版页面下载`.whl`文件，使用`pip`直接安装即可：
     
-    $ pip install ./clitheme-<version>-py3-none-any.whl
+    $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
 ### 通过Arch Linux软件包安装
 
@@ -194,7 +206,7 @@ $ clitheme-man ls
 
 首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 
-    $ pip install --upgrade setuptools build wheel
+    $ python3 -m pip install --upgrade setuptools build wheel
 
 然后，切换到项目目录，使用以下命令构建软件包：
 

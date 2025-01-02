@@ -16,51 +16,62 @@ import sys
 import shutil
 import re
 import io
+import stat
+import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
+from ._globalvar import _direct_exit
+from typing import List, Optional
 
 # spell-checker:ignore pathnames lsdir inpstr
 
-frontend.global_domain="swiftycode"
-frontend.global_appname="clitheme"
-frontend.global_subsections="cli"
-
-_globalvar.handle_set_themedef(frontend, "cli")
+frontend.set_domain("swiftycode")
+frontend.set_appname("clitheme")
+frontend.set_subsections("cli")
 
 last_data_path=""
-def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_temp=False, generate_only=False):
+def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False, no_confirm=False):
     """
     Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
     (Invokes 'clitheme apply-theme')
 
+    - Set file_contents=None to read file contents from specified filenames
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
     - Set generate_only=True to generate the data hierarchy only (invokes 'clitheme generate-data' instead)
+    - Set no_confirm=True to skip the user confirmation prompt
     """
+    if file_contents==None:
+        try: file_contents=_get_file_contents(filenames)
+        except _direct_exit as exc: return exc.code
+        except: 
+            _globalvar.handle_exception()
+            return 1
     if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
         raise ValueError("file_contents and filenames have different lengths")
     f=frontend.FetchDescriptor(subsections="cli apply-theme")
-    if len(filenames)>1 or True: # currently set to True for now
-        if generate_only:
-            print(f.reof("generate-data-msg", "The theme data will be generated from the following definition files in the following order:"))
-        else:
-            print(f.reof("apply-theme-msg", "The following definition files will be applied in the following order: "))
-        for i in range(len(filenames)):
-            path=filenames[i]
-            print("\t{}: {}".format(str(i+1), path))
-        if not generate_only:
-            if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
-                print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
-            if overlay==True:
-                print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
+    # Display information and confirmation prompt
+    if generate_only:
+        print(f.reof("generate-data-msg", "The theme data will be generated from the following definition files in the following order:"))
+    else:
+        print(f.reof("apply-theme-msg", "The following definition files will be applied in the following order: "))
+    for i in range(len(filenames)):
+        path=filenames[i]
+        print("\t{}: {}".format(str(i+1), fmt(path)))
+    if not generate_only:
+        if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
+            print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
+        if overlay==True:
+            print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
+        if not no_confirm:
             inpstr=f.reof("confirm-prompt", "Do you want to continue? [y/n]")
             try: inp=input(inpstr+" ").strip().lower()
             except (KeyboardInterrupt, EOFError): print();return 130
             if not (inp=="y" or inp=="yes"):
                 return 1
     if overlay: print(f.reof("overlay-msg", "Overlay specified"))
-    print(f.reof("generating-data", "==> Generating data..."))
+    print(f.reof("processing-files", "==> Processing files..."))
     index=1
     generate_path=True
     if overlay:
@@ -81,8 +92,9 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
     final_path: str
-    line_prefix="\x1b[2K\r    " # clear current line content and move cursor to beginning
-    print_progress=len(file_contents)>1
+    line_prefix=f"\x1b[2K\r{' '*4}" # clear current line content and move cursor to beginning
+    print_progress=True #len(file_contents)>1
+    newline="\n" if print_progress else ""
     orig_stdout=sys.stdout # Prevent interference with other code piping stdout
     for i in range(len(file_contents)):
         if print_progress:
@@ -99,12 +111,12 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
             index+=1
         except Exception as exc:
             sys.stdout=orig_stdout
-            print(("\n" if print_progress else ""), end='')
+            print(newline, end='')
             # Print any output messages if an error occurs
             if generator_msgs.getvalue()!='':
                 # end='' because the pipe value already contains a newline due to the print statements
                 print(generator_msgs.getvalue(), end='')
-            print(f.feof("generate-data-error", "[File {index}] An error occurred while generating the data:\n{message}", \
+            print(f.feof("process-files-error", "[File {index}] An error occurred while processing the file:\n{message}", \
                 index=str(i+1), message=str(sys.exc_info()[1])))
             if type(exc)==SyntaxError: _globalvar.handle_exception()
             else: raise # Always raise exception if other error occurred in _generator
@@ -112,11 +124,9 @@ def apply_theme(file_contents: list, filenames: list, overlay: bool, preserve_te
         else: 
             sys.stdout=orig_stdout # restore standard output
             if generator_msgs.getvalue()!='':
-                print(("\n" if print_progress else "")+generator_msgs.getvalue(), end='')
+                print(newline+generator_msgs.getvalue(), end='')
         finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
-    if print_progress:
-        print(line_prefix+f.reof("all-finished", "> All finished"))
-    print(f.reof("generate-data-success", "Successfully generated data"))
+    print((line_prefix.rstrip(' ') if print_progress else "")+f.reof("process-files-success", "Successfully processed files"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":
@@ -170,9 +180,13 @@ def unset_current_theme():
     print(f.reof("remove-data-success", "Successfully removed the current theme data"))
     return 0
 
-def get_current_theme_info():
+def get_current_theme_info(name: bool=False, file_path=False):
     """
-    Get the current theme info
+    Displays the current theme info
+
+    - Set name=True to only display the name of each theme
+    - Set file_path=True to only display the source file path of each theme
+    - Both information are displayed when both options are set to True
 
     (Invokes 'clitheme get-current-theme-info')
     """
@@ -181,24 +195,29 @@ def get_current_theme_info():
     if not os.path.isdir(search_path):
         print(f.reof("no-theme", "No theme currently set"))
         return 1
-    lsdir_result=os.listdir(search_path)
-    lsdir_result.sort(reverse=True) # sort by latest installed
+    lsdir_result=_globalvar.list_directory(search_path)
+    lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
     lsdir_num=0
     for x in lsdir_result: 
         if os.path.isdir(search_path+"/"+x):
             lsdir_num+=1
-    if lsdir_num<=1: 
-        print(f.reof("current-theme-msg", "Currently installed theme:"))
-    else: 
-        print(f.reof("overlay-history-msg", "Overlay history (sorted by latest installed):"))
+    print(f.reof("current-theme-msg", "Currently installed theme(s):"))
+    minimal_info: bool=name==True or file_path==True
     for theme_pathname in lsdir_result:
         target_path=search_path+"/"+theme_pathname.strip()
         if (not os.path.isdir(target_path)) or re.search(r"^\d+$", theme_pathname.strip())==None: continue # skip current_theme_index file
         # name
-        name="(Unknown)"
-        if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
-            name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
-        print("[{}]: {}".format(theme_pathname, name))
+        if minimal_info==False or (minimal_info==True and name==True):
+            theme_name="(Unknown)"
+            if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
+                theme_name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
+            print("[{}]: {}".format(theme_pathname, theme_name))
+        if minimal_info==True and file_path==True:
+            theme_filepath="(Unknown)"
+            if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")):
+                theme_filepath=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), 'r', encoding="utf-8").read().strip()
+            print(theme_filepath)
+        if minimal_info==True: continue # --Stop here if either parameters are specified--
         # version
         version="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="version")):
@@ -237,24 +256,27 @@ def get_current_theme_info():
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
                 print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
+
+        print() # Separate each entry with an empty line
     return 0
 
-def update_theme():
+def update_theme(no_confirm=False):
     """
     Re-applies theme files from file paths specified in the previous apply-theme command (including all related apply-theme commands if --overlay is used)
+
+    - Set no_confirm=True to skip the user confirmation prompt
 
     (Invokes 'clitheme update-theme')
     """
     class invalid_theme(Exception): pass
-    file_contents: list
-    file_paths: list
+    file_paths: List[str]
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
         search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
         if not os.path.isdir(search_path):
             print(fi.reof("no-theme-err", "Error: no theme currently set"))
             return 1
-        lsdir_result=os.listdir(search_path); lsdir_result.sort()
+        lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
         lsdir_num=0
         for x in lsdir_result: 
             if os.path.isdir(search_path+"/"+x): lsdir_num+=1
@@ -271,11 +293,6 @@ def update_theme():
             except: raise invalid_theme("Read error: "+str(sys.exc_info()[1]))
             file_paths.append(got_path)
         if len(file_paths)==0: raise invalid_theme("file_paths empty")
-        # Get file contents
-        try: file_contents=_get_file_contents(file_paths)
-        except:
-            _globalvar.handle_exception()
-            return 1
     except invalid_theme:
         print(fi.reof("not-available-err", "update-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
         _globalvar.handle_exception()
@@ -284,7 +301,7 @@ def update_theme():
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    return apply_theme(file_contents, file_paths, overlay=False)
+    return apply_theme(None, file_paths, overlay=False, no_confirm=no_confirm)
 
 def _is_option(arg):
     return arg.strip()[0:1]=="-"
@@ -298,10 +315,10 @@ def _handle_help_message(full_help: bool=False):
     fd=frontend.FetchDescriptor(subsections="cli help-message")
     print(fd.reof("usage-str", "Usage:"))
     print(
-"""\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp]
-\t{0} get-current-theme-info
+"""\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
+\t{0} get-current-theme-info [--name] [--file-path]
 \t{0} unset-current-theme
-\t{0} update-theme
+\t{0} update-theme [--yes]
 \t{0} generate-data [themedef-file] [--overlay]
 \t{0} --version
 \t{0} --help""".format(arg_first)
@@ -309,28 +326,37 @@ def _handle_help_message(full_help: bool=False):
     if not full_help: return
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
-    "apply-theme: Applies the given theme definition file(s) into the current system.\nSpecify --overlay to append value definitions in the file(s) onto the current data.\nSpecify --preserve-temp to prevent the temporary directory from removed after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Outputs detailed information about the currently applied theme"))
+    "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
-    print("\t"+fd.reof("options-update-theme", "update-theme: Re-applies the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
-    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generates a data hierarchy from specified theme definition files in a temporary directory"))
-    print("\t"+fd.reof("options-version", "--version: Outputs the current version of clitheme"))
-    print("\t"+fd.reof("options-help", "--help: Display this help message"))
+    print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
+    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-yes", "[For supported commands, specify --yes to skip the confirmation prompt]"))
+    print("\t"+fd.reof("options-version", "--version: Show the current version of clitheme"))
+    print("\t"+fd.reof("options-help", "--help: Show this help message"))
 
-def _get_file_contents(file_paths: list) -> list:
+def _get_file_contents(file_paths: List[str]) -> List[str]:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")
     content_list=[]
+    line_prefix="\x1b[2K\r" # clear current line content and move cursor to beginning
     for i in range(len(file_paths)):
         path=file_paths[i]
         try:
+            print(line_prefix+fi.feof("reading-file","==> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
+            # Detect standard input
+            is_stdin=_globalvar.handle_stdin_prompt(path)
             content_list.append(open(path, 'r', encoding="utf-8").read())
+            if is_stdin: print() # Print an extra newline
+        except KeyboardInterrupt: 
+            print();raise _direct_exit(130)
         except:
-            print(fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
+            print("\n"+fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
                 index=str(i+1), message=path+": "+fmt(str(sys.exc_info()[1]))))
             raise
+    print(line_prefix, end='')
     return content_list
 
-def main(cli_args: list):
+def main(cli_args: List[str]):
     """
     Use this function invoke 'clitheme' with command line arguments
     
@@ -347,49 +373,54 @@ def main(cli_args: list):
         for arg in cli_args:
             if not exclude_options or not _is_option(arg): c+=1
         if c<count:
-            exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
+            raise _direct_exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
     def check_extra_args(count: int):
         if len(cli_args)>count:
-            exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
+            raise _direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
 
-    if cli_args[1]=="apply-theme" or cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy":
-        check_enough_args(3)
-        generate_only=(cli_args[1]=="generate-data" or cli_args[1]=="generate-data-hierarchy")
-        paths=[]
-        overlay=False
-        preserve_temp=False
-        for arg in cli_args[2:]:
-            if _is_option(arg):
-                if arg.strip()=="--overlay": overlay=True
-                elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
+    try:
+        if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
+            check_enough_args(3)
+            generate_only=(cli_args[1] in ("generate-data", "generate-data-hierarchy"))
+            paths=[]
+            overlay=False
+            preserve_temp=False
+            no_confirm=False
+            for arg in cli_args[2:]:
+                if _is_option(arg):
+                    if arg.strip()=="--overlay": overlay=True
+                    elif arg.strip()=="--preserve-temp" and not generate_only: preserve_temp=True
+                    elif arg.strip()=="--yes" and not generate_only: no_confirm=True
+                    else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+                else:
+                    paths.append(arg)
+            return apply_theme(file_contents=None, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only, no_confirm=no_confirm)
+        elif cli_args[1]=="get-current-theme-info":
+            name=False; file_path=False
+            for arg in cli_args[2:]:
+                if arg.strip()=="--name": name=True
+                elif arg.strip()=="--file-path": file_path=True
                 else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
-            else:
-                paths.append(arg)
-        fi=frontend.FetchDescriptor(subsections="cli apply-theme")
-        content_list: list
-        try: content_list=_get_file_contents(paths)
-        except: 
-            _globalvar.handle_exception()
-            return 1
-        return apply_theme(content_list, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only)
-    elif cli_args[1]=="get-current-theme-info":
-        check_extra_args(2) # disabled additional options
-        return get_current_theme_info()
-    elif cli_args[1]=="unset-current-theme":
-        check_extra_args(2)
-        return unset_current_theme()
-    elif cli_args[1]=="update-theme":
-        check_extra_args(2)
-        return update_theme()
-    elif cli_args[1]=="--version":
-        check_extra_args(2)
-        print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
-    else:
-        if cli_args[1]=="--help":
+            return get_current_theme_info(name=name, file_path=file_path)
+        elif cli_args[1]=="unset-current-theme":
             check_extra_args(2)
-            _handle_help_message(full_help=True)
+            return unset_current_theme()
+        elif cli_args[1]=="update-theme":
+            no_confirm=False
+            for arg in cli_args[2:]:
+                if arg.strip()=="--yes": no_confirm=True
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+            return update_theme(no_confirm=no_confirm)
+        elif cli_args[1]=="--version":
+            check_extra_args(2)
+            print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
         else:
-            return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
+            if cli_args[1]=="--help":
+                check_extra_args(2)
+                _handle_help_message(full_help=True)
+            else:
+                return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
+    except _direct_exit as exc: return exc.code
     return 0
 def _script_main(): # for script
     return main(sys.argv)

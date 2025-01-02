@@ -1,7 +1,7 @@
 """
 clitheme fallback frontend for version 2.0 (returns fallback values for all functions)
 """
-from typing import Optional
+from typing import Optional, List
 
 data_path=""
 
@@ -12,12 +12,22 @@ global_debugmode=False
 global_lang=""
 global_disablelang=False
 
+def set_domain(value: Optional[str]): pass
+def set_appname(value: Optional[str]): pass
+def set_subsections(value: Optional[str]): pass
+def set_debugmode(value: Optional[bool]): pass
+def set_lang(value: Optional[str]): pass
+def set_disablelang(value: Optional[bool]): pass
+
 alt_path=None
 alt_path_dirname=None
 alt_path_hash=None
 
 def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """Fallback set_local_themedef function (always returns False)"""
+    return False
+def set_local_themedefs(file_contents: List[str], overlay: bool=False):
+    """Fallback set_local_themedefs function (always returns False)"""
     return False
 def unset_local_themedef():
     """Fallback unset_local_themedef function"""

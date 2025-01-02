@@ -11,6 +11,9 @@ import os
 import string
 import random
 from typing import Optional
+from .. import _globalvar
+from . import _parser_handlers
+from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -32,27 +35,32 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if custom_path_gen:
         generate_custom_path()
     global path
-    obj=_dataclass.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
+    obj=_parser_handlers.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
-    ## Main code
+    before_content_lines=True
     while obj.goto_next_line():
-        first_phrase=obj.lines_data[obj.lineindex].split()[0]
-        # process header and main sections here
-        if first_phrase=="set_options":
-            obj.check_enough_args(obj.lines_data[obj.lineindex].split(), 2)
-            obj.handle_set_global_options(obj.subst_variable_content(_globalvar.splitarray_to_string(obj.lines_data[obj.lineindex].split()[1:])).split(), really_really_global=True)
-        elif first_phrase.startswith("setvar:"): 
-            obj.check_enough_args(obj.lines_data[obj.lineindex].split(), 2)
-            obj.handle_set_variable(obj.lines_data[obj.lineindex], really_really_global=True)
-        elif first_phrase=="begin_header" or first_phrase==r"{header_section}":
+        phrases=obj.lines_data[obj.lineindex].split()
+        first_phrase=phrases[0]
+        is_content=True
+        if first_phrase in ("begin_header", r"{header_section}"):
             _header_parser.handle_header_section(obj, first_phrase)
-        elif first_phrase=="begin_main" or first_phrase==r"{entries_section}":
+        elif first_phrase in ("begin_main", r"{entries_section}"):
             _entries_parser.handle_entries_section(obj, first_phrase)
         elif first_phrase==r"{substrules_section}":
             _substrules_parser.handle_substrules_section(obj, first_phrase)
         elif first_phrase==r"{manpage_section}":
             _manpage_parser.handle_manpage_section(obj, first_phrase)
+        elif obj.handle_setters(really_really_global=True): pass
+        elif first_phrase=="!require_version":
+            is_content=False
+            obj.check_enough_args(phrases, 2)
+            obj.check_extra_args(phrases, 2, use_exact_count=True)
+            if not before_content_lines:
+                obj.handle_error(obj.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=str(obj.lineindex+1), phrase=first_phrase))
+            obj.check_version(phrases[1])
         else: obj.handle_invalid_phrase(first_phrase)
+
+        if is_content: before_content_lines=False
 
     def is_content_parsed() -> bool:
         content_sections=["entries", "substrules", "manpage"]
@@ -70,9 +78,3 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     theme_index.write(obj.custom_infofile_name+"\n")
     path=obj.path
     return obj.path
-
-# prevent circular import error by placing these statements at the end
-from .. import _globalvar
-from . import _dataclass
-from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
-_globalvar.handle_set_themedef(_dataclass.GeneratorObject.frontend, "generator")

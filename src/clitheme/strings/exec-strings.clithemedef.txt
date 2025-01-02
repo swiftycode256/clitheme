@@ -38,17 +38,17 @@ in_domainapp swiftycode clitheme
             # locale:default --debug-newlines: Use newlines to display output that does not end on a newline
             locale:zh_CN --debug-newlines：使用新的一行来显示没有新行的输出
         [/entry]
-        [entry] options-debug-showchars
-            # locale:default --debug-showchars: Display various control characters in plain text
-            locale:zh_CN --debug-showchars：使用明文显示终端控制符号
+        [entry] options-showchars
+            # locale:default --showchars: Display various control characters in plain text
+            locale:zh_CN --showchars：使用明文显示终端控制符号
         [/entry]
-        [entry] options-debug-foreground
-            # locale:default --debug-foreground: Display message when the foreground status of the process changes (value of tcgetpgrp)
-            locale:zh_CN --debug-foreground: 当进程的前台状态（tcgetpgrp的返回值）变动时，显示提示信息
+        [entry] options-foreground-stat
+            # locale:default --foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)
+            locale:zh_CN --foreground-stat: 当进程的前台状态（tcgetpgrp的返回值）变动时，显示提示信息
         [/entry]
-        [entry] options-debug-nosubst
-            # locale:default --debug-nosubst: Do not perform any output substitutions even if a theme is set
-            locale:zh_CN --debug-nosubst：不进行任何输出替换，即使已设定主题
+        [entry] options-nosubst
+            # locale:default --nosubst: Do not perform any output substitutions even if a theme is set
+            locale:zh_CN --nosubst：不进行任何输出替换，即使已设定主题
         [/entry]
     in_subsection exec
         [entry] help-usage-prompt
@@ -59,6 +59,10 @@ in_domainapp swiftycode clitheme
             # locale:default Error: unknown option "{phrase}"
             locale:zh_CN 错误：未知选项"{phrase}"
         [/entry]
+        [entry] debug-newlines-not-with-debug
+            # locale:default Error: "--debug-newlines" must be used with "--debug" option
+            locale:zh_CN 错误："--debug-newlines"选项必须与"--debug"选项同时指定
+        [/entry]
         [entry] no-command-err
             # locale:default Error: no command specified
             locale:zh_CN 错误：未指定命令
@@ -67,27 +71,41 @@ in_domainapp swiftycode clitheme
             # locale:default Warning: no theme set or theme does not have substrules
             locale:zh_CN 警告：没有设定主题或当前主题没有substrules定义
         [/entry]
-        [entry] substrules-migrate-msg
-            # locale:default Migrating substrules database...
-            locale:zh_CN 正在迁移substrules数据库...
+        [entry] substrules-update-msg
+            # locale:default Updating database...
+            locale:zh_CN 正在更新数据库...
         [/entry]
-        [entry] db-migration-generator-err
+        [entry] db-update-generator-err
             # locale:default Failed to generate data (full log below):
             locale:zh_CN 无法生成数据（完整日志在此）：
         [/entry]
-        [entry] db-migration-err
+        [entry] db-update-err
             # [locale] default
-            #     An error occurred while migrating the database: {msg}
+            #     An error occurred while updating the database: {msg}
             #     Please re-apply the theme and try again
             # [/locale]
             [locale] zh_CN 
-                迁移数据库时发生了错误：{msg}
+                更新数据库时发生了错误：{msg}
                 请重新应用当前主题，然后重试
             [/locale]
         [/entry]
-        [entry] db-migrate-success-msg
-            # locale:default Successfully completed migration, proceeding execution
-            locale:zh_CN 数据库迁移完成，继续执行命令
+        [entry] db-read-err
+            # [locale] default
+            #     An error occurred while reading the database: {msg}
+            #     Please re-apply the theme and try again
+            # [/locale]
+            [locale] zh_CN 
+                读取数据库时发生了错误：{msg}
+                请重新应用当前主题，然后重试
+            [/locale]
+        [/entry]
+        [entry] db-invalid-version
+            # locale:default Invalid database version information
+            locale:zh_CN 无效数据库版本信息
+        [/entry]
+        [entry] db-update-success-msg
+            # locale:default Successfully updated database, proceeding execution
+            locale:zh_CN 数据库更新完成，继续执行命令
         [/entry]
         [entry] command-fail-err
             # locale:default Error: failed to run command: {msg}
@@ -96,5 +114,9 @@ in_domainapp swiftycode clitheme
         [entry] internal-error-err
             # locale:default Error: an internal error has occurred while executing the command (execution halted):
             locale:zh_CN 错误：执行命令时发生内部错误（执行已终止）：
+        [/entry]
+        [entry] output-interrupted-exit
+            # locale:default Output interrupted after command exit
+            locale:zh_CN 输出在命令退出后被中断
         [/entry]
 {/entries_section}

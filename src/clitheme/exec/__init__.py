@@ -15,17 +15,19 @@ import os
 import re
 import io
 import shutil
+import functools
 def _labeled_print(msg: str):
-    print("[clitheme-exec] "+msg)
+    for line in msg.splitlines():
+        print("[clitheme-exec] "+line)
 
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
+from typing import List
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
 
-_globalvar.handle_set_themedef(frontend, "clitheme-exec")
-frontend.global_domain="swiftycode"
-frontend.global_appname="clitheme"
+frontend.set_domain("swiftycode")
+frontend.set_appname("clitheme")
 fd=frontend.FetchDescriptor(subsections="exec")
 
 # Prevent recursion dead loops and accurately simulate that regeneration is only triggered once
@@ -40,13 +42,13 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
         else: db_interface.connect_db()
     except db_interface.need_db_regenerate:
-        _labeled_print(fd.reof("substrules-migrate-msg", "Migrating substrules database..."))
+        _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
         orig_stdout=sys.stdout
         try:
             # gather files
             search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
             if not os.path.isdir(search_path): raise Exception(search_path+" not directory")
-            lsdir_result=os.listdir(search_path); lsdir_result.sort()
+            lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
             lsdir_num=0
             for x in lsdir_result: 
                 if os.path.isdir(search_path+"/"+x): lsdir_num+=1
@@ -63,20 +65,23 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
             if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
-                raise Exception(fd.reof("db-migration-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
+                raise Exception(fd.reof("db-update-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=orig_stdout
             try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
             except FileNotFoundError: raise
             shutil.copy(cli.last_data_path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
-            _labeled_print(fd.reof("db-migrate-success-msg", "Successfully completed migration, proceeding execution"))
+            _labeled_print(fd.reof("db-update-success-msg", "Successfully updated database, proceeding execution"))
         except:
             sys.stdout=orig_stdout
-            _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+            _labeled_print(fd.feof("db-update-err", "An error occurred while updating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return False
     except FileNotFoundError: pass
-    except: 
-        _labeled_print(fd.feof("db-migration-err", "An error occurred while migrating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
+    except Exception as exc: 
+        msg=fd.reof("db-invalid-version", "Invalid database version information")\
+            if type(exc) in (ValueError, TypeError) else str(sys.exc_info()[1])
+            # ValueError: value is not an integer; TypeError: fetched value is None
+        _labeled_print(fd.feof("db-read-err", "An error occurred while reading the database: {msg}\nPlease re-apply the theme and try again", msg=msg))
         _globalvar.handle_exception()
         return False
     return True
@@ -84,22 +89,22 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
 def _handle_help_message(full_help: bool=False):
     fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
-    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--debug-showchars] [--debug-foreground] [--debug-nosubst] [command]")
+    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--showchars] [--foreground-stat] [--nosubst] [command]")
     if not full_help: return
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
+    print("\t\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
     print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
-    print("\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
-    print("\t"+fd2.reof("options-debug-showchars", "--debug-showchars: Display various control characters in plain text"))
-    print("\t"+fd2.reof("options-debug-foreground", "--debug-foreground: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
-    print("\t"+fd2.reof("options-debug-nosubst", "--debug-nosubst: Do not perform any output substitutions even if a theme is set"))
+    print("\t"+fd2.reof("options-showchars", "--showchars: Display various control characters in plain text"))
+    print("\t"+fd2.reof("options-foreground-stat", "--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
+    print("\t"+fd2.reof("options-nosubst", "--nosubst: Do not perform any output substitutions even if a theme is set"))
 
 def _handle_error(message: str):
     print(message)
     print(fd.reof("help-usage-prompt", "Run \"clitheme-exec --help\" for usage information"))
     return 1
 
-def main(arguments: list):
+def main(arguments: List[str]):
     """
     Invoke clitheme-exec using the given command line arguments
 
@@ -120,24 +125,25 @@ def main(arguments: list):
             debug_mode.append("color")
         elif arg=="--debug-newlines":
             debug_mode.append("newlines")
-        elif arg=="--debug-showchars":
+        elif arg in ("--showchars", "--debug-showchars"):
             debug_mode.append("showchars")
-        elif arg=="--debug-foreground":
+        elif arg in ("--foreground-stat", "--debug-foreground"):
             debug_mode.append("foreground")
-        elif arg=="--debug-nosubst":
+        elif arg in ("--nosubst", "--debug-nosubst"):
             subst=False
         elif arg=="--help":
             showhelp=True
         else: 
             return _handle_error(fd.feof("unknown-option-err", "Error: unknown option \"{phrase}\"", phrase=arg))
+    if "newlines" in debug_mode and not "normal" in debug_mode:
+        return _handle_error(fd.reof("debug-newlines-not-with-debug", "Error: \"--debug-newlines\" must be used with \"--debug\" option"))
     if len(arguments)<=1+argcount:
         if showhelp:
             _handle_help_message(full_help=True)
             return 0
         else: 
             _handle_help_message()
-            _handle_error(fd.reof("no-command-err", "Error: no command specified"))
-            return 1
+            return _handle_error(fd.reof("no-command-err", "Error: no command specified"))
     # check database
     if subst:
         if not os.path.exists(f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):

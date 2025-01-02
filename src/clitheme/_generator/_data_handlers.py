@@ -5,12 +5,12 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Functions for data processing and others (internal module)
+Functions for data processing and error handling (internal module)
 """
 import os
 import gzip
 import re
-from typing import Optional
+from typing import Optional, List
 from .. import _globalvar, frontend
 
 # spell-checker:ignore datapath
@@ -26,8 +26,8 @@ class DataHandlers:
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
         self.fd=self.frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
         self.fmt=_globalvar.make_printable # alias for the make_printable function
-    def handle_error(self, message: str):
-        output=self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
+    def handle_error(self, message: str, not_syntax_error: bool=False):
+        output=message if not_syntax_error else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
         raise SyntaxError(output)
     def handle_warning(self, message: str):
         output=self.fd.feof("warning-str", "Warning: {msg}", msg=message)
@@ -65,7 +65,7 @@ class DataHandlers:
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         f.write(content+'\n')
-    def write_infofile_newlines(self, path: str, filename: str, content_phrases: list, line_number_debug: int, header_name_debug: str):
+    def write_infofile_newlines(self, path: str, filename: str, content_phrases: List[str], line_number_debug: int, header_name_debug: str):
         if not os.path.isdir(path):
             os.makedirs(path)
         target_path=path+"/"+filename
@@ -75,13 +75,13 @@ class DataHandlers:
         f=open(target_path,'w', encoding="utf-8")
         for line in content_phrases:
             f.write(line+"\n")
-    def write_manpage_file(self, file_path: list, content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
+    def write_manpage_file(self, file_path: List[str], content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
         parent_path=custom_parent_path if custom_parent_path!=None else self.path+"/"+_globalvar.generator_manpage_pathname
         parent_path+='/'+os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
         # create the parent directory
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)
         full_path=parent_path+"/"+file_path[-1]
         if os.path.isfile(full_path):
             if line_number_debug!=-1: self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: repeated manpage file, overwriting", num=str(line_number_debug)))
@@ -90,4 +90,4 @@ class DataHandlers:
             open(full_path, "w", encoding="utf-8").write(content)
             open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
         except IsADirectoryError:
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)
