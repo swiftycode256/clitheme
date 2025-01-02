@@ -10,3 +10,4 @@ override_dh_auto_install:
 	dh_auto_install
 	# remove __pycache__
 	-rm -r debian/$(PYBUILD_NAME)/usr/lib/python3/dist-packages/$(PYBUILD_NAME)/__pycache__
+	-rm -r debian/$(PYBUILD_NAME)/usr/lib/python3/dist-packages/$(PYBUILD_NAME)/*/__pycache__
