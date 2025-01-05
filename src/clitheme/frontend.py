@@ -161,6 +161,8 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
             shutil.copytree(return_val, path_name)
         try: shutil.rmtree(return_val)
         except: pass
+    else:
+        if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")
     global _alt_path
     _alt_path_hash=local_path_hash
     _alt_path=path_name+"/"+_globalvar.generator_data_pathname
