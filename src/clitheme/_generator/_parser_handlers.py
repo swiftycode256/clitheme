@@ -278,11 +278,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     leading_whitespace=re.sub(r"\t", " "*8, leading_whitespace)
                     # update line content
                     # replace \end_block with end_block
-                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
+                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
                     # update minspaces
                     minspaces=min(minspaces, len(leading_whitespace))
             else: # don't preserve whitespaces
-                line=re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
+                line=re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
             # write to data
             blockinput_data+="\n"+line
         # remove the extra leading newline
