@@ -64,7 +64,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
                 paths.append(target_path+"/manpage_data/file_content") # small hack/workaround
             cli_msg=io.StringIO()
             sys.stdout=cli_msg
-            if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True)==0: 
+            if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True, no_confirm=True)==0: 
                 raise Exception(fd.reof("db-update-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
             sys.stdout=orig_stdout
             try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
