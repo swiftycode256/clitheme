@@ -11,12 +11,12 @@ Version information definition file
 
 # Version definition file; define the package version here
 # The __version__ variable must be a literal string; DO NOT use variables
-__version__="2.0-beta3"
+__version__="2.0-dev20250120"
 major=2
 minor=0
 release=-1 # -1 stands for "dev"
 beta_release=3 # None if not beta
 # For PKGBUILD
 # version_main CANNOT contain hyphens (-); use underscores (_) instead
-version_main="2.0_beta3"
+version_main="2.0_dev20250120"
 version_buildnumber=1
