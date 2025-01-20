@@ -7,7 +7,7 @@ version = {attr = "clitheme._version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-exclude = ["*test*"]
+include = ["clitheme", "clitheme.*"]
 
 [tool.setuptools.package-data]
 "*" = ["*"]
