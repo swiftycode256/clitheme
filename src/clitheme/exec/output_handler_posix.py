@@ -120,7 +120,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 # Background thread to forward stdin to subprocess pipe
                 nonlocal r,w
                 while True:
-                    select.select([sys.stdin], [], [])
                     d=os.read(sys.stdin.fileno(), readsize)
                     if d==b'': # stdin is closed
                         os.close(w)
@@ -308,7 +307,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if not thread.is_alive() and not process.poll()!=None:
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
-            if thread_exception_handled: continue # Prevent conflict with setting terminal attributes
+            if thread_exception_handled: break # Prevent conflict with setting terminal attributes
 
             # Process outputs
             def process_line(line: bytes, line_data):
