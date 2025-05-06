@@ -66,12 +66,12 @@ This setting is valid for the module/code file that invokes this function.
 - Change global variables (e.g. global_domain, global_debugmode) to set the default value for all files in an invoking module
 """
 
-def set_domain(value: Optional[str]): _desc.format("domain_name");_update_local_settings("domain", value)
-def set_appname(value: Optional[str]): _desc.format("app_name");_update_local_settings("appname", value)
-def set_subsections(value: Optional[str]): _desc.format("subsections");_update_local_settings("subsections", value)
-def set_debugmode(value: Optional[bool]): _desc.format("debug_mode");_update_local_settings("debugmode", value)
-def set_lang(value: Optional[str]): _desc.format("lang");_update_local_settings("lang", value)
-def set_disablelang(value: Optional[bool]): _desc.format("disable_lang");_update_local_settings("disablelang", value)
+def set_domain(value: Optional[str]): _update_local_settings("domain", value)
+def set_appname(value: Optional[str]): _update_local_settings("appname", value)
+def set_subsections(value: Optional[str]): _update_local_settings("subsections", value)
+def set_debugmode(value: Optional[bool]): _update_local_settings("debugmode", value)
+def set_lang(value: Optional[str]): _update_local_settings("lang", value)
+def set_disablelang(value: Optional[bool]): _update_local_settings("disablelang", value)
 
 global_domain=""
 global_appname=""
