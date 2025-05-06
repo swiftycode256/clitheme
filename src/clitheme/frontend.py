@@ -91,11 +91,51 @@ def _get_setting(key: str, caller: Optional[str]=None) -> Union[str,bool]:
 _alt_path: Optional[str]=None
 _alt_path_dirname: Optional[str]=None
 _alt_path_hash: Optional[bytes]=None
-_alt_info_index: int=1
+_alt_info_index: int=1 # Next info index
 
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
+
+def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> bool:
+    """
+    Handle generate data operation for set_local_themedef[s] functions
+    """
+    from . import _generator
+    global global_debugmode
+    _generator.generate_custom_path() # prepare _generator.path
+    if _alt_path_dirname!=None and overlay==True: # overlay
+        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
+    if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
+    # Generate data hierarchy as needed
+    if not os.path.exists(path_name):
+        return_val: str
+        d_copy=(global_debugmode, _generator.silence_warn)
+        for x in range(len(file_contents)):
+            file_content=file_contents[x]
+            if _get_setting("debugmode") and len(file_contents)>1:
+                print(f"[Debug] set_local_themedefs: Processing file {x+1} of {len(file_contents)}")
+            try:
+                # Set this to prevent extra messages from being displayed
+                _generator.silence_warn=True
+                global_debugmode=False
+                return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+            except SyntaxError:
+                if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
+                return False
+            finally: global_debugmode, _generator.silence_warn=d_copy
+        if not os.path.exists(path_name):
+            shutil.copytree(return_val, path_name)
+        try: shutil.rmtree(return_val)
+        except: pass
+    else:
+        if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")
+    return True
+def _get_dir_name(hash: bytes, index: int) -> str:
+    h=hashlib.shake_256(hash)
+    local_path_hash="O"+str(index)+h.hexdigest(5)
+    dir_name=f"clitheme-data-{local_path_hash}"
+    return dir_name
 
 def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """
@@ -117,33 +157,11 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     if new_path_hash!=None and overlay==True:
         new_path_hash+=h # append
     else: new_path_hash=h # override
-    hash=hashlib.shake_256(h)
-    local_path_hash="O"+str(_alt_info_index)+hash.hexdigest(5)
-    dir_name=f"clitheme-data-{local_path_hash}"
-    _generator.generate_custom_path() # prepare _generator.path
+    dir_name=_get_dir_name(new_path_hash, _alt_info_index)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
-    if _alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
-    if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
-    # Generate data hierarchy as needed
-    if not os.path.exists(path_name):
-        _generator.silence_warn=True
-        return_val: str
-        d_copy=(global_debugmode, _generator.silence_warn)
-        try:
-            # Set this to prevent extra messages from being displayed
-            global_debugmode=False
-            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
-        except SyntaxError:
-            if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
-            return False
-        finally: global_debugmode, _generator.silence_warn=d_copy
-        if not os.path.exists(path_name):
-            shutil.copytree(return_val, path_name)
-        try: shutil.rmtree(return_val)
-        except: pass
-    else:
-        if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")
+
+    _generate_data([file_content], path_name, overlay)
+
     # Update everything after success
     _alt_info_index+=1
     _alt_path_hash=new_path_hash
@@ -162,13 +180,22 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     
     This function returns True if successful, otherwise returns False.
     """
-    global _alt_path, _alt_path_hash, _alt_path_dirname
-    orig=(_alt_path, _alt_path_hash, _alt_path_dirname)
-    for x in range(len(file_contents)):
-        content=file_contents[x]
-        if not set_local_themedef(content, overlay=(x>0 or overlay)): 
-            _alt_path, _alt_path_hash, _alt_path_dirname=orig
-            return False
+    global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index
+    # File hash generation
+    # if overlay, update hash with new contents of file
+    path_hash: bytes=_alt_path_hash if overlay and _alt_path_hash!=None else b""
+    for file_content in file_contents:
+        path_hash+=hashlib.sha1(bytes(file_content, 'utf-8')).digest()
+    dir_name=_get_dir_name(path_hash, _alt_info_index+len(file_contents)-1)
+    path_name=_globalvar.clitheme_temp_root+"/"+dir_name
+
+    _generate_data(file_contents, path_name, overlay)
+
+    # Update everything after success
+    _alt_info_index+=len(file_contents)
+    _alt_path_hash=path_hash
+    _alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    _alt_path_dirname=dir_name
     return True
 
 def unset_local_themedef():
