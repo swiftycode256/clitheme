@@ -10,7 +10,7 @@ It is not required to always follow this path naming convention and specifying g
 
 ### Directly accessing the theme data hierarchy
 
-One of the key design principles of `clitheme` is that the use of frontend module is not needed to access the theme data hierarchy, and its method is easy to understand and implement. This is important especially in applications written in languages other than Python because Python is the only language supported by the frontend module.
+One of the key design principles of CLItheme is that the use of frontend module is not needed to access the theme data hierarchy, and its method is easy to understand and implement. This is important especially in applications written in languages other than Python because Python is the only language supported by the frontend module.
 
 The data hierarchy is organized in a **subfolder structure**, meaning that every subsection in the path name represent a file or folder in the data hierarchy.
 
@@ -26,7 +26,7 @@ In conclusion, to directly access a specific string definition, convert the path
 
 ### Using the built-in frontend module
 
-Using the frontend module provided by `clitheme` is very easy and straightforward. To access a string definition in the current theme setting, create a new `frontend.FetchDescriptor` object and use the provided `retrieve_entry_or_fallback` function.
+Using the frontend module provided by CLItheme is very easy and straightforward. To access a string definition in the current theme setting, create a new `frontend.FetchDescriptor` object and use the provided `retrieve_entry_or_fallback` function.
 
 You need to pass the path name and a fallback string to this function. If the current theme setting does not provide the specified path name and string definition, the function will return the fallback string.
 
@@ -58,7 +58,7 @@ f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\""
 
 ### Using the fallback frontend module
 
-You can integrate the fallback frontend module provided by this project to better handle situations when `clitheme` does not exist on the system. This fallback module contains all the functions in the frontend module, and its functions will always return fallback values.
+You can integrate the fallback frontend module provided by this project to better handle situations when CLItheme does not exist on the system. This fallback module contains all the functions in the frontend module, and its functions will always return fallback values.
 
 Import the `frontend_fallback.py` file from the repository and insert the following code in your project to use it:
 
