@@ -1,4 +1,4 @@
-# clitheme - 命令行自定义工具
+# CLItheme - 命令行自定义工具
 
 **中文** | [English](.github/README.md)
 
@@ -6,7 +6,7 @@
 
 ---
 
-`clitheme`允许你对命令行输出进行个性化定制，给它们一个你想要的风格和个性。
+CLItheme允许你对命令行输出进行个性化定制，给它们一个你想要的风格和个性。
 
 样例：
 ```plaintext
@@ -39,7 +39,7 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 
 ## 功能
 
-`clitheme`包含以下主要功能：
+CLItheme包含以下主要功能：
 
 - 对任何命令行应用程序的输出通过定义替换规则进行修改和自定义
 - 自定义Unix/Linux文档手册（manpage）
@@ -48,7 +48,7 @@ test.c:4:3: 提示: 'char *'从不兼容的指针类型赋值为'int *',两者�
 其他特性：
 
 - 多语言支持
-    - 这意味着你也可以用`clitheme`来为应用程序添加多语言支持
+    - 这意味着你也可以用CLItheme来为应用程序添加多语言支持
 - 简洁易懂的**主题定义文件**语法
 - 无需应用程序API也可以访问当前主题中的字符串定义（易懂的数据结构）
 
@@ -168,11 +168,11 @@ $ clitheme-man ls
 
 # 安装与构建
 
-安装`clitheme`非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
+安装CLItheme非常简单，您可以通过pip软件包，Arch Linux软件包，或者Debian软件包安装。
 
 ### 通过Python/pip软件包安装
 
-首先，确保Python 3已安装在系统中。`clitheme`需要Python 3.8或更高版本。
+首先，确保Python 3已安装在系统中。CLItheme需要Python 3.8或更高版本。
 
 - 在Linux发行版上，你可以通过对应的软件包管理器安装Python
 - 在macOS上，你可以通过Xcode命令行开发者工具安装Python（使用`xcode-select --install`命令），或者通过Python官网（ https://www.python.org/downloads ）下载
@@ -202,7 +202,7 @@ $ clitheme-man ls
 
 ### 构建pip软件包
 
-`clitheme`使用的是`setuptools`构建器，所以构建软件包前需要安装它。
+CLItheme使用的是`setuptools`构建器，所以构建软件包前需要安装它。
 
 首先，安装`setuptools`、`build`、和`wheel`软件包。你可以通过你使用的Linux发行版提供的软件包，或者使用以下命令通过`pip`安装：
 

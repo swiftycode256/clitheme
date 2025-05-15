@@ -1,4 +1,4 @@
-# clitheme - Command line customization utility
+# CLItheme - Command line customization utility
 
 [中文](../README.md) | **English**
 
@@ -6,7 +6,7 @@
 
 ---
 
-`clitheme` allows you to customize the output of command line applications, giving them the style and personality you want.
+CLItheme allows you to customize the output of command line applications, giving them the style and personality you want.
 
 Example:
 ```plaintext
@@ -39,7 +39,7 @@ test.c:4:3: note: incompatible pointer types 'char *' and 'int *', they're so…
 
 ## Features
 
-`clitheme` has these main features:
+CLItheme has these main features:
 
 - Customize and modify the output of any command line application through defining substitution rules
 - Customize Unix/Linux manual pages (man pages)
@@ -48,7 +48,7 @@ test.c:4:3: note: incompatible pointer types 'char *' and 'int *', they're so…
 Other characteristics:
 
 - Multi-language/internalization support
-    - This means that you can also use `clitheme` to add internalization support for command line applications
+    - This means that you can also use CLItheme to add internalization support for command line applications
 - Easy-to-understand **theme definition file** syntax
 - The string entries in the current theme setting can be accessed without using the frontend API (easy-to-understand data structure)
 
@@ -169,11 +169,11 @@ Please see [this article](./README-frontend.en.md)
 
 # Installing and building
 
-`clitheme` can be installed through pip package, Debian package, and Arch Linux package.
+CLItheme can be installed through pip package, Debian package, and Arch Linux package.
 
 ### Install using Python/pip package
 
-First, ensure that Python 3 is installed on the system. `clitheme` requires Python 3.8 or higher.
+First, ensure that Python 3 is installed on the system. CLItheme requires Python 3.8 or higher.
 
 - On Linux distributions, you can use relevant package manager to install 
 - On macOS, you can install Python through Xcode command line developer tools (use `xcode-select --install` command), or through Python website ( https://www.python.org/downloads )
@@ -203,7 +203,7 @@ You can build the package from the repository source code, which includes any la
 
 ### Build pip package
 
-`clitheme` uses the `setuptools` build system, so it needs to be installed beforehand.
+CLItheme uses the `setuptools` build system, so it needs to be installed beforehand.
 
 First, install `setuptools`, `build`, and `wheel` packages. You can use the packages provided by your Linux distribution, or install using `pip`:
 
