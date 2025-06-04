@@ -21,7 +21,7 @@ import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
 from ._globalvar import _direct_exit
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # spell-checker:ignore pathnames lsdir inpstr
 
@@ -263,23 +263,31 @@ def get_current_theme_info(name: bool=False, file_path=False):
 class _invalid_theme(Exception): 
     def __init__(self, message: str):
         self.message=message
-def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+_is_not_datadir=lambda target_path: \
+    (not os.path.isdir(target_path)) or re.search(r"^\d+$", os.path.basename(target_path))==None
+def _fetch_abs_lsdir() -> List[str]:
     search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
     if not os.path.isdir(search_path): 
         raise _invalid_theme("no theme set")
     lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
+    # Make absolute path
+    lsdir_result=list(map(lambda name:search_path+"/"+name, lsdir_result))
     lsdir_num=0
-    for x in lsdir_result: 
-        if os.path.isdir(search_path+"/"+x): lsdir_num+=1
+    lsdir_final=[]
+    for target_path in lsdir_result: 
+        if os.path.isdir(target_path): lsdir_num+=1
+        # Don't include current_theme_index file
+        if not _is_not_datadir(target_path): lsdir_final.append(target_path)
     if lsdir_num<1: raise _invalid_theme("empty directory")
+    return lsdir_final
 
+def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+    lsdir_result=_fetch_abs_lsdir()
     # Get file paths from clithemeinfo_filepath files
     file_paths: List[str]=[]
     # Get file contents from file_content files
     file_contents: List[str]=[]
-    for pathname in lsdir_result:
-        target_path=search_path+"/"+pathname
-        if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
+    for target_path in lsdir_result:
         got_path: str
         try:
             if get_filepath:
@@ -314,6 +322,48 @@ def update_theme(no_confirm=False):
         _globalvar.handle_exception()
         return 1
     return apply_theme(None, file_paths, overlay=False, no_confirm=no_confirm)
+
+def repair_theme():
+    """
+    Re-applies theme files stored in the current theme data
+
+    (Invokes `clitheme repair-theme`)
+    """
+    fi=frontend.FetchDescriptor(subsections="cli repair-theme")
+    # Get file paths and file contents
+    try:
+        file_paths: List[str]
+        file_contents: List[str]
+        file_paths, file_contents=_fetch_theme_data(get_filepath=True, get_file_contents=True) # type: ignore
+    except _invalid_theme as exc:
+        if exc.message=="no theme set":
+            print(fi.reof("no-theme-err", "Error: no theme currently set"))
+        else:
+            print(fi.reof("not-available-err", "repair-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
+            _globalvar.handle_exception()
+        return 1
+    except:
+        print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
+        _globalvar.handle_exception()
+        return 1
+    lsdir_result=_fetch_abs_lsdir()
+    assert len(lsdir_result)==len(file_paths), f"{len(lsdir_result)}!={len(file_paths)}"
+    # Run apply-theme to overwrite existing data
+    # Quick workaround to handle manpage paths in definition files
+    apply_paths=list(map(lambda path: path+"/manpage_data/file_content", lsdir_result))
+    if apply_theme(file_contents, apply_paths, no_confirm=False)!=0: return 1
+    # Replace filepath theme-info data
+    print(fi.reof("updating-info", "==> Updating info..."))
+    try:
+        for x in range(len(lsdir_result)):
+            target_path=lsdir_result[x]
+            info_path=target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")
+            open(info_path, 'w').write(file_paths[x]+"\n")
+    except Exception as exc:
+        print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
+        return 1
+    print(fi.reof("update-info-success", "Successfully updated info"))
+    return 0
 
 def _is_option(arg):
     return arg.strip()[0:1]=="-"
