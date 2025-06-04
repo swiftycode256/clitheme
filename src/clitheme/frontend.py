@@ -160,7 +160,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     dir_name=_get_dir_name(new_path_hash, _alt_info_index)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
 
-    _generate_data([file_content], path_name, overlay)
+    if not _generate_data([file_content], path_name, overlay): return False
 
     # Update everything after success
     _alt_info_index+=1
@@ -189,7 +189,7 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     dir_name=_get_dir_name(path_hash, _alt_info_index+len(file_contents)-1)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
 
-    _generate_data(file_contents, path_name, overlay)
+    if not _generate_data(file_contents, path_name, overlay): return False
 
     # Update everything after success
     _alt_info_index+=len(file_contents)
