@@ -351,7 +351,7 @@ def repair_theme():
     # Run apply-theme to overwrite existing data
     # Quick workaround to handle manpage paths in definition files
     apply_paths=list(map(lambda path: path+"/manpage_data/file_content", lsdir_result))
-    if apply_theme(file_contents, apply_paths, no_confirm=False)!=0: return 1
+    if apply_theme(file_contents, apply_paths, no_confirm=True)!=0: return 1
     # Replace filepath theme-info data
     print(fi.reof("updating-info", "==> Updating info..."))
     try:
@@ -393,6 +393,7 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
     print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-repair-theme", "repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data"))
     print("\t"+fd.reof("options-yes", "[For supported commands, specify --yes to skip the confirmation prompt]"))
     print("\t"+fd.reof("options-version", "--version: Show the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Show this help message"))
@@ -473,6 +474,9 @@ def main(cli_args: List[str]):
                 if arg.strip()=="--yes": no_confirm=True
                 else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
             return update_theme(no_confirm=no_confirm)
+        elif cli_args[1]=="repair-theme":
+            check_extra_args(2)
+            return repair_theme()
         elif cli_args[1]=="--version":
             check_extra_args(2)
             print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
