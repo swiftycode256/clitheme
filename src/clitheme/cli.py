@@ -260,6 +260,37 @@ def get_current_theme_info(name: bool=False, file_path=False):
         print() # Separate each entry with an empty line
     return 0
 
+class _invalid_theme(Exception): 
+    def __init__(self, message: str):
+        self.message=message
+def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+    search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
+    if not os.path.isdir(search_path): 
+        raise _invalid_theme("no theme set")
+    lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
+    lsdir_num=0
+    for x in lsdir_result: 
+        if os.path.isdir(search_path+"/"+x): lsdir_num+=1
+    if lsdir_num<1: raise _invalid_theme("empty directory")
+
+    # Get file paths from clithemeinfo_filepath files
+    file_paths: List[str]=[]
+    # Get file contents from file_content files
+    file_contents: List[str]=[]
+    for pathname in lsdir_result:
+        target_path=search_path+"/"+pathname
+        if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
+        got_path: str
+        try:
+            if get_filepath:
+                got_path=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), encoding="utf-8").readline().strip()
+                file_paths.append(got_path)
+            if get_file_contents:
+                content=open(target_path+"/file_content", encoding="utf-8").read()
+                file_contents.append(content)
+        except: raise _invalid_theme("Read error: "+str(sys.exc_info()[1]))
+    return (file_paths if get_filepath else None, file_contents if get_file_contents else None)
+
 def update_theme(no_confirm=False):
     """
     Re-applies theme files from file paths specified in the previous apply-theme command (including all related apply-theme commands if --overlay is used)
@@ -268,34 +299,15 @@ def update_theme(no_confirm=False):
 
     (Invokes 'clitheme update-theme')
     """
-    class invalid_theme(Exception): pass
-    file_paths: List[str]
     fi=frontend.FetchDescriptor(subsections="cli update-theme")
     try:
-        search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
-        if not os.path.isdir(search_path):
+        file_paths: List[str]=_fetch_theme_data(get_filepath=True, get_file_contents=False)[0] # type: ignore
+    except _invalid_theme as exc:
+        if exc.message=="no theme set":
             print(fi.reof("no-theme-err", "Error: no theme currently set"))
-            return 1
-        lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
-        lsdir_num=0
-        for x in lsdir_result: 
-            if os.path.isdir(search_path+"/"+x): lsdir_num+=1
-        if lsdir_num<1: raise invalid_theme("empty directory")
-
-        # Get file paths from clithemeinfo_filepath files
-        file_paths=[]
-        for pathname in lsdir_result:
-            target_path=search_path+"/"+pathname
-            if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
-            got_path: str
-            try:
-                got_path=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), encoding="utf-8").readline().strip()
-            except: raise invalid_theme("Read error: "+str(sys.exc_info()[1]))
-            file_paths.append(got_path)
-        if len(file_paths)==0: raise invalid_theme("file_paths empty")
-    except invalid_theme:
-        print(fi.reof("not-available-err", "update-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
-        _globalvar.handle_exception()
+        else:
+            print(fi.reof("not-available-err", "update-theme cannot be used with the current theme setting\nPlease re-apply the current theme and try again"))
+            _globalvar.handle_exception()
         return 1
     except:
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
