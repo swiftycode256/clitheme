@@ -43,39 +43,13 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
         else: db_interface.connect_db()
     except db_interface.need_db_regenerate:
         _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
-        orig_stdout=sys.stdout
-        try:
-            # gather files
-            search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
-            if not os.path.isdir(search_path): raise Exception(search_path+" not directory")
-            lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
-            lsdir_num=0
-            for x in lsdir_result: 
-                if os.path.isdir(search_path+"/"+x): lsdir_num+=1
-            if lsdir_num<1: raise Exception("empty directory")
-
-            file_contents=[]
-            paths=[]
-            for pathname in lsdir_result:
-                target_path=search_path+"/"+pathname
-                if (not os.path.isdir(target_path)) or re.search(r"^\d+$", pathname.strip())==None: continue # skip current_theme_index file
-                content=open(target_path+"/file_content", encoding="utf-8").read()
-                file_contents.append(content)
-                paths.append(target_path+"/manpage_data/file_content") # small hack/workaround
-            cli_msg=io.StringIO()
-            sys.stdout=cli_msg
-            if not cli.apply_theme(file_contents, filenames=paths, overlay=False, generate_only=True, preserve_temp=True, no_confirm=True)==0: 
-                raise Exception(fd.reof("db-update-generator-err", "Failed to generate data (full log below):")+"\n"+cli_msg.getvalue()+"\n")
-            sys.stdout=orig_stdout
-            try: os.remove(dest_root_path+"/"+_globalvar.db_filename)
-            except FileNotFoundError: raise
-            shutil.copy(cli.last_data_path+"/"+_globalvar.db_filename, dest_root_path+"/"+_globalvar.db_filename)
-            _labeled_print(fd.reof("db-update-success-msg", "Successfully updated database, proceeding execution"))
+        try: 
+            if cli.repair_theme()!=0: raise Exception("repair_theme returned error")
         except:
-            sys.stdout=orig_stdout
             _labeled_print(fd.feof("db-update-err", "An error occurred while updating the database: {msg}\nPlease re-apply the theme and try again", msg=str(sys.exc_info()[1])))
             _globalvar.handle_exception()
             return False
+        _labeled_print(fd.reof("db-update-success-msg", "Successfully updated database, proceeding execution")+"\n")
     except FileNotFoundError: pass
     except Exception as exc: 
         msg=fd.reof("db-invalid-version", "Invalid database version information")\
