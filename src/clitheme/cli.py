@@ -40,7 +40,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     - Set overlay=True to overlay the theme on top of existing theme[s]
     - Set preserve_temp=True to preserve the temp directory (debugging purposes)
     - Set generate_only=True to generate the data hierarchy only (invokes 'clitheme generate-data' instead)
-    - Set no_confirm=True to skip the user confirmation prompt
+    - Set no_confirm=True to skip displaying the file list and confirmation prompt
     """
     if file_contents==None:
         try: file_contents=_get_file_contents(filenames)
@@ -51,20 +51,20 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
         raise ValueError("file_contents and filenames have different lengths")
     f=frontend.FetchDescriptor(subsections="cli apply-theme")
-    # Display information and confirmation prompt
-    if generate_only:
-        print(f.reof("generate-data-msg", "The theme data will be generated from the following definition files in the following order:"))
-    else:
-        print(f.reof("apply-theme-msg", "The following definition files will be applied in the following order: "))
-    for i in range(len(filenames)):
-        path=filenames[i]
-        print("\t{}: {}".format(str(i+1), fmt(path)))
-    if not generate_only:
-        if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
-            print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
-        if overlay==True:
-            print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
-        if not no_confirm:
+    if not no_confirm:
+        # Display information and confirmation prompt
+        if generate_only:
+            print(f.reof("generate-data-msg", "The theme data will be generated from the following definition files in the following order:"))
+        else:
+            print(f.reof("apply-theme-msg", "The following definition files will be applied in the following order: "))
+        for i in range(len(filenames)):
+            path=filenames[i]
+            print("\t{}: {}".format(str(i+1), fmt(path)))
+        if not generate_only:
+            if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
+                print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
+            if overlay==True:
+                print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
             inpstr=f.reof("confirm-prompt", "Do you want to continue? [y/n]")
             try: inp=input(inpstr+" ").strip().lower()
             except (KeyboardInterrupt, EOFError): print();return 130
