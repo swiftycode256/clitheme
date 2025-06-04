@@ -220,6 +220,42 @@ in_domainapp swiftycode clitheme
                     请重新应用当前主题后重试
                 [/locale]
             [/entry]
+        # repair-theme 指令
+        # repair-theme command
+        in_subsection cli repair-theme
+            [entry] no-theme-err
+                # locale:default Error: no theme currently set
+                locale:zh_CN 错误：当前没有设定主题
+            [/entry]
+            [entry] not-available-err
+                # [locale] default
+                #     repair-theme cannot be used with the current theme setting
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    repair-theme在当前主题设定上无法使用
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] other-err
+                # [locale] default
+                #     An error occurred: {msg}
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    发生了错误：{msg}
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] updating-info
+                # locale:default ==> Updating info...
+                locale:zh_CN ==> 正在更新信息...
+            [/entry]
+            [entry] update-info-success
+                # locale:default Successfully updated info
+                locale:zh_CN 已成功更新信息
+            [/entry]
+
         # 用于clitheme --help的字符串定义
         # String entries used for "clitheme --help"
         in_subsection cli help-message
@@ -268,6 +304,10 @@ in_domainapp swiftycode clitheme
             [entry] options-generate-data
                 # locale:default generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
+            [/entry]
+            [entry] options-repair-theme
+                # locale:default repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data
+                locale:zh_CN generate-data：【仅供调试用途】从当前数据中存储的定义文件重新应用主题
             [/entry]
             [entry] options-yes
                 # locale:default [For supported commands, specify --yes to skip the confirmation prompt]
