@@ -1,29 +1,22 @@
-# Sample gitignore file to make your life easier (>^ω^<)
+# spell-checker: disable
+# Python packaging files
 __pycache__
-__pycache__/*
-dist
-dist/*
-build
-build/*
-venv
-venv/*
+dist/
+build/
+venv/
 src/*.egg-info
-.vscode
-.vscode/*
+.vscode/
 # Vim swap file
 **/*.sw?
-# excluded files (ex)
+# Debian packaging files
 debian/*.ex 
 debian/clitheme
 debian/.debhelper
 debian/files
 debian/*.debhelper.log
-.pybuild
-.pybuild/*
-# for building Arch Linux package
-buildtmp
-buildtmp/*
-srctmp
-srctmp/*
+.pybuild/
+# Arch Linux packaging files
+buildtmp/
+srctmp/
 *.pkg.tar.zst
 .DS_Store
