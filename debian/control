@@ -12,9 +12,9 @@ Package: clitheme
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, python3 (> 3.8), man-db, sqlite3
-Description: Application framework for text theming
- clitheme allows users to customize the output of supported programs, such as
- multi-language support or mimicking your favorite cartoon character. It has an
- easy-to-understand syntax and implementation module for programs. 
+Description: Command-line application customization utility
+ clitheme allows users to customize the output of command-line programs and
+ manual pages. This package contains clitheme, clitheme-exec, and clitheme-man
+ utilities.
  .
  For more information, visit the homepage and the pages in the Wiki section.

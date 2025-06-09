@@ -1,8 +1,10 @@
 # Maintainer: swiftycode <3291929745@qq.com>
+
+# spell-checker: disable
 pkgname='clitheme'
 pkgver=2.0_dev20250604
 pkgrel=1
-pkgdesc="A text theming library for command line applications"
+pkgdesc="Command-line application customization utility"
 arch=('any')
 url="https://gitee.com/swiftycode/clitheme"
 license=('GPL3')
