@@ -29,6 +29,7 @@ Specify \fB--file-path\fR to only display the source file path of each theme.
 .TP
 .B unset-current-theme
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
+
 .TP
 .B update-theme [--yes]
 Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if \fB--overlay\fR is used)
@@ -36,6 +37,12 @@ Re-applies the theme definition files specified in the previous "apply-theme" co
 Calling this command is equivalent to calling "clitheme apply-theme" with previously-specified files.
 
 Specify \fB--yes\fR to skip the confirmation prompt.
+
+.TP
+.B repair-theme
+Re-applies theme definition files stored in the current theme data. It can be used when the current theme data is corrupt or modified.
+
+This command is for debug purposes only.
 
 .TP
 .B generate-data [themedef-file] [--overlay]
