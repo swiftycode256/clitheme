@@ -1,5 +1,5 @@
 """
-clitheme fallback frontend for version 2.0 (returns fallback values for all functions)
+CLItheme fallback frontend for version 2.0 (returns fallback values for all functions)
 """
 from typing import Optional, List
 

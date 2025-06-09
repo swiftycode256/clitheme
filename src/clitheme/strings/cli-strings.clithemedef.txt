@@ -39,8 +39,8 @@ in_domainapp swiftycode clitheme
             locale:zh_CN 使用"{clitheme} --help"以获取使用方法
         [/entry]
         [entry] version-str
-            # locale:default clitheme version {ver}
-            locale:zh_CN clitheme 版本：{ver}
+            # locale:default CLItheme version {ver}
+            locale:zh_CN CLItheme 版本：{ver}
         [/entry]
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands

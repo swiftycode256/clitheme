@@ -479,7 +479,7 @@ def main(cli_args: List[str]):
             return repair_theme()
         elif cli_args[1]=="--version":
             check_extra_args(2)
-            print(f.feof("version-str", "clitheme version {ver}", ver=_globalvar.clitheme_version))
+            print(f.feof("version-str", "CLItheme version {ver}", ver=_globalvar.clitheme_version))
         else:
             if cli_args[1]=="--help":
                 check_extra_args(2)

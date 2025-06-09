@@ -97,7 +97,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 version_ok=version_ok and _version.beta_release==None
 
             if not version_ok:
-                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
+                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_version.__version__+ \
                             # For "dev" versions: output corresponding beta milestone
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),

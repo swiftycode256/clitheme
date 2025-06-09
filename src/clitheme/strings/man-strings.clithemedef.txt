@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 {header_section}
-    name clitheme message text translations (man)
+    name CLItheme message text translations (man)
     version 2.0
     locales zh_CN
     supported_apps clitheme
