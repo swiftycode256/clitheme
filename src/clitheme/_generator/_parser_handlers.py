@@ -88,9 +88,13 @@ class GeneratorObject(_data_handlers.DataHandlers):
         else:
             version_ok= int(match_result.groupdict()['major'])<=_version.major \
                         and int(match_result.groupdict()['minor'])<=_version.minor \
-                        and (int(match_result.groupdict()['bugfix']) if match_result.groupdict().get("bugfix")!=None else -1)<=_version.release
-            if match_result.groupdict().get("beta_release")!=None and _version.beta_release!=None:
-                version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+                        and (int(match_result.groupdict()['bugfix'])<=_version.release if match_result.groupdict().get("bugfix")!=None else True)
+            if match_result.groupdict().get("beta_release")!=None:
+                if _version.beta_release!=None:
+                    version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+            else:
+                # If did not specify beta, current version cannot be beta
+                version_ok=version_ok and _version.beta_release==None
 
             if not version_ok:
                 self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
