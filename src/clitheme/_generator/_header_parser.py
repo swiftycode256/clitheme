@@ -8,7 +8,6 @@
 header_section parser function (internal module)
 """
 import re
-from typing import Optional
 from .. import _globalvar
 from . import _parser_handlers
 

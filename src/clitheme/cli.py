@@ -16,7 +16,6 @@ import sys
 import shutil
 import re
 import io
-import stat
 import functools
 from . import _globalvar, _generator, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function

@@ -9,7 +9,6 @@ Functions for data processing and error handling (internal module)
 """
 import os
 import gzip
-import re
 from typing import Optional, List
 from .. import _globalvar, frontend
 

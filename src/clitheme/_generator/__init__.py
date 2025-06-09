@@ -10,7 +10,6 @@ Generator function used in applying themes (should not be invoked directly)
 import os
 import string
 import random
-from typing import Optional
 from .. import _globalvar
 from . import _parser_handlers
 from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser

@@ -8,7 +8,6 @@
 Functions used by various parsers (internal module)
 """
 
-import sys
 import re
 import math
 import copy

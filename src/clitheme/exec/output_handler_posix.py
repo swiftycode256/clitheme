@@ -21,7 +21,6 @@ import signal
 import struct
 import copy
 import re
-import sqlite3
 import time
 import threading
 import queue

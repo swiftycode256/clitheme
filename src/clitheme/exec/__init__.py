@@ -12,10 +12,6 @@ Module used for clitheme-exec
 """
 import sys
 import os
-import re
-import io
-import shutil
-import functools
 def _labeled_print(msg: str):
     for line in msg.splitlines():
         print("[clitheme-exec] "+line)
