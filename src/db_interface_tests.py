@@ -84,6 +84,14 @@ substrules_file=r"""
         [/substitute_regex]
     unset_filter_command
 
+    set_options strictcmdmatch
+    filter_command example_app install-stuff
+        [substitute_string] Error: sample message
+            locale:default Error: sample message! (>﹏<)
+            locale:zh_CN 错误：样例提示！(>﹏<)
+        [/substitute_string] endmatchhere
+    unset_filter_command
+
     # global substitutions
     [substitute_regex] ^Warning:( )
         locale:default o(≧v≦)o Note:\g<1>
@@ -97,13 +105,6 @@ substrules_file=r"""
         locale:default input is invalid! ಥ_ಥ
         locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
-
-    set_options strictcmdmatch
-    filter_command example_app install-stuff
-        [substitute_string] Error: sample message
-            locale:default Error: sample message! (>﹏<)
-            locale:zh_CN 错误：样例提示！(>﹏<)
-        [/substitute_string] endmatchhere
 
     set_options exactcmdmatch
     filter_command rm file.ban

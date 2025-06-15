@@ -18,7 +18,7 @@ import gc
 from typing import Optional, List, Tuple, Dict
 from .. import _globalvar, frontend
 
-# spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp
+# spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp nolocale
 
 connection=sqlite3.connect(":memory:") # placeholder
 db_path=""
@@ -90,7 +90,6 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
     for cmd in cmdlist:
         # remove any existing values with the same match_pattern and effective_command
         strictness_condition=""
-        # if command_match_strictness==2: strictness_condition="AND command_match_strictness=2"
         match_condition=f"match_pattern=? AND effective_command=? {strictness_condition} {locale_condition} AND stdout_stderr_only=? AND is_regex=?"
         match_params=(match_pattern, cmd, effective_locale, stdout_stderr_matchoption, is_regex)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
@@ -133,55 +132,31 @@ def _fetch_matches(command: Optional[str]) -> List[tuple]:
 
 def _get_matches(command: Optional[str]) -> List[tuple]:
     _connection=sqlite3.connect(db_path)
-    final_cmdlist=[]
-    final_cmdlist_exactmatch=[]
-    if command!=None and len(command.split())>0:
-        # command without paths (e.g. /usr/bin/bash -> bash)
-        stripped_command=os.path.basename(command.split()[0])+(" "+_globalvar.splitarray_to_string(command.split()[1:]) if len(command.split())>1 else '')
-        cmdlist_items=["effective_command", "command_match_strictness"]
-        # obtain a list of effective_command with the same first term
-        cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE effective_command LIKE ? or effective_command LIKE ?;", (command.split()[0].strip()+" %", stripped_command.split()[0].strip()+" %")).fetchall()
-        # also include one-phrase commands
-        cmdlist+=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE effective_command=? or effective_command=?;", (command.split()[0].strip(),stripped_command.split()[0].strip())).fetchall()
-        # sort by number of phrases (greatest to least)
-        def split_len(obj: tuple) -> int: return len(obj[0].split())
-        cmdlist.sort(key=split_len, reverse=True)
-        # prioritize effective_command with exact match requirement
-        cmdlist=_connection.execute(f"SELECT DISTINCT {','.join(cmdlist_items)} FROM {_globalvar.db_data_tablename} WHERE (effective_command=? OR effective_command=?) AND command_match_strictness=2", (re.sub(r" {2,}", " ", command).strip(),re.sub(r" {2,}", " ", stripped_command).strip())).fetchall()+cmdlist
-        # attempt to find matching command 
-        for target_command in [command, stripped_command]:
-            for tp in cmdlist:
-                match_cmd=tp[0].strip()
-                strictness=tp[1]
-                if _check_strictness(match_cmd, strictness, target_command)==True:
-                    # if found matching target_command
-                    if match_cmd not in final_cmdlist: 
-                        final_cmdlist.append(match_cmd)
-                        final_cmdlist_exactmatch.append(strictness==2)
     matches=[]
-    def fetch_matches_by_locale(filter_condition: str, filter_data: tuple=tuple()):
-        fetch_items=["match_pattern", "substitute_pattern", "is_regex", "end_match_here", "stdout_stderr_only", "unique_id", "foreground_only", "effective_command", "command_match_strictness", "file_id"]
-        # get locales
-        locales=_globalvar.get_locale()
-        nonlocal matches
-        # try the ones with locale defined
-        for this_locale in locales:
-            fetch_data=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND effective_locale=? ORDER BY rowid;", filter_data+(this_locale,)).fetchall()
-            if len(fetch_data)>0:
-                matches+=fetch_data
-        # else, fetches the ones without locale defined
-        matches+=_connection.execute(f"SELECT DISTINCT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE {filter_condition} AND typeof(effective_locale)=typeof(null) ORDER BY rowid;", filter_data).fetchall()
-    if len(final_cmdlist)>0:
-        for x in range(len(final_cmdlist)):
-            cmd=final_cmdlist[x]
-            # prioritize exact match
-            if final_cmdlist_exactmatch[x]==True: fetch_matches_by_locale("effective_command=? AND command_match_strictness=2", (cmd,))
-            # also append matches with other strictness
-            fetch_matches_by_locale("effective_command=? AND command_match_strictness!=2", (cmd,))
-    fetch_matches_by_locale("typeof(effective_command)=typeof(null)")
+    fetch_items=["match_pattern",
+                "substitute_pattern",
+                "is_regex",
+                "end_match_here",
+                "stdout_stderr_only",
+                "unique_id",
+                "foreground_only",
+                "effective_command",
+                "command_match_strictness",
+                "file_id",
+                "rowid"]
+    # get locales
+    locales=_globalvar.get_locale()
+    # get all unique entry IDs
+    entry_ids=_connection.execute(f"SELECT DISTINCT unique_id FROM {_globalvar.db_data_tablename}").fetchall()
+    # for each entry, fetch in locale order and then `default` locale
+    for eid in entry_ids:
+        for locale in locales+[None]:
+            locale_condition="effective_locale=?" if locale!=None else "typeof(effective_locale)=typeof(?)"
+            matches+=_connection.execute(f"SELECT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE unique_id=? AND {locale_condition};", (eid[0], locale)).fetchall()
+
     return matches
 
-def _check_strictness(match_cmd: str, strictness: int, target_command: str):
+def _check_command(match_cmd: str, strictness: int, target_command: str):
     def process_smartcmdmatch_phrases(match_cmd: str) -> List[str]:
         match_cmd_phrases=[]
         for p in range(len(match_cmd.split())):
@@ -192,35 +167,32 @@ def _check_strictness(match_cmd: str, strictness: int, target_command: str):
             else: match_cmd_phrases.append(ph)
         return match_cmd_phrases
     success=True
+    # check starting phrase
+    first_phrase=target_command.split()[0]
+    success=match_cmd.split()[0] in (first_phrase, os.path.basename(first_phrase))
+
+    # in following checks, first phrase is excluded as it's already checked
     if strictness==1: # must start with pattern in terms of space-separated phrases
-        condition=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[:len(match_cmd.split())]==match_cmd.split()
-        if not condition==True: success=False
+        success=len(match_cmd.split())<=len(target_command.split()) and target_command.split()[1:len(match_cmd.split())]==match_cmd.split()[1:]
     elif strictness==2: # must equal to pattern
-        if not re.sub(r" {2,}", " ", target_command).strip()==match_cmd: success=False
-    elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 operation
+        process=lambda cmd: _globalvar.splitarray_to_string(cmd[1:])
+        success=process(match_cmd)==process(target_command)
+    elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 check
         # process both phrases
         match_cmd_phrases=process_smartcmdmatch_phrases(match_cmd)
         command_phrases=process_smartcmdmatch_phrases(target_command)
-        for phrase in match_cmd_phrases:
-            if phrase not in command_phrases: success=False
-    else: # implying strictness==0; must contain all phrases in pattern
-        for phrase in match_cmd.split():
-            if phrase not in target_command.split(): success=False
+        for phrase in match_cmd_phrases[1:]:
+            if phrase not in command_phrases[1:]: success=False
+    else: # strictness==0; must contain all phrases in pattern
+        for phrase in match_cmd.split()[1:]:
+            if phrase not in target_command.split()[1:]: success=False
     return success
 
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> bytes:
     # pids: (main_pid, current_tcpgrp)
 
-    # Match order:
-    # 1. Match rules with exactcmdmatch option set
-    # 2. Match rules with command filter having the same first phrase
-    #   - Command filters with greater number of phrases are prioritized over others
-    # 3. Match rules without command filter
-
-    # retrieve a list of effective commands matching first argument
     matches=_fetch_matches(command)
-    content_str=copy.copy(content)
-    content_str=_handle_subst(matches, content_str, is_stderr, pids, command)
+    content_str=_handle_subst(matches, content, is_stderr, pids, command)
     return content_str
 
 # timeout value for each match operation
@@ -233,13 +205,11 @@ def _handle_subst(matches: List[tuple], content: bytes, is_stderr: bool, pids: T
     for match_data in matches:
         if match_data[4]!=0 and is_stderr+1!=match_data[4]: continue # check stdout/stderr constraint
         if match_data[5] in encountered_ids: continue # check uuid
-        else: encountered_ids.add(match_data[5])
         # check if corresponding file is skipped due to endmatchhere
         if match_data[9] in skipped_files: continue 
-        # Check strictness
+        # Check command
         if target_command!=None and match_data[7]!=None and \
-            _check_strictness(match_data[7], match_data[8], \
-            os.path.basename(target_command.split()[0])+(" "+_globalvar.splitarray_to_string(target_command.split()[1:]) if len(target_command.split())>1 else ''))==False: continue
+            _check_command(match_data[7], match_data[8], target_command)==False: continue
         if match_data[6]==True: # Foreground only
             if pids[0]!=pids[1]: continue
         matched=False
@@ -259,6 +229,8 @@ def _handle_subst(matches: List[tuple], content: bytes, is_stderr: bool, pids: T
             except UnicodeDecodeError: 
                 matched=bytes(match_data[0], 'utf-8') in content_str
                 content_str=content_str.replace(bytes(match_data[0],'utf-8'), bytes(match_data[1],'utf-8'))
-        if match_data[3]==True and matched: # endmatchhere is set
-            skipped_files.add(match_data[9])
+        if matched:
+            encountered_ids.add(match_data[5])
+            if match_data[3]==True: # endmatchhere is set
+                skipped_files.add(match_data[9])
     return content_str
