@@ -179,7 +179,7 @@ def unset_current_theme():
     print(f.reof("remove-data-success", "Successfully removed the current theme data"))
     return 0
 
-def get_current_theme_info(name: bool=False, file_path=False):
+def show_info(name: bool=False, file_path=False):
     """
     Displays the current theme info
 
@@ -187,9 +187,9 @@ def get_current_theme_info(name: bool=False, file_path=False):
     - Set file_path=True to only display the source file path of each theme
     - Both information are displayed when both options are set to True
 
-    (Invokes 'clitheme get-current-theme-info')
+    (Invokes 'clitheme show-info')
     """
-    f=frontend.FetchDescriptor(subsections="cli get-current-theme-info")
+    f=frontend.FetchDescriptor(subsections="cli show-info")
     search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
     if not os.path.isdir(search_path):
         print(f.reof("no-theme", "No theme currently set"))
@@ -258,6 +258,7 @@ def get_current_theme_info(name: bool=False, file_path=False):
 
         print() # Separate each entry with an empty line
     return 0
+get_current_theme_info=show_info
 
 class _invalid_theme(Exception): 
     def __init__(self, message: str):
@@ -377,7 +378,7 @@ def _handle_help_message(full_help: bool=False):
     print(fd.reof("usage-str", "Usage:"))
     print(
 """\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
-\t{0} get-current-theme-info [--name] [--file-path]
+\t{0} show-info [--name] [--file-path]
 \t{0} unset-current-theme
 \t{0} update-theme [--yes]
 \t{0} generate-data [themedef-file] [--overlay]
@@ -388,7 +389,7 @@ def _handle_help_message(full_help: bool=False):
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
     "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-get-current-theme-info", "get-current-theme-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-show-info", "show-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
     print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
@@ -457,13 +458,13 @@ def main(cli_args: List[str]):
                 else:
                     paths.append(arg)
             return apply_theme(file_contents=None, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only, no_confirm=no_confirm)
-        elif cli_args[1]=="get-current-theme-info":
+        elif cli_args[1] in ("show-info", "get-current-theme-info"):
             name=False; file_path=False
             for arg in cli_args[2:]:
                 if arg.strip()=="--name": name=True
                 elif arg.strip()=="--file-path": file_path=True
                 else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
-            return get_current_theme_info(name=name, file_path=file_path)
+            return show_info(name=name, file_path=file_path)
         elif cli_args[1]=="unset-current-theme":
             check_extra_args(2)
             return unset_current_theme()

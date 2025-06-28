@@ -166,9 +166,9 @@ in_domainapp swiftycode clitheme
                 # locale:default Successfully removed the current theme data
                 locale:zh_CN 已成功移除当前主题数据
             [/entry]
-        # get-current-theme-info 指令
-        # get-current-theme-info command
-        in_subsection cli get-current-theme-info
+        # show-info 指令
+        # show-info command
+        in_subsection cli show-info
             [entry] no-theme
                 # locale:default No theme currently set
                 locale:zh_CN 当前没有设定任何主题
@@ -279,15 +279,15 @@ in_domainapp swiftycode clitheme
                     指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
                 [/locale]
             [/entry]
-            [entry] options-get-current-theme-info
+            [entry] options-show-info
                 # [locale] default
-                #     get-current-theme-info: Show information about the currently applied theme(s)
+                #     show-info: Show information about the currently applied theme(s)
                 #     Specify --name to only display the name of each theme
                 #     Specify --file-path to only display the source file path of each theme
                 #     (Both will be displayed when both specified)
                 # [/locale]
                 [locale] zh_CN 
-                    get-current-theme-info：显示当前主题设定的详细信息
+                    show-info：显示当前主题设定的详细信息
                     指定"--name"以仅显示每个主题的名称
                     指定"--file-path"以仅显示每个主题的源文件路径
                     （同时指定时，两者都会显示）
