@@ -13,7 +13,7 @@ Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, python3 (> 3.8), man-db, sqlite3
 Description: Command-line application customization utility
- clitheme allows users to customize the output of command-line programs and
+ CLItheme allows users to customize the output of command-line programs and
  manual pages. This package contains clitheme, clitheme-exec, and clitheme-man
  utilities.
  .

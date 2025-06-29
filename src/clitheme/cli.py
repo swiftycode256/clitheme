@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Module used for the clitheme command line interface
+Module used for the CLItheme command line interface
 
 - You can access 'clitheme' by invoking this module directly: 'python3 -m clitheme'
 - You can invoke individual commands in scripts using the functions in this module

@@ -21,7 +21,7 @@ from typing import List
 # spell-checker:ignoreRegExp banphrase[s]{0,1}
 
 error_msg_str= \
-"""[clitheme] Error: unable to get your home directory or invalid home directory information.
+"""[CLItheme] Error: unable to get your home directory or invalid home directory information.
 Please make sure that the {var} environment variable is set correctly.
 Try restarting your terminal session to fix this issue."""
 

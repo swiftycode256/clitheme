@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-clitheme frontend interface for accessing entries
+CLItheme frontend interface for accessing entries
 
 - Create a FetchDescriptor instance and optionally pass information such as domain&app name and subsections
 - Use the 'retrieve_entry_or_fallback' or 'reof' function in the instance to retrieve content of an entry definition

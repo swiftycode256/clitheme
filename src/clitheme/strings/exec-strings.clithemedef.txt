@@ -7,7 +7,7 @@
 # spell-checker:ignore nosubst
 
 {header_section}
-    name clitheme message text translations (clitheme-exec)
+    name CLItheme message text translations (clitheme-exec)
     version 2.0
     locales zh_CN
     supported_apps clitheme
