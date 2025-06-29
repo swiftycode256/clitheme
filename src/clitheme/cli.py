@@ -383,6 +383,7 @@ def _handle_help_message(full_help: bool=False):
 \t{0} remove-theme
 \t{0} update-theme [--yes]
 \t{0} generate-data [themedef-file] [--overlay]
+\t{0} repair-theme
 \t{0} --version
 \t{0} --help""".format(arg_first)
     )

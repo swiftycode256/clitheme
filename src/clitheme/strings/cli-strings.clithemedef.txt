@@ -307,7 +307,7 @@ in_domainapp swiftycode clitheme
             [/entry]
             [entry] options-repair-theme
                 # locale:default repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data
-                locale:zh_CN generate-data：【仅供调试用途】从当前数据中存储的定义文件重新应用主题
+                locale:zh_CN repair-theme：【仅供调试用途】从当前数据中存储的定义文件重新应用主题
             [/entry]
             [entry] options-yes
                 # locale:default [For supported commands, specify --yes to skip the confirmation prompt]
