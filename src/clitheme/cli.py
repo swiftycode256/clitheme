@@ -161,13 +161,13 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         except: pass
     return 0
 
-def unset_current_theme():
+def remove_theme():
     """
     Delete the current theme data hierarchy from the data path
 
-    (Invokes 'clitheme unset-current-theme')
+    (Invokes 'clitheme remove-theme')
     """
-    f=frontend.FetchDescriptor(subsections="cli unset-current-theme")
+    f=frontend.FetchDescriptor(subsections="cli remove-theme")
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError:
         print(f.reof("no-data-found", "Error: No theme data present (no theme was set)"))
@@ -178,6 +178,7 @@ def unset_current_theme():
         return 1
     print(f.reof("remove-data-success", "Successfully removed the current theme data"))
     return 0
+unset_current_theme=remove_theme
 
 def show_info(name: bool=False, file_path=False):
     """
@@ -379,7 +380,7 @@ def _handle_help_message(full_help: bool=False):
     print(
 """\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
 \t{0} show-info [--name] [--file-path]
-\t{0} unset-current-theme
+\t{0} remove-theme
 \t{0} update-theme [--yes]
 \t{0} generate-data [themedef-file] [--overlay]
 \t{0} --version
@@ -390,7 +391,7 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd.reof("options-apply-theme",
     "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
     print("\t"+fd.reof("options-show-info", "show-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-unset-current-theme", "unset-current-theme: Remove the current theme data from the system"))
+    print("\t"+fd.reof("options-remove-theme", "remove-theme: Remove the current theme data from the system"))
     print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
     print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
     print("\t"+fd.reof("options-repair-theme", "repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data"))
@@ -465,9 +466,9 @@ def main(cli_args: List[str]):
                 elif arg.strip()=="--file-path": file_path=True
                 else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
             return show_info(name=name, file_path=file_path)
-        elif cli_args[1]=="unset-current-theme":
+        elif cli_args[1] in ("remove-theme", "unset-current-theme"):
             check_extra_args(2)
-            return unset_current_theme()
+            return remove_theme()
         elif cli_args[1]=="update-theme":
             no_confirm=False
             for arg in cli_args[2:]:

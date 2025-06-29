@@ -145,9 +145,9 @@ in_domainapp swiftycode clitheme
                     {message}
                 [/locale]
             [/entry]
-        # unset-current-theme 指令
-        # unset-current-theme command
-        in_subsection cli unset-current-theme
+        # remove-theme 指令
+        # remove-theme command
+        in_subsection cli remove-theme
             [entry] no-data-found
                 # locale:default Error: No theme data present (no theme was set)
                 locale:zh_CN 错误：当前没有设定主题
@@ -293,9 +293,9 @@ in_domainapp swiftycode clitheme
                     （同时指定时，两者都会显示）
                 [/locale]
             [/entry]
-            [entry] options-unset-current-theme
-                # locale:default unset-current-theme: Remove the current theme data from the system
-                locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
+            [entry] options-remove-theme
+                # locale:default remove-theme: Remove the current theme data from the system
+                locale:zh_CN remove-theme：取消设定当前主题定义和数据
             [/entry]
             [entry] options-update-theme
                 # locale:default update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)
