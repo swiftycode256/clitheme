@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -84,6 +84,14 @@ substrules_file=r"""
         [/substitute_regex]
     unset_filter_command
 
+    set_options strictcmdmatch
+    filter_command example_app install-stuff
+        [substitute_string] Error: sample message
+            locale:default Error: sample message! (>﹏<)
+            locale:zh_CN 错误：样例提示！(>﹏<)
+        [/substitute_string] endmatchhere
+    unset_filter_command
+
     # global substitutions
     [substitute_regex] ^Warning:( )
         locale:default o(≧v≦)o Note:\g<1>
@@ -97,13 +105,6 @@ substrules_file=r"""
         locale:default input is invalid! ಥ_ಥ
         locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
-
-    set_options strictcmdmatch
-    filter_command example_app install-stuff
-        [substitute_string] Error: sample message
-            locale:default Error: sample message! (>﹏<)
-            locale:zh_CN 错误：样例提示！(>﹏<)
-        [/substitute_string] endmatchhere
 
     set_options exactcmdmatch
     filter_command rm file.ban

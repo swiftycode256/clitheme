@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -25,6 +25,8 @@ begin_main
                 is just good
                     #enough
             should have leading 2 lines and trailing 3 lines
+            \\end_block
+            \\\\end_block
 
 
 
@@ -40,7 +42,7 @@ end_header
 
 begin_main
     entry test_entry
-        locale_block zh_CN
+        [locale] zh_CN
 
 
 
@@ -50,9 +52,11 @@ begin_main
                 #非常好
                     ...
             should have leading 3 lines and trailing 2 lines
+            \\[/locale]
+            \\\\[/locale]
 
 
-        end_block leadspaces:4
+        [/locale] leadspaces:4
     end_entry
 end_main
 """

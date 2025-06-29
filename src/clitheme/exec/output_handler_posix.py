@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -21,7 +21,6 @@ import signal
 import struct
 import copy
 import re
-import sqlite3
 import time
 import threading
 import queue
@@ -120,7 +119,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 # Background thread to forward stdin to subprocess pipe
                 nonlocal r,w
                 while True:
-                    select.select([sys.stdin], [], [])
                     d=os.read(sys.stdin.fileno(), readsize)
                     if d==b'': # stdin is closed
                         os.close(w)
@@ -308,7 +306,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if not thread.is_alive() and not process.poll()!=None:
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
-            if thread_exception_handled: continue # Prevent conflict with setting terminal attributes
+            if thread_exception_handled: break # Prevent conflict with setting terminal attributes
 
             # Process outputs
             def process_line(line: bytes, line_data):

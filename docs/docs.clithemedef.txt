@@ -1,10 +1,10 @@
 {header_section}
-    name clitheme manual pages
+    name CLItheme manual pages
     version 2.0
     [description]
-        This file contains manual pages for clitheme.
+        This file contains manual pages for CLItheme.
         Apply this theme to install the manual pages in the "docs" directory.
-        After that, use "clitheme-man" to access them.
+        After that, use "CLItheme-man" to access them.
     [/description]
 {/header_section}
 

@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -8,7 +8,6 @@
 Functions used by various parsers (internal module)
 """
 
-import sys
 import re
 import math
 import copy
@@ -88,12 +87,16 @@ class GeneratorObject(_data_handlers.DataHandlers):
         else:
             version_ok= int(match_result.groupdict()['major'])<=_version.major \
                         and int(match_result.groupdict()['minor'])<=_version.minor \
-                        and (int(match_result.groupdict()['bugfix']) if match_result.groupdict().get("bugfix")!=None else -1)<=_version.release
-            if match_result.groupdict().get("beta_release")!=None and _version.beta_release!=None:
-                version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+                        and (int(match_result.groupdict()['bugfix'])<=_version.release if match_result.groupdict().get("bugfix")!=None else True)
+            if match_result.groupdict().get("beta_release")!=None:
+                if _version.beta_release!=None:
+                    version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+            else:
+                # If did not specify beta, current version cannot be beta
+                version_ok=version_ok and _version.beta_release==None
 
             if not version_ok:
-                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of clitheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
+                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_version.__version__+ \
                             # For "dev" versions: output corresponding beta milestone
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
@@ -278,11 +281,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     leading_whitespace=re.sub(r"\t", " "*8, leading_whitespace)
                     # update line content
                     # replace \end_block with end_block
-                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
+                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
                     # update minspaces
                     minspaces=min(minspaces, len(leading_whitespace))
             else: # don't preserve whitespaces
-                line=re.sub(r"^\\([\\]*)"+end_phrase, r"\g<1>"+end_phrase, line.strip())
+                line=re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
             # write to data
             blockinput_data+="\n"+line
         # remove the extra leading newline

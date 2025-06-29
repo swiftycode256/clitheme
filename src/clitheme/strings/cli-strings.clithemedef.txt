@@ -1,11 +1,11 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 {header_section}
-    name clitheme message text translations (cli)
+    name CLItheme message text translations (cli)
     version 2.0
     locales zh_CN
     supported_apps clitheme
@@ -39,8 +39,8 @@ in_domainapp swiftycode clitheme
             locale:zh_CN 使用"{clitheme} --help"以获取使用方法
         [/entry]
         [entry] version-str
-            # locale:default clitheme version {ver}
-            locale:zh_CN clitheme 版本：{ver}
+            # locale:default CLItheme version {ver}
+            locale:zh_CN CLItheme 版本：{ver}
         [/entry]
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands
@@ -145,9 +145,9 @@ in_domainapp swiftycode clitheme
                     {message}
                 [/locale]
             [/entry]
-        # unset-current-theme 指令
-        # unset-current-theme command
-        in_subsection cli unset-current-theme
+        # remove-theme 指令
+        # remove-theme command
+        in_subsection cli remove-theme
             [entry] no-data-found
                 # locale:default Error: No theme data present (no theme was set)
                 locale:zh_CN 错误：当前没有设定主题
@@ -166,9 +166,9 @@ in_domainapp swiftycode clitheme
                 # locale:default Successfully removed the current theme data
                 locale:zh_CN 已成功移除当前主题数据
             [/entry]
-        # get-current-theme-info 指令
-        # get-current-theme-info command
-        in_subsection cli get-current-theme-info
+        # show-info 指令
+        # show-info command
+        in_subsection cli show-info
             [entry] no-theme
                 # locale:default No theme currently set
                 locale:zh_CN 当前没有设定任何主题
@@ -220,6 +220,42 @@ in_domainapp swiftycode clitheme
                     请重新应用当前主题后重试
                 [/locale]
             [/entry]
+        # repair-theme 指令
+        # repair-theme command
+        in_subsection cli repair-theme
+            [entry] no-theme-err
+                # locale:default Error: no theme currently set
+                locale:zh_CN 错误：当前没有设定主题
+            [/entry]
+            [entry] not-available-err
+                # [locale] default
+                #     repair-theme cannot be used with the current theme setting
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    repair-theme在当前主题设定上无法使用
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] other-err
+                # [locale] default
+                #     An error occurred: {msg}
+                #     Please re-apply the current theme and try again
+                # [/locale]
+                [locale] zh_CN
+                    发生了错误：{msg}
+                    请重新应用当前主题后重试
+                [/locale]
+            [/entry]
+            [entry] updating-info
+                # locale:default ==> Updating info...
+                locale:zh_CN ==> 正在更新信息...
+            [/entry]
+            [entry] update-info-success
+                # locale:default Successfully updated info
+                locale:zh_CN 已成功更新信息
+            [/entry]
+
         # 用于clitheme --help的字符串定义
         # String entries used for "clitheme --help"
         in_subsection cli help-message
@@ -243,23 +279,23 @@ in_domainapp swiftycode clitheme
                     指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
                 [/locale]
             [/entry]
-            [entry] options-get-current-theme-info
+            [entry] options-show-info
                 # [locale] default
-                #     get-current-theme-info: Show information about the currently applied theme(s)
+                #     show-info: Show information about the currently applied theme(s)
                 #     Specify --name to only display the name of each theme
                 #     Specify --file-path to only display the source file path of each theme
                 #     (Both will be displayed when both specified)
                 # [/locale]
                 [locale] zh_CN 
-                    get-current-theme-info：显示当前主题设定的详细信息
+                    show-info：显示当前主题设定的详细信息
                     指定"--name"以仅显示每个主题的名称
                     指定"--file-path"以仅显示每个主题的源文件路径
                     （同时指定时，两者都会显示）
                 [/locale]
             [/entry]
-            [entry] options-unset-current-theme
-                # locale:default unset-current-theme: Remove the current theme data from the system
-                locale:zh_CN unset-current-theme：取消设定当前主题定义和数据
+            [entry] options-remove-theme
+                # locale:default remove-theme: Remove the current theme data from the system
+                locale:zh_CN remove-theme：取消设定当前主题定义和数据
             [/entry]
             [entry] options-update-theme
                 # locale:default update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)
@@ -268,6 +304,10 @@ in_domainapp swiftycode clitheme
             [entry] options-generate-data
                 # locale:default generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory
                 locale:zh_CN generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构
+            [/entry]
+            [entry] options-repair-theme
+                # locale:default repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data
+                locale:zh_CN repair-theme：【仅供调试用途】从当前数据中存储的定义文件重新应用主题
             [/entry]
             [entry] options-yes
                 # locale:default [For supported commands, specify --yes to skip the confirmation prompt]

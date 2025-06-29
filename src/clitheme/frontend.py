@@ -1,11 +1,11 @@
-# Copyright © 2023-2024 swiftycode
+# Copyright © 2023-2025 swiftycode
 
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-clitheme frontend interface for accessing entries
+CLItheme frontend interface for accessing entries
 
 - Create a FetchDescriptor instance and optionally pass information such as domain&app name and subsections
 - Use the 'retrieve_entry_or_fallback' or 'reof' function in the instance to retrieve content of an entry definition
@@ -66,12 +66,12 @@ This setting is valid for the module/code file that invokes this function.
 - Change global variables (e.g. global_domain, global_debugmode) to set the default value for all files in an invoking module
 """
 
-def set_domain(value: Optional[str]): _desc.format("domain_name");_update_local_settings("domain", value)
-def set_appname(value: Optional[str]): _desc.format("app_name");_update_local_settings("appname", value)
-def set_subsections(value: Optional[str]): _desc.format("subsections");_update_local_settings("subsections", value)
-def set_debugmode(value: Optional[bool]): _desc.format("debug_mode");_update_local_settings("debugmode", value)
-def set_lang(value: Optional[str]): _desc.format("lang");_update_local_settings("lang", value)
-def set_disablelang(value: Optional[bool]): _desc.format("disable_lang");_update_local_settings("disablelang", value)
+def set_domain(value: Optional[str]): _update_local_settings("domain", value)
+def set_appname(value: Optional[str]): _update_local_settings("appname", value)
+def set_subsections(value: Optional[str]): _update_local_settings("subsections", value)
+def set_debugmode(value: Optional[bool]): _update_local_settings("debugmode", value)
+def set_lang(value: Optional[str]): _update_local_settings("lang", value)
+def set_disablelang(value: Optional[bool]): _update_local_settings("disablelang", value)
 
 global_domain=""
 global_appname=""
@@ -88,13 +88,54 @@ def _get_setting(key: str, caller: Optional[str]=None) -> Union[str,bool]:
     else:
         return eval(f"global_{key}")
 
-_alt_path=None
-_alt_path_dirname=None
-_alt_path_hash=None
-_alt_info_index: int=1
+_alt_path: Optional[str]=None
+_alt_path_dirname: Optional[str]=None
+_alt_path_hash: Optional[bytes]=None
+_alt_info_index: int=1 # Next info index
+
 # Support for setting a local definition file
 # - Generate the data in a temporary directory named after content hash
 # - First try alt_path then data_path
+
+def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> bool:
+    """
+    Handle generate data operation for set_local_themedef[s] functions
+    """
+    from . import _generator
+    global global_debugmode
+    _generator.generate_custom_path() # prepare _generator.path
+    if _alt_path_dirname!=None and overlay==True: # overlay
+        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
+    if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
+    # Generate data hierarchy as needed
+    if not os.path.exists(path_name):
+        return_val: str
+        d_copy=(global_debugmode, _generator.silence_warn)
+        for x in range(len(file_contents)):
+            file_content=file_contents[x]
+            if _get_setting("debugmode") and len(file_contents)>1:
+                print(f"[Debug] set_local_themedefs: Processing file {x+1} of {len(file_contents)}")
+            try:
+                # Set this to prevent extra messages from being displayed
+                _generator.silence_warn=True
+                global_debugmode=False
+                return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+            except SyntaxError:
+                if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
+                return False
+            finally: global_debugmode, _generator.silence_warn=d_copy
+        if not os.path.exists(path_name):
+            shutil.copytree(return_val, path_name)
+        try: shutil.rmtree(return_val)
+        except: pass
+    else:
+        if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")
+    return True
+def _get_dir_name(hash: bytes, index: int) -> str:
+    h=hashlib.shake_256(hash)
+    local_path_hash="O"+str(index)+h.hexdigest(5)
+    dir_name=f"clitheme-data-{local_path_hash}"
+    return dir_name
 
 def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """
@@ -107,62 +148,23 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     
     This function returns True if successful, otherwise returns False.
     """
+    global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index, global_debugmode
     from . import _generator
-    # Determine directory name
-    h=hashlib.shake_256(bytes(file_content, "utf-8"))
-    d=h.hexdigest(6) # length of 12 (6*2)
-    global _alt_path_hash
-    local_path_hash=_alt_path_hash
+    h=hashlib.sha1(bytes(file_content, "utf-8")).digest()
+    # File hash generation
     # if overlay, update hash with new contents of file
-    if _alt_path_hash!=None and overlay==True:
-        newhash=""
-        for x in range(len(_alt_path_hash)):
-            chart=string.ascii_uppercase+string.ascii_lowercase+string.digits
-            numorig=0
-            numcur=0
-            if d[x]>='A' and d[x]<='Z': #uppercase letters
-                numorig=ord(d[x])-ord('A')
-            elif d[x]>='a' and d[x]<='z': #lowercase letters
-                numorig=(ord(d[x])-ord('a'))+len(string.ascii_uppercase)
-            elif d[x]>='0' and d[x]<='9': #digit
-                numorig=ord(d[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
-            if _alt_path_hash[x]>='A' and _alt_path_hash[x]<='Z': #uppercase letters
-                numcur=ord(_alt_path_hash[x])-ord('A')
-            elif _alt_path_hash[x]>='a' and _alt_path_hash[x]<='z': #lowercase letters
-                numcur=(ord(_alt_path_hash[x])-ord('a'))+len(string.ascii_uppercase)
-            elif _alt_path_hash[x]>='0' and _alt_path_hash[x]<='9': #digit
-                numcur=ord(_alt_path_hash[x])-ord('0')+len(string.ascii_uppercase+string.ascii_lowercase)
-            newhash+=chart[(numorig+numcur)%len(chart)]
-        local_path_hash=newhash
-    else: local_path_hash=d # else, use generated hash
-    dir_name=f"clitheme-data-{local_path_hash}"
-    _generator.generate_custom_path() # prepare _generator.path
-    global _alt_path_dirname, _alt_info_index
-    global global_debugmode
+    new_path_hash=_alt_path_hash
+    if new_path_hash!=None and overlay==True:
+        new_path_hash+=h # append
+    else: new_path_hash=h # override
+    dir_name=_get_dir_name(new_path_hash, _alt_info_index)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
-    if _alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
-    if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
-    # Generate data hierarchy as needed
-    if not os.path.exists(path_name):
-        _generator.silence_warn=True
-        return_val: str
-        d_copy=(global_debugmode, _generator.silence_warn)
-        try:
-            # Set this to prevent extra messages from being displayed
-            global_debugmode=False
-            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
-            _alt_info_index+=1
-        except SyntaxError:
-            if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
-            return False
-        finally: global_debugmode, _generator.silence_warn=d_copy
-        if not os.path.exists(path_name):
-            shutil.copytree(return_val, path_name)
-        try: shutil.rmtree(return_val)
-        except: pass
-    global _alt_path
-    _alt_path_hash=local_path_hash
+
+    if not _generate_data([file_content], path_name, overlay): return False
+
+    # Update everything after success
+    _alt_info_index+=1
+    _alt_path_hash=new_path_hash
     _alt_path=path_name+"/"+_globalvar.generator_data_pathname
     _alt_path_dirname=dir_name
     return True
@@ -178,13 +180,22 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     
     This function returns True if successful, otherwise returns False.
     """
-    global _alt_path, _alt_path_hash, _alt_path_dirname
-    orig=(_alt_path, _alt_path_hash, _alt_path_dirname)
-    for x in range(len(file_contents)):
-        content=file_contents[x]
-        if not set_local_themedef(content, overlay=(x>0 or overlay)): 
-            _alt_path, _alt_path_hash, _alt_path_dirname=orig
-            return False
+    global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index
+    # File hash generation
+    # if overlay, update hash with new contents of file
+    path_hash: bytes=_alt_path_hash if overlay and _alt_path_hash!=None else b""
+    for file_content in file_contents:
+        path_hash+=hashlib.sha1(bytes(file_content, 'utf-8')).digest()
+    dir_name=_get_dir_name(path_hash, _alt_info_index+len(file_contents)-1)
+    path_name=_globalvar.clitheme_temp_root+"/"+dir_name
+
+    if not _generate_data(file_contents, path_name, overlay): return False
+
+    # Update everything after success
+    _alt_info_index+=len(file_contents)
+    _alt_path_hash=path_hash
+    _alt_path=path_name+"/"+_globalvar.generator_data_pathname
+    _alt_path_dirname=dir_name
     return True
 
 def unset_local_themedef():

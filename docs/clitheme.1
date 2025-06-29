@@ -4,7 +4,7 @@ clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
 .B clitheme [COMMAND] [OPTIONS]
 .SH DESCRIPTION 
-\fIclitheme\fR is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
+\fICLItheme\fR is a framework for applications that allows users to customize its output and messages through theme definition files. This CLI interface allows the user to control their current settings and theme definition on the system. 
 .SH OPTIONS
 .TP
 .B apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
@@ -17,7 +17,7 @@ Specify \fB--preserve-temp\fR to preserve the temporary directory after the oper
 Specify \fB--yes\fR to skip the confirmation prompt.
 
 .TP 
-.B get-current-theme-info [--name] [--file-path]
+.B show-info [--name] [--file-path]
 Outputs detailed information about the currently applied theme. If multiple themes are applied using the \fB--overlay\fR option, outputs detailed information for each applied theme.
 
 Specify \fB--name\fR to only display the name of each theme.
@@ -27,8 +27,9 @@ Specify \fB--file-path\fR to only display the source file path of each theme.
 (Both will be displayed when both specified)
 
 .TP
-.B unset-current-theme
+.B remove-theme
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
+
 .TP
 .B update-theme [--yes]
 Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if \fB--overlay\fR is used)
@@ -36,6 +37,12 @@ Re-applies the theme definition files specified in the previous "apply-theme" co
 Calling this command is equivalent to calling "clitheme apply-theme" with previously-specified files.
 
 Specify \fB--yes\fR to skip the confirmation prompt.
+
+.TP
+.B repair-theme
+Re-applies theme definition files stored in the current theme data. It can be used when the current theme data is corrupt or modified.
+
+This command is for debug purposes only.
 
 .TP
 .B generate-data [themedef-file] [--overlay]
