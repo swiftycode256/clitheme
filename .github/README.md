@@ -47,8 +47,8 @@ CLItheme has these main features:
 
 Other characteristics:
 
-- Multi-language/internalization support
-    - This means that you can also use CLItheme to add internalization support for command line applications
+- Multi-language/i18n support
+    - This means that you can also use CLItheme to add i18n (internationalization) support for command line applications
 - Easy-to-understand **theme definition file** syntax
 - The string entries in the current theme setting can be accessed without using the frontend API (easy-to-understand data structure)
 
