@@ -211,12 +211,12 @@ def show_info(name: bool=False, file_path=False):
             theme_name="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
                 theme_name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
-            print("[{}]: {}".format(theme_pathname, theme_name))
+            print("[{}]: {}".format(theme_pathname, fmt(theme_name)))
         if minimal_info==True and file_path==True:
             theme_filepath="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")):
                 theme_filepath=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), 'r', encoding="utf-8").read().strip()
-            print(theme_filepath)
+            print(fmt(theme_filepath))
         if minimal_info==True: continue # --Stop here if either parameters are specified--
         # version
         version="(Unknown)"
@@ -416,7 +416,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             print();raise _direct_exit(130)
         except:
             print("\n"+fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
-                index=str(i+1), message=path+": "+fmt(str(sys.exc_info()[1]))))
+                index=str(i+1), message=fmt(path+": "+str(sys.exc_info()[1]))))
             raise
     print(line_prefix, end='')
     return content_list
