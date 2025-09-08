@@ -14,6 +14,7 @@ import sys
 import re
 import string
 import stat
+import tempfile
 from copy import copy
 from . import _version
 from typing import List
@@ -48,7 +49,11 @@ if clitheme_root_data_path=="": # prev did not succeed
             var=r"%USERPROFILE%"
         print(error_msg_str.format(var=var))
         exit(1)
-clitheme_temp_root="/tmp" if os.name!="nt" else os.environ['TEMP']
+
+clitheme_temp_root=tempfile.gettempdir()
+# Function might return 'bytes' on older Python versions
+if type(clitheme_temp_root)==bytes:
+    clitheme_temp_root=clitheme_temp_root.decode('utf-8')
 
 ## _generator file and folder names
 generator_info_pathname="theme-info" # e.g. ~/.local/share/clitheme/theme-info
