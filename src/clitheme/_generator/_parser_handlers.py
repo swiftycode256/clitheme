@@ -21,7 +21,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
-    content_subst_options=["substesc","substvar"]
+    content_subst_options=["substesc","substvar", "substchar"]
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
     subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere"]
     
