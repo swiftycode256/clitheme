@@ -40,9 +40,9 @@ expected_outputs=[
     ("o(≧v≦)o Note: input is invalid! ಥ_ಥ", "o(≧v≦)o 提示： 无效输入！ಥ_ಥ"),
     ("(ToT)/~~~ Error: input is invalid! ಥ_ಥ", "(ToT)/~~~ 错误：无效输入！ಥ_ಥ"),
     ("(ToT)/~~~ Error: sample message", "(ToT)/~~~ 错误：sample message"),
-    ("Error: sample message! (>﹏<)", "错误：样例提示！(>﹏<)"),
-    ("Error: sample message! (>﹏<)", "错误：样例提示！(>﹏<)"),
-    ("rm says: Operation not permitted! ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
+    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
     ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)", "o(≧v≦)o example_app 说： 正在使用子路径！(｡ì _ í｡)"),
     ("o(≧v≦)o example_app says: using list options! (⊙ω⊙)", "o(≧v≦)o example_app 说： 正在使用列表选项！(⊙ω⊙)"),
 ]
@@ -62,32 +62,37 @@ substrules_file=r"""
             locale:zh_CN 关于更多信息，请使用rm --help (｡ì _ í｡)
         [/substitute_string]
 
+    # test substvar
+    set_options substvar
+    setvar:shell (?P<shell>.+)
     [filter_commands]
         rm -rf
         cat
         cd
         ls
     [/filter_commands]
-        [substitute_regex] (?P<shell>.+): (?P<filename>.+): Permission denied
+        [substitute_regex] {{shell}}: (?P<filename>.+): Permission denied
             locale:default \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
             locale:zh_CN \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
         [/substitute_regex]
 
     filter_command ls
         # testing repeated entry detection
-        [substitute_regex] (?P<shell>.+): unrecognized option '(?P<opt>.+)'
+        [substitute_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
             locale:default wef
         [/substitute_regex]
-        [substitute_regex] (?P<shell>.+): unrecognized option '(?P<opt>.+)'
+        [substitute_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
             locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
             locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/substitute_regex]
     unset_filter_command
 
+    # test substesc
+    set_options substesc
     set_options strictcmdmatch
     filter_command example_app install-stuff
         [substitute_string] Error: sample message
-            locale:default Error: sample message! (>﹏<)
+            locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
             locale:zh_CN 错误：样例提示！(>﹏<)
         [/substitute_string] endmatchhere
     unset_filter_command
@@ -106,10 +111,14 @@ substrules_file=r"""
         locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
 
+    # Test substchar and substvar
+    set_options substchar
+    setvar:style {{[x1b]}}[1;4m
+    setvar:orig {{[x1b]}}[0m
     set_options exactcmdmatch
     filter_command rm file.ban
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
-            locale:default \g<shell> says: Operation not permitted! ಥ_ಥ
+            locale:default \g<shell> says: {{style}}Operation not permitted!{{orig}} ಥ_ಥ
             locale:zh_CN \g<shell> 说：不允许的操作！ಥ_ಥ
         [/substitute_regex]
     
