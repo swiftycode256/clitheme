@@ -18,7 +18,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     self: _parser_handlers.GeneratorObject=obj
     # substrules_options: {effective_commands: list, is_regex: bool, strictness: int}
 
-    entry_name_substesc=False; entry_name_substvar=False
+    entry_name_substesc=False; entry_name_substvar=False; entry_name_substchar=False
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
@@ -111,6 +111,8 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 entry_name_substesc=True
             if got_options.get('substvar')==True:
                 entry_name_substvar=True
+            if got_options.get('substchar')==True:
+                entry_name_substchar=True
             if got_options.get('foregroundonly')==True:
                 substrules_foregroundonly=True
             break
@@ -122,7 +124,8 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         match_pattern=entry[0]
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
         debug_linenumber=entry[5] if is_substrules else entry[4]
-        match_pattern=self.subst_variable_content(match_pattern, subst_var=entry_name_substvar, \
+        match_pattern=self.subst_variable_content(match_pattern, \
+                subst_var=entry_name_substvar, subst_chars=entry_name_substchar, \
                 line_number_debug=debug_linenumber, \
                 # Don't show warnings for the same match_pattern
                 silence_warnings=entry[3] in encountered_ids)

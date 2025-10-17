@@ -335,11 +335,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if not disallow_other_options:
                 ban_options=[]
                 if not preserve_indents: ban_options+=self.lead_indent_options
-                if disable_substesc: ban_options+=["substesc"]
+                if disable_substesc: ban_options+=["substesc", "substchar"]
             else:
                 allowed_options=[]
                 if preserve_indents: allowed_options+=self.lead_indent_options
-                if not disable_substesc: allowed_options+=["substesc"]
+                if not disable_substesc: allowed_options+=["substesc", "substchar"]
                 allowed_options+=["substvar"]
             got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:],
                 merge_global_options=True,
@@ -350,7 +350,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if preserve_indents and got_options.get("leadspaces")!=None:
             blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
         # Process substvar
-        blockinput_data=self.subst_variable_content(blockinput_data, subst_var=got_options.get("substvar")==True, line_number_debug=debug_linenumber)
+        blockinput_data=self.subst_variable_content(blockinput_data, 
+                subst_var=got_options.get("substvar")==True, 
+                subst_chars=got_options.get("substchar")==True,
+                line_number_debug=debug_linenumber)
         if not disable_substesc: # Must come after substvar
             blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get("substesc")==True, line_number_debug=debug_linenumber)
         return blockinput_data
