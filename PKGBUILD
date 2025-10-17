@@ -2,7 +2,7 @@
 
 # spell-checker: disable
 pkgname='clitheme'
-pkgver=2.0.1
+pkgver=2.1_dev20251017
 pkgrel=1
 pkgdesc="Command-line application customization utility"
 arch=('any')
