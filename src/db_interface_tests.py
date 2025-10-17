@@ -62,8 +62,6 @@ substrules_file=r"""
             locale:zh_CN 关于更多信息，请使用rm --help (｡ì _ í｡)
         [/substitute_string]
 
-    # test substvar
-    set_options substvar
     setvar:shell (?P<shell>.+)
     [filter_commands]
         rm -rf
@@ -74,8 +72,11 @@ substrules_file=r"""
         [substitute_regex] {{shell}}: (?P<filename>.+): Permission denied
             locale:default \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
             locale:zh_CN \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
-        [/substitute_regex]
+        # Test substvar specified in block
+        [/substitute_regex] substvar
 
+    # test substvar
+    set_options substvar
     filter_command ls
         # testing repeated entry detection
         [substitute_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
@@ -96,6 +97,7 @@ substrules_file=r"""
             locale:zh_CN 错误：样例提示！(>﹏<)
         [/substitute_string] endmatchhere
     unset_filter_command
+    set_options nosubstesc
 
     # global substitutions
     [substitute_regex] ^Warning:( )
@@ -111,27 +113,32 @@ substrules_file=r"""
         locale:zh_CN 无效输入！ಥ_ಥ
     [/substitute_regex]
 
-    # Test substchar and substvar
-    set_options substchar
     setvar:style {{[x1b]}}[1;4m
-    setvar:orig {{[x1b]}}[0m
+    setvar:orig {{ESC}}[0m
     set_options exactcmdmatch
     filter_command rm file.ban
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
-            locale:default \g<shell> says: {{style}}Operation not permitted!{{orig}} ಥ_ಥ
+            # test substchar and substesc specified in block
+            [locale] default
+                \g<shell> says: {{style}}Operation not permitted!{{orig}} ಥ_ಥ
+            [/locale] substchar substesc
             locale:zh_CN \g<shell> 说：不允许的操作！ಥ_ಥ
         [/substitute_regex]
-    
+
     set_options normalcmdmatch
     filter_command example_app
         [substitute_string] example_app:
             locale:default o(≧v≦)o example_app says:
             locale:zh_CN o(≧v≦)o example_app 说：
         [/substitute_string]
+
+    # test substchar
+    set_options substchar
     set_options smartcmdmatch
     filter_command example_app -r
         [substitute_string] using recursive directories
-            locale:default using recursive directories! (｡ì _ í｡)
+            # \x21=!
+            locale:default using recursive directories{{[x21]}} (｡ì _ í｡)
             locale:zh_CN 正在使用子路径！(｡ì _ í｡)
         [/substitute_string]
     filter_command example_app -l
