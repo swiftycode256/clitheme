@@ -55,16 +55,15 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
             if len(obj.lines_data[obj.lineindex].split())>1:
                 got_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=True, allowed_options=obj.block_input_options+obj.command_filter_options)
                 inline_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=False, allowed_options=obj.block_input_options+obj.command_filter_options)
-            for this_option in got_options:
-                if this_option=="strictcmdmatch" and got_options['strictcmdmatch']==True:
-                    strictness=1
-                elif this_option=="exactcmdmatch" and got_options['exactcmdmatch']==True:
-                    strictness=2
-                elif this_option=="smartcmdmatch" and got_options['smartcmdmatch']==True:
-                    strictness=-1
-                elif this_option=="foregroundonly" and "foregroundonly" in inline_options.keys():
-                    outline_foregroundonly=obj.global_options.get('foregroundonly')==True
-                    obj.global_options['foregroundonly']=inline_options['foregroundonly']
+            if got_options.get('strictcmdmatch')==True:
+                strictness=1
+            if got_options.get('exactcmdmatch')==True:
+                strictness=2
+            if got_options.get('smartcmdmatch')==True:
+                strictness=-1
+            if "foregroundonly" in inline_options.keys():
+                outline_foregroundonly=obj.global_options.get('foregroundonly')==True
+                obj.global_options['foregroundonly']=inline_options['foregroundonly']
             command_filters=[]
             for cmd in command_strings:
                 command_filters.append(cmd.strip())
@@ -75,13 +74,12 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
             content=_globalvar.splitarray_to_string(phrases[1:])
             content=obj.parse_content(content, pure_name=True)
             strictness=0
-            for this_option in obj.global_options:
-                if this_option=="strictcmdmatch" and obj.global_options['strictcmdmatch']==True:
-                    strictness=1
-                elif this_option=="exactcmdmatch" and obj.global_options['exactcmdmatch']==True:
-                    strictness=2
-                elif this_option=="smartcmdmatch" and obj.global_options['smartcmdmatch']==True:
-                    strictness=-1
+            if obj.global_options.get('strictcmdmatch')==True:
+                strictness=1
+            if obj.global_options.get('exactcmdmatch')==True:
+                strictness=2
+            if obj.global_options.get('smartcmdmatch')==True:
+                strictness=-1
             command_filters=[content]
             command_filter_strictness=strictness
         elif phrases[0]=="unset_filter_command":

@@ -101,19 +101,18 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                         +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
                         +(['foregroundonly'] if is_substrules else [])
                     )
-            for option in got_options:
-                if option=="endmatchhere" and got_options['endmatchhere']==True:
-                    substrules_endmatchhere=True
-                elif option=="subststdoutonly" and got_options['subststdoutonly']==True:
-                    substrules_stdout_stderr_option=1
-                elif option=="subststderronly" and got_options['subststderronly']==True:
-                    substrules_stdout_stderr_option=2
-                elif option=="substesc" and got_options['substesc']==True:
-                    entry_name_substesc=True
-                elif option=="substvar" and got_options['substvar']==True:
-                    entry_name_substvar=True
-                elif option=="foregroundonly" and got_options['foregroundonly']==True:
-                    substrules_foregroundonly=True
+            if got_options.get('endmatchhere')==True:
+                substrules_endmatchhere=True
+            if got_options.get('subststdoutonly')==True:
+                substrules_stdout_stderr_option=1
+            if got_options.get('subststderronly')==True:
+                substrules_stdout_stderr_option=2
+            if got_options.get('substesc')==True:
+                entry_name_substesc=True
+            if got_options.get('substvar')==True:
+                entry_name_substvar=True
+            if got_options.get('foregroundonly')==True:
+                substrules_foregroundonly=True
             break
         else: self.handle_invalid_phrase(phrases[0])
     # For silence_warning in subst_variable_content
