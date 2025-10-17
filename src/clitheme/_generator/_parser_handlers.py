@@ -152,7 +152,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.global_options=self.parse_options(options_data, merge_global_options=1) 
         specified_options=self.parse_options(options_data, merge_global_options=False)
         # if manually disabled, show substvar warning again next time
-        for option in ("substvar", "substesc"):
+        for option in self.content_subst_options:
             if self.global_options.get(option)!=True \
                 and option in specified_options:
                 self.warnings[option]=True
@@ -161,41 +161,74 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
         # if manually disabled, show warnings again next time
-        for option in ("substvar", "substesc"):
+        for option in self.content_subst_options:
             if self.global_options.get(option)!=True and prev_options.get(option)==True:
                 self.warnings[option]=True
         self.global_variables=copy.copy(self.really_really_global_variables)
-    def subst_variable_content(self, content: str, custom_condition: Optional[bool]=None, line_number_debug: Optional[str]=None, silence_warnings: bool=False) -> str:
-        pattern=r"{{([^\s]+?)??}}"
-        # Check the condition here instead of respective if statements to better handle the warning
-        condition=self.global_options.get("substvar")==True if custom_condition==None else custom_condition
-        if condition==False:
-            # Handle substvar warning
-            if self.warnings.get('substvar') in (True,None):
-                for match in re.finditer(pattern, content):
-                    if self.global_variables.get(match.group(1))!=None:
-                        self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
-                        self.warnings['substvar']=False
-                        break
-            return content
+    def subst_variable_content(self, content: str, subst_var: Optional[bool]=None, line_number_debug: Optional[str]=None, silence_warnings: bool=False, subst_chars: Optional[bool]=None) -> str:
+        substvar_pattern=r"{{([^\s]+?)??}}"
+        substchar_pattern=r"{{\[([^\s]+?)??\]}}"
+        # Handle substvar warning
+        if subst_var==None \
+            and self.global_options.get("substvar")==False \
+            and self.warnings.get('substvar') in (True,None):
+            for match in re.finditer(substvar_pattern, content):
+                if self.global_variables.get(match.group(1))!=None:
+                    self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                    self.warnings['substvar']=False
+                    break
+        # Handle substchar warning
+        if subst_chars==None \
+            and self.global_options.get("substchar")==False \
+            and self.warnings.get('substchar') in (True,None):
+            if re.match(substchar_pattern, content)!=None:
+                self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                self.warnings['substchar']=False
+                
+        subst_var=self.global_options.get("substvar")==True if subst_var==None else subst_var
+        subst_chars=self.global_options.get("substchar")==True if subst_chars==None else subst_chars
         # get all variables used in content
-        new_content=copy.copy(content)
-        encountered_variables=set()
-        offset=0
-        for match in re.finditer(pattern, content):
-            var_name=match.group(1)
-            if var_name==None or var_name.strip()=='': continue
-            if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
-            var_content: str
-            try: 
-                var_content=self.global_variables[var_name]
-            except KeyError: 
-                if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
-                    num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
-            else:
-                new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
-                offset+=len(var_content)-(match.end()-match.start())
-            encountered_variables.add(var_name) # Prevent repeated warnings
+        new_content=content
+        if subst_var:
+            offset=0
+            encountered_variables=set()
+            for match in re.finditer(substvar_pattern, content):
+                var_name=match.group(1)
+                if var_name==None or var_name.strip()=='': continue
+                if var_name=="ESC": continue # skip {{ESC}}; leave it for substesc
+                if re.match(r"^\[.+\]$", var_name)!=None: continue # skip substchar format
+
+                var_content=None
+                try: 
+                    var_content=self.global_variables[var_name]
+                except KeyError: 
+                    if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
+                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
+                if var_content!=None:
+                    new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
+                    offset+=len(var_content)-(match.end()-match.start())
+                encountered_variables.add(var_name) # Prevent repeated warnings
+        # substchar
+        content=new_content
+        if subst_chars:
+            offset=0
+            for match in re.finditer(substchar_pattern, content):
+                pattern=match.group(1)
+                if pattern==None or pattern.strip()=='': continue
+                
+                char_content=None
+                # Match x,u,U formats
+                m=re.match(r"^(x.{2}|u.{4}|U.{8})$", pattern)
+                if m!=None:
+                    # Convert to character
+                    try: char_content=chr(int(m.string[1:], base=16))
+                    except ValueError: 
+                        if not silence_warnings: self.handle_warning(self.fd.feof("invalid-charcode-warn", "Line {num}: invalid character code \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(m.string[1:])))
+                else:
+                    if not silence_warnings: self.handle_warning(self.fd.feof("invalid-substchar-format-warn", "Line {num}: invalid substchar format \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(pattern)))
+                if char_content!=None:
+                    new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
+                    offset+=len(char_content)-(match.end()-match.start())
         return new_content
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
@@ -240,10 +273,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
     def parse_content(self, content: str, pure_name: bool=False) -> str:
-        target_content=copy.copy(content)
-        target_content=self.subst_variable_content(target_content)
+        target_content=self.subst_variable_content(content, subst_chars=pure_name==False and self.global_options.get("substchar")==True)
         if pure_name==False:
-            target_content=self.handle_substesc(target_content, condition=pure_name==False and self.global_options.get("substesc")==True)
+            # Shows warning when condition is False
+            target_content=self.handle_substesc(target_content, condition=self.global_options.get("substesc")==True)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
@@ -317,7 +350,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if preserve_indents and got_options.get("leadspaces")!=None:
             blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
         # Process substvar
-        blockinput_data=self.subst_variable_content(blockinput_data, custom_condition=got_options.get("substvar")==True, line_number_debug=debug_linenumber)
+        blockinput_data=self.subst_variable_content(blockinput_data, subst_var=got_options.get("substvar")==True, line_number_debug=debug_linenumber)
         if not disable_substesc: # Must come after substvar
             blockinput_data=self.handle_substesc(blockinput_data, condition=got_options.get("substesc")==True, line_number_debug=debug_linenumber)
         return blockinput_data

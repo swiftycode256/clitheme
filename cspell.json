@@ -16,7 +16,7 @@
         "leadtabindents", "leadspaces", 
         "strictcmdmatch", "normalcmdmatch", "exactcmdmatch", "smartcmdmatch",
         "subststdoutonly", "subststderronly", "substallstreams", "foregroundonly",
-        "substvar", "substesc", 
+        "substvar", "substesc", "substchar",
         "PKGBUILD", "MANPATH",
         "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer", "tcgetpgrp", "tcsetpgrp",
         "TIOCGWINSZ", "TIOCSWINSZ", "TCSADRAIN", "SIGWINCH", "SIGALRM", "ITIMER", "SIGTSTP", "SIGSTOP", "SIGCONT", "SIGUSR1", "SIGUSR2",
