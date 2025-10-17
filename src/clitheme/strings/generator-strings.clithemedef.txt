@@ -149,6 +149,14 @@ in_domainapp swiftycode clitheme
             # locale:default Line {num}: phrase "{old_phrase}" is deprecated in this version; please use "{new_phrase}" instead
             locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
         [/entry]
+        [entry] invalid-charcode-warn
+            # locale:default Line {num}: invalid character code "{name}", not performing substitution
+            locale:zh_CN 第{num}行：无效字符代码"{name}"，不会进行替换
+        [/entry]
+        [entry] invalid-substchar-format-warn
+            # locale:default Line {num}: invalid substchar format "{name}", not performing substitution
+            locale:zh_CN 第{num}行：无效的substchar格式"{name}"，不会进行替换
+        [/entry]
         [entry] unknown-variable-warn
             # locale:default Line {num}: unknown variable "{name}", not performing substitution
             locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
@@ -183,6 +191,10 @@ in_domainapp swiftycode clitheme
             # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
             # locale:default Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled
             locale:zh_CN Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用
+        [/entry]
+        [entry] set-substchar-warn
+            # locale:default Line {num}: attempted to use character substitution, but "substchar" option is not enabled
+            locale:zh_CN 第{num}行：尝试使用字符替换，但"substchar"选项未被启用
         [/entry]
         # 以下提示会是上方定义中"{sanitycheck_msg}"的内容
         # The following messages are the contents of "{sanitycheck_msg}" in the above entries
