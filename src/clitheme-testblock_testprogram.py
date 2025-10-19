@@ -13,18 +13,18 @@ begin_header
 end_header
 
 begin_main
-    set_options leadtabindents:1
+    set_options leadtabindents:1 linebounds
     entry test_entry
         locale_block default en_US en C
 
 
             this
             and
-            that
+          | that|
 
                 is just good
                     #enough
-            should have leading 2 lines and trailing 3 lines
+        |   should have leading 2 lines and trailing 3 lines|
             \\end_block
             \\\\end_block
 
@@ -32,6 +32,9 @@ begin_main
 
         end_block
     end_entry
+    [entry] test_entry-2
+        locale:default |   this and that  |
+    [/entry]
 end_main
 """
 
@@ -66,13 +69,14 @@ if frontend.set_local_themedef(file_data)==False:
     print("Error: set_local_themedef failed")
     exit(1)
 if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
-    print("Error: set_local_themedef failed")
+    print("Error: set_local_themedef with overlay failed")
     exit(1)
 f=frontend.FetchDescriptor()
 print("Default locale:")
 f.disable_lang=True
 # Not printing because debug mode already prints
 (f.reof("test_entry", "Nonexistent"))
+(f.reof("test_entry-2", "Nonexistent"))
 print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
