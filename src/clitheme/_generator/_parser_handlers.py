@@ -70,20 +70,22 @@ class GeneratorObject(_data_handlers.DataHandlers):
             # stop at non-empty or non-comment line
             if not self.is_ignore_line(): return True
         else: return False # End of file
+    def linenum(self) -> str:
+        return str(self.lineindex+1)
     def check_enough_args(self, phrases: List[str], count: int):
         if len(phrases)<count:
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=str(self.lineindex+1)))
+            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
     def check_extra_args(self, phrases: List[str], count: int, use_exact_count: bool):
         not_pass: bool
         if use_exact_count: not_pass=len(phrases)!=count
         else: not_pass=len(phrases)>count
         if not_pass:
-            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(phrases[0])))
+            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(phrases[0])))
     def check_version(self, version_str: str):
         # allow_bugfix is disabled to allow interoperability with other release variants
         allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
         match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+)){{,{int(allow_bugfix)}}}(-beta(?P<beta_release>\d+))?$", version_str)
-        def invalid_version(): self.handle_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=str(self.lineindex+1)))
+        def invalid_version(): self.handle_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=self.linenum()))
         if match_result==None: invalid_version()
         elif int(match_result.groupdict()['major'])<2: invalid_version()
         else:
@@ -104,7 +106,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
-        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=str(self.lineindex+1)))
+        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None, ban_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         assert not (allowed_options!=None and ban_options!=None), "Cannot specify allowed and banned options at the same time"
@@ -121,10 +123,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)$", each_option)
                 value: int
                 if results==None: # no value specified
-                    self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
+                    self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
                 else: 
                     try: value=int(results.groupdict()['value'])
-                    except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
+                    except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
                 # set option
                 final_options[option_name]=value
             elif option_name in self.bool_options:
@@ -135,17 +137,17 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     if option_name_preserve_no in option_group:
                         for opt in options_data:
                             if opt!=option_name_preserve_no and opt in option_group:
-                                self.handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=str(self.lineindex+1), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
+                                self.handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=self.linenum(), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
                         # set all other options to false
                         for opt in option_group: final_options[opt]=False
                         # set the option
                         final_options[option_name_preserve_no]=True
                         break
                 else: # executed when no break occurs
-                    self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name_preserve_no)))
+                    self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
             if (allowed_options!=None and option_name not in allowed_options) or\
                (ban_options!=None and option_name in ban_options):
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=str(self.lineindex+1), phrase=self.fmt(option_name)))
+                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
         return final_options 
     def handle_set_global_options(self, options_data: List[str], really_really_global: bool=False):
         # set options globally
@@ -176,7 +178,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             and self.warnings.get('substvar')!=False:
             for match in re.finditer(substvar_pattern, content):
                 if self.global_variables.get(match.group(1))!=None:
-                    self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                    self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                     self.warnings['substvar']=False
                     break
         # Handle substchar warning
@@ -184,7 +186,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             and self.global_options.get("substchar")==False \
             and self.warnings.get('substchar')!=False:
             if re.match(substchar_pattern, content)!=None:
-                self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                 self.warnings['substchar']=False
                 
         subst_var=self.global_options.get("substvar")==True if subst_var==None else subst_var
@@ -205,7 +207,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     var_content=self.global_variables[var_name]
                 except KeyError: 
                     if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
-                        num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(var_name)))
+                        num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(var_name)))
                 if var_content!=None:
                     new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
                     offset+=len(var_content)-(match.end()-match.start())
@@ -225,9 +227,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     # Convert to character
                     try: char_content=chr(int(m.string[1:], base=16))
                     except ValueError: 
-                        if not silence_warnings: self.handle_warning(self.fd.feof("invalid-charcode-warn", "Line {num}: invalid character code \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(m.string[1:])))
+                        if not silence_warnings: self.handle_warning(self.fd.feof("invalid-charcode-warn", "Line {num}: invalid character code \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(m.string[1:])))
                 else:
-                    if not silence_warnings: self.handle_warning(self.fd.feof("invalid-substchar-format-warn", "Line {num}: invalid substchar format \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1), name=self.fmt(pattern)))
+                    if not silence_warnings: self.handle_warning(self.fd.feof("invalid-substchar-format-warn", "Line {num}: invalid substchar format \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(pattern)))
                 if char_content!=None:
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())
@@ -256,10 +258,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         results=re.search(r"setvar:(?P<name>.+)", line_content.split()[0])
         var_name: str
         if results==None:
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=str(self.lineindex+1)))
+            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=self.linenum()))
         else: var_name=results.groupdict()['name']
         # sanity check var_name
-        def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=str(self.lineindex+1)))
+        def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=self.linenum()))
         if var_name=='ESC': bad_var()
         for char in self.substvar_banphrases:
             if char in var_name: bad_var()
@@ -272,7 +274,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.global_variables[var_name]=var_content
     def handle_begin_section(self, section_name: str):
         if section_name in self.parsed_sections: 
-            self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=str(self.lineindex+1), section=section_name))
+            self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=self.linenum(), section=section_name))
         self.section_parsing=True
         self.handle_setup_global_options()
     def handle_end_section(self, section_name: str):
@@ -285,7 +287,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         else:
             # Handle substesc warning
             if self.warnings.get("substesc") in (True,None) and "{{ESC}}" in content:
-                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
+                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                 self.warnings['substesc']=False
             return content
     def handle_linenumber_range(self, begin: int, end: int) -> str:

@@ -62,7 +62,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 self.check_enough_args(phrases, 2)
                 results=re.search(r"locale:(?P<locale>.+)", phrases[0])
                 if results==None:
-                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=str(self.lineindex+1)))
+                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=self.linenum()))
                 else:
                     locale=results.groupdict()['locale']
                 content=_globalvar.extract_content(line_content)
@@ -75,7 +75,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
             for this_locale in locales:
                 for each_name in entryNames:
                     if is_substrules:
-                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], str(self.lineindex+1), each_name[2]))
+                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.linenum(), each_name[2]))
                     else:
                         target_entry=copy.copy(each_name[0])
                         if this_locale!="default":

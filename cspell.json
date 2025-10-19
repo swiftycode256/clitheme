@@ -21,7 +21,7 @@
         "PKGBUILD", "MANPATH",
         "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer", "tcgetpgrp", "tcsetpgrp",
         "TIOCGWINSZ", "TIOCSWINSZ", "TCSADRAIN", "SIGWINCH", "SIGALRM", "ITIMER", "SIGTSTP", "SIGSTOP", "SIGCONT", "SIGUSR1", "SIGUSR2",
-        "showchars", "keepends",
+        "showchars", "keepends", "linenum",
         "appname", "domainapp",
         "sanitycheck", "debugmode", "splitarray", "disablelang"
     ],

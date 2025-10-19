@@ -33,7 +33,7 @@ def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
             is_stdin=_globalvar.handle_stdin_prompt(file_dir)
             filecontent: str
             try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
-            except: obj.handle_error(obj.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=str(obj.lineindex+1), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]), not_syntax_error=True)
+            except: obj.handle_error(obj.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=obj.linenum(), filepath=obj.fmt(file_dir), error_msg=sys.exc_info()[1]), not_syntax_error=True)
             if is_stdin: print()
             sys.stdout=orig_stdout
             # write manpage files in theme-info for db migration feature to work successfully
@@ -45,7 +45,7 @@ def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
                 filepath=obj.parse_content(_globalvar.splitarray_to_string(p[1:]), pure_name=True).split()
                 # sanity check the file path
                 if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
-                    obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=obj.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 return filepath
             file_paths=[handle(phrases)]
             # handle additional [file_content] phrases
@@ -65,14 +65,14 @@ def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
             obj.check_enough_args(phrases, 2)
             filepath=obj.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
-                obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=obj.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
 
             filecontent=get_file_content(filepath)
             # expect "as" clause on next line
             if obj.goto_next_line() and len(obj.lines_data[obj.lineindex].split())>0 and obj.lines_data[obj.lineindex].split()[0]=="as":
                 target_file=obj.parse_content(_globalvar.splitarray_to_string(obj.lines_data[obj.lineindex].split()[1:]), pure_name=True).split()
                 if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
-                    obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=obj.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 obj.write_manpage_file(target_file, filecontent, obj.lineindex+1)
             else:
                 obj.handle_error(obj.fd.feof("include-file-missing-phrase-err", "Missing \"as <filename>\" phrase on next line of line {num}", num=str(obj.lineindex+1-1)))
@@ -80,7 +80,7 @@ def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
             obj.check_enough_args(phrases, 2)
             filepath=obj.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
-                obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=obj.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
             filecontent=get_file_content(filepath)
             while obj.goto_next_line():
                 p=obj.lines_data[obj.lineindex].split()
@@ -88,7 +88,7 @@ def handle_manpage_section(obj: _parser_handlers.GeneratorObject, first_phrase: 
                     obj.check_enough_args(p, 2)
                     target_file=obj.parse_content(_globalvar.splitarray_to_string(obj.lines_data[obj.lineindex].split()[1:]), pure_name=True).split()
                     if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
-                        obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=str(obj.lineindex+1), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                        obj.handle_error(obj.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=obj.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     obj.write_manpage_file(target_file, filecontent, obj.lineindex+1)
                 elif p[0]=="[/include_file]":
                     obj.check_extra_args(p, 1, use_exact_count=True)

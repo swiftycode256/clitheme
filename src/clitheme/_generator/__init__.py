@@ -55,7 +55,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             obj.check_enough_args(phrases, 2)
             obj.check_extra_args(phrases, 2, use_exact_count=True)
             if not before_content_lines:
-                obj.handle_error(obj.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=str(obj.lineindex+1), phrase=first_phrase))
+                obj.handle_error(obj.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=obj.linenum(), phrase=first_phrase))
             obj.check_version(phrases[1])
         else: obj.handle_invalid_phrase(first_phrase)
 
