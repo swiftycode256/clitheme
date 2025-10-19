@@ -18,7 +18,6 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     self: _parser_handlers.GeneratorObject=obj
     # substrules_options: {effective_commands: list, is_regex: bool, strictness: int}
 
-    entry_name_substesc=False; entry_name_substvar=False; entry_name_substchar=False
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
@@ -27,9 +26,11 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
     entries: List[tuple]=[]
 
-    substrules_endmatchhere=False
     substrules_stdout_stderr_option=0
-    substrules_foregroundonly=False
+    got_options=None
+    def opt(name: str) -> bool: 
+        assert got_options!=None
+        return got_options.get(name)==True
 
     def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
         # check if patterns are valid
@@ -101,20 +102,10 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                         +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
                         +(['foregroundonly'] if is_substrules else [])
                     )
-            if got_options.get('endmatchhere')==True:
-                substrules_endmatchhere=True
             if got_options.get('subststdoutonly')==True:
                 substrules_stdout_stderr_option=1
             if got_options.get('subststderronly')==True:
                 substrules_stdout_stderr_option=2
-            if got_options.get('substesc')==True:
-                entry_name_substesc=True
-            if got_options.get('substvar')==True:
-                entry_name_substvar=True
-            if got_options.get('substchar')==True:
-                entry_name_substchar=True
-            if got_options.get('foregroundonly')==True:
-                substrules_foregroundonly=True
             break
         else: self.handle_invalid_phrase(phrases[0])
     # For silence_warning in subst_variable_content
@@ -125,11 +116,11 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
         debug_linenumber=entry[5] if is_substrules else entry[4]
         match_pattern=self.subst_variable_content(match_pattern, \
-                subst_var=entry_name_substvar, subst_chars=entry_name_substchar, \
+                subst_var=opt('substvar'), subst_chars=opt('substchar'), \
                 line_number_debug=debug_linenumber, \
                 # Don't show warnings for the same match_pattern
                 silence_warnings=entry[3] in encountered_ids)
-        match_pattern=self.handle_substesc(match_pattern, condition=entry_name_substesc==True, line_number_debug=debug_linenumber)
+        match_pattern=self.handle_substesc(match_pattern, condition=opt('substesc'), line_number_debug=debug_linenumber)
 
         if is_substrules: check_valid_pattern(match_pattern, entry[5])
         else:
@@ -146,9 +137,9 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                     effective_locale=entry[2], \
                     is_regex=substrules_options['is_regex'], \
                     command_match_strictness=substrules_options['strictness'], \
-                    end_match_here=substrules_endmatchhere, \
+                    end_match_here=opt('endmatchhere'), \
                     stdout_stderr_matchoption=substrules_stdout_stderr_option, \
-                    foreground_only=substrules_foregroundonly, \
+                    foreground_only=opt('foregroundonly'), \
                     line_number_debug=entry[4], \
                     file_id=self.file_id, \
                     unique_id=entry[3])
