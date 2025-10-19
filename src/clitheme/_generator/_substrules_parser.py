@@ -15,8 +15,8 @@ from . import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phrase: str):
-    obj.handle_begin_section("substrules")
+def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phrase: str):
+    self.handle_begin_section("substrules")
     end_phrase=r"{/substrules_section}"
     command_filters: Optional[list]=None
     command_filter_strictness=0
@@ -28,33 +28,33 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
         """
         nonlocal outline_foregroundonly
         if outline_foregroundonly!=None:
-            obj.global_options['foregroundonly']=outline_foregroundonly
+            self.global_options['foregroundonly']=outline_foregroundonly
             outline_foregroundonly=None
     # initialize the database
-    if os.path.exists(obj.path+"/"+_globalvar.db_filename):
-        try: obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
-        except obj.db_interface.need_db_regenerate:
+    if os.path.exists(self.path+"/"+_globalvar.db_filename):
+        try: self.db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
+        except self.db_interface.need_db_regenerate:
             from ..exec import _check_regenerate_db
-            if not _check_regenerate_db(obj.path): obj.handle_error(obj.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
-            obj.db_interface.connect_db(path=obj.path+"/"+_globalvar.db_filename)
-    else: obj.db_interface.init_db(obj.path+"/"+_globalvar.db_filename)
-    obj.db_interface.debug_mode=not obj.silence_warn
-    while obj.goto_next_line():
-        phrases=obj.lines_data[obj.lineindex].split()
+            if not _check_regenerate_db(self.path): self.handle_error(self.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
+            self.db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
+    else: self.db_interface.init_db(self.path+"/"+_globalvar.db_filename)
+    self.db_interface.debug_mode=not self.silence_warn
+    while self.goto_next_line():
+        phrases=self.lines_data[self.lineindex].split()
         if phrases[0]=="[filter_commands]":
-            obj.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1, use_exact_count=True)
             reset_outline_foregroundonly()
-            content=obj.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_other_options=False, disable_substesc=True)
+            content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_other_options=False, disable_substesc=True)
             # read commands
             command_strings=content.splitlines()
 
             strictness=0
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
-            got_options=copy.copy(obj.global_options)
+            got_options=copy.copy(self.global_options)
             inline_options={}
-            if len(obj.lines_data[obj.lineindex].split())>1:
-                got_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=True, allowed_options=obj.block_input_options+obj.command_filter_options)
-                inline_options=obj.parse_options(obj.lines_data[obj.lineindex].split()[1:], merge_global_options=False, allowed_options=obj.block_input_options+obj.command_filter_options)
+            if len(self.lines_data[self.lineindex].split())>1:
+                got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=True, allowed_options=self.block_input_options+self.command_filter_options)
+                inline_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False, allowed_options=self.block_input_options+self.command_filter_options)
             if got_options.get('strictcmdmatch')==True:
                 strictness=1
             if got_options.get('exactcmdmatch')==True:
@@ -62,40 +62,40 @@ def handle_substrules_section(obj: _parser_handlers.GeneratorObject, first_phras
             if got_options.get('smartcmdmatch')==True:
                 strictness=-1
             if "foregroundonly" in inline_options.keys():
-                outline_foregroundonly=obj.global_options.get('foregroundonly')==True
-                obj.global_options['foregroundonly']=inline_options['foregroundonly']
+                outline_foregroundonly=self.global_options.get('foregroundonly')==True
+                self.global_options['foregroundonly']=inline_options['foregroundonly']
             command_filters=[]
             for cmd in command_strings:
                 command_filters.append(cmd.strip())
             command_filter_strictness=strictness
         elif phrases[0]=="filter_command":
-            obj.check_enough_args(phrases, 2) 
+            self.check_enough_args(phrases, 2) 
             reset_outline_foregroundonly()
             content=_globalvar.splitarray_to_string(phrases[1:])
-            content=obj.parse_content(content, pure_name=True)
+            content=self.parse_content(content, pure_name=True)
             strictness=0
-            if obj.global_options.get('strictcmdmatch')==True:
+            if self.global_options.get('strictcmdmatch')==True:
                 strictness=1
-            if obj.global_options.get('exactcmdmatch')==True:
+            if self.global_options.get('exactcmdmatch')==True:
                 strictness=2
-            if obj.global_options.get('smartcmdmatch')==True:
+            if self.global_options.get('smartcmdmatch')==True:
                 strictness=-1
             command_filters=[content]
             command_filter_strictness=strictness
         elif phrases[0]=="unset_filter_command":
-            obj.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1, use_exact_count=True)
             reset_outline_foregroundonly()
             command_filters=None
         elif phrases[0] in ("[subst_string]", "[substitute_string]", "[subst_regex]", "[substitute_regex]"):
-            obj.check_enough_args(phrases, 2)
+            self.check_enough_args(phrases, 2)
             options={"effective_commands": copy.copy(command_filters),
                       "is_regex": phrases[0] in ("[subst_regex]", "[substitute_regex]"),
                       "strictness": command_filter_strictness}
-            match_pattern=_globalvar.extract_content(obj.lines_data[obj.lineindex])
-            obj.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
-        elif obj.handle_setters(): pass
+            match_pattern=_globalvar.extract_content(self.lines_data[self.lineindex])
+            self.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
+        elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
-            obj.check_extra_args(phrases, 1, use_exact_count=True)
-            obj.handle_end_section("substrules")
+            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.handle_end_section("substrules")
             break
-        else: obj.handle_invalid_phrase(phrases[0])
+        else: self.handle_invalid_phrase(phrases[0])

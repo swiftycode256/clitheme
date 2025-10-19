@@ -34,46 +34,46 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if custom_path_gen:
         generate_custom_path()
     global path
-    obj=_parser_handlers.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
+    self=_parser_handlers.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path, silence_warn=silence_warn)
 
     before_content_lines=True
-    while obj.goto_next_line():
-        phrases=obj.lines_data[obj.lineindex].split()
+    while self.goto_next_line():
+        phrases=self.lines_data[self.lineindex].split()
         first_phrase=phrases[0]
         is_content=True
         if first_phrase in ("begin_header", r"{header_section}"):
-            _header_parser.handle_header_section(obj, first_phrase)
+            _header_parser.handle_header_section(self, first_phrase)
         elif first_phrase in ("begin_main", r"{entries_section}"):
-            _entries_parser.handle_entries_section(obj, first_phrase)
+            _entries_parser.handle_entries_section(self, first_phrase)
         elif first_phrase==r"{substrules_section}":
-            _substrules_parser.handle_substrules_section(obj, first_phrase)
+            _substrules_parser.handle_substrules_section(self, first_phrase)
         elif first_phrase==r"{manpage_section}":
-            _manpage_parser.handle_manpage_section(obj, first_phrase)
-        elif obj.handle_setters(really_really_global=True): pass
+            _manpage_parser.handle_manpage_section(self, first_phrase)
+        elif self.handle_setters(really_really_global=True): pass
         elif first_phrase=="!require_version":
             is_content=False
-            obj.check_enough_args(phrases, 2)
-            obj.check_extra_args(phrases, 2, use_exact_count=True)
+            self.check_enough_args(phrases, 2)
+            self.check_extra_args(phrases, 2, use_exact_count=True)
             if not before_content_lines:
-                obj.handle_error(obj.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=obj.linenum(), phrase=first_phrase))
-            obj.check_version(phrases[1])
-        else: obj.handle_invalid_phrase(first_phrase)
+                self.handle_error(self.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=self.linenum(), phrase=first_phrase))
+            self.check_version(phrases[1])
+        else: self.handle_invalid_phrase(first_phrase)
 
         if is_content: before_content_lines=False
 
     def is_content_parsed() -> bool:
         content_sections=["entries", "substrules", "manpage"]
         for section in content_sections:
-            if section in obj.parsed_sections: return True
+            if section in self.parsed_sections: return True
         return False
-    if obj.section_parsing or not "header" in obj.parsed_sections or not is_content_parsed():
-        obj.handle_error(obj.fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
+    if self.section_parsing or not "header" in self.parsed_sections or not is_content_parsed():
+        self.handle_error(self.fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
-    obj.write_infofile(obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, "file_content", obj.file_content, obj.lineindex+1, "<file_content>")
+    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, "file_content", self.file_content, self.lineindex+1, "<file_content>")
     # record *full* file path for update-themes feature
-    obj.write_infofile(obj.path+"/"+_globalvar.generator_info_pathname+"/"+obj.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), obj.lineindex+1, "<filepath>")
+    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), self.lineindex+1, "<filepath>")
     # Update current theme index
-    theme_index=open(obj.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
-    theme_index.write(obj.custom_infofile_name+"\n")
-    path=obj.path
-    return obj.path
+    theme_index=open(self.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
+    theme_index.write(self.custom_infofile_name+"\n")
+    path=self.path
+    return self.path
