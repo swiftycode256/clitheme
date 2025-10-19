@@ -38,7 +38,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
 
     before_content_lines=True
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         first_phrase=phrases[0]
         is_content=True
         if first_phrase in ("begin_header", r"{header_section}"):

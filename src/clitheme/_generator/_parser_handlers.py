@@ -63,7 +63,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         from . import db_interface
         self.db_interface=db_interface
     def is_ignore_line(self) -> bool:
-        return self.lines_data[self.lineindex].strip()=="" or self.lines_data[self.lineindex].strip().startswith('#')
+        return self.get_current_line().strip()=="" or self.get_current_line().strip().startswith('#')
     def goto_next_line(self) -> bool:
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
@@ -72,6 +72,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
         else: return False # End of file
     def linenum(self) -> str:
         return str(self.lineindex+1)
+    def get_current_line(self) -> str:
+        return self.lines_data[self.lineindex]
     def check_enough_args(self, phrases: List[str], count: int):
         if len(phrases)<count:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
@@ -302,13 +304,13 @@ class GeneratorObject(_data_handlers.DataHandlers):
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         if phrases[0]=="set_options":
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
         elif phrases[0].startswith("setvar:"): 
             self.check_enough_args(phrases, 2)
-            self.handle_set_variable(self.lines_data[self.lineindex], really_really_global)
+            self.handle_set_variable(self.get_current_line(), really_really_global)
         else: return False
         return True
     
@@ -321,7 +323,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             # read line
-            line=self.lines_data[self.lineindex].rstrip()
+            line=self.get_current_line().rstrip()
             if line.strip()=="": # empty line
                 if preserve_empty_lines: blockinput_data+="\n"
                 continue
@@ -354,7 +356,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         got_options=copy.copy(self.global_options)
         def opt(name: str): return got_options.get(name)
 
-        if len(self.lines_data[self.lineindex].split())>1:
+        if len(self.get_current_line().split())>1:
             # Allowed/banned options
             ban_options=None; allowed_options=None
             if not disallow_other_options:
@@ -366,7 +368,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 if preserve_indents: allowed_options+=self.lead_indent_options
                 if not disable_substesc: allowed_options+=self.char_subst_options
                 allowed_options+=self.content_subst_options
-            got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:],
+            got_options=self.parse_options(self.get_current_line().split()[1:],
                 merge_global_options=True,
                 allowed_options=allowed_options, ban_options=ban_options)
         # Process lead indent options

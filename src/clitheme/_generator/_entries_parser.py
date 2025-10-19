@@ -20,9 +20,9 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
     self.in_domainapp=""
     self.in_subsection=""
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         if phrases[0]=="in_domainapp":
-            this_phrases=self.parse_content(self.lines_data[self.lineindex].strip(), pure_name=True).split()
+            this_phrases=self.parse_content(self.get_current_line().strip(), pure_name=True).split()
             self.check_enough_args(this_phrases, 3)
             self.check_extra_args(this_phrases, 3, use_exact_count=False)
             self.in_domainapp=this_phrases[1]+" "+this_phrases[2]
@@ -43,7 +43,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             self.in_subsection=""
         elif phrases[0] in ("entry", "[entry]"):
             self.check_enough_args(phrases, 2)
-            entry_name=_globalvar.extract_content(self.lines_data[self.lineindex])
+            entry_name=_globalvar.extract_content(self.get_current_line())
             self.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:

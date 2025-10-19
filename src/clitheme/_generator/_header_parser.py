@@ -18,10 +18,10 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
     end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     specified_info=[]
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         if phrases[0] in ("name", "version", "description"):
             self.check_enough_args(phrases, 2)
-            content=_globalvar.extract_content(self.lines_data[self.lineindex])
+            content=_globalvar.extract_content(self.get_current_line())
             content=self.parse_content(content, pure_name=phrases[0]!="description")
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \

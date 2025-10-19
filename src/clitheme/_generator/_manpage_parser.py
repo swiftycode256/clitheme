@@ -19,7 +19,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
     self.handle_begin_section("manpage")
     end_phrase="{/manpage_section}"
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         def get_file_content(filepath: List[str]) -> str:
             # determine file path
             parent_dir=""
@@ -51,7 +51,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
             # handle additional [file_content] phrases
             prev_line_index=self.lineindex
             while self.goto_next_line():
-                p=self.lines_data[self.lineindex].split()
+                p=self.get_current_line().split()
                 if p[0]=="[file_content]":
                     prev_line_index=self.lineindex
                     file_paths.append(handle(p))
@@ -69,8 +69,8 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
 
             filecontent=get_file_content(filepath)
             # expect "as" clause on next line
-            if self.goto_next_line() and len(self.lines_data[self.lineindex].split())>0 and self.lines_data[self.lineindex].split()[0]=="as":
-                target_file=self.parse_content(_globalvar.splitarray_to_string(self.lines_data[self.lineindex].split()[1:]), pure_name=True).split()
+            if self.goto_next_line() and len(self.get_current_line().split())>0 and self.get_current_line().split()[0]=="as":
+                target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
                 if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
                     self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 self.write_manpage_file(target_file, filecontent, self.lineindex+1)
@@ -83,10 +83,10 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
                 self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
             filecontent=get_file_content(filepath)
             while self.goto_next_line():
-                p=self.lines_data[self.lineindex].split()
+                p=self.get_current_line().split()
                 if p[0]=="as":
                     self.check_enough_args(p, 2)
-                    target_file=self.parse_content(_globalvar.splitarray_to_string(self.lines_data[self.lineindex].split()[1:]), pure_name=True).split()
+                    target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
                     if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
                         self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     self.write_manpage_file(target_file, filecontent, self.lineindex+1)

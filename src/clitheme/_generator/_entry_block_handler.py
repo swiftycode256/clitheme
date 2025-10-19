@@ -37,8 +37,8 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         try: re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
-        line_content=self.lines_data[self.lineindex]
+        phrases=self.get_current_line().split()
+        line_content=self.get_current_line()
         # Support specifying multiple match pattern/entry names in one definition block
         if phrases[0]!=start_phrase and not names_processed:
             names_processed=True # Prevent specifying it after other definition syntax

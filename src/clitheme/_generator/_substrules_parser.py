@@ -40,7 +40,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
     else: self.db_interface.init_db(self.path+"/"+_globalvar.db_filename)
     self.db_interface.debug_mode=not self.silence_warn
     while self.goto_next_line():
-        phrases=self.lines_data[self.lineindex].split()
+        phrases=self.get_current_line().split()
         if phrases[0]=="[filter_commands]":
             self.check_extra_args(phrases, 1, use_exact_count=True)
             reset_outline_foregroundonly()
@@ -52,9 +52,9 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
             got_options=copy.copy(self.global_options)
             inline_options={}
-            if len(self.lines_data[self.lineindex].split())>1:
-                got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=True, allowed_options=self.block_input_options+self.command_filter_options)
-                inline_options=self.parse_options(self.lines_data[self.lineindex].split()[1:], merge_global_options=False, allowed_options=self.block_input_options+self.command_filter_options)
+            if len(self.get_current_line().split())>1:
+                got_options=self.parse_options(self.get_current_line().split()[1:], merge_global_options=True, allowed_options=self.block_input_options+self.command_filter_options)
+                inline_options=self.parse_options(self.get_current_line().split()[1:], merge_global_options=False, allowed_options=self.block_input_options+self.command_filter_options)
             if got_options.get('strictcmdmatch')==True:
                 strictness=1
             if got_options.get('exactcmdmatch')==True:
@@ -91,7 +91,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             options={"effective_commands": copy.copy(command_filters),
                       "is_regex": phrases[0] in ("[subst_regex]", "[substitute_regex]"),
                       "strictness": command_filter_strictness}
-            match_pattern=_globalvar.extract_content(self.lines_data[self.lineindex])
+            match_pattern=_globalvar.extract_content(self.get_current_line())
             self.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
