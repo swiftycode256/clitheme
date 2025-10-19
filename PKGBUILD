@@ -2,7 +2,7 @@
 
 # spell-checker: disable
 pkgname='clitheme'
-pkgver=2.1_dev20251017
+pkgver=unknown
 pkgrel=1
 pkgdesc="Command-line application customization utility"
 arch=('any')
@@ -29,7 +29,7 @@ pkgver(){
 	cd srctmp
 	cd src/clitheme
 	pkgrel=$(python3 -c "from _version import version_buildnumber; print(version_buildnumber)")
-	python3 -c "from _version import version_disp; print(version_disp)"
+	python3 -c "from _version import __version__; print(__version__)"
 }
 
 build() {

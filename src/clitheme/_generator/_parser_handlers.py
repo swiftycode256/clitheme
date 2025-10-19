@@ -103,9 +103,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
             if not version_ok:
                 self.handle_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
-                        cur_ver=_version.__version__+ \
+                        cur_ver=_globalvar.clitheme_version+ \
                             # For "dev" versions: output corresponding beta milestone
-                            (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _version.__version__ else ""),
+                            (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _globalvar.clitheme_version else ""),
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def handle_invalid_phrase(self, name: str):
         self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))

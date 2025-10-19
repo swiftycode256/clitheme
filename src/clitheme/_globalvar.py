@@ -26,7 +26,7 @@ error_msg_str= \
 Please make sure that the {var} environment variable is set correctly.
 Try restarting your terminal session to fix this issue."""
 
-clitheme_version=_version.__version__
+clitheme_version=_version.version_disp
 
 ## Core data paths
 clitheme_root_data_path=""
