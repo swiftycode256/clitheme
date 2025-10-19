@@ -21,18 +21,19 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
-    content_subst_options=["substesc", "substvar", "substchar"]
-    char_subst_options=["substesc", "substchar"]
+    content_subst_options=["substvar"]
+    char_subst_options=["substesc", "substchar", "linebounds"]
+    subst_options=content_subst_options+char_subst_options
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
     subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere"]
     
     # options used in handle_block_input
-    block_input_options=lead_indent_options+content_subst_options
+    block_input_options=lead_indent_options+subst_options
 
     # value options: options requiring an integer value
     value_options=lead_indent_options
     # on/off options (use no<...> to disable)
-    bool_options=content_subst_options+["endmatchhere", "foregroundonly"]
+    bool_options=subst_options+["endmatchhere", "foregroundonly"]
     # only one of these options can be set to true at the same time (specific to groups)
     switch_options=[command_filter_options[:4]]
     # Disable these options for now (BETA)
@@ -153,7 +154,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.global_options=self.parse_options(options_data, merge_global_options=1) 
         specified_options=self.parse_options(options_data, merge_global_options=False)
         # if manually disabled, show substvar warning again next time
-        for option in self.content_subst_options:
+        for option in self.subst_options:
             if self.global_options.get(option)!=True \
                 and option in specified_options:
                 self.warnings[option]=True
@@ -162,7 +163,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # reset global_options to contents of really_really_global_options
         self.global_options=copy.copy(self.really_really_global_options)
         # if manually disabled, show warnings again next time
-        for option in self.content_subst_options:
+        for option in self.subst_options:
             if self.global_options.get(option)!=True and prev_options.get(option)==True:
                 self.warnings[option]=True
         self.global_variables=copy.copy(self.really_really_global_variables)
@@ -172,7 +173,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # Handle substvar warning
         if subst_var==None \
             and self.global_options.get("substvar")==False \
-            and self.warnings.get('substvar') in (True,None):
+            and self.warnings.get('substvar')!=False:
             for match in re.finditer(substvar_pattern, content):
                 if self.global_variables.get(match.group(1))!=None:
                     self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
@@ -181,7 +182,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # Handle substchar warning
         if subst_chars==None \
             and self.global_options.get("substchar")==False \
-            and self.warnings.get('substchar') in (True,None):
+            and self.warnings.get('substchar')!=False:
             if re.match(substchar_pattern, content)!=None:
                 self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else str(self.lineindex+1)))
                 self.warnings['substchar']=False
@@ -231,6 +232,23 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())
         return new_content
+    def handle_linebounds(self, content: str, condition: Optional[bool]=None, debug_linenumber: Optional[int]=None) -> str:
+        # Skip if not starts with |
+        if not content.strip().startswith('|'): return content
+
+        match=re.match(r"^\|(.+)\|$", content.strip())
+        condition=self.global_options.get('linebounds')==True if condition==None else condition
+        if condition==False:
+            # Linebounds warning
+            if match!=None and self.warnings.get('linebounds')!=False:
+                self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.lineindex+1 if debug_linenumber==None else debug_linenumber)))
+                self.warnings['linebounds']=False
+            return content
+        # Match pattern |...|
+        if match!=None:
+            return match.group(1)
+        else:
+            self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.lineindex+1 if debug_linenumber==None else debug_linenumber)))
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
         # match variable name
@@ -278,6 +296,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if pure_name==False:
             # Shows warning when condition is False
             target_content=self.handle_substesc(target_content, condition=self.global_options.get("substesc")==True)
+        target_content=self.handle_linebounds(target_content)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
@@ -324,16 +343,17 @@ class GeneratorObject(_data_handlers.DataHandlers):
             blockinput_data+="\n"+line
         # remove the extra leading newline
         blockinput_data=re.sub(r"\A\n", "", blockinput_data)
-        # remove all whitespaces except common minspaces (if preserve_indents)
+        # remove all whitespaces except common minspaces
         if preserve_indents:
             pattern=r"(?P<optline>\n|^)[ ]{"+str(minspaces)+"}"
             blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
-        ## Parse leadtabindents, leadspaces, and subst options here
+
+        ## Parse options
         got_options=copy.copy(self.global_options)
         def opt(name: str): return got_options.get(name)
 
         if len(self.lines_data[self.lineindex].split())>1:
-            # Process allowed/banned options
+            # Allowed/banned options
             ban_options=None; allowed_options=None
             if not disallow_other_options:
                 ban_options=[]
@@ -343,7 +363,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 allowed_options=[]
                 if preserve_indents: allowed_options+=self.lead_indent_options
                 if not disable_substesc: allowed_options+=self.char_subst_options
-                allowed_options+=["substvar"]
+                allowed_options+=self.content_subst_options
             got_options=self.parse_options(self.lines_data[self.lineindex].split()[1:],
                 merge_global_options=True,
                 allowed_options=allowed_options, ban_options=ban_options)
@@ -360,5 +380,15 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 line_number_debug=debug_linenumber)
         if not disable_substesc: # Must come after substvar
             blockinput_data=self.handle_substesc(blockinput_data, condition=opt("substesc")==True, line_number_debug=debug_linenumber)
+        # Process linebounds
+        blockinput_lines=[]
+        offset=0
+        for line in blockinput_data.splitlines():
+            ws_match=re.match(r"^(?P<spc>\s*)", line)
+            assert ws_match!=None
+            leading_whitespace=ws_match.groupdict()['spc']
+            blockinput_lines.append(leading_whitespace+self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, debug_linenumber=begin_line_number+offset))
+            offset+=1
+        blockinput_data="\n".join(blockinput_lines)
         return blockinput_data
     handle_entry=_entry_block_handler.handle_entry

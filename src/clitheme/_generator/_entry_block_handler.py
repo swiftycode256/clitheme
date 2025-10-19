@@ -99,7 +99,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
             got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, \
                     allowed_options=\
                         (self.subst_limiting_options if is_substrules else [])
-                        +(self.content_subst_options if is_substrules else ["substvar"]) # don't allow substesc in `[entry]`
+                        +(self.subst_options if is_substrules else self.content_subst_options) # don't allow char subst in `[entry]`
                         +(['foregroundonly'] if is_substrules else [])
                     )
             if got_options.get('subststdoutonly')==True:
@@ -116,11 +116,13 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
         debug_linenumber=entry[5] if is_substrules else entry[4]
         match_pattern=self.subst_variable_content(match_pattern, \
-                subst_var=opt('substvar'), subst_chars=opt('substchar'), \
+                subst_var=opt('substvar'), subst_chars=opt('substchar') and is_substrules, \
                 line_number_debug=debug_linenumber, \
                 # Don't show warnings for the same match_pattern
                 silence_warnings=entry[3] in encountered_ids)
-        match_pattern=self.handle_substesc(match_pattern, condition=opt('substesc'), line_number_debug=debug_linenumber)
+        if is_substrules:
+            match_pattern=self.handle_substesc(match_pattern, condition=opt('substesc'), line_number_debug=debug_linenumber)
+            match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'))
 
         if is_substrules: check_valid_pattern(match_pattern, entry[5])
         else:
