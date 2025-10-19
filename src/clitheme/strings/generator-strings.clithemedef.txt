@@ -98,6 +98,10 @@ in_domainapp swiftycode clitheme
             # locale:default Bad substitute pattern at line {num} ({error_msg})
             locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
         [/entry]
+        [entry] linebounds-format-err
+            # locale:default Invalid line boundary format at line {num}
+            locale:zh_CN 第{num}行：无效行边界格式
+        [/entry]
         [entry] bad-var-name-err
             # locale:default Line {num}: "{name}" is not a valid variable name
             locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
@@ -165,6 +169,23 @@ in_domainapp swiftycode clitheme
             # locale:default Line {num}: repeated manpage file, overwriting
             locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
         [/entry]
+        [entry] set-substvar-warn
+            # locale:default Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled
+            locale:zh_CN 第{num}行：尝试引用定义的变量，但"substvar"选项未被启用
+        [/entry]
+        [entry] set-substesc-warn
+            # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
+            # locale:default Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled
+            locale:zh_CN Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用
+        [/entry]
+        [entry] set-substchar-warn
+            # locale:default Line {num}: attempted to use character substitution, but "substchar" option is not enabled
+            locale:zh_CN 第{num}行：尝试使用字符替换，但"substchar"选项未被启用
+        [/entry]
+        [entry] set-linebounds-warn
+            # locale:default Line {num}: Attempted to use line boundaries, but "linebounds" option is not enabled
+            locale:zh_CN 第{num}行：尝试使用行边界，但"linebounds"选项未被启用
+        [/entry]
         # 路径检查功能提示
         # Sanity check feature messages
         [entry] sanity-check-entry-err
@@ -182,19 +203,6 @@ in_domainapp swiftycode clitheme
         [entry] sanity-check-manpage-err
             # locale:default Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories
             locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
-        [/entry]
-        [entry] set-substvar-warn
-            # locale:default Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled
-            locale:zh_CN 第{num}行：尝试引用定义的变量，但"substvar"选项未被启用
-        [/entry]
-        [entry] set-substesc-warn
-            # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
-            # locale:default Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled
-            locale:zh_CN Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用
-        [/entry]
-        [entry] set-substchar-warn
-            # locale:default Line {num}: attempted to use character substitution, but "substchar" option is not enabled
-            locale:zh_CN 第{num}行：尝试使用字符替换，但"substchar"选项未被启用
         [/entry]
         # 以下提示会是上方定义中"{sanitycheck_msg}"的内容
         # The following messages are the contents of "{sanitycheck_msg}" in the above entries
