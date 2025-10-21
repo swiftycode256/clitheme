@@ -61,6 +61,11 @@ begin_main
 
         [/locale] leadspaces:4
     end_entry
+    [entry] test_entry-2
+        [locale] zh_CN
+            |   that and this  |
+        [/locale] linebounds
+    [/entry]
 end_main
 """
 
@@ -81,6 +86,7 @@ print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
 (f.reof("test_entry", "Nonexistent"))
+(f.reof("test_entry-2", "Nonexistent"))
 f.debug_mode=False
 for lang in ["C", "en", "en_US", "zh_CN"]:
     f.disable_lang=True

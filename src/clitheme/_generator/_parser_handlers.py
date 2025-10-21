@@ -21,8 +21,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
-    content_subst_options=["substvar"]
-    char_subst_options=["substesc", "substchar", "linebounds"]
+    content_subst_options=["substvar", "linebounds"]
+    char_subst_options=["substesc", "substchar"]
     subst_options=content_subst_options+char_subst_options
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
     subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere"]
@@ -236,7 +236,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())
         return new_content
-    def handle_linebounds(self, content: str, condition: Optional[bool]=None, debug_linenumber: Optional[int]=None) -> str:
+    def handle_linebounds(self, content: str, condition: Optional[bool]=None, preserve_indents: bool=True, debug_linenumber: Optional[int]=None) -> str:
         # Skip if not starts with |
         if not content.strip().startswith('|'): return content
 
@@ -250,7 +250,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             return content
         # Match pattern |...|
         if match!=None:
-            return match.group(1)
+            content=match.group(1)
+            return content if preserve_indents else content.strip()
         else:
             self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.lineindex+1 if debug_linenumber==None else debug_linenumber)))
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
@@ -300,7 +301,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if pure_name==False:
             # Shows warning when condition is False
             target_content=self.handle_substesc(target_content, condition=self.global_options.get("substesc")==True)
-        target_content=self.handle_linebounds(target_content)
+        target_content=self.handle_linebounds(target_content, preserve_indents=not pure_name)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
@@ -391,7 +392,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             ws_match=re.match(r"^(?P<spc>\s*)", line)
             assert ws_match!=None
             leading_whitespace=ws_match.groupdict()['spc']
-            blockinput_lines.append(leading_whitespace+self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, debug_linenumber=begin_line_number+offset))
+            blockinput_lines.append(leading_whitespace+self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, debug_linenumber=begin_line_number+offset))
             offset+=1
         blockinput_data="\n".join(blockinput_lines)
         return blockinput_data

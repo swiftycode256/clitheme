@@ -122,7 +122,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 silence_warnings=entry[3] in encountered_ids)
         if is_substrules:
             match_pattern=self.handle_substesc(match_pattern, condition=opt('substesc'), line_number_debug=debug_linenumber)
-            match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'))
+        match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
 
         if is_substrules: check_valid_pattern(match_pattern, entry[5])
         else:
