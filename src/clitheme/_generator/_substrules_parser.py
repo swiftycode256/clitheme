@@ -44,7 +44,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
         if phrases[0]=="[filter_commands]":
             self.check_extra_args(phrases, 1, use_exact_count=True)
             reset_outline_foregroundonly()
-            content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_other_options=False, disable_substesc=True)
+            content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=r"[/filter_commands]", disallow_other_options=False, disable_char_subst=True)
             # read commands
             command_strings=content.splitlines()
 

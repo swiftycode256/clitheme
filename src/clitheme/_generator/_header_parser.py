@@ -44,7 +44,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
                 content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
                 file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
             else:
-                content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_substesc=True)
+                content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_char_subst=True)
                 file_name=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \

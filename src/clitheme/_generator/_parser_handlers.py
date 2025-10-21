@@ -12,7 +12,7 @@ import re
 import math
 import copy
 import uuid
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Tuple
 from .. import _globalvar, _version
 from . import _data_handlers, _entry_block_handler
 # spell-checker:ignore lineindex banphrases minspaces blockinput optline datapath matchoption
@@ -171,28 +171,35 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if self.global_options.get(option)!=True and prev_options.get(option)==True:
                 self.warnings[option]=True
         self.global_variables=copy.copy(self.really_really_global_variables)
-    def subst_variable_content(self, content: str, subst_var: Optional[bool]=None, line_number_debug: Optional[str]=None, silence_warnings: bool=False, subst_chars: Optional[bool]=None) -> str:
+    def handle_subst(self, content: str, line_number_debug: Optional[str]=None, silence_warnings: Union[bool, Tuple[bool, bool, bool]]=False, subst_var: Optional[bool]=None, subst_esc: Optional[bool]=None, subst_chars: Optional[bool]=None) -> str:
+        # silence_warnings: (substvar, substesc, substchar)
         substvar_pattern=r"{{([^\s]+?)??}}"
         substchar_pattern=r"{{\[([^\s]+?)??\]}}"
+
+        subst_var=self.global_options.get("substvar")==True if subst_var==None else subst_var
+        subst_chars=self.global_options.get("substchar")==True if subst_chars==None else subst_chars
+        subst_esc=self.global_options.get("substesc")==True if subst_esc==None else subst_esc
+
+        if type(silence_warnings)==bool: silence_warn=(silence_warnings,)*3
+        else: silence_warn=silence_warnings
         # Handle substvar warning
-        if subst_var==None \
-            and self.global_options.get("substvar")==False \
-            and self.warnings.get('substvar')!=False:
+        if not silence_warn[0] and subst_var!=True and self.warnings.get('substvar')!=False:
             for match in re.finditer(substvar_pattern, content):
                 if self.global_variables.get(match.group(1))!=None:
                     self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                     self.warnings['substvar']=False
                     break
+        # Handle substesc warning
+        if not silence_warn[1] and subst_esc!=True and self.warnings.get('substesc')!=False:
+            if "{{ESC}}" in content:
+                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
+                self.warnings['substesc']=False
         # Handle substchar warning
-        if subst_chars==None \
-            and self.global_options.get("substchar")==False \
-            and self.warnings.get('substchar')!=False:
+        if not silence_warn[2] and subst_chars!=True and self.warnings.get('substchar')!=False:
             if re.match(substchar_pattern, content)!=None:
                 self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                 self.warnings['substchar']=False
                 
-        subst_var=self.global_options.get("substvar")==True if subst_var==None else subst_var
-        subst_chars=self.global_options.get("substchar")==True if subst_chars==None else subst_chars
         # get all variables used in content
         new_content=content
         if subst_var:
@@ -214,6 +221,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
                     offset+=len(var_content)-(match.end()-match.start())
                 encountered_variables.add(var_name) # Prevent repeated warnings
+        # substesc
+        if subst_esc:
+            new_content=new_content.replace("{{ESC}}", "\x1b")
         # substchar
         content=new_content
         if subst_chars:
@@ -284,23 +294,16 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.parsed_sections.append(section_name)
         self.section_parsing=False
         self.handle_setup_global_options()
-    def handle_substesc(self, content: str, condition: bool, line_number_debug: Optional[str]=None) -> str:
-        if condition==True:
-            return content.replace("{{ESC}}", "\x1b")
-        else:
-            # Handle substesc warning
-            if self.warnings.get("substesc") in (True,None) and "{{ESC}}" in content:
-                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                self.warnings['substesc']=False
-            return content
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
     def parse_content(self, content: str, pure_name: bool=False) -> str:
-        target_content=self.subst_variable_content(content, subst_chars=pure_name==False and self.global_options.get("substchar")==True)
-        if pure_name==False:
-            # Shows warning when condition is False
-            target_content=self.handle_substesc(target_content, condition=self.global_options.get("substesc")==True)
+        target_content=self.handle_subst(content,
+            subst_chars=pure_name==False and self.global_options.get("substchar")==True,
+            subst_esc=pure_name==False and self.global_options.get("substesc")==True,
+            # Don't show substchar/substesc warnings if not using char subst
+            silence_warnings=(False, pure_name, pure_name)
+        )
         target_content=self.handle_linebounds(target_content, preserve_indents=not pure_name)
         return target_content
     def handle_setters(self, really_really_global: bool=False) -> bool:
@@ -317,7 +320,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     
     ## sub-block processing functions
 
-    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_substesc: bool=False) -> str:
+    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
         begin_line_number=self.lineindex+1+1
@@ -363,11 +366,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if not disallow_other_options:
                 ban_options=[]
                 if not preserve_indents: ban_options+=self.lead_indent_options
-                if disable_substesc: ban_options+=self.char_subst_options
+                if disable_char_subst: ban_options+=self.char_subst_options
             else:
                 allowed_options=[]
                 if preserve_indents: allowed_options+=self.lead_indent_options
-                if not disable_substesc: allowed_options+=self.char_subst_options
+                if not disable_char_subst: allowed_options+=self.char_subst_options
                 allowed_options+=self.content_subst_options
             got_options=self.parse_options(self.get_current_line().split()[1:],
                 merge_global_options=True,
@@ -379,12 +382,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
             blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
         # Process subst options
         debug_linenumber=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)
-        blockinput_data=self.subst_variable_content(blockinput_data, 
+        blockinput_data=self.handle_subst(blockinput_data, 
                 subst_var=opt("substvar")==True, 
-                subst_chars=opt("substchar")==True,
+                subst_esc=opt("substesc")==True and not disable_char_subst,
+                subst_chars=opt("substchar")==True and not disable_char_subst,
+                silence_warnings=(False, disable_char_subst, disable_char_subst),
                 line_number_debug=debug_linenumber)
-        if not disable_substesc: # Must come after substvar
-            blockinput_data=self.handle_substesc(blockinput_data, condition=opt("substesc")==True, line_number_debug=debug_linenumber)
         # Process linebounds
         blockinput_lines=[]
         offset=0

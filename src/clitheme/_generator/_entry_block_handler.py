@@ -115,13 +115,13 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         match_pattern=entry[0]
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
         debug_linenumber=entry[5] if is_substrules else entry[4]
-        match_pattern=self.subst_variable_content(match_pattern, \
-                subst_var=opt('substvar'), subst_chars=opt('substchar') and is_substrules, \
-                line_number_debug=debug_linenumber, \
+        match_pattern=self.handle_subst(match_pattern, 
+                subst_var=opt('substvar'),
+                subst_esc=opt('substesc') and is_substrules,
+                subst_chars=opt('substchar') and is_substrules, 
+                line_number_debug=debug_linenumber, 
                 # Don't show warnings for the same match_pattern
-                silence_warnings=entry[3] in encountered_ids)
-        if is_substrules:
-            match_pattern=self.handle_substesc(match_pattern, condition=opt('substesc'), line_number_debug=debug_linenumber)
+                silence_warnings=True if entry[3] in encountered_ids else (False, not is_substrules, not is_substrules))
         match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
 
         if is_substrules: check_valid_pattern(match_pattern, entry[5])
