@@ -4,13 +4,21 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional, Any
+from typing import Optional, Any, List
+import subprocess
 
 class BaseHandler:
     """
     Template for handler class
     """
-    def __init__(self, command):
+    def __init__(self, command: List):
+        self.stdout_fd: int
+        self.stdout_child: int
+        self.stderr_fd: int
+        self.stderr_child: int
+        self.process: subprocess.Popen
+        raise NotImplementedError
+    def get_readable_descriptors(self, timeout: float) -> List:
         raise NotImplementedError
     def get_window_size(self):
         raise NotImplementedError
@@ -24,5 +32,5 @@ class BaseHandler:
         raise NotImplementedError
     def reset_terminal(self):
         raise NotImplementedError
-    def handle_exit(self):
+    def handle_exit(self) -> int:
         raise NotImplementedError

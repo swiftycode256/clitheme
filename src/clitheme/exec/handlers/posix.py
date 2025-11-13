@@ -14,6 +14,7 @@ import termios
 import stat
 import fcntl
 import signal
+import select
 import struct
 import copy
 import threading
@@ -43,7 +44,6 @@ class PosixHandler(BaseHandler):
         env['PAGER']="cat"
 
         # Initialize process
-        self.main_pid=os.getpid()
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=self.stdout_child
         if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
@@ -93,6 +93,10 @@ class PosixHandler(BaseHandler):
         def window_size_handler(*args): self.update_window_size(*args)
         signal.signal(signal.SIGWINCH, window_size_handler)
         
+    def get_readable_descriptors(self, timeout: float) -> List:
+        try: fds=select.select([self.stdout_fd, sys.stdin, self.stderr_fd], [], [], timeout)[0]
+        except OSError: fds=select.select([self.stdout_fd, self.stderr_fd], [], [], timeout)[0]
+        return fds
     def get_window_size(self):
         return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     def update_window_size(self, *args):
@@ -125,6 +129,9 @@ class PosixHandler(BaseHandler):
             self.process.send_signal(sig)
             def signal_handler(*args): self._signal_handler_function(*args)
             signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
+            # Set term attributes after re-entering
+            attrs=self.get_process_term_attrs(no_buffering=True)
+            if attrs!=None: self.set_host_term_attrs(attrs)
         elif sig==signal.SIGTSTP: # suspend signal
             if os.tcgetpgrp(self.stdout_fd)!=self.process.pid: # e.g. A shell running another process
                 if self.process.poll()==None: # Process is running
@@ -132,7 +139,7 @@ class PosixHandler(BaseHandler):
             else: 
                 self.process.send_signal(signal.SIGSTOP) # Stop the process
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
-                os.kill(self.main_pid, signal.SIGTSTP) # Suspend itself
+                os.kill(os.getpid(), signal.SIGTSTP) # Suspend itself
         elif sig==signal.SIGINT:
             if self.process.poll()==None:
                 os.write(self.stdout_fd, b'\x03') # '^C' character
@@ -148,7 +155,7 @@ class PosixHandler(BaseHandler):
     def reset_terminal(self):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
         print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
-    def handle_exit(self):
+    def handle_exit(self) -> int:
         if self.prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, self.prev_attrs) # restore previous attributes
         exit_code=self.process.poll()
         try:
@@ -160,3 +167,4 @@ class PosixHandler(BaseHandler):
                 # Properly return exit code for corresponding signals
                 return 128+abs(exit_code)
         except: pass
+        return exit_code if exit_code!=None else 0

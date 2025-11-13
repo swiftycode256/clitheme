@@ -122,8 +122,8 @@ def main(arguments: List[str]):
             if not _check_regenerate_db(): return 1
     # determine platform
     if os.name=="posix":
-        from . import output_handler_posix
-        return output_handler_posix.handler_main(arguments[1+argcount:], debug_mode, subst)
+        from . import output_processor
+        return output_processor.handler_main(arguments[1+argcount:], debug_mode, subst)
     elif os.name=="nt":
         _labeled_print("Error: Windows platform is not currently supported")
         return 1

@@ -8,17 +8,11 @@
 Main output processing handler for Unix/Linux systems (internal module)
 """
 
-import subprocess
 import sys
 import os
 import io
-import pty
-import select
 import termios
-import stat
-import fcntl
 import signal
-import struct
 import copy
 import re
 import time
@@ -27,6 +21,7 @@ import queue
 from typing import Optional, List
 from .._generator import db_interface
 from .. import _globalvar, frontend
+from .handlers.base_handler import BaseHandler
 from .._globalvar import _direct_exit
 from . import _labeled_print
 
@@ -67,121 +62,47 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     if do_subst==True: 
         try: db_interface.connect_db()
         except FileNotFoundError: pass
-    stdout_fd, stdout_slave=pty.openpty()
-    stderr_fd, stderr_slave=pty.openpty()
-    readsize=io.DEFAULT_BUFFER_SIZE
-
-    env=copy.copy(os.environ)
-    # Prevent apps from using "less" or "more" as pager, as it won't work here
-    env['PAGER']="cat"
-    prev_attrs=None
-    try: prev_attrs=termios.tcgetattr(sys.stdout)
-    except termios.error: pass
-    main_pid=os.getpid()
-    process: subprocess.Popen
-    # Redirect stderr to stdout for now (BETA)
-        # need to find a method to preserve exact order when using separated stdout and stderr pipes
     
-    # Since a new session is started with os.setsid() in child process:
-    # - Suspend and continue signals must be manually relayed to the child process
-    # [Not implemented yet] - Suspend signal from child process must be manually relayed to the parent process
-    def signal_handler(sig, frame):
-        if sig==signal.SIGCONT: # continue signal
-            process.send_signal(sig)
-            signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
-        elif sig==signal.SIGTSTP: # suspend signal
-            if os.tcgetpgrp(stdout_fd)!=process.pid: # e.g. A shell running another process
-                if process.poll()==None: # Process is running
-                    os.write(stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
-            else: 
-                process.send_signal(signal.SIGSTOP) # Stop the process
-                signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
-                os.kill(main_pid, signal.SIGTSTP) # Suspend itself
-        elif sig==signal.SIGINT:
-            if process.poll()==None:
-                os.write(stdout_fd, b'\x03') # '^C' character
-            else:
-                reset_terminal()
-                _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
-                # Prevent message being triggered multiple times
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
-                raise _direct_exit(130) # Will be raised in main processing loop
-        elif sig==signal.SIGQUIT:
-            if process.poll()==None:
-                os.write(stdout_fd, b'\x1c') # '^\' character
-    handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
     try:
-        # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
-        stdin_fd=stdout_slave
-        if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
-            r,w=os.pipe()
-            def pipe_forward():
-                # Background thread to forward stdin to subprocess pipe
-                nonlocal r,w
-                while True:
-                    d=os.read(sys.stdin.fileno(), readsize)
-                    if d==b'': # stdin is closed
-                        os.close(w)
-                        # Duplicate stdout terminal onto stdin to read user input
-                        if os.isatty(sys.stdout.fileno()):
-                            os.dup2(sys.stdout.fileno(), sys.stdin.fileno())
-                        break
-                    os.write(w,d)
-            t=threading.Thread(target=pipe_forward, daemon=True)
-            t.start()
-            stdin_fd=r
-        def child_init():
-            # Must start new session or some programs might not work properly
-            os.setsid()
-
-            # Make controlling terminal so programs can access TTY properly
-            # [Explicitly open the tty to make it become a controlling tty.]
-            # --This code and above description are from the source code of pty.fork()--
-            tmp_fd = os.open(os.ttyname(stdout_slave), os.O_RDWR)
-            tmp_fd2 = os.open(os.ttyname(stderr_slave), os.O_RDWR)
-            os.close(tmp_fd);os.close(tmp_fd2)
-        process=subprocess.Popen(command, stdin=stdin_fd, stdout=stdout_slave, stderr=stdout_slave, env=env, preexec_fn=child_init)
+        handler: BaseHandler
+        if os.name=="posix":
+            from .handlers.posix import PosixHandler
+            handler=PosixHandler(command)
+        else: raise NotImplementedError
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    else:
-        for sig in handle_signals:
-            signal.signal(sig, signal_handler)
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)
-    def get_terminal_size(): return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
-    last_terminal_size=struct.pack('HHHH',0,0,0,0) # placeholder
-    # this mechanism prevents user input from being processed through substrules
-    last_input_content=None
-    last_tcgetpgrp=os.tcgetpgrp(stdout_fd)
+    last_tcgetpgrp=handler.get_foreground_pid()
 
-    def reset_terminal():
-        if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-        print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
-    def handle_debug_pgrp(foreground_pid: int):
-        nonlocal last_tcgetpgrp
+    def handle_debug_pgrp(foreground_pid: Optional[int]):
+        nonlocal handler, last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
-            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==process.pid else 'False'} ({foreground_pid})\x1b[0m\n"
+            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process.pid else 'False'} ({foreground_pid})\x1b[0m\n"
             os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
     thread_exception_handled=False
     def handle_exception(exc: Optional[Exception]=None):
         nonlocal thread_exception_handled; thread_exception_handled=True
-        reset_terminal()
+        handler.reset_terminal()
         _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
         if exc!=None: raise exc
         else: raise
 
     thread_debug=0
-    def thread_debug_handle(sig, frame):
-        nonlocal thread_debug
-        if sig==signal.SIGUSR1: thread_debug=1
-        elif sig==signal.SIGUSR2: thread_debug=2
-    signal.signal(signal.SIGUSR1, thread_debug_handle)
-    signal.signal(signal.SIGUSR2, thread_debug_handle)
+    if os.name=="posix":
+        def thread_debug_handle(sig, frame):
+            nonlocal thread_debug
+            if sig==signal.SIGUSR1: thread_debug=1
+            elif sig==signal.SIGUSR2: thread_debug=2
+        signal.signal(signal.SIGUSR1, thread_debug_handle)
+        signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
-        nonlocal last_input_content, output_lines
+        nonlocal output_lines
         unfinished_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time)
+        # Just in case where input is read in multiple segments before output arrives
+        last_input_content=None
         try:
             while True:
                 # Testing thread exception handling
@@ -192,35 +113,25 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 # Set a short timeout value if there are unfinished outputs
                 # Else, wait longer to reduce CPU usage
                 timeout=0.002 if unfinished_output!=None or last_input_content!=None else 0.5
-                try: fds=select.select([stdout_fd, sys.stdin, stderr_fd], [], [], timeout)[0]
-                except OSError: fds=select.select([stdout_fd, stderr_fd], [], [], timeout)[0]
+                fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
                 if sys.stdin in fds:
-                    data=os.read(sys.stdin.fileno(), readsize)
+                    data=os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
                     # if input from last iteration did not end with newlines, append new content
                     if last_input_content!=None: last_input_content+=data
                     else: last_input_content=data
-                    try: os.write(stdout_fd, data)
+                    try: os.write(handler.stdout_fd, data)
                     except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
                 unfinished_output_handled=False
-                def process_block(data: tuple):
-                    output_lines.put(data)
-                    # lines=data[0].splitlines(keepends=True)
-                    # for line in lines:
-                    #     output_lines.put((line,)+data[1:])
                 def handle_output(is_stderr: bool):
                     nonlocal unfinished_output, output_lines, unfinished_output_handled, last_input_content
 
-                    data=os.read(stderr_fd if is_stderr else stdout_fd, readsize)
+                    data=os.read(handler.stderr_fd if is_stderr else handler.stdout_fd, io.DEFAULT_BUFFER_SIZE)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return
-                    try:
-                        term_attrs=termios.tcgetattr(stdout_fd)
-                        # disable canonical and echo mode (enable cbreak) no matter what
-                        term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
-                    except termios.error: term_attrs=None
-                    foreground_pid=os.tcgetpgrp(stdout_fd)
+                    term_attrs=handler.get_process_term_attrs(no_buffering=True)
+                    foreground_pid=handler.get_foreground_pid()
 
                     do_subst_operation=True
                     # check if the output is user input. if yes, skip
@@ -238,7 +149,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             # If exceeds maximum time or differing terminal attributes, append first line of data into unfinished output and process it
                             if time.perf_counter()-unfinished_output[5]>0.05 or term_attrs!=unfinished_output[4]:
                                 lines=data.splitlines(keepends=True)
-                                process_block((unfinished_output[0]+lines[0],)+unfinished_output[1:])
+                                output_lines.put((unfinished_output[0]+lines[0],)+unfinished_output[1:])
                                 data=data[len(lines[0]):] # Remove first line from data
                             else:
                                 # Modify existing line data instead of directly pushing it
@@ -247,7 +158,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                                 unfinished_output_time=unfinished_output[5]
                         else:
                             # Shouldn't join them together in this case
-                            process_block(unfinished_output)
+                            output_lines.put(unfinished_output)
                             # Don't push the current line just yet; leave it for newline check
                         unfinished_output=None
                         unfinished_output_handled=True
@@ -257,19 +168,19 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     if not data.endswith(newlines):
                         unfinished_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, unfinished_output_time)
                         unfinished_output_handled=True
-                    else: process_block((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
+                    else: output_lines.put((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
 
-                if stdout_fd in fds: handle_output(is_stderr=False)
-                if stderr_fd in fds: handle_output(is_stderr=True)
+                if handler.stdout_fd in fds: handle_output(is_stderr=False)
+                if handler.stderr_fd in fds: handle_output(is_stderr=True)
                 # if no unfinished_output is handled by handle_output, append the unfinished output if exists
                 if not unfinished_output_handled and unfinished_output!=None:
-                    process_block(unfinished_output)
+                    output_lines.put(unfinished_output)
                     unfinished_output=None
                 # Reset last input content if no output is made within timeout
                 if not sys.stdin in fds and last_input_content!=None:
                     last_input_content=None
 
-                if process.poll()!=None: 
+                if handler.process.poll()!=None: 
                     # Send termination signal
                     output_lines.put(None)
                     break
@@ -278,32 +189,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     thread=threading.Thread(target=output_read_loop, name="output-reader", daemon=True)
     thread.start()
 
-    def update_window_size(*args):
-        # update terminal size
-        nonlocal last_terminal_size
-        try:
-            new_term_size=get_terminal_size()
-            if new_term_size!=last_terminal_size:
-                last_terminal_size=new_term_size
-                fcntl.ioctl(stdout_fd, termios.TIOCSWINSZ, new_term_size)
-                fcntl.ioctl(stderr_fd, termios.TIOCSWINSZ, new_term_size)
-                process.send_signal(signal.SIGWINCH)
-        except: pass
-    signal.signal(signal.SIGWINCH, update_window_size)
-    # Call this function for the first time to set initial window size
-    update_window_size()
-    # Initially set terminal attributes
-    try:
-        term_attrs=termios.tcgetattr(stdout_fd)
-        # disable canonical and echo mode (enable cbreak) no matter what
-        term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
-        termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
-    except termios.error: pass
     # If had output on the previous run, use shorter timeout to minimize delay in --foreground-stat output
     had_output=False
     while True:
         try:
-            if not thread.is_alive() and not process.poll()!=None:
+            if not thread.is_alive() and not handler.process.poll()!=None:
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
             if thread_exception_handled: break # Prevent conflict with setting terminal attributes
@@ -319,7 +209,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     def operation():
                         nonlocal subst_line, failed, foreground_pid
                         try: 
-                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(process.pid, foreground_pid))
+                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(handler.process.pid, foreground_pid))
                         except TimeoutError: failed=True
                         # Happens when no theme is set/no subst-data.db
                         except db_interface.db_not_found: pass
@@ -332,7 +222,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
             if output_lines.empty():
-                handle_debug_pgrp(os.tcgetpgrp(stdout_fd))
+                handle_debug_pgrp(handler.get_foreground_pid())
             try: line_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.5)
             except queue.Empty: 
                 had_output=False
@@ -357,15 +247,4 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise
-    if prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, prev_attrs) # restore previous attributes
-    exit_code=process.poll()
-    try:
-        if exit_code!=None and exit_code<0: # Terminated by signal
-            # Block signal handlers before the kill operation to prevent unexpected behavior
-            for sig in handle_signals:
-                signal.signal(sig, signal.SIG_IGN)
-            os.kill(os.getpid(), abs(exit_code))
-            # Properly return exit code for corresponding signals
-            return 128+abs(exit_code)
-    except: pass
-    return exit_code
+    return handler.handle_exit()
