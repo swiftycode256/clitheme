@@ -74,6 +74,7 @@ class PosixHandler(BaseHandler):
             tmp_fd2 = os.open(os.ttyname(self.stderr_child), os.O_RDWR)
             os.close(tmp_fd);os.close(tmp_fd2)
         self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
+        self.process_pid=self.process.pid
 
         # Terminal attributes
         self.prev_attrs=self.get_process_term_attrs()
@@ -93,10 +94,18 @@ class PosixHandler(BaseHandler):
         def window_size_handler(*args): self.update_window_size(*args)
         signal.signal(signal.SIGWINCH, window_size_handler)
         
+    def read_pty(self, is_stderr: bool=False) -> bytes:
+        return os.read(self.stderr_fd if is_stderr else self.stdout_fd, io.DEFAULT_BUFFER_SIZE)
+    def write_pty(self, data: bytes):
+        os.write(self.stdout_fd, data)
     def get_readable_descriptors(self, timeout: float) -> List:
+        # Possible values: ["stdin", "stdout", "stderr"]
         try: fds=select.select([self.stdout_fd, sys.stdin, self.stderr_fd], [], [], timeout)[0]
         except OSError: fds=select.select([self.stdout_fd, self.stderr_fd], [], [], timeout)[0]
-        return fds
+        fd_names=[]
+        for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
+            if pair[0] in fds: fd_names.append(pair[1])
+        return fd_names
     def get_window_size(self):
         return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
     def update_window_size(self, *args):
@@ -152,6 +161,8 @@ class PosixHandler(BaseHandler):
         elif sig==signal.SIGQUIT:
             if self.process.poll()==None:
                 os.write(self.stdout_fd, b'\x1c') # '^\' character
+    def get_proc_status(self) -> Optional[int]:
+        return self.process.poll()
     def reset_terminal(self):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
         print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen

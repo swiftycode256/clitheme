@@ -79,7 +79,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     def handle_debug_pgrp(foreground_pid: Optional[int]):
         nonlocal handler, last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
-            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process.pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process.pid else 'False'} ({foreground_pid})\x1b[0m\n"
+            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process_pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process_pid else 'False'} ({foreground_pid})\x1b[0m\n"
             os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
     thread_exception_handled=False
@@ -115,19 +115,19 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 timeout=0.002 if unfinished_output!=None or last_input_content!=None else 0.5
                 fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
-                if sys.stdin in fds:
+                if "stdin" in fds:
                     data=os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
                     # if input from last iteration did not end with newlines, append new content
                     if last_input_content!=None: last_input_content+=data
                     else: last_input_content=data
-                    try: os.write(handler.stdout_fd, data)
+                    try: handler.write_pty(data)
                     except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
                 unfinished_output_handled=False
                 def handle_output(is_stderr: bool):
                     nonlocal unfinished_output, output_lines, unfinished_output_handled, last_input_content
 
-                    data=os.read(handler.stderr_fd if is_stderr else handler.stdout_fd, io.DEFAULT_BUFFER_SIZE)
+                    data=handler.read_pty(is_stderr=is_stderr)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return
                     term_attrs=handler.get_process_term_attrs(no_buffering=True)
@@ -170,17 +170,17 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         unfinished_output_handled=True
                     else: output_lines.put((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
 
-                if handler.stdout_fd in fds: handle_output(is_stderr=False)
-                if handler.stderr_fd in fds: handle_output(is_stderr=True)
+                if "stdout" in fds: handle_output(is_stderr=False)
+                if "stderr" in fds: handle_output(is_stderr=True)
                 # if no unfinished_output is handled by handle_output, append the unfinished output if exists
                 if not unfinished_output_handled and unfinished_output!=None:
                     output_lines.put(unfinished_output)
                     unfinished_output=None
                 # Reset last input content if no output is made within timeout
-                if not sys.stdin in fds and last_input_content!=None:
+                if not "stdin" in fds and last_input_content!=None:
                     last_input_content=None
 
-                if handler.process.poll()!=None: 
+                if handler.get_proc_status()!=None: 
                     # Send termination signal
                     output_lines.put(None)
                     break
@@ -193,7 +193,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     had_output=False
     while True:
         try:
-            if not thread.is_alive() and not handler.process.poll()!=None:
+            if not thread.is_alive() and not handler.get_proc_status()!=None:
                 if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
                 else: return 1
             if thread_exception_handled: break # Prevent conflict with setting terminal attributes
@@ -206,17 +206,14 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 failed=False
                 foreground_pid=line_data[3]
                 if do_subst and line_data[2]==True:
-                    def operation():
-                        nonlocal subst_line, failed, foreground_pid
-                        try: 
-                            subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(handler.process.pid, foreground_pid))
-                        except TimeoutError: failed=True
-                        # Happens when no theme is set/no subst-data.db
-                        except db_interface.db_not_found: pass
                     def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
                     signal.signal(signal.SIGALRM, raise_error)
                     signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
-                    operation()
+                    try: 
+                        subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(handler.process_pid, foreground_pid))
+                    except TimeoutError: failed=True
+                    # Happens when no theme is set/no subst-data.db
+                    except db_interface.db_not_found: pass
                     # remove the interval timer to prevent exception when function finishes before timeout
                     signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 

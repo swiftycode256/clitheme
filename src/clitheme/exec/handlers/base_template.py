@@ -12,13 +12,15 @@ class BaseHandler:
     Template for handler class
     """
     def __init__(self, command: List):
-        self.stdout_fd: int
-        self.stdout_child: int
-        self.stderr_fd: int
-        self.stderr_child: int
-        self.process: subprocess.Popen
+        self.process_pid: int
+        raise NotImplementedError
+    def read_pty(self, is_stderr: bool=False) -> bytes:
+        raise NotImplementedError
+    def write_pty(self, data: bytes):
         raise NotImplementedError
     def get_readable_descriptors(self, timeout: float) -> List:
+        # Possible values: ["stdin", "stdout", "stderr"]
+        # for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
         raise NotImplementedError
     def get_window_size(self):
         raise NotImplementedError
@@ -29,6 +31,9 @@ class BaseHandler:
     def set_host_term_attrs(self, term_attrs):
         raise NotImplementedError
     def get_foreground_pid(self) -> Optional[int]:
+        raise NotImplementedError
+    def get_proc_status(self) -> Optional[int]:
+        # Returns None if running; returns exit code if finished
         raise NotImplementedError
     def reset_terminal(self):
         raise NotImplementedError
