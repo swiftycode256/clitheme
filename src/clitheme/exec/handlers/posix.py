@@ -21,7 +21,7 @@ import threading
 from typing import Optional, List
 from clitheme._globalvar import _direct_exit
 from .. import _labeled_print
-from .base_handler import BaseHandler
+from .base_template import BaseHandler
 
 class PosixHandler(BaseHandler):
     def __init__(self, command):

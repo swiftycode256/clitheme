@@ -21,7 +21,7 @@ import queue
 from typing import Optional, List
 from .._generator import db_interface
 from .. import _globalvar, frontend
-from .handlers.base_handler import BaseHandler
+from .handlers.base_template import BaseHandler
 from .._globalvar import _direct_exit
 from . import _labeled_print
 
