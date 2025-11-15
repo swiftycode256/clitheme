@@ -142,16 +142,16 @@ class PosixHandler(BaseHandler):
             attrs=self.get_process_term_attrs(no_buffering=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
         elif sig==signal.SIGTSTP: # suspend signal
-            if os.tcgetpgrp(self.stdout_fd)!=self.process.pid: # e.g. A shell running another process
+            if self.get_foreground_pid()!=self.process.pid: # e.g. A shell running another process
                 if self.process.poll()==None: # Process is running
-                    os.write(self.stdout_fd, b'\x1a') # Send '^Z' character; don't suspend the entire shell
+                    self.write_pty(b'\x1a') # Send '^Z' character; don't suspend the entire shell
             else: 
                 self.process.send_signal(signal.SIGSTOP) # Stop the process
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
                 os.kill(os.getpid(), signal.SIGTSTP) # Suspend itself
         elif sig==signal.SIGINT:
             if self.process.poll()==None:
-                os.write(self.stdout_fd, b'\x03') # '^C' character
+                self.write_pty(b'\x03') # '^C' character
             else:
                 self.reset_terminal()
                 # _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
@@ -167,8 +167,8 @@ class PosixHandler(BaseHandler):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
         print("\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J", end='') # reset color, mouse reporting, and clear the rest of the screen
     def handle_exit(self) -> int:
-        if self.prev_attrs!=None: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, self.prev_attrs) # restore previous attributes
-        exit_code=self.process.poll()
+        if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs)
+        exit_code=self.get_proc_status()
         try:
             if exit_code!=None and exit_code<0: # Terminated by signal
                 # Block signal handlers before the kill operation to prevent unexpected behavior
