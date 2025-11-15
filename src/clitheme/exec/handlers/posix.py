@@ -94,6 +94,8 @@ class PosixHandler(BaseHandler):
         def window_size_handler(*args): self.update_window_size(*args)
         signal.signal(signal.SIGWINCH, window_size_handler)
         
+    def read_stdin(self) -> bytes:
+        return os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
     def read_pty(self, is_stderr: bool=False) -> bytes:
         return os.read(self.stderr_fd if is_stderr else self.stdout_fd, io.DEFAULT_BUFFER_SIZE)
     def write_pty(self, data: bytes):

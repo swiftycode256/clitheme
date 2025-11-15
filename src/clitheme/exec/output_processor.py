@@ -116,7 +116,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
                 if "stdin" in fds:
-                    data=os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
+                    data=handler.read_stdin()
                     # if input from last iteration did not end with newlines, append new content
                     if last_input_content!=None: last_input_content+=data
                     else: last_input_content=data

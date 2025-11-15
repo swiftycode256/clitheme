@@ -14,6 +14,8 @@ class BaseHandler:
     def __init__(self, command: List):
         self.process_pid: int
         raise NotImplementedError
+    def read_stdin(self) -> bytes:
+        raise NotImplementedError
     def read_pty(self, is_stderr: bool=False) -> bytes:
         raise NotImplementedError
     def write_pty(self, data: bytes):
