@@ -112,7 +112,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
 
                 # Set a short timeout value if there are unfinished outputs
                 # Else, wait longer to reduce CPU usage
-                timeout=0.002 if unfinished_output!=None or last_input_content!=None else 0.5
+                timeout=0.002 if unfinished_output!=None or last_input_content!=None else 0.1
                 fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
                 if "stdin" in fds:
@@ -236,7 +236,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if line_data[2]==True: handle_debug_pgrp(line_data[3])
             # update terminal attributes from what the program sets
             if line_data[4]!=None:
-                try: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, line_data[4])
+                try: handler.set_host_term_attrs(line_data[4])
                 except termios.error: pass
             # subst operation and print output
             os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(),output)

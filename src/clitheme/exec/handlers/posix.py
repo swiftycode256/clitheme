@@ -35,15 +35,21 @@ class PosixHandler(BaseHandler):
         - Set initial window size
         - Add signal handlers
         """
-        # Open terminal descriptors
-        self.stdout_fd, self.stdout_child=pty.openpty()
-        self.stderr_fd, self.stderr_child=pty.openpty()
 
         env=copy.copy(os.environ)
         # Prevent apps from using "less" or "more" as pager, as it won't work here
         env['PAGER']="cat"
 
-        # Initialize process
+        # Open terminal descriptors
+        # Detect if stdout/stderr is piped (e.g. clitheme-exec curl --help|cat)
+        if stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
+            self.stdout_fd, self.stdout_child=os.pipe()
+        else: 
+            self.stdout_fd, self.stdout_child=pty.openpty()
+        if stat.S_ISFIFO(os.stat(sys.stderr.fileno()).st_mode):
+            self.stderr_fd, self.stderr_child=os.pipe()
+        else:
+            self.stderr_fd, self.stderr_child=pty.openpty()
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=self.stdout_child
         if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
@@ -63,16 +69,18 @@ class PosixHandler(BaseHandler):
             t=threading.Thread(target=pipe_forward, daemon=True)
             t.start()
             stdin_fd=r
+        # Initialize process
         def child_init():
             # Must start new session or some programs might not work properly
             os.setsid()
 
-            # Make controlling terminal so programs can access TTY properly
-            # [Explicitly open the tty to make it become a controlling tty.]
-            # --This code and above description are from the source code of pty.fork()--
-            tmp_fd = os.open(os.ttyname(self.stdout_child), os.O_RDWR)
-            tmp_fd2 = os.open(os.ttyname(self.stderr_child), os.O_RDWR)
-            os.close(tmp_fd);os.close(tmp_fd2)
+            for fd in (self.stdout_child, self.stderr_child):
+                if os.isatty(fd):
+                    # Make controlling terminal so programs can access TTY properly
+                    # [Explicitly open the tty to make it become a controlling tty.]
+                    # --From source code of pty.fork()--
+                    tmp_fd = os.open(os.ttyname(fd), os.O_RDWR)
+                    os.close(tmp_fd)
         self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
         self.process_pid=self.process.pid
 
