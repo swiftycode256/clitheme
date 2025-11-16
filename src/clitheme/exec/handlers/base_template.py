@@ -16,6 +16,8 @@ class BaseHandler:
         raise NotImplementedError
     def read_stdin(self) -> bytes:
         raise NotImplementedError
+    def write_output(self, data: bytes, is_stderr: bool=False):
+        raise NotImplementedError
     def read_pty(self, is_stderr: bool=False) -> bytes:
         raise NotImplementedError
     def write_pty(self, data: bytes):

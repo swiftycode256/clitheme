@@ -80,7 +80,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         nonlocal handler, last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
             message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process_pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process_pid else 'False'} ({foreground_pid})\x1b[0m\n"
-            os.write(sys.stdout.fileno(), bytes(message, 'utf-8'))
+            handler.write_output(bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
     thread_exception_handled=False
     def handle_exception(exc: Optional[Exception]=None):
@@ -239,7 +239,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 try: handler.set_host_term_attrs(line_data[4])
                 except termios.error: pass
             # subst operation and print output
-            os.write(sys.stderr.fileno() if line_data[1]==True else sys.stdout.fileno(),output)
+            handler.write_output(output, is_stderr=line_data[1])
         except _direct_exit: break
         except: 
             if not thread_exception_handled: handle_exception()
