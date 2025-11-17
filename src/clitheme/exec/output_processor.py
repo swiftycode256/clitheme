@@ -10,8 +10,6 @@ Main output processing handler for Unix/Linux systems (internal module)
 
 import sys
 import os
-import io
-import termios
 import signal
 import copy
 import re
@@ -68,7 +66,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         if os.name=="posix":
             from .handlers.posix import PosixHandler
             handler=PosixHandler(command)
-        else: raise NotImplementedError
+        else: 
+            from .handlers.windows import WindowsHandler
+            handler=WindowsHandler(command)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
@@ -206,21 +206,22 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 failed=False
                 foreground_pid=line_data[3]
                 if do_subst and line_data[2]==True:
-                    def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
-                    signal.signal(signal.SIGALRM, raise_error)
-                    signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
+                    if os.name=="posix":
+                        def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
+                        signal.signal(signal.SIGALRM, raise_error)
+                        signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
                     try: 
                         subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(handler.process_pid, foreground_pid))
                     except TimeoutError: failed=True
                     # Happens when no theme is set/no subst-data.db
                     except db_interface.db_not_found: pass
                     # remove the interval timer to prevent exception when function finishes before timeout
-                    signal.setitimer(signal.ITIMER_REAL, 0)
+                    if os.name=="posix": signal.setitimer(signal.ITIMER_REAL, 0)
                 if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
                 return subst_line
             if output_lines.empty():
                 handle_debug_pgrp(handler.get_foreground_pid())
-            try: line_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.5)
+            try: line_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.1)
             except queue.Empty: 
                 had_output=False
                 continue
@@ -235,13 +236,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             # Print message if foreground process changed and not user input
             if line_data[2]==True: handle_debug_pgrp(line_data[3])
             # update terminal attributes from what the program sets
-            if line_data[4]!=None:
-                try: handler.set_host_term_attrs(line_data[4])
-                except termios.error: pass
+            if line_data[4]!=None: handler.set_host_term_attrs(line_data[4])
             # subst operation and print output
             handler.write_output(output, is_stderr=line_data[1])
         except _direct_exit: break
         except: 
             if not thread_exception_handled: handle_exception()
-            else: raise
+            else: raise # Handle "output read loop terminated expectedly" without re-printing the message
     return handler.handle_exit()

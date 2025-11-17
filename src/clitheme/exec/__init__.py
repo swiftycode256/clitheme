@@ -12,12 +12,14 @@ Module used for clitheme-exec
 """
 import sys
 import os
+import ctypes
 def _labeled_print(msg: str):
     for line in msg.splitlines():
         print("[clitheme-exec] "+line)
 
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
+from . import output_processor
 from typing import List
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
@@ -81,6 +83,17 @@ def main(arguments: List[str]):
     Note: the first item in the argument list must be the program name 
         (e.g. ['clitheme-exec', <arguments>] or ['example-app', <arguments>])
     """
+    # For Windows: Check Windows version
+    if os.name=="nt":
+        try:
+            func_pointers=[
+                ctypes.windll.kernel32.CreatePseudoConsole,
+                ctypes.windll.kernel32.ResizePseudoConsole,
+                ctypes.windll.kernel32.ClosePseudoConsole,
+            ]
+        except AttributeError: # Function not found
+            _labeled_print(fd.feof("windows-version-err", "Error: Windows 10 version 1809 or later is required ({errmsg})", errmsg=str(sys.exc_info()[1])))
+            return 1
     # process debug mode arguments
     debug_mode=[]
     argcount=0
@@ -120,16 +133,7 @@ def main(arguments: List[str]):
             _labeled_print(fd.reof("no-theme-warn", "Warning: no theme set or theme does not have substrules"))
         else: 
             if not _check_regenerate_db(): return 1
-    # determine platform
-    if os.name=="posix":
-        from . import output_processor
-        return output_processor.handler_main(arguments[1+argcount:], debug_mode, subst)
-    elif os.name=="nt":
-        _labeled_print("Error: Windows platform is not currently supported")
-        return 1
-    else:
-        _labeled_print("Error: Unsupported platform")
-        return 1
-    return 0
+    # Start the process
+    return output_processor.handler_main(arguments[1+argcount:], debug_mode, subst)
 def _script_main(): # for script
     return main(sys.argv)

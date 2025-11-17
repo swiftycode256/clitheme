@@ -51,6 +51,10 @@ in_domainapp swiftycode clitheme
             locale:zh_CN --nosubst：不进行任何输出替换，即使已设定主题
         [/entry]
     in_subsection exec
+        [entry] windows-version-err
+            # locale:default Error: Windows 10 version 1809 or later is required ({errmsg})
+            locale:zh_CN 错误：需要Windows 10版本1809或以上版本 ({errmsg})
+        [/entry]
         [entry] help-usage-prompt
             # locale:default Run "clitheme-exec --help" for usage information
             locale:zh_CN 使用"clitheme-exec --help"以获取使用方式
