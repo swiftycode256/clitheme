@@ -18,26 +18,23 @@ from ... import _globalvar
 from .base_template import BaseHandler
 from .windows_headers import *
 
-def _assert_hook(exc_type, value, traceback):
-    if exc_type==AssertionError:
-        # Get error message from last function call
-        buffer = ctypes.create_unicode_buffer(1024)
-        result = kernel32.FormatMessageW(
-            FORMAT_MESSAGE_FROM_SYSTEM,
-            None, # lpSource: None for system error
-            ctypes.GetLastError(),
-            0, # dwLanguageId: 0 to use system language
-            buffer,
-            ctypes.sizeof(buffer) // ctypes.sizeof(wintypes.WCHAR),
-            None # Arguments: None for this one
-        )
-        if result==0: message="(Unknown error)"
-        else: message=buffer.value
-        # Display AssertionError with error message
-        sys.__excepthook__(exc_type, exc_type(message), traceback)
-    else: sys.__excepthook__(exc_type, value, traceback)
+def errmsg() -> str:
+    buffer = ctypes.create_unicode_buffer(1024)
+    result = kernel32.FormatMessageW(
+        FORMAT_MESSAGE_FROM_SYSTEM,
+        None, # lpSource: None for system error
+        ctypes.GetLastError(),
+        0, # dwLanguageId: 0 to use system language
+        buffer,
+        ctypes.sizeof(buffer) // ctypes.sizeof(wintypes.WCHAR),
+        None # Arguments: None for this one
+    )
+    if result==0: message="(Unknown error)"
+    else: message=buffer.value
+    return message
 
-sys.excepthook=_assert_hook
+def w_assert(condition, msg: Optional[str]=None):
+    assert condition, errmsg() if msg==None else msg
 
 class WindowsHandler(BaseHandler):
     def __init__(self, command: List):
@@ -64,12 +61,12 @@ class WindowsHandler(BaseHandler):
         sa.bInheritHandle = True # VERY Important!
         sa.lpSecurityDescriptor = None
         # Create input pipe
-        assert kernel32.CreatePipe(ctypes.byref(inputReadSide), ctypes.byref(inputWriteSide), ctypes.byref(sa), 0)
+        w_assert(kernel32.CreatePipe(ctypes.byref(inputReadSide), ctypes.byref(inputWriteSide), ctypes.byref(sa), 0))
         # Create output pipe
-        assert kernel32.CreatePipe(ctypes.byref(outputReadSide), ctypes.byref(outputWriteSide), ctypes.byref(sa), 0)
+        w_assert(kernel32.CreatePipe(ctypes.byref(outputReadSide), ctypes.byref(outputWriteSide), ctypes.byref(sa), 0))
         # [Optional] Disable inheritance for parent process handles to prevent issues
-        assert kernel32.SetHandleInformation(outputReadSide, HANDLE_FLAG_INHERIT, 0)
-        assert kernel32.SetHandleInformation(inputWriteSide, HANDLE_FLAG_INHERIT, 0)
+        w_assert(kernel32.SetHandleInformation(outputReadSide, HANDLE_FLAG_INHERIT, 0))
+        w_assert(kernel32.SetHandleInformation(inputWriteSide, HANDLE_FLAG_INHERIT, 0))
 
         try:
             host_size=os.get_terminal_size()
@@ -78,13 +75,13 @@ class WindowsHandler(BaseHandler):
             term_size = COORD(80,24)
         ## Create pseudo console
         self.console_handle = wintypes.HANDLE() # HPCON
-        assert kernel32.CreatePseudoConsole(
+        w_assert(kernel32.CreatePseudoConsole(
                 term_size,
                 inputReadSide,
                 outputWriteSide,
                 PSEUDOCONSOLE_INHERIT_CURSOR, # Don't clear the screen
                 ctypes.byref(self.console_handle)
-        )==S_OK
+        )==S_OK)
 
         ## Set startup info
         si = STARTUPINFOEX()
@@ -110,17 +107,17 @@ class WindowsHandler(BaseHandler):
             )
             # Allocate memory to represent the list
             si.lpAttributeList = kernel32.HeapAlloc(kernel32.GetProcessHeap(), 0, bytesRequired)
-            assert si.lpAttributeList, "Cannot allocate lpAttributeList"
+            w_assert(si.lpAttributeList, "Cannot allocate lpAttributeList")
             # Initialize the list memory location
-            assert kernel32.InitializeProcThreadAttributeList(
+            w_assert(kernel32.InitializeProcThreadAttributeList(
                 si.lpAttributeList,
                 1,     # dwAttributeCount (1 attribute)
                 0,     # dwFlags
                 ctypes.byref(bytesRequired)
-            )
+            ))
             # endregion
             # Set the pseudoconsole information into attribute list
-            assert kernel32.UpdateProcThreadAttribute(
+            w_assert(kernel32.UpdateProcThreadAttribute(
                 si.lpAttributeList,
                 0,  # dwFlags
                 PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
@@ -128,12 +125,12 @@ class WindowsHandler(BaseHandler):
                 ctypes.sizeof(self.console_handle),
                 None,  # lpPreviousValue
                 None   # lpReturnSize
-            )
+            ))
 
         ## Start process
 
         pi = PROCESS_INFORMATION()
-        assert kernel32.CreateProcessW(
+        w_assert(kernel32.CreateProcessW(
             None,  # lpApplicationName
             _globalvar.splitarray_to_string(command),  # lpCommandLine
             None,  # lpProcessAttributes
@@ -144,7 +141,7 @@ class WindowsHandler(BaseHandler):
             None,  # lpCurrentDirectory
             ctypes.byref(si),  # lpStartupInfo
             ctypes.byref(pi)  # lpProcessInformation
-        )
+        ))
         self.process_pid=int(pi.dwProcessId)
         self.process_handle=pi.hProcess
         ## Set terminal attributes
@@ -169,43 +166,43 @@ class WindowsHandler(BaseHandler):
 
     def _get_std_handles(self) -> Tuple[wintypes.HANDLE, wintypes.HANDLE]:
         stdin_handle=kernel32.GetStdHandle(STD_INPUT_HANDLE)
-        assert stdin_handle!=INVALID_HANDLE_VALUE
+        w_assert(stdin_handle!=INVALID_HANDLE_VALUE)
         stdout_handle=kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-        assert stdout_handle!=INVALID_HANDLE_VALUE
+        w_assert(stdout_handle!=INVALID_HANDLE_VALUE)
         return (stdin_handle, stdout_handle)
     def _read_data(self, handle: wintypes.HANDLE) -> bytes:
         buf=ctypes.create_string_buffer(io.DEFAULT_BUFFER_SIZE)
         bytes_read=wintypes.DWORD()
-        assert kernel32.ReadFile(handle, ctypes.byref(buf), ctypes.sizeof(buf), ctypes.byref(bytes_read), None)
+        w_assert(kernel32.ReadFile(handle, ctypes.byref(buf), ctypes.sizeof(buf), ctypes.byref(bytes_read), None))
         return buf.value[:bytes_read.value]
     def _write_data(self, handle: wintypes.HANDLE, data: Union[bytes, str]):
         handle_type=kernel32.GetFileType(handle)
-        assert handle_type!=FILE_TYPE_UNKNOWN
+        w_assert(handle_type!=FILE_TYPE_UNKNOWN)
         if handle_type==FILE_TYPE_CHAR: # str
             try:
                 if type(data)==bytes: data=data.decode('utf-8')
                 buf=ctypes.create_unicode_buffer(data) # type: ignore
-                assert kernel32.WriteConsoleW(handle,
+                w_assert(kernel32.WriteConsoleW(handle,
                         ctypes.byref(buf),
                         ctypes.sizeof(buf) // ctypes.sizeof(wintypes.WCHAR),
-                        None, None)
+                        None, None))
             except UnicodeDecodeError:
                 buf=ctypes.create_string_buffer(data) # type: ignore
-                assert kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None)
+                w_assert(kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None))
         elif handle_type==FILE_TYPE_PIPE: # bytes
             if type(data)==str: data=data.encode('utf-8')
             buf=ctypes.create_string_buffer(data) # type: ignore
-            assert kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None)
+            w_assert(kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None))
         else: raise AssertionError("Unsupported handle type")
     def read_stdin(self) -> bytes:
         stdin_handle=self._get_std_handles()[0]
         stdin_type=kernel32.GetFileType(stdin_handle)
-        assert stdin_type!=FILE_TYPE_UNKNOWN
+        w_assert(stdin_type!=FILE_TYPE_UNKNOWN)
         if stdin_type==FILE_TYPE_CHAR:
             events_read = wintypes.DWORD()
             input_records = INPUT_RECORD_arr()
             arr_size=input_records._length_
-            assert kernel32.ReadConsoleInputW(stdin_handle, ctypes.byref(input_records), arr_size, ctypes.byref(events_read))
+            w_assert(kernel32.ReadConsoleInputW(stdin_handle, ctypes.byref(input_records), arr_size, ctypes.byref(events_read)))
             total_data=b''
             for x in range(events_read.value):
                 record=input_records[x]
@@ -215,7 +212,7 @@ class WindowsHandler(BaseHandler):
                         total_data+=key_event.uChar.UnicodeChar.encode('utf-8')*key_event.wRepeatCount
                 elif record.EventType==WINDOW_BUFFER_SIZE_EVENT:
                     coord=record.Event.WindowBufferSizeEvent.dwSize
-                    assert kernel32.ResizePseudoConsole(self.console_handle, coord)==S_OK
+                    w_assert(kernel32.ResizePseudoConsole(self.console_handle, coord)==S_OK)
             return total_data
         elif stdin_type==FILE_TYPE_PIPE:
             return self._read_data(stdin_handle)
@@ -241,12 +238,12 @@ class WindowsHandler(BaseHandler):
     def _read_available(self, handle) -> bool:
         # Check if available for reading
         handle_type=kernel32.GetFileType(handle)
-        assert handle_type!=FILE_TYPE_UNKNOWN
+        w_assert(handle_type!=FILE_TYPE_UNKNOWN)
         bytes_available = wintypes.DWORD()
         if handle_type==FILE_TYPE_CHAR:
-            assert kernel32.GetNumberOfConsoleInputEvents(handle, ctypes.byref(bytes_available))
+            w_assert(kernel32.GetNumberOfConsoleInputEvents(handle, ctypes.byref(bytes_available)))
         elif handle_type==FILE_TYPE_PIPE:
-            assert kernel32.PeekNamedPipe(handle, None, 0, None, ctypes.byref(bytes_available), None)
+            w_assert(kernel32.PeekNamedPipe(handle, None, 0, None, ctypes.byref(bytes_available), None))
         else: raise AssertionError("Unsupported handle type")
         return bytes_available.value>0
     def get_readable_descriptors(self, timeout: float) -> List:
@@ -268,9 +265,9 @@ class WindowsHandler(BaseHandler):
         try:
             stdin_handle, stdout_handle=self._get_std_handles()
             input_mode=wintypes.DWORD()
-            assert kernel32.GetConsoleMode(stdin_handle, ctypes.byref(input_mode))
+            w_assert(kernel32.GetConsoleMode(stdin_handle, ctypes.byref(input_mode)))
             output_mode=wintypes.DWORD()
-            assert kernel32.GetConsoleMode(stdout_handle, ctypes.byref(output_mode))
+            w_assert(kernel32.GetConsoleMode(stdout_handle, ctypes.byref(output_mode)))
             if no_buffering:
                 input_mode.value &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT)
                 input_mode.value |= ENABLE_VIRTUAL_TERMINAL_INPUT
@@ -280,8 +277,8 @@ class WindowsHandler(BaseHandler):
     def set_host_term_attrs(self, term_attrs):
         try:
             stdin_handle, stdout_handle=self._get_std_handles()
-            assert kernel32.SetConsoleMode(stdin_handle, term_attrs[0])
-            assert kernel32.SetConsoleMode(stdout_handle, term_attrs[1])
+            w_assert(kernel32.SetConsoleMode(stdin_handle, term_attrs[0]))
+            w_assert(kernel32.SetConsoleMode(stdout_handle, term_attrs[1]))
         except AssertionError: return None
     def get_foreground_pid(self) -> Optional[int]:
         # Not applicable for Windows processes
@@ -289,7 +286,7 @@ class WindowsHandler(BaseHandler):
     def get_proc_status(self) -> Optional[int]:
         # Returns None if running; returns exit code if finished
         exit_code=wintypes.DWORD()
-        assert kernel32.GetExitCodeProcess(self.process_handle, ctypes.byref(exit_code))
+        w_assert(kernel32.GetExitCodeProcess(self.process_handle, ctypes.byref(exit_code)))
         if exit_code.value == STILL_ACTIVE: return None
         else: return exit_code.value
     def reset_terminal(self):
@@ -298,9 +295,9 @@ class WindowsHandler(BaseHandler):
     def handle_exit(self) -> int:
         if self.ends_with_R: self.write_output(b'\n')
         # Close handles when done
-        assert kernel32.CloseHandle(self.stdin_fd)
-        assert kernel32.CloseHandle(self.stdout_fd)
-        assert kernel32.ClosePseudoConsole(self.console_handle)==None
+        w_assert(kernel32.CloseHandle(self.stdin_fd))
+        w_assert(kernel32.CloseHandle(self.stdout_fd))
+        w_assert(kernel32.ClosePseudoConsole(self.console_handle)==None)
         # Restore console mode
         if self.prev_attrs!=None:
             self.set_host_term_attrs(self.prev_attrs)
