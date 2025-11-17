@@ -105,6 +105,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         last_input_content=None
         try:
             while True:
+                time.sleep(0.001)
                 # Testing thread exception handling
                 nonlocal thread_debug
                 if thread_debug==1: raise Exception
