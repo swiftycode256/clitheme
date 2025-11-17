@@ -19,9 +19,12 @@ import struct
 import copy
 import threading
 from typing import Optional, List
-from clitheme._globalvar import _direct_exit
+from ... import frontend
+from ..._globalvar import _direct_exit
 from .. import _labeled_print
 from .base_template import BaseHandler
+
+fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 
 class PosixHandler(BaseHandler):
     def __init__(self, command):
@@ -166,7 +169,7 @@ class PosixHandler(BaseHandler):
                 self.write_pty(b'\x03') # '^C' character
             else:
                 self.reset_terminal()
-                # _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
+                _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
                 # Prevent message being triggered multiple times
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
                 raise _direct_exit(130) # Will be raised in main processing loop
