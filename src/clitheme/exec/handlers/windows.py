@@ -157,6 +157,16 @@ class WindowsHandler(BaseHandler):
         self.stdin_fd=inputWriteSide
         self.stdout_fd=outputReadSide
 
+        # The Pseudoconsole outputs these sets of control sequences before process output:
+        # 1. Query cursor position, when PSEUDOCONSOLE_INHERIT_CURSOR is specified
+        # 2. Setup additional console modes (e.g. Focus event reporting, UTF-8 edit mode)
+        # These set of sequences are VERY important and MUST be directly written to output!
+        self.init_seq_left=2
+
+        # The last line of console output might end with '\r'
+        # In this case, output '\n' when exiting
+        self.ends_with_R=False
+
     def _get_std_handles(self) -> Tuple[wintypes.HANDLE, wintypes.HANDLE]:
         stdin_handle=kernel32.GetStdHandle(STD_INPUT_HANDLE)
         assert stdin_handle!=INVALID_HANDLE_VALUE
@@ -215,7 +225,17 @@ class WindowsHandler(BaseHandler):
         self._write_data(self._get_std_handles()[1], data)
     def read_pty(self, is_stderr: bool=False) -> bytes:
         if is_stderr: raise NotImplementedError
-        return self._read_data(self.stdout_fd)
+        data=self._read_data(self.stdout_fd)
+        
+        self.ends_with_R=data.endswith(b'\r')
+        # If initial sequences doesn't start with ESC, always assume process output
+        if not data.startswith(b'\x1b'): self.init_seq_left=0
+        # Handle initial control sequences: Write directly to output
+        if self.init_seq_left>0:
+            self.write_output(data)
+            self.init_seq_left-=1
+            return b''
+        else: return data
     def write_pty(self, data: bytes):
         self._write_data(self.stdin_fd, data)
     def _read_available(self, handle) -> bool:
@@ -276,6 +296,7 @@ class WindowsHandler(BaseHandler):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
         self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
     def handle_exit(self) -> int:
+        if self.ends_with_R: self.write_output(b'\n')
         # Close handles when done
         assert kernel32.CloseHandle(self.stdin_fd)
         assert kernel32.CloseHandle(self.stdout_fd)
