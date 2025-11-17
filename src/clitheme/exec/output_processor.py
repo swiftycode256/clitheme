@@ -135,13 +135,34 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     foreground_pid=handler.get_foreground_pid()
 
                     do_subst_operation=True
-                    # check if the output is user input. if yes, skip
+                    # Check if the output is user input
                     if last_input_content!=None and not (unfinished_output!=None and unfinished_output[2]==True):
-                        input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
-                        input_equals=b'^'+input_match_expression+b'$'
-                        # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
-                        if re.search(input_equals, data)!=None:
-                            do_subst_operation=False
+                        # Windows keystroke input: "\x1b[0;0;0;0;0;0_"
+                        windows_input_expr=rb"\x1b\[\d+?;\d+?;(?P<char>\d+?);(?P<pressed>\d+?);\d+?;\d+?_"
+                        if re.fullmatch(b'('+windows_input_expr+b')+', last_input_content)!=None:
+                            # Process input sequence: Discard parts with char=0
+                            target_input=b''
+                            remaining=last_input_content
+                            while len(remaining)>0:
+                                match_obj=re.match(b'^'+windows_input_expr, remaining)
+                                assert match_obj!=None, "Failed to match Windows keystroke input"
+                                if int(match_obj.groupdict()['char'])!=0:
+                                    target_input+=match_obj.group(0)
+                                remaining=remaining[len(match_obj.group(0)):]
+                            # Construct output match pattern
+                            target_output=b''
+                            for char_code in re.sub(rb"(\x08 \x08|\x08\x1b\[K)", b'\x08', data):
+                                for pressed in (b'1',b'0'):
+                                    target_output+=rb"\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";"+pressed+rb";\d+?;\d+?_"
+                            # print(target_input, target_output, re.fullmatch(target_output, target_input)!=None) # DEBUG
+                            if re.fullmatch(target_output, target_input)!=None: do_subst_operation=False
+                        else:
+                            # Unix keystroke: mostly same as output
+                            input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
+                            input_equals=b'^'+input_match_expression+b'$'
+                            # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
+                            if re.search(input_equals, data)!=None:
+                                do_subst_operation=False
                         last_input_content=None
                     unfinished_output_time=time.perf_counter()
                     if unfinished_output!=None:
