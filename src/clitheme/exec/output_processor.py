@@ -29,11 +29,11 @@ fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subse
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
-def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=False, matched: bool=False, failed: bool=False) -> List[bytes]:
+def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=False, matched: bool=False, failed: bool=False, do_subst: bool=False) -> List[bytes]:
     final_lines=[]
     for x in range(len(lines)):
         line=lines[x]
-        if "showchars" in debug_mode:
+        if do_subst and "showchars" in debug_mode:
             wrapper=b"\x1b[4;32m{}\x1b[0m"
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
@@ -41,16 +41,19 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=Fa
             line=line.replace(b'\n', wrapper.replace(b'{}',b'\\n')+b'\n')
             line=line.replace(b'\b', wrapper.replace(b'{}',b'\\x08'))
             line=line.replace(b'\a', wrapper.replace(b'{}',b'\\x07'))
-        if "newlines" in debug_mode:
+        if do_subst and "newlines" in debug_mode:
             if not line.endswith(b'\n'):
                 line+=b"\n"
         if "color" in debug_mode:
             match_pattern=r"(^|\x1b\[[\d;]*?m)"
-            sub_pattern=f"\\g<0>\x1b[{'31' if is_stderr else '33'}m"
+            if do_subst:
+                sub_pattern=f"\\g<0>\x1b[{'31' if is_stderr else '33'}m" # Yellow or Red
+            else:
+                sub_pattern=f"\\g<0>\x1b[38;5;8m" # Gray
             try: line=bytes(re.sub(match_pattern, sub_pattern, line.decode('utf-8')), 'utf-8')
             except UnicodeDecodeError: line=re.sub(bytes(match_pattern, 'utf-8'), bytes(sub_pattern, 'utf-8'), line)
             line+=b'\x1b[0m'
-        if "normal" in debug_mode:
+        if do_subst and "normal" in debug_mode:
             line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';37;41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
         final_lines.append(line)
     return final_lines
@@ -239,7 +242,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     except db_interface.db_not_found: pass
                     # remove the interval timer to prevent exception when function finishes before timeout
                     if os.name=="posix": signal.setitimer(signal.ITIMER_REAL, 0)
-                if line_data[2]==True: subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed)[0] 
+                subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed, do_subst=line_data[2])[0] 
                 return subst_line
             if output_lines.empty():
                 handle_debug_pgrp(handler.get_foreground_pid())
