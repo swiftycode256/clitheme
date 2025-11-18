@@ -205,7 +205,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if not "stdin" in fds and last_input_content!=None:
                     last_input_content=None
 
-                if handler.get_proc_status()!=None: 
+                if handler.get_proc_status()!=None and unfinished_output==None: 
                     # Send termination signal
                     output_lines.put(None)
                     break
