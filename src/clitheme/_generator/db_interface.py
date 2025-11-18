@@ -169,7 +169,11 @@ def _check_command(match_cmd: str, strictness: int, target_command: str):
     success=True
     # check starting phrase
     first_phrase=target_command.split()[0]
-    success=match_cmd.split()[0] in (first_phrase, os.path.basename(first_phrase))
+    success=match_cmd.split()[0] in (
+        first_phrase,
+        os.path.basename(first_phrase),
+        re.sub(r"(\.exe|\.com|\.ps1|\.bat)$",'',os.path.basename(first_phrase)),
+    )
 
     # in following checks, first phrase is excluded as it's already checked
     if strictness==1: # must start with pattern in terms of space-separated phrases

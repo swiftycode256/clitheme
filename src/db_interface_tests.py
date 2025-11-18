@@ -25,7 +25,7 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: sample message", "example_app install-stuff"), # test strictcmdmatch with SAME command as defined in filter
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
-               ("example_app: using list options", "/usr/bin/example_app -rlc"), # test smartcmdmatch and command basename handling
+               ("example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
 ]
 expected_outputs=[
     ("rm says: missing arguments and options (>﹏<)", "rm 说：缺少参数和选项 (>﹏<)"),
