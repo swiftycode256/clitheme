@@ -15,6 +15,7 @@ import re
 import string
 import stat
 import tempfile
+import ctypes
 from copy import copy
 from . import _version
 from typing import List
@@ -149,8 +150,8 @@ def get_locale(debug_mode: bool=False) -> List[str]:
         nonlocal lang
         if not sanity_check(target_lang, use_orig=True)==False:
             no_encoding=re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", target_lang)
-            lang.append(target_lang)
-            if no_encoding!=target_lang: lang.append(no_encoding)
+            if not target_lang in lang: lang.append(target_lang)
+            if not no_encoding in lang: lang.append(no_encoding)
         else:
             if debug_mode: print("[Debug] Locale \"{0}\": sanity check failed ({1})".format(target_lang, sanity_check_error_message))
 
@@ -159,7 +160,7 @@ def get_locale(debug_mode: bool=False) -> List[str]:
     LC_ALL_value=os.environ["LC_ALL"] if "LC_ALL" in os.environ and os.environ["LC_ALL"].strip()!='' else "C"
     skip_LANGUAGE=(LANG_value=="C" or LANG_value.startswith("C.")) and (LC_ALL_value=="C" or LC_ALL_value.startswith("C."))
     # $LANGUAGE (list of languages separated by colons)
-    if "LANGUAGE" in os.environ and not skip_LANGUAGE:
+    if "LANGUAGE" in os.environ and os.environ["LANGUAGE"].strip()!="" and not skip_LANGUAGE:
         if debug_mode: print("[Debug] Using LANGUAGE variable")
         target_str=os.environ['LANGUAGE']
         for language in target_str.split(":"):
@@ -184,6 +185,17 @@ def get_locale(debug_mode: bool=False) -> List[str]:
         if debug_mode: print("[Debug] Using LANG variable")
         target_str=os.environ["LANG"].strip()
         add_language(target_str)
+
+    if os.name=="nt":
+        try:
+            s=ctypes.create_unicode_buffer(85)
+            assert ctypes.windll.kernel32.GetUserDefaultLocaleName(s, 85)!=0
+            win_locale: str=s.value
+        except: pass
+        else:
+            if win_locale.strip()!="":
+                add_language(win_locale+".UTF-8")
+                add_language(win_locale.replace('-','_')+".UTF-8")
     return lang
 
 def handle_exception():
