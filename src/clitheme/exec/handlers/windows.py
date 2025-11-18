@@ -248,19 +248,27 @@ class WindowsHandler(BaseHandler):
         return bytes_available.value>0
     def get_readable_descriptors(self, timeout: float) -> List:
         # Possible values: ["stdin", "stdout", "stderr"]
-        avail_handles=[]
-        stdin_handle=self._get_std_handles()[0]
-        # stdin
-        try:
-            if self._read_available(stdin_handle):
-                avail_handles.append("stdin")
-        except AssertionError: pass
-        # stdout
-        try:
-            if self._read_available(self.stdout_fd):
-                avail_handles.append("stdout")
-        except AssertionError: pass
-        return avail_handles
+        init_time=time.perf_counter()
+        # Simulate timeout
+        counter=0
+        while counter==0 or time.perf_counter()-init_time<timeout:
+            counter+=1
+
+            avail_handles=[]
+            stdin_handle=self._get_std_handles()[0]
+            # stdin
+            try:
+                if self._read_available(stdin_handle):
+                    avail_handles.append("stdin")
+            except AssertionError: pass
+            # stdout
+            try:
+                if self._read_available(self.stdout_fd):
+                    avail_handles.append("stdout")
+            except AssertionError: pass
+            if len(avail_handles)!=0: return avail_handles
+            time.sleep(0.001)
+        return []
     def get_process_term_attrs(self, no_buffering=False) -> Optional[Any]:
         try:
             stdin_handle, stdout_handle=self._get_std_handles()
