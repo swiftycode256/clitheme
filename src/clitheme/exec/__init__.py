@@ -61,7 +61,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
 def _handle_help_message(full_help: bool=False):
     fd2=frontend.FetchDescriptor(subsections="exec help-message")
     print(fd2.reof("usage-str", "Usage:"))
-    print("\tclitheme-exec [--debug] [--debug-color] [--debug-newlines] [--showchars] [--foreground-stat] [--nosubst] [command]")
+    print("\tclitheme-exec (options) [command]")
     if not full_help: return
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))

@@ -378,11 +378,11 @@ def _handle_help_message(full_help: bool=False):
     fd=frontend.FetchDescriptor(subsections="cli help-message")
     print(fd.reof("usage-str", "Usage:"))
     print(
-"""\t{0} apply-theme [themedef-file] [--overlay] [--preserve-temp] [--yes]
-\t{0} show-info [--name] [--file-path]
+"""\t{0} apply-theme [file] (--overlay) (--preserve-temp) (--yes)
+\t{0} show-info (--name) (--file-path)
 \t{0} remove-theme
-\t{0} update-theme [--yes]
-\t{0} generate-data [themedef-file] [--overlay]
+\t{0} update-theme (--yes)
+\t{0} generate-data [file] (--overlay)
 \t{0} repair-theme
 \t{0} --version
 \t{0} --help""".format(arg_first)
