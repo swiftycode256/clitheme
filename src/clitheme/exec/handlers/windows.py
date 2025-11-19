@@ -299,11 +299,13 @@ class WindowsHandler(BaseHandler):
         else: return exit_code.value
     def reset_terminal(self):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
-        self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
+        if not stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
+            self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
     def handle_exit(self) -> int:
         if self.ends_with_R: self.write_output(b'\n')
         # Unset UTF-8 extended edit mode to prevent issues with some apps
-        self.write_output(b'\x1b[?9001l') 
+        if not stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
+            self.write_output(b'\x1b[?9001l') 
         # Close handles when done
         w_assert(kernel32.CloseHandle(self.stdin_fd))
         w_assert(kernel32.CloseHandle(self.stdout_fd))
