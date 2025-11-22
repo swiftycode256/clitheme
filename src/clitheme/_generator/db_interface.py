@@ -62,9 +62,10 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
     global connection
     connection=sqlite3.connect(db_path)
     # check db version
-    version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
-    if version!=_globalvar.db_version:
-        raise need_db_regenerate
+    try:
+        version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
+        assert version==_globalvar.db_version
+    except: raise need_db_regenerate
 
 def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list], effective_locale: Optional[str]=None, is_regex: bool=True, command_match_strictness: int=0, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), file_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
