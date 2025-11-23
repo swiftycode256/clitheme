@@ -1,4 +1,4 @@
-clitheme (2.1-dev20251119) unstable; urgency=medium
+clitheme (2.1-dev20251119) unstable; urgency=low
 
   * In development; see commit logs for changes
 
@@ -8,15 +8,26 @@ clitheme (2.0.1-1) unstable; urgency=medium
 
   * Fix temporary directory mechanism
 
- -- swiftycode <3291929745@qq.com>  Sun, 29 Jun 2025 17:29:00 +0800
+ -- swiftycode <3291929745@qq.com>  Tue, 09 Sep 2025 16:16:00 +0800
  
 clitheme (2.0-1) unstable; urgency=medium
 
-  See https://gitee.com/swiftycode/clitheme/releases/v2.0 for full changelog
+  Changes compared to beta 3:
+
+  * Important change: substitution rules will be executed in the order defined in file, not by command filter lengths
+  * Fix end phrase with backslash not being processed properly in content blocks
+  * Optimize `set_local_themedef` folder naming mechanism
+  * `set_local_themedefs` function will no longer generate multiple folders
+  * New `clitheme repair-theme` command: re-apply theme from stored theme definition files in current data
+  * Change: specifying non-beta version in `!require_version` drops compatibility with corresponding beta versions
+  * Rename `get-current-theme-info` to `show-info`
+  * Rename `unset-current-theme` to `remove-theme`
+
+  See https://gitee.com/swiftycode/clitheme/releases/v2.0 for v2.0 release notes
 
  -- swiftycode <3291929745@qq.com>  Sun, 29 Jun 2025 17:29:00 +0800
 
-clitheme (2.0-beta3-1) unstable; urgency=medium
+clitheme (2.0-beta3-1) unstable; urgency=low
 
   New features
 
@@ -52,7 +63,7 @@ clitheme (2.0-beta3-1) unstable; urgency=medium
 
  -- swiftycode <3291929745@qq.com>  Wed, 01 Jan 2025 11:54:00 +0800
 
-clitheme (2.0-beta2-1) unstable; urgency=medium
+clitheme (2.0-beta2-1) unstable; urgency=low
 
   New features
 
