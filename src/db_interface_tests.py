@@ -23,6 +23,9 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: sample message", "example_app --this install-stuff"), # test strictcmdmatch (substitution should not happen)
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
                ("Error: sample message", "example_app install-stuff"), # test strictcmdmatch with SAME command as defined in filter
+               # Test regex filters
+               ("Error: sample message", "app_example install-stuff"),
+               ("Error: sample message", "app --wef install"),
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
                ("example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
@@ -42,6 +45,8 @@ expected_outputs=[
     ("(ToT)/~~~ Error: sample message", "(ToT)/~~~ 错误：sample message"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
     ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)", "o(≧v≦)o example_app 说： 正在使用子路径！(｡ì _ í｡)"),
     ("o(≧v≦)o example_app says: using list options! (⊙ω⊙)", "o(≧v≦)o example_app 说： 正在使用列表选项！(⊙ω⊙)"),
@@ -52,7 +57,7 @@ substrules_file=r"""
     name test
 {/header_section}
 {substrules_section}
-    filter_command rm
+    filter_cmd rm
         [substitute_string] rm: missing operand
             locale:default rm says: missing arguments and options (>﹏<)
             locale:zh_CN rm 说：缺少参数和选项 (>﹏<)
@@ -63,12 +68,12 @@ substrules_file=r"""
         [/substitute_string]
 
     setvar:shell (?P<shell>.+)
-    [filter_commands]
+    [filter_cmds]
         rm -rf
         cat
         cd
         ls
-    [/filter_commands]
+    [/filter_cmds]
         [substitute_regex] {{shell}}: (?P<filename>.+): Permission denied
             locale:default \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
             locale:zh_CN \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
@@ -77,7 +82,7 @@ substrules_file=r"""
 
     # test substvar
     set_options substvar
-    filter_command ls
+    filter_cmd ls
         # testing repeated entry detection
         [substitute_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
             locale:default wef
@@ -86,19 +91,27 @@ substrules_file=r"""
             locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
             locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/substitute_regex]
-    unset_filter_command
+    unset_filter_cmd
 
     # test substesc
     set_options substesc
     set_options strictcmdmatch
-    filter_command example_app install-stuff
+    filter_cmd example_app install-stuff
         [substitute_string] Error: sample message
             locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
             locale:zh_CN 错误：样例提示！(>﹏<)
         [/substitute_string] endmatchhere
-    unset_filter_command
-    set_options nosubstesc
+    unset_filter_cmd
 
+    # Test regex filter and substvar
+    setvar:pattern app(_example)? (.*)install(-stuff)?
+    filter_cmd_regex {{pattern}}
+        [substitute_string] Error: sample message
+            locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
+            locale:zh_CN 错误：样例提示！(>﹏<)
+        [/substitute_string] endmatchhere
+    unset_filter_cmd
+    set_options nosubstesc
     # global substitutions
     [substitute_regex] ^Warning:( )
         locale:default o(≧v≦)o Note:\g<1>
@@ -116,7 +129,7 @@ substrules_file=r"""
     setvar:style {{[x1b]}}[1;4m
     setvar:orig {{ESC}}[0m
     set_options exactcmdmatch
-    filter_command rm file.ban
+    filter_cmd rm file.ban
         [substitute_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
             # test substchar and substesc specified in block
             [locale] default
@@ -126,7 +139,7 @@ substrules_file=r"""
         [/substitute_regex]
 
     set_options normalcmdmatch
-    filter_command example_app
+    filter_cmd example_app
         [substitute_string] example_app:
             locale:default o(≧v≦)o example_app says:
             locale:zh_CN o(≧v≦)o example_app 说：
@@ -135,13 +148,13 @@ substrules_file=r"""
     # test substchar
     set_options substchar
     set_options smartcmdmatch
-    filter_command example_app -r
+    filter_cmd example_app -r
         [substitute_string] using recursive directories
             # \x21=!
             locale:default using recursive directories{{[x21]}} (｡ì _ í｡)
             locale:zh_CN 正在使用子路径！(｡ì _ í｡)
         [/substitute_string]
-    filter_command example_app -l
+    filter_cmd example_app -l
         [substitute_string] using list options
             locale:default using list options! (⊙ω⊙)
             locale:zh_CN 正在使用列表选项！(⊙ω⊙)

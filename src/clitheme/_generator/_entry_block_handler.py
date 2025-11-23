@@ -135,10 +135,11 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 self.db_interface.add_subst_entry(
                     match_pattern=match_pattern, \
                     substitute_pattern=entry[1], \
-                    effective_commands=substrules_options['effective_commands'], \
-                    effective_locale=entry[2], \
                     is_regex=substrules_options['is_regex'], \
+                    effective_commands=substrules_options['effective_commands'], \
                     command_match_strictness=substrules_options['strictness'], \
+                    command_is_regex=substrules_options['command_is_regex'], \
+                    effective_locale=entry[2], \
                     end_match_here=opt('endmatchhere'), \
                     stdout_stderr_matchoption=substrules_stdout_stderr_option, \
                     foreground_only=opt('foregroundonly'), \

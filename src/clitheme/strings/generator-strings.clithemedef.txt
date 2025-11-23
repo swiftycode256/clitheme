@@ -94,6 +94,10 @@ in_domainapp swiftycode clitheme
             # locale:default Bad match pattern at line {num} ({error_msg})
             locale:zh_CN 第{num}行：无效的匹配正则表达式（{error_msg}）
         [/entry]
+        [entry] bad-cmd-filter-pattern-err
+            # locale:default Bad command filter pattern at line {num} ({error_msg})
+            locale:zh_CN 第{num}行：无效的命令限制正则表达式（{error_msg}）
+        [/entry]
         [entry] bad-subst-pattern-err
             # locale:default Bad substitute pattern at line {num} ({error_msg})
             locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
