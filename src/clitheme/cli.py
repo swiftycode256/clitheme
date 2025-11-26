@@ -192,27 +192,19 @@ def show_info(name: bool=False, file_path=False):
     (Invokes 'clitheme show-info')
     """
     f=frontend.FetchDescriptor(subsections="cli show-info")
-    search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
-    if not os.path.isdir(search_path):
+    try: lsdir_result=_fetch_abs_lsdir()
+    except _invalid_theme:
         print(f.reof("no-theme", "No theme currently set"))
         return 1
-    lsdir_result=_globalvar.list_directory(search_path)
-    lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
-    lsdir_num=0
-    for x in lsdir_result: 
-        if os.path.isdir(search_path+"/"+x):
-            lsdir_num+=1
     print(f.reof("current-theme-msg", "Currently installed theme(s):"))
     minimal_info: bool=name==True or file_path==True
-    for theme_pathname in lsdir_result:
-        target_path=search_path+"/"+theme_pathname.strip()
-        if (not os.path.isdir(target_path)) or re.search(r"^\d+$", theme_pathname.strip())==None: continue # skip current_theme_index file
+    for target_path in lsdir_result:
         # name
         if minimal_info==False or (minimal_info==True and name==True):
             theme_name="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
                 theme_name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
-            print("[{}]: {}".format(theme_pathname, fmt(theme_name)))
+            print("[{}]: {}".format(os.path.basename(target_path), fmt(theme_name)))
         if minimal_info==True and file_path==True:
             theme_filepath="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")):
@@ -271,7 +263,8 @@ def _fetch_abs_lsdir() -> List[str]:
     search_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname
     if not os.path.isdir(search_path): 
         raise _invalid_theme("no theme set")
-    lsdir_result=_globalvar.list_directory(search_path); lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
+    lsdir_result=_globalvar.list_directory(search_path)
+    lsdir_result.sort(key=functools.cmp_to_key(_globalvar.result_sort_cmp))
     # Make absolute path
     lsdir_result=list(map(lambda name:search_path+"/"+name, lsdir_result))
     lsdir_num=0
