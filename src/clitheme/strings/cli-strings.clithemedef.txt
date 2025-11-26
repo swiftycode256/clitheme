@@ -247,14 +247,6 @@ in_domainapp swiftycode clitheme
                     请重新应用当前主题后重试
                 [/locale]
             [/entry]
-            [entry] updating-info
-                # locale:default ==> Updating info...
-                locale:zh_CN ==> 正在更新信息...
-            [/entry]
-            [entry] update-info-success
-                # locale:default Successfully updated info
-                locale:zh_CN 已成功更新信息
-            [/entry]
 
         # 用于clitheme --help的字符串定义
         # String entries used for "clitheme --help"

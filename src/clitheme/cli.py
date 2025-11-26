@@ -62,14 +62,14 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         if not generate_only:
             if os.path.isdir(_globalvar.clitheme_root_data_path) and overlay==False:
                 print(f.reof("overwrite-notice", "The existing theme data will be overwritten if you continue."))
-            if overlay==True:
+            if overlay:
                 print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
             inpstr=f.reof("confirm-prompt", "Do you want to continue? [y/n]")
             try: inp=input(inpstr+" ").strip().lower()
             except (KeyboardInterrupt, EOFError): print();return 130
             if not (inp=="y" or inp=="yes"):
                 return 1
-    if overlay: print(f.reof("overlay-msg", "Overlay specified"))
+    if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
     print(f.reof("processing-files", "==> Processing files..."))
     index=1
     generate_path=True
@@ -141,6 +141,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         try: shutil.rmtree(_globalvar.clitheme_root_data_path)
         except OSError as exc:
             # Prevent errors when executing "clitheme apply-theme" in clitheme-exec
+            # [An empty subst-data.db might be created during database queries]
             if exc.errno==66: pass # Directory not empty error when rmtree executes os.rmdir after removing files
             else: raise
     except FileNotFoundError: pass
@@ -354,7 +355,6 @@ def repair_theme():
     apply_paths=list(map(lambda path: path+"/manpage_data/file_content", lsdir_result))
     if apply_theme(file_contents, apply_paths, no_confirm=True)!=0: return 1
     # Replace filepath theme-info data
-    print(fi.reof("updating-info", "==> Updating info..."))
     try:
         for x in range(len(lsdir_result)):
             target_path=lsdir_result[x]
@@ -363,7 +363,6 @@ def repair_theme():
     except Exception as exc:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         return 1
-    print(fi.reof("update-info-success", "Successfully updated info"))
     return 0
 
 def _is_option(arg):
