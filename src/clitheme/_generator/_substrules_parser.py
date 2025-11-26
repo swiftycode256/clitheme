@@ -67,10 +67,10 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
             got_options=copy.copy(self.global_options)
             inline_options={}
-            if len(self.get_current_line().split())>1:
+            if len(phrases)>1:
                 allowed_options=self.block_input_options+(self.command_filter_options if not command_filter_is_regex else ["foregroundonly"])
-                got_options=self.parse_options(allowed_options, merge_global_options=True, allowed_options=self.block_input_options+self.command_filter_options)
-                inline_options=self.parse_options(allowed_options, merge_global_options=False, allowed_options=self.block_input_options+self.command_filter_options)
+                got_options=self.parse_options(phrases[1:], merge_global_options=True, allowed_options=allowed_options)
+                inline_options=self.parse_options(phrases[1:], merge_global_options=False, allowed_options=allowed_options)
             if got_options.get('strictcmdmatch')==True:
                 strictness=1
             if got_options.get('exactcmdmatch')==True:
