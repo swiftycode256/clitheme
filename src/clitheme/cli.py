@@ -171,7 +171,7 @@ def remove_theme():
     f=frontend.FetchDescriptor(subsections="cli remove-theme")
     try: shutil.rmtree(_globalvar.clitheme_root_data_path)
     except FileNotFoundError:
-        print(f.reof("no-data-found", "Error: No theme data present (no theme was set)"))
+        print(f.reof("no-theme-err", "Error: no theme currently set"))
         return 1
     except Exception:
         print(f.feof("remove-data-error", "An error occurred while removing the data:\n{message}", message=fmt(str(sys.exc_info()[1]))))

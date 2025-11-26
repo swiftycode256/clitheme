@@ -148,8 +148,8 @@ in_domainapp swiftycode clitheme
         # remove-theme 指令
         # remove-theme command
         in_subsection cli remove-theme
-            [entry] no-data-found
-                # locale:default Error: No theme data present (no theme was set)
+            [entry] no-theme-err
+                # locale:default Error: no theme currently set
                 locale:zh_CN 错误：当前没有设定主题
             [/entry]
             [entry] remove-data-error
