@@ -69,9 +69,9 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     if self.section_parsing or not "header" in self.parsed_sections or not is_content_parsed():
         self.handle_error(self.fd.reof("incomplete-section-err", "Missing or incomplete header or content sections"))
     # record file content for database migration/upgrade feature
-    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, "file_content", self.file_content, self.lineindex+1, "<file_content>")
+    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, "file_content", self.file_content, self.linenum(), "<file_content>")
     # record *full* file path for update-themes feature
-    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), self.lineindex+1, "<filepath>")
+    self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), self.linenum(), "<filepath>")
     # Update current theme index
     theme_index=open(self.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
     theme_index.write(self.custom_infofile_name+"\n")

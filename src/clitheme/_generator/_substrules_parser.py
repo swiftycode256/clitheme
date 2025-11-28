@@ -35,7 +35,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             outline_foregroundonly=None
     def check_pattern(pattern: str, linenum: Optional[int]=None):
         try: re.compile(pattern)
-        except re.error: self.handle_error(self.fd.feof("bad-cmd-filter-pattern-err", "Bad command filter pattern at line {num} ({error_msg})", num=str(linenum if linenum!=None else self.lineindex+1), error_msg=sys.exc_info()[1]))
+        except re.error: self.handle_error(self.fd.feof("bad-cmd-filter-pattern-err", "Bad command filter pattern at line {num} ({error_msg})", num=str(linenum if linenum!=None else self.linenum()), error_msg=sys.exc_info()[1]))
 
     # initialize the database
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
@@ -53,7 +53,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             reset_outline_foregroundonly()
             command_filter_is_regex=phrases[0] in ("[filter_commands_regex]", "[filter_cmds_regex]")
 
-            prev_linenum=self.lineindex+1
+            prev_linenum=self.linenum()
             # read commands
             content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=phrases[0].replace('[','[/'), disallow_other_options=False, disable_char_subst=True)
             command_strings=content.splitlines()

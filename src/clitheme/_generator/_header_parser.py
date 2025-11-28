@@ -26,14 +26,14 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
-                content,self.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
+                content,self.linenum(),phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
         elif phrases[0] in ("locales", "supported_apps"):
             self.check_enough_args(phrases, 2)
             content=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             self.write_infofile_newlines( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 _globalvar.generator_info_v2filename.format(info=phrases[0]),\
-                content,self.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+                content,self.linenum(),phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
         elif phrases[0] in ("locales_block", "supported_apps_block", "description_block", "[locales]", "[supported_apps]", "[description]"):
             self.check_extra_args(phrases, 1)
             # handle block input
@@ -49,7 +49,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 file_name,\
-                content,self.lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
+                content,self.linenum(),re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)

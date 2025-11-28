@@ -21,7 +21,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
-    entryNames: List[tuple]=[(entry_name, uuid.uuid4(), self.lineindex+1)]
+    entryNames: List[tuple]=[(entry_name, uuid.uuid4(), self.linenum())]
     # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
     # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
     entries: List[tuple]=[]
@@ -32,7 +32,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         assert got_options!=None
         return got_options.get(name)==True
 
-    def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
+    def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.linenum()):
         # check if patterns are valid
         try: 
             if len(pattern)==0:
@@ -57,7 +57,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
-            entryNames.append((pattern, uuid.uuid4(), self.lineindex+1))
+            entryNames.append((pattern, uuid.uuid4(), self.linenum()))
         elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
             content: str
             locale: str
@@ -83,16 +83,16 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                         target_entry=copy.copy(each_name[0])
                         if this_locale!="default":
                             target_entry+="__"+this_locale
-                        entries.append((target_entry, content, self.lineindex+1, each_name[1], each_name[2]))
+                        entries.append((target_entry, content, self.linenum(), each_name[1], each_name[2]))
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
             locales=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
-            begin_line_number=self.lineindex+1+1
+            begin_line_number=self.linenum()+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
             for this_locale in locales:
                 for each_name in entryNames:
                     if is_substrules:
-                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.lineindex+1-1), each_name[2]))
+                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.linenum()-1), each_name[2]))
                     else:
                         target_entry=copy.copy(each_name[0])
                         if this_locale!="default":

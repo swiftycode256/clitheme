@@ -70,8 +70,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             # stop at non-empty or non-comment line
             if not self.is_ignore_line(): return True
         else: return False # End of file
-    def linenum(self) -> str:
-        return str(self.lineindex+1)
+    def linenum(self) -> int:
+        return self.lineindex+1
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
     def check_enough_args(self, phrases: List[str], count: int, check_processed: bool=True):
@@ -268,7 +268,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if condition==False:
             # Linebounds warning
             if match!=None and self.warnings.get('linebounds')!=False:
-                self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.lineindex+1 if debug_linenumber==None else debug_linenumber)))
+                self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
                 self.warnings['linebounds']=False
             return content
         # Match pattern |...|
@@ -276,7 +276,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             content=match.group(1)
             return content if preserve_indents else content.strip()
         else:
-            self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.lineindex+1 if debug_linenumber==None else debug_linenumber)))
+            self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
         # match variable name
@@ -335,7 +335,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
-        begin_line_number=self.lineindex+1+1
+        begin_line_number=self.linenum()+1
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             # read line
@@ -393,7 +393,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if preserve_indents and opt("leadspaces")!=None:
             blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
         # Process subst options
-        debug_linenumber=self.handle_linenumber_range(begin_line_number, self.lineindex+1-1)
+        debug_linenumber=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
         blockinput_data=self.handle_subst(blockinput_data, 
                 subst_var=opt("substvar")==True, 
                 subst_esc=opt("substesc")==True and not disable_char_subst,
