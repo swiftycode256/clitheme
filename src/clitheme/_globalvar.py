@@ -87,7 +87,7 @@ empty_error_message_orig=copy(empty_error_message)
 sanity_check_error_message=""
 # retrieve the entry only once to avoid dead loop in frontend.FetchDescriptor callbacks
 msg_retrieved=False
-from . import frontend, _get_resource
+from . import frontend
 def sanity_check(path: str, use_orig: bool=False) -> bool:
     # retrieve the entry (only for the first time)
     global msg_retrieved
@@ -224,7 +224,7 @@ def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
     orig_stdout=sys.stdout
     try:
         files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt", "strings/man-strings.clithemedef.txt"]
-        file_contents=list(map(lambda name: _get_resource.read_file(name), files))
+        file_contents=list(map(lambda name: open(f"{os.path.dirname(__file__)}/{name}", encoding='utf-8').read(), files))
         msg=io.StringIO()
         sys.stdout=msg
         fr.set_debugmode(True)
