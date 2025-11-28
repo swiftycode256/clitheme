@@ -91,12 +91,12 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
                         self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     self.write_manpage_file(target_file, filecontent, self.lineindex+1)
                 elif p[0]=="[/include_file]":
-                    self.check_extra_args(p, 1, use_exact_count=True)
+                    self.check_extra_args(p, 1)
                     break
                 else: self.handle_invalid_phrase(phrases[0])
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             self.handle_end_section("manpage")
             break
         else: self.handle_invalid_phrase(phrases[0])

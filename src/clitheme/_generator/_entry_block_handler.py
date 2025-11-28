@@ -34,7 +34,10 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
 
     def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.lineindex+1):
         # check if patterns are valid
-        try: re.compile(pattern)
+        try: 
+            if len(pattern)==0:
+                raise ValueError("empty pattern")
+            re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
     while self.goto_next_line():
         phrases=self.get_current_line().split()
@@ -52,7 +55,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 entryNames[x]=(name, each_entry[1], each_entry[2])
                     
         if phrases[0]==start_phrase and not names_processed:
-            self.check_enough_args(phrases, 2)
+            self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
             entryNames.append((pattern, uuid.uuid4(), self.lineindex+1))
         elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
@@ -96,7 +99,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                             target_entry+="__"+this_locale
                         entries.append((target_entry, content, begin_line_number, each_name[1], each_name[2]))
         elif phrases[0]==end_phrase:
-            got_options=self.parse_options(phrases[1:] if len(phrases)>1 else [], merge_global_options=True, \
+            got_options=self.parse_options(phrases[1:], merge_global_options=True, \
                     allowed_options=\
                         (self.subst_limiting_options if is_substrules else [])
                         +(self.subst_options if is_substrules else self.content_subst_options) # don't allow char subst in `[entry]`
@@ -133,18 +136,18 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
         if is_substrules:
             try: 
                 self.db_interface.add_subst_entry(
-                    match_pattern=match_pattern, \
-                    substitute_pattern=entry[1], \
-                    is_regex=substrules_options['is_regex'], \
-                    effective_commands=substrules_options['effective_commands'], \
-                    command_match_strictness=substrules_options['strictness'], \
-                    command_is_regex=substrules_options['command_is_regex'], \
-                    effective_locale=entry[2], \
-                    end_match_here=opt('endmatchhere'), \
-                    stdout_stderr_matchoption=substrules_stdout_stderr_option, \
-                    foreground_only=opt('foregroundonly'), \
-                    line_number_debug=entry[4], \
-                    file_id=self.file_id, \
+                    match_pattern=match_pattern,
+                    substitute_pattern=entry[1],
+                    is_regex=substrules_options['is_regex'],
+                    effective_commands=substrules_options['effective_commands'],
+                    command_match_strictness=substrules_options['strictness'],
+                    command_is_regex=substrules_options['command_is_regex'],
+                    effective_locale=entry[2],
+                    end_match_here=opt('endmatchhere'),
+                    stdout_stderr_matchoption=substrules_stdout_stderr_option,
+                    foreground_only=opt('foregroundonly'),
+                    line_number_debug=entry[4],
+                    file_id=self.file_id,
                     unique_id=entry[3])
             except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
         else:

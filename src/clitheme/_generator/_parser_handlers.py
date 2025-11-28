@@ -74,14 +74,27 @@ class GeneratorObject(_data_handlers.DataHandlers):
         return str(self.lineindex+1)
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
-    def check_enough_args(self, phrases: List[str], count: int):
-        if len(phrases)<count:
+    def check_enough_args(self, phrases: List[str], count: int, check_processed: bool=True):
+        # Check unprocessed phrases
+        success=len(phrases)>=count
+
+        # Check processed phrases after the first
+        processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+        # If rest of content only contains spaces
+        if check_processed and len(processed.split())+1<count: success=False
+
+        if not success:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
-    def check_extra_args(self, phrases: List[str], count: int, use_exact_count: bool):
-        not_pass: bool
-        if use_exact_count: not_pass=len(phrases)!=count
-        else: not_pass=len(phrases)>count
-        if not_pass:
+        
+    def check_extra_args(self, phrases: List[str], count: int, check_processed: bool=True):
+        # Check unprocessed phrases
+        success=len(phrases)<=count
+
+        # Check processed phrases after the first
+        processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+        if check_processed and len(processed.split())+1>count: success=False
+
+        if not success:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(phrases[0])))
     def check_version(self, version_str: str):
         # allow_bugfix is disabled to allow interoperability with other release variants
@@ -267,7 +280,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_set_variable(self, line_content: str, really_really_global: bool=False):
         if not line_content.split()[0].startswith("setvar:"): return
         # match variable name
-        self.check_enough_args(line_content.split(), 2)
         results=re.search(r"setvar:(?P<name>.+)", line_content.split()[0])
         var_name: str
         if results==None:
@@ -313,7 +325,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
         elif phrases[0].startswith("setvar:"): 
-            self.check_enough_args(phrases, 2)
+            self.check_enough_args(phrases, 2, check_processed=False)
             self.handle_set_variable(self.get_current_line(), really_really_global)
         else: return False
         return True

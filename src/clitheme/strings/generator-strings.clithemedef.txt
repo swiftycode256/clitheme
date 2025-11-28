@@ -218,5 +218,9 @@ in_domainapp swiftycode clitheme
             # locale:default cannot start with '{char}'
             locale:zh_CN 不能以'{char}'开头
         [/entry]
+        [entry] sanity-check-msg-empty-err
+            # locale:default cannot be empty
+            locale:zh_CN 不能为空
+        [/entry]
 {/entries_section}
     

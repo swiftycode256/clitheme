@@ -79,6 +79,8 @@ banphrase_error_message="cannot contain '{char}'"
 banphrase_error_message_orig=copy(banphrase_error_message)
 startswith_error_message="cannot start with '{char}'"
 startswith_error_message_orig=copy(startswith_error_message)
+empty_error_message="cannot be empty"
+empty_error_message_orig=copy(empty_error_message)
 # function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
@@ -87,25 +89,26 @@ sanity_check_error_message=""
 msg_retrieved=False
 from . import frontend, _get_resource
 def sanity_check(path: str, use_orig: bool=False) -> bool:
-    def retrieve_entry():
-        # retrieve the entry (only for the first time)
-        global msg_retrieved
-        global sanity_check_error_message, banphrase_error_message, startswith_error_message
-        if not msg_retrieved:
-            msg_retrieved=True
-            f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
-            banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
-            startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
+    # retrieve the entry (only for the first time)
+    global msg_retrieved
+    global sanity_check_error_message, banphrase_error_message, startswith_error_message, empty_error_message
+    if not msg_retrieved and not use_orig:
+        msg_retrieved=True
+        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+        banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
+        startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
+        empty_error_message=f.reof("sanity-check-msg-empty-err", empty_error_message)
     global sanity_check_error_message
+    if path.strip()=='':
+        sanity_check_error_message=empty_error_message if not use_orig else empty_error_message_orig
+        return False
     for p in path.split():
         for b in startswith_banphrases:
             if p.startswith(b):
-                if not use_orig: retrieve_entry()
                 sanity_check_error_message=startswith_error_message.format(char=b) if not use_orig else startswith_error_message_orig.format(char=b)
                 return False
         for b in entry_banphrases:
             if p.find(b)!=-1:
-                if not use_orig: retrieve_entry()
                 sanity_check_error_message=banphrase_error_message.format(char=b) if not use_orig else banphrase_error_message_orig.format(char=b)
                 return False
     return True

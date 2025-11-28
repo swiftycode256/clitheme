@@ -35,7 +35,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
                 _globalvar.generator_info_v2filename.format(info=phrases[0]),\
                 content,self.lineindex+1,phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
         elif phrases[0] in ("locales_block", "supported_apps_block", "description_block", "[locales]", "[supported_apps]", "[description]"):
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             # handle block input
             content=""; file_name=""
             endphrase="end_block"
@@ -52,7 +52,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
                 content,self.lineindex+1,re.sub(r'_block$','',phrases[0])) # e.g. [...]/theme-info/1/clithemeinfo_description_v2
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             if not "name" in specified_info:
                 self.handle_error(self.fd.feof("missing-info-err", "{sect_name} section missing required entries: {entries}", sect_name="header", entries="name"))
             self.handle_end_section("header")

@@ -260,7 +260,7 @@ class FetchDescriptor():
             self.disable_lang=disable_lang
 
         # sanity check the domain, app, and subsections
-        if _globalvar.sanity_check(self.domain_name+" "+self.app_name+" "+self.subsections, use_orig=True)==False:
+        if _globalvar.sanity_check(self.domain_name+"_"+self.app_name+"_"+self.subsections, use_orig=True)==False:
             raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
     def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str) -> str:
         """

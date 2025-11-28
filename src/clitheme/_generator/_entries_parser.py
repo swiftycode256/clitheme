@@ -22,9 +22,9 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         if phrases[0]=="in_domainapp":
+            self.check_enough_args(phrases, 3)
+            self.check_extra_args(phrases, 3)
             this_phrases=self.parse_content(self.get_current_line().strip(), pure_name=True).split()
-            self.check_enough_args(this_phrases, 3)
-            self.check_extra_args(this_phrases, 3, use_exact_count=False)
             self.in_domainapp=this_phrases[1]+" "+this_phrases[2]
             if _globalvar.sanity_check(self.in_domainapp)==False:
                 self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
@@ -36,18 +36,18 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             if _globalvar.sanity_check(self.in_subsection)==False:
                 self.handle_error(self.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
         elif phrases[0]=="unset_domainapp":
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             self.in_domainapp=""; self.in_subsection=""
         elif phrases[0]=="unset_subsection":
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             self.in_subsection=""
         elif phrases[0] in ("entry", "[entry]"):
-            self.check_enough_args(phrases, 2)
+            self.check_enough_args(phrases, 2, check_processed=False)
             entry_name=_globalvar.extract_content(self.get_current_line())
             self.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             self.handle_end_section("entries")
             # deprecation warning
             if phrases[0]=="end_main":

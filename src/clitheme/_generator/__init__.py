@@ -53,7 +53,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         elif first_phrase=="!require_version":
             is_content=False
             self.check_enough_args(phrases, 2)
-            self.check_extra_args(phrases, 2, use_exact_count=True)
+            self.check_extra_args(phrases, 2)
             if not before_content_lines:
                 self.handle_error(self.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=self.linenum(), phrase=first_phrase))
             self.check_version(phrases[1])

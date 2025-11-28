@@ -49,7 +49,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         if phrases[0] in ("[filter_cmds]", "[filter_commands]", "[filter_cmds_regex]", "[filter_commands_regex]"):
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             reset_outline_foregroundonly()
             command_filter_is_regex=phrases[0] in ("[filter_commands_regex]", "[filter_cmds_regex]")
 
@@ -102,11 +102,11 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             command_filters=[content]
             command_filter_strictness=strictness
         elif phrases[0] in ("unset_filter_command", "unset_filter_cmd"):
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             reset_outline_foregroundonly()
             command_filters=None
         elif phrases[0] in ("[subst_string]", "[substitute_string]", "[subst_regex]", "[substitute_regex]"):
-            self.check_enough_args(phrases, 2)
+            self.check_enough_args(phrases, 2, check_processed=False)
             options={"effective_commands": copy.copy(command_filters),
                       "command_is_regex": command_filter_is_regex,
                       "is_regex": phrases[0] in ("[subst_regex]", "[substitute_regex]"),
@@ -115,7 +115,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             self.handle_entry(match_pattern, start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
-            self.check_extra_args(phrases, 1, use_exact_count=True)
+            self.check_extra_args(phrases, 1)
             self.handle_end_section("substrules")
             break
         else: self.handle_invalid_phrase(phrases[0])
