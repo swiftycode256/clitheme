@@ -263,7 +263,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # Skip if not starts with |
         if not content.strip().startswith('|'): return content
 
-        match=re.match(r"^\|(.+)\|$", content.strip())
+        match=re.match(r"^\|(.*)\|$", content.strip())
         condition=self.global_options.get('linebounds')==True if condition==None else condition
         if condition==False:
             # Linebounds warning
