@@ -24,7 +24,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
         if phrases[0]=="in_domainapp":
             self.check_enough_args(phrases, 3)
             self.check_extra_args(phrases, 3)
-            this_phrases=self.parse_content(self.get_current_line().strip(), pure_name=True).split()
+            this_phrases=self.parse_content(self.get_current_line(), pure_name=True).split()
             self.in_domainapp=this_phrases[1]+" "+this_phrases[2]
             if _globalvar.sanity_check(self.in_domainapp)==False:
                 self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))

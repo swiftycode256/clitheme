@@ -293,7 +293,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
         var_content=_globalvar.extract_content(line_content)
         # Parse content without substesc (subst variable content)
-        var_content=self.parse_content(var_content, pure_name=True)
+        var_content=self.parse_content(var_content, pure_name=True, preserve_indents=True)
         # set variable
         if really_really_global: self.really_really_global_variables[var_name]=var_content
         self.global_variables[var_name]=var_content
@@ -309,15 +309,16 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
-    def parse_content(self, content: str, pure_name: bool=False) -> str:
+    def parse_content(self, content: str, pure_name: bool=False, preserve_indents: Optional[bool]=None) -> str:
         target_content=self.handle_subst(content,
             subst_chars=pure_name==False and self.global_options.get("substchar")==True,
             subst_esc=pure_name==False and self.global_options.get("substesc")==True,
             # Don't show substchar/substesc warnings if not using char subst
             silence_warnings=(False, pure_name, pure_name)
         )
-        target_content=self.handle_linebounds(target_content, preserve_indents=not pure_name)
-        return target_content
+        if preserve_indents==None: preserve_indents=not pure_name
+        target_content=self.handle_linebounds(target_content, preserve_indents=preserve_indents)
+        return target_content if preserve_indents else target_content.strip()
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
         phrases=self.get_current_line().split()
