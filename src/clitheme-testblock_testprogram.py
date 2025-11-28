@@ -13,7 +13,7 @@ begin_header
 end_header
 
 begin_main
-    set_options leadtabindents:1 linebounds
+    set_options linebounds
     entry test_entry
         locale_block default en_US en C
 
@@ -59,8 +59,9 @@ begin_main
             \\\\[/locale]
 
 
-        [/locale] leadspaces:4
+        [/locale] leadtabindents:1
     end_entry
+    set_options leadspaces:2
     [entry] test_entry-2
         [locale] zh_CN
             |   that and this  |
@@ -69,24 +70,25 @@ begin_main
 end_main
 """
 
-frontend.set_debugmode(True)
 if frontend.set_local_themedef(file_data)==False:
     print("Error: set_local_themedef failed")
     exit(1)
 if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
     print("Error: set_local_themedef with overlay failed")
     exit(1)
+def disp(content):
+    print(f"\"{content}\"")
+    print()
 f=frontend.FetchDescriptor()
 print("Default locale:")
 f.disable_lang=True
-# Not printing because debug mode already prints
-(f.reof("test_entry", "Nonexistent"))
-(f.reof("test_entry-2", "Nonexistent"))
+disp(f.reof("test_entry", "Nonexistent"))
+disp(f.reof("test_entry-2", "Nonexistent"))
 print("zh_CN locale:")
 f.disable_lang=False
 f.lang="zh_CN"
-(f.reof("test_entry", "Nonexistent"))
-(f.reof("test_entry-2", "Nonexistent"))
+disp(f.reof("test_entry", "Nonexistent"))
+disp(f.reof("test_entry-2", "Nonexistent"))
 f.debug_mode=False
 for lang in ["C", "en", "en_US", "zh_CN"]:
     f.disable_lang=True
