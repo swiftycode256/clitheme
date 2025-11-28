@@ -22,7 +22,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
         if phrases[0] in ("name", "version", "description"):
             self.check_enough_args(phrases, 2)
             content=_globalvar.extract_content(self.get_current_line())
-            content=self.parse_content(content, pure_name=phrases[0]!="description")
+            content=self.parse_content(content, pure_name=True, preserve_indents=phrases[0]=="description")
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
@@ -37,15 +37,15 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
         elif phrases[0] in ("locales_block", "supported_apps_block", "description_block", "[locales]", "[supported_apps]", "[description]"):
             self.check_extra_args(phrases, 1)
             # handle block input
-            content=""; file_name=""
             endphrase="end_block"
             if not phrases[0].endswith("_block"): endphrase=phrases[0].replace("[", "[/")
-            if phrases[0] in ("description_block", "[description]"):
-                content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase=endphrase)
-                file_name=_globalvar.generator_info_filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
-            else:
-                content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=endphrase, disable_char_subst=True)
-                file_name=_globalvar.generator_info_v2filename.format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
+
+            is_description=phrases[0] in ("description_block", "[description]")
+            content=self.handle_block_input(preserve_indents=is_description, preserve_empty_lines=is_description, end_phrase=endphrase, disable_char_subst=True)
+            file_name=(_globalvar.generator_info_filename \
+                        if is_description else \
+                        _globalvar.generator_info_v2filename) \
+                .format(info=re.sub(r'_block$', '', phrases[0]).replace('[','').replace(']',''))
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 file_name,\
