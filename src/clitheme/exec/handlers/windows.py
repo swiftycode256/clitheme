@@ -34,7 +34,8 @@ def errmsg() -> str:
     return message
 
 def w_assert(condition, msg: Optional[str]=None):
-    assert condition, errmsg() if msg==None else msg
+    if not condition:
+        raise OSError(errmsg() if msg==None else msg)
 
 class WindowsHandler(BaseHandler):
     def __init__(self, command: List):
