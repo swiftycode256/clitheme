@@ -1,15 +1,16 @@
 {header_section}
     name CLItheme manual pages
-    version 2.0
+    version 2.1
     [description]
         This file contains manual pages for CLItheme.
-        Apply this theme to install the manual pages in the "docs" directory.
-        After that, use "CLItheme-man" to access them.
+        Apply this theme to install the manual pages contained in the "docs" directory.
+        After that, use "clitheme-man" to access them.
     [/description]
 {/header_section}
 
 {manpage_section}
     set_options substvar
+    # Test substvar feature
     setvar:name clitheme
     include_file {{name}}.1
         as man1 {{name}}.1
