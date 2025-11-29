@@ -32,6 +32,8 @@ if os.name=="nt":
 del os
 
 # Expose these modules when "clitheme" is imported
-from . import _globalvar, frontend
-_globalvar.handle_set_themedef(frontend, "global") # type: ignore
+from . import frontend
+# Set localization files
+from . import _globalvar
+_globalvar.handle_set_themedef(debug_name="global")
 del _globalvar # Don't expose this module

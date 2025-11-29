@@ -94,7 +94,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
     global sanity_check_error_message, banphrase_error_message, startswith_error_message, empty_error_message
     if not msg_retrieved and not use_orig:
         msg_retrieved=True
-        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator", debug_mode=False)
         banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
         startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
         empty_error_message=f.reof("sanity-check-msg-empty-err", empty_error_message)
@@ -218,7 +218,7 @@ def handle_stdin_prompt(path: str) -> bool:
     except: pass
     return is_stdin
 
-def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
+def handle_set_themedef(debug_name: str): # type: ignore
     prev_mode=False
     # Prevent interference with other code piping stdout
     orig_stdout=sys.stdout
@@ -227,13 +227,13 @@ def handle_set_themedef(fr: frontend, debug_name: str): # type: ignore
         file_contents=list(map(lambda name: open(f"{os.path.dirname(__file__)}/{name}", encoding='utf-8').read(), files))
         msg=io.StringIO()
         sys.stdout=msg
-        fr.set_debugmode(True)
-        if not fr.set_local_themedefs(file_contents): raise RuntimeError("Full log below: \n"+msg.getvalue())
-        fr.set_debugmode(prev_mode)
+        frontend.set_debugmode(True)
+        if not frontend.set_local_themedefs(file_contents): raise RuntimeError("\n"+msg.getvalue())
+        frontend.set_debugmode(prev_mode)
         sys.stdout=orig_stdout
     except:
         sys.stdout=orig_stdout
-        fr.set_debugmode(prev_mode)
+        frontend.set_debugmode(prev_mode)
         # If pre-release build or manual environment variable flag set, display error
         if _version.release<0 or os.environ.get("CLITHEME_SHOW_TRACEBACK")=='1':
             print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)

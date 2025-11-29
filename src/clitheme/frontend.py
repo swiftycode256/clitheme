@@ -102,7 +102,7 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
     Handle generate data operation for set_local_themedef[s] functions
     """
     from . import _generator
-    global global_debugmode
+    global global_debugmode, _alt_info_index
     _generator.generate_custom_path() # prepare _generator.path
     if _alt_path_dirname!=None and overlay==True: # overlay
         if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
@@ -120,6 +120,7 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
                 _generator.silence_warn=True
                 global_debugmode=False
                 return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+                _alt_info_index+=1
             except SyntaxError:
                 if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
                 return False
@@ -163,7 +164,6 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     if not _generate_data([file_content], path_name, overlay): return False
 
     # Update everything after success
-    _alt_info_index+=1
     _alt_path_hash=new_path_hash
     _alt_path=path_name+"/"+_globalvar.generator_data_pathname
     _alt_path_dirname=dir_name
@@ -192,7 +192,6 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     if not _generate_data(file_contents, path_name, overlay): return False
 
     # Update everything after success
-    _alt_info_index+=len(file_contents)
     _alt_path_hash=path_hash
     _alt_path=path_name+"/"+_globalvar.generator_data_pathname
     _alt_path_dirname=dir_name
