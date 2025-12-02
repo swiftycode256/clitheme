@@ -81,10 +81,6 @@ in_domainapp swiftycode clitheme
                 # locale:default Overlay specified
                 locale:zh_CN 已使用数据叠加模式
             [/entry]
-            [entry] processing-files
-                # locale:default ==> Processing files...
-                locale:zh_CN ==> 正在处理文件...
-            [/entry]
             [entry] processing-file
                 # locale:default > Processing file {filename}...
                 locale:zh_CN > 正在处理文件{filename}...
@@ -97,13 +93,9 @@ in_domainapp swiftycode clitheme
                 # locale:default View at {path}
                 locale:zh_CN 生成的数据可以在"{path}"查看
             [/entry]
-            [entry] applying-theme
-                # locale:default ==> Applying theme...
-                locale:zh_CN ==> 正在应用主题...
-            [/entry]
             [entry] apply-theme-success
-                # locale:default Theme applied successfully
-                locale:zh_CN 已成功应用主题
+                # locale:default ==> Theme applied successfully
+                locale:zh_CN ==> 已成功应用主题
             [/entry]
             [entry] read-file-error
                 # [locale] default

@@ -70,7 +70,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             if not (inp=="y" or inp=="yes"):
                 return 1
     if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
-    print(f.reof("processing-files", "==> Processing files..."))
+    ## Process files and generate data
     index=1
     generate_path=True
     if overlay:
@@ -79,7 +79,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             print(f.reof("overlay-no-data", \
                 "Error: no theme set or the current data is corrupt\nTry setting a theme first"))
             return 1
-        # update index
+        # Get current index
         try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r', encoding="utf-8").read().strip())+1
         except ValueError:
             print(f.reof("overlay-data-error", \
@@ -91,7 +91,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
         generate_path=False
     final_path: str
-    line_prefix=f"\x1b[2K\r{' '*4}" # clear current line content and move cursor to beginning
+    line_prefix=f"\x1b[2K\r" # clear current line content and move cursor to beginning
     print_progress=True #len(file_contents)>1
     newline="\n" if print_progress else ""
     orig_stdout=sys.stdout # Prevent interference with other code piping stdout
@@ -135,7 +135,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     if generate_only: return 0 
     # ---Stop here if generate_only is set---
 
-    print(f.reof("applying-theme", "==> Applying theme..."))
+    ## Apply theme: move generated folder to data directory
     # remove the current data, ignoring directory not found error
     try:
         try: shutil.rmtree(_globalvar.clitheme_root_data_path)
@@ -156,7 +156,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    print(f.reof("apply-theme-success", "Theme applied successfully"))
+    print(f.reof("apply-theme-success", "==> Theme applied successfully"))
     if not preserve_temp:
         try: shutil.rmtree(final_path)
         except: pass
