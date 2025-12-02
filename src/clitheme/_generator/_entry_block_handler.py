@@ -12,7 +12,7 @@ from typing import Optional, Union, List, Dict, Any
 from .. import _globalvar
 
 
-def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
+def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
     from . import _parser_handlers
     self: _parser_handlers.GeneratorObject=obj
@@ -21,7 +21,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
-    entryNames: List[tuple]=[(entry_name, uuid.uuid4(), self.linenum())]
+    entryNames: List[tuple]=[]
     # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
     # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
     entries: List[tuple]=[]
@@ -39,6 +39,8 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                 raise ValueError("empty pattern")
             re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
+
+    self.lineindex-=1 # Process current line
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         line_content=self.get_current_line()
@@ -62,7 +64,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
             content: str
             locale: str
             if phrases[0].startswith("locale:"):
-                self.check_enough_args(phrases, 2)
+                self.check_enough_args(phrases, 2, check_processed=False)
                 results=re.search(r"locale:(?P<locale>.+)", phrases[0])
                 if results==None:
                     self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=self.linenum()))
@@ -70,7 +72,7 @@ def handle_entry(obj, entry_name: str, start_phrase: str, end_phrase: str, is_su
                     locale=results.groupdict()['locale']
                 content=_globalvar.extract_content(line_content)
             else:
-                self.check_enough_args(phrases, 3)
+                self.check_enough_args(phrases, 3, check_processed=False)
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
             locales=self.parse_content(locale, pure_name=True).split()

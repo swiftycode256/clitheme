@@ -42,9 +42,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             self.check_extra_args(phrases, 1)
             self.in_subsection=""
         elif phrases[0] in ("entry", "[entry]"):
-            self.check_enough_args(phrases, 2, check_processed=False)
-            entry_name=_globalvar.extract_content(self.get_current_line())
-            self.handle_entry(entry_name, start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
+            self.handle_entry(start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)
