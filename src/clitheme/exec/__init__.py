@@ -38,7 +38,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
         if os.environ.get("CLITHEME_REGENERATE_DB")=="1" and not db_already_regenerated:
             db_already_regenerated=True
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
-        else: db_interface.connect_db()
+        else: db_interface.connect_db(f"{dest_root_path}/{_globalvar.db_filename}")
     except db_interface.need_db_regenerate:
         _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
         if cli.repair_theme()!=0: return False
