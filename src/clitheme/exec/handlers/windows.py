@@ -7,9 +7,7 @@
 import sys
 import os
 import time
-import signal
 import ctypes
-import re
 import io
 import stat
 from ctypes import wintypes

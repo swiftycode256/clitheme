@@ -9,7 +9,7 @@ substrules_section parser function (internal module)
 """
 import os
 import sys
-from typing import Optional, List
+from typing import List
 from .. import _globalvar
 from . import _parser_handlers
 

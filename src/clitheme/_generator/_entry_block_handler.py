@@ -8,7 +8,7 @@ import sys
 import re
 import copy
 import uuid
-from typing import Optional, Union, List, Dict, Any
+from typing import Union, List, Dict, Any
 from .. import _globalvar
 from . import db_interface
 
