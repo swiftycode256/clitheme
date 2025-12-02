@@ -60,8 +60,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.file_content=file_content
         self.file_id=uuid.uuid4()
         _data_handlers.DataHandlers.__init__(self, path, silence_warn)
-        from . import db_interface
-        self.db_interface=db_interface
     def is_ignore_line(self) -> bool:
         return self.get_current_line().strip()=="" or self.get_current_line().strip().startswith('#')
     def goto_next_line(self) -> bool:

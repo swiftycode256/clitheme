@@ -10,7 +10,7 @@ import copy
 import uuid
 from typing import Optional, Union, List, Dict, Any
 from .. import _globalvar
-
+from . import db_interface
 
 def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
@@ -137,7 +137,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         encountered_ids.add(entry[3])
         if is_substrules:
             try: 
-                self.db_interface.add_subst_entry(
+                db_interface.add_subst_entry(
                     match_pattern=match_pattern,
                     substitute_pattern=entry[1],
                     is_regex=substrules_options['is_regex'],
@@ -151,6 +151,6 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     line_number_debug=entry[4],
                     file_id=self.file_id,
                     unique_id=entry[3])
-            except self.db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
+            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
         else:
             self.add_entry(self.datapath, match_pattern, entry[1], entry[2])

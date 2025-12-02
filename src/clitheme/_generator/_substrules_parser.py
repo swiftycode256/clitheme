@@ -13,7 +13,7 @@ import re
 import sys
 from typing import Optional
 from .. import _globalvar
-from . import _parser_handlers
+from . import _parser_handlers, db_interface
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -39,13 +39,13 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
 
     # initialize the database
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
-        try: self.db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
-        except self.db_interface.need_db_regenerate:
+        try: db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
+        except db_interface.need_db_regenerate:
             from ..exec import _check_regenerate_db
             if not _check_regenerate_db(self.path): self.handle_error(self.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
-            self.db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
-    else: self.db_interface.init_db(self.path+"/"+_globalvar.db_filename)
-    self.db_interface.debug_mode=not self.silence_warn
+            db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
+    else: db_interface.init_db(self.path+"/"+_globalvar.db_filename)
+    db_interface.debug_mode=not self.silence_warn
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         if phrases[0] in ("[filter_cmds]", "[filter_commands]", "[filter_cmds_regex]", "[filter_commands_regex]"):
