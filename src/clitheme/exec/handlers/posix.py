@@ -146,7 +146,10 @@ class PosixHandler(BaseHandler):
             termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
         except termios.error: pass
     def get_foreground_pid(self) -> Optional[int]:
-        try: return os.tcgetpgrp(self.stdout_fd)
+        try: 
+            value=os.tcgetpgrp(self.stdout_fd)
+            if value==0: return self.process_pid
+            else: return value
         except OSError: return None
     def _signal_handler_function(self, sig, frame):
         if sig==signal.SIGCONT: # continue signal
