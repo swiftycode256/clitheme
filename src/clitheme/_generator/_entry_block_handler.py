@@ -8,7 +8,8 @@ import sys
 import re
 import copy
 import uuid
-from typing import Union, List, Dict, Any
+from typing import Union, List, Dict, Any, Optional
+from typing import NamedTuple
 from .. import _globalvar
 from . import db_interface
 
@@ -21,10 +22,19 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     names_processed=False # Set to True when no more entry names are being specified
 
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
-    entryNames: List[tuple]=[]
+    class EntryName(NamedTuple):
+        value: str
+        id: uuid.UUID
+        line_number: str
+    entry_names: List[EntryName]=[]
     # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
     # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
-    entries: List[tuple]=[]
+    class Entry(NamedTuple):
+        entry_name: EntryName # /match_content =entry_name.value
+        content: str # /substitute_content
+        content_line_number: str
+        locale: Optional[str]
+    entry_items: List[Entry]=[]
 
     substrules_stdout_stderr_option=0
     got_options=None
@@ -32,7 +42,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         assert got_options!=None
         return got_options.get(name)==True
 
-    def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]=self.linenum()):
+    def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]):
         # check if patterns are valid
         try: 
             if len(pattern)==0:
@@ -48,18 +58,22 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         if phrases[0]!=start_phrase and not names_processed:
             names_processed=True # Prevent specifying it after other definition syntax
             # --Process entry names--
-            for x in range(len(entryNames)):
-                each_entry=entryNames[x]
+            for x in range(len(entry_names)):
+                each_entry=entry_names[x]
                 name=each_entry[0]
                 if not is_substrules:
                     if self.in_subsection!="": name=self.in_subsection+" "+name
                     if self.in_domainapp!="": name=self.in_domainapp+" "+name
-                entryNames[x]=(name, each_entry[1], each_entry[2])
+                entry_names[x]=EntryName(value=name, id=each_entry.id, line_number=each_entry.line_number)
                     
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
-            entryNames.append((pattern, uuid.uuid4(), self.linenum()))
+            entry_names.append(EntryName(
+                value=pattern,
+                id=uuid.uuid4(),
+                line_number=str(self.linenum())
+            ))
         elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
             content: str
             locale: str
@@ -67,7 +81,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 self.check_enough_args(phrases, 2, check_processed=False)
                 results=re.search(r"locale:(?P<locale>.+)", phrases[0])
                 if results==None:
-                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<locale>", num=self.linenum()))
+                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<name>", num=self.linenum()))
                 else:
                     locale=results.groupdict()['locale']
                 content=_globalvar.extract_content(line_content)
@@ -76,30 +90,30 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
             locales=self.parse_content(locale, pure_name=True).split()
+            if len(locales)==0:
+                self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<name>", num=self.linenum()))
             content=self.parse_content(content)
             for this_locale in locales:
-                for each_name in entryNames:
-                    if is_substrules:
-                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.linenum(), each_name[2]))
-                    else:
-                        target_entry=copy.copy(each_name[0])
-                        if this_locale!="default":
-                            target_entry+="__"+this_locale
-                        entries.append((target_entry, content, self.linenum(), each_name[1], each_name[2]))
+                for each_name in entry_names:
+                    entry_items.append(Entry(
+                        entry_name=each_name,
+                        content=content,
+                        content_line_number=str(self.linenum()),
+                        locale=None if this_locale=="default" else this_locale
+                    ))
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
             locales=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             begin_line_number=self.linenum()+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
             for this_locale in locales:
-                for each_name in entryNames:
-                    if is_substrules:
-                        entries.append((each_name[0], content, None if this_locale=="default" else this_locale, each_name[1], self.handle_linenumber_range(begin_line_number, self.linenum()-1), each_name[2]))
-                    else:
-                        target_entry=copy.copy(each_name[0])
-                        if this_locale!="default":
-                            target_entry+="__"+this_locale
-                        entries.append((target_entry, content, begin_line_number, each_name[1], each_name[2]))
+                for each_name in entry_names:
+                    entry_items.append(Entry(
+                        entry_name=each_name,
+                        content=content,
+                        content_line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1),
+                        locale=None if this_locale=="default" else this_locale
+                    ))
         elif phrases[0]==end_phrase:
             got_options=self.parse_options(phrases[1:], merge_global_options=True, \
                     allowed_options=\
@@ -115,42 +129,43 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         else: self.handle_invalid_phrase(phrases[0])
     # For silence_warning in subst_variable_content
     encountered_ids=set()
-    for x in range(len(entries)):
-        entry=entries[x]
-        match_pattern=entry[0]
+    for entry in entry_items:
+        match_pattern=entry.entry_name.value
         # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
-        debug_linenumber=entry[5] if is_substrules else entry[4]
         match_pattern=self.handle_subst(match_pattern, 
                 subst_var=opt('substvar'),
                 subst_esc=opt('substesc') and is_substrules,
                 subst_chars=opt('substchar') and is_substrules, 
-                line_number_debug=debug_linenumber, 
+                line_number_debug=entry.entry_name.line_number, 
                 # Don't show warnings for the same match_pattern
-                silence_warnings=True if entry[3] in encountered_ids else (False, not is_substrules, not is_substrules))
+                silence_warnings=True if entry.entry_name.id in encountered_ids else (False, not is_substrules, not is_substrules))
         match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
+        encountered_ids.add(entry.entry_name.id)
 
-        if is_substrules: check_valid_pattern(match_pattern, entry[5])
+        if is_substrules: check_valid_pattern(match_pattern, entry.content_line_number)
         else:
             # Prevent leading . & prevent /,\ in entry name
             if _globalvar.sanity_check(match_pattern)==False:
-                self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=str(entry[4]), sanitycheck_msg=_globalvar.sanity_check_error_message))
-        encountered_ids.add(entry[3])
+                self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry.entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
         if is_substrules:
             try: 
                 db_interface.add_subst_entry(
                     match_pattern=match_pattern,
-                    substitute_pattern=entry[1],
+                    substitute_pattern=entry.content,
                     is_regex=substrules_options['is_regex'],
                     effective_commands=substrules_options['effective_commands'],
                     command_match_strictness=substrules_options['strictness'],
                     command_is_regex=substrules_options['command_is_regex'],
-                    effective_locale=entry[2],
+                    effective_locale=entry.locale,
                     end_match_here=opt('endmatchhere'),
                     stdout_stderr_matchoption=substrules_stdout_stderr_option,
                     foreground_only=opt('foregroundonly'),
-                    line_number_debug=entry[4],
+                    line_number_debug=entry.content_line_number,
                     file_id=self.file_id,
-                    unique_id=entry[3])
-            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry[4], error_msg=sys.exc_info()[1]))
+                    unique_id=entry.entry_name.id)
+            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=sys.exc_info()[1]))
         else:
-            self.add_entry(self.datapath, match_pattern, entry[1], entry[2])
+            target_entry=copy.copy(match_pattern).strip()
+            if entry.locale!=None:
+                target_entry+="__"+entry.locale
+            self.add_entry(self.datapath, target_entry, entry.content, entry.content_line_number)
