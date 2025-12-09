@@ -13,6 +13,8 @@ from typing import NamedTuple
 from .. import _globalvar
 from . import db_interface
 
+# spell-checker:ignore matchoption datapath lineindex
+
 def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
     from . import _parser_handlers
@@ -24,6 +26,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
     class EntryName(NamedTuple):
         value: str
+        is_multiline: bool
         id: uuid.UUID
         line_number: str
     entry_names: List[EntryName]=[]
@@ -64,15 +67,35 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 if not is_substrules:
                     if self.in_subsection!="": name=self.in_subsection+" "+name
                     if self.in_domainapp!="": name=self.in_domainapp+" "+name
-                entry_names[x]=EntryName(value=name, id=each_entry.id, line_number=each_entry.line_number)
+                entry_names[x]=EntryName(value=name, is_multiline=each_entry.is_multiline, id=each_entry.id, line_number=each_entry.line_number)
                     
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
             entry_names.append(EntryName(
                 value=pattern,
+                is_multiline=False,
                 id=uuid.uuid4(),
                 line_number=str(self.linenum())
+            ))
+        elif phrases[0]==start_phrase.replace(']','>>') and is_substrules:
+            # e.g. '[subst_regex>>' syntax
+            assert re.match(r"^\[.+\]$", phrases[0])!=None, "Start phrase doesn't follow [<name>] format"
+            self.check_extra_args(phrases, 1)
+            begin_line_number=self.linenum()+1
+            # Only allow indent options in this block input
+            pattern=self.handle_block_input(
+                # e.g. '<<subst_regex]' syntax
+                end_phrase=start_phrase.replace('[', '<<'),
+                preserve_empty_lines=True,
+                preserve_indents=True,
+                disable_char_subst=True, disable_content_subst=True
+            )
+            entry_names.append(EntryName(
+                value=pattern,
+                is_multiline=True,
+                id=uuid.uuid4(),
+                line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
             ))
         elif phrases[0]=="locale" or phrases[0].startswith("locale:"):
             content: str
@@ -153,6 +176,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     match_pattern=match_pattern,
                     substitute_pattern=entry.content,
                     is_regex=substrules_options['is_regex'],
+                    match_is_multiline=entry.entry_name.is_multiline,
                     effective_commands=substrules_options['effective_commands'],
                     command_match_strictness=substrules_options['strictness'],
                     command_is_regex=substrules_options['command_is_regex'],

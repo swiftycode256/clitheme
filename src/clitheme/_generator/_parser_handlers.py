@@ -331,7 +331,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     
     ## sub-block processing functions
 
-    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False) -> str:
+    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False, disable_content_subst: bool=False) -> str:
         minspaces=math.inf
         blockinput_data=""
         begin_line_number=self.linenum()+1
@@ -378,11 +378,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 ban_options=[]
                 if not preserve_indents: ban_options+=self.lead_indent_options
                 if disable_char_subst: ban_options+=self.char_subst_options
+                if disable_content_subst: ban_options+=self.content_subst_options
             else:
                 allowed_options=[]
                 if preserve_indents: allowed_options+=self.lead_indent_options
                 if not disable_char_subst: allowed_options+=self.char_subst_options
-                allowed_options+=self.content_subst_options
+                if not disable_content_subst: allowed_options+=self.content_subst_options
             got_options=self.parse_options(self.get_current_line().split()[1:],
                 merge_global_options=True,
                 allowed_options=allowed_options, ban_options=ban_options)

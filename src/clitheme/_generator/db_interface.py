@@ -42,6 +42,7 @@ def init_db(file_path: str):
                     match_pattern TEXT NOT NULL, \
                     substitute_pattern TEXT NOT NULL, \
                     is_regex INTEGER NOT NULL, \
+                    match_is_multiline INTEGER NOT NULL, \
                     unique_id TEXT NOT NULL, \
                     file_id TEXT NOT NULL, \
                     effective_command TEXT, \
@@ -68,14 +69,29 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
         assert version==_globalvar.db_version
     except: raise need_db_regenerate
 
-def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_commands: Optional[list], command_match_strictness: int=0, command_is_regex: bool=False, effective_locale: Optional[str]=None, is_regex: bool=True, end_match_here: bool=False, stdout_stderr_matchoption: int=0, foreground_only: bool=False, unique_id: uuid.UUID=uuid.UUID(int=0), file_id: uuid.UUID=uuid.UUID(int=0), line_number_debug: str="-1"):
+def add_subst_entry(
+    match_pattern: str,
+    substitute_pattern: str,
+    effective_commands: Optional[list],
+    command_match_strictness: int,
+    command_is_regex: bool,
+    effective_locale: Optional[str],
+    is_regex: bool,
+    match_is_multiline: bool,
+    end_match_here: bool,
+    stdout_stderr_matchoption: int,
+    foreground_only: bool,
+    unique_id: uuid.UUID,
+    file_id: uuid.UUID,
+    line_number_debug: str
+):
     if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
     cmdlist: List[Optional[str]]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="effective_locale=?" if effective_locale!=None else "typeof(effective_locale)=typeof(?)"
-    insert_values=["match_pattern", "substitute_pattern", "is_regex", "effective_command", "command_match_strictness", "command_is_regex", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only", "file_id"]
+    insert_values=["match_pattern", "substitute_pattern", "is_regex", "match_is_multiline", "effective_command", "command_match_strictness", "command_is_regex", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only", "file_id"]
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
@@ -92,7 +108,7 @@ def add_subst_entry(match_pattern: str, substitute_pattern: str, effective_comma
             _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
     connection.commit()
 
 ## Database fetch caching
