@@ -182,17 +182,22 @@ def _check_command(match_cmd: str, strictness: int, target_command: str, is_rege
                 for character in results.groups()[0]: match_cmd_phrases.append("-"+character)
             else: match_cmd_phrases.append(ph)
         return match_cmd_phrases
+
+    first_phrase=target_command.split()[0]
+    valid_first_phrases=(
+        first_phrase,
+        os.path.basename(first_phrase),
+        re.sub(r"(\.exe|\.com|\.ps1|\.bat)$",'',os.path.basename(first_phrase)),
+    )
     if is_regex:
         # Match start of target command
-        return re.match(f"^{match_cmd}", target_command)!=None
+        for fp in valid_first_phrases:
+            if re.match(f"^{match_cmd}", ' '.join([fp]+target_command.split()[1:]))!=None:
+                return True
+        return False
     else:
         # check starting phrase
-        first_phrase=target_command.split()[0]
-        if not match_cmd.split()[0] in (
-            first_phrase,
-            os.path.basename(first_phrase),
-            re.sub(r"(\.exe|\.com|\.ps1|\.bat)$",'',os.path.basename(first_phrase)),
-        ): return False
+        if not match_cmd.split()[0] in valid_first_phrases: return False
 
         # in following checks, first phrase is excluded as it's already checked
         if strictness==1: # must start with pattern in terms of space-separated phrases

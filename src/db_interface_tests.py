@@ -24,7 +24,7 @@ sample_inputs=[("rm: missing operand", "rm"),
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
                ("Error: sample message", "example_app install-stuff"), # test strictcmdmatch with SAME command as defined in filter
                # Test regex filters
-               ("Error: sample message", "app_example install-stuff"),
+               ("Error: sample message", "/usr/bin/app_example.exe install-stuff"), # test command basename handling in regex
                ("Error: sample message", "app --wef install"),
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
