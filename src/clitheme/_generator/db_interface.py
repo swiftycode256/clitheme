@@ -31,28 +31,41 @@ class db_not_found(Exception): pass
 
 def _handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
+
+class Item(NamedTuple):
+    match_pattern: str
+    match_is_multiline: bool
+    substitute_pattern: str
+    is_regex: bool
+
+    effective_locale: Optional[str]
+    effective_command: Optional[str]
+    command_match_strictness: int # 0: contains all phrases, 1: starts with, 2: equal to
+    command_is_regex: bool
+
+    foreground_only: bool
+    end_match_here: bool
+    stdout_stderr_only: int # 0: None; 1: stdout; 2: stderr
+
+    unique_id: str
+    file_id: str
+
 def init_db(file_path: str):
     global connection, db_path
     db_path=file_path
     connection=sqlite3.connect(file_path)
-    # create the table
-    # command_match_strictness: 0: default match options, 1: must start with pattern, 2: must exactly equal pattern
-    # stdout_stderr_only: 0: no limiter, 1: match stdout only, 2: match stderr only
-    connection.execute(f"CREATE TABLE {_globalvar.db_data_tablename} ( \
-                    match_pattern TEXT NOT NULL, \
-                    substitute_pattern TEXT NOT NULL, \
-                    is_regex INTEGER NOT NULL, \
-                    match_is_multiline INTEGER NOT NULL, \
-                    unique_id TEXT NOT NULL, \
-                    file_id TEXT NOT NULL, \
-                    effective_command TEXT, \
-                    command_match_strictness INTEGER NOT NULL, \
-                    command_is_regex INTEGER NOT NULL, \
-                    effective_locale TEXT, \
-                    foreground_only INTEGER NOT NULL, \
-                    end_match_here INTEGER NOT NULL, \
-                    stdout_stderr_only INTEGER NOT NULL \
-                    );")
+    # Create main table
+    fields=[]
+    for name, kind in Item.__annotations__.items():
+        # Determine field type
+        if kind==str: field_type="TEXT NOT NULL"
+        elif kind in (int, bool): field_type="INTEGER NOT NULL"
+        elif kind==Optional[str]: field_type="TEXT"
+        else: raise AssertionError(f"Unsupported type {kind}")
+        # Convert entry to SQL statement
+        fields.append(' '.join([name, field_type]))
+    connection.execute(f"CREATE TABLE {_globalvar.db_data_tablename} ({','.join(fields)});")
+    # Store version information
     connection.execute(f"CREATE TABLE {_globalvar.db_data_tablename}_version (value INTEGER NOT NULL);")
     connection.execute(f"INSERT INTO {_globalvar.db_data_tablename}_version (value) VALUES (?)", (_globalvar.db_version,)) 
     connection.commit()
@@ -111,24 +124,10 @@ def add_subst_entry(
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
     connection.commit()
 
-## Database fetch caching
-class _Item(NamedTuple):
-    match_pattern: str
-    substitute_pattern: str
-    is_regex: bool
-    unique_id: str
-    file_id: str
-    effective_command: str
-    command_match_strictness: int
-    command_is_regex: bool
-    effective_locale: str
-    foreground_only: bool
-    end_match_here: bool
-    stdout_stderr_only: int # 0: None; 1: stdout; 2: stderr
-    rowid: str
+## Database fetching and caching
 
 _db_last_state: Optional[float]=None
-_matches_cache: Dict[Optional[str],List[_Item]]={}
+_matches_cache: Dict[Optional[str],List[Item]]={}
 
 def _is_db_updated() -> bool:
     global _db_last_state
@@ -143,7 +142,7 @@ def _is_db_updated() -> bool:
         _db_last_state=cur_state
     return updated
 
-def _fetch_matches(command: Optional[str]) -> List[_Item]:
+def _fetch_matches(command: Optional[str]) -> List[Item]:
     global _matches_cache
     updated=_is_db_updated()
     if _db_last_state==None: raise db_not_found("file at db_path does not exist")
@@ -154,11 +153,9 @@ def _fetch_matches(command: Optional[str]) -> List[_Item]:
         _matches_cache[command]=_get_matches(command)
     return _matches_cache[command]
 
-## Output processing and matching
-
-def _get_matches(command: Optional[str]) -> List[_Item]:
+def _get_matches(command: Optional[str]) -> List[Item]:
     matches=[]
-    fetch_items=_Item._fields
+    fetch_items=Item._fields
     # get locales
     locales=_globalvar.get_locale()
     # get all unique entry IDs
@@ -170,8 +167,10 @@ def _get_matches(command: Optional[str]) -> List[_Item]:
             matches+=connection.execute(f"SELECT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE unique_id=? AND {locale_condition};", (eid[0], locale)).fetchall()
     match_items=[]
     for item in matches:
-        match_items.append(_Item(*item))
+        match_items.append(Item(*item))
     return match_items
+
+## Output processing and matching
 
 def _check_command(match_cmd: str, strictness: int, target_command: str, is_regex: bool) -> bool:
     def process_smartcmdmatch_phrases(match_cmd: str) -> List[str]:
@@ -222,7 +221,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 # timeout value for each match operation
 match_timeout=_globalvar.output_subst_timeout
 
-def _handle_subst(matches: List[_Item], content: bytes, is_stderr: bool, pids: Tuple[int,int], target_command: Optional[str]) -> bytes:
+def _handle_subst(matches: List[Item], content: bytes, is_stderr: bool, pids: Tuple[int,int], target_command: Optional[str]) -> bytes:
     content_str=copy.copy(content)
     encountered_ids=set()
     skipped_files=set() # File ids skipped with endmatchhere option
