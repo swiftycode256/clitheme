@@ -80,7 +80,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             if "foregroundonly" in inline_options.keys():
                 outline_foregroundonly=self.global_options.get('foregroundonly')==True
                 self.global_options['foregroundonly']=inline_options['foregroundonly']
-            command_filters=[cmd.strip() for cmd in command_strings]
+            command_filters=command_strings
             command_filter_strictness=strictness
         elif phrases[0] in ("filter_cmd", "filter_command", "filter_cmd_regex", "filter_command_regex"):
             self.check_enough_args(phrases, 2) 
