@@ -198,18 +198,18 @@ class GeneratorObject(_data_handlers.DataHandlers):
             for match in re.finditer(substvar_pattern, content):
                 if self.global_variables.get(match.group(1))!=None:
                     self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                    self.warnings['substvar']=False
+                    # self.warnings['substvar']=False
                     break
         # Handle substesc warning
         if not silence_warn[1] and subst_esc!=True and self.warnings.get('substesc')!=False:
             if "{{ESC}}" in content:
                 self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                self.warnings['substesc']=False
+                # self.warnings['substesc']=False
         # Handle substchar warning
         if not silence_warn[2] and subst_chars!=True and self.warnings.get('substchar')!=False:
             if re.match(substchar_pattern, content)!=None:
                 self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                self.warnings['substchar']=False
+                # self.warnings['substchar']=False
                 
         # get all variables used in content
         new_content=content
@@ -267,7 +267,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             # Linebounds warning
             if match!=None and self.warnings.get('linebounds')!=False:
                 self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
-                self.warnings['linebounds']=False
+                # self.warnings['linebounds']=False
             return content
         # Match pattern |...|
         if match!=None:
