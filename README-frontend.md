@@ -1,66 +1,66 @@
-# 应用程序API和字符串定义示范
+# Frontend API and string entries demo
 
-## 数据结构和路径名称
+## Data hierarchy and path naming
 
-应用程序是主要通过**路径名称**来指定所需的字符串。这个路径由空格来区别子路径（`subsections`）。大部分时候路径的前两个名称是用来指定开发者和应用名称的。主题文件会通过该路径名称来适配对应的字符串，从而达到自定义输出的效果。
+Applications use **path names** to specify the string definitions they want. Subsections in the path name is separated using spaces. The first two subsections are usually reserved for the developer and application name. Theme definition files will use this path name to adopt corresponding string definitions, achieving the effect of output customization.
 
-比如`com.example example-app example-text`指的是`com.example`开发的`example-app`中的`example-text`字符串。
+For example, the path name `com.example example-app example-text` refers to the `example-text` string definition for the `example-app` application developed by `com.example`.
 
-当然，路径名称也可以是全局的（不和任何应用信息关联），如`global-entry`或`global-example global-text`。
+It is not required to always follow this path naming convention and specifying global definitions (not related to any specific application) is allowed. For example, `global-entry` and `global-example global-text` are also valid path names.
 
-### 直接访问主题数据结构
+### Directly accessing the theme data hierarchy
 
-CLItheme的核心设计理念之一包括无需使用frontend模块就可以访问主题数据，并且访问方法直观易懂。这一点在使用其他语言编写的程序中尤其重要，因为frontend模块目前只提供Python程序的支持。
+One of the key design principles of CLItheme is that the use of frontend module is not needed to access the theme data hierarchy, and its method is easy to understand and implement. This is important especially in applications written in languages other than Python because Python is the only language supported by the frontend module.
 
-CLItheme的数据结构采用了**子文件夹**的结构，意味着路径中的每一段代表着数据结构中的一个文件夹/文件。
+The data hierarchy is organized in a **subfolder structure**, meaning that every subsection in the path name represent a file or folder in the data hierarchy.
 
-比如说，`com.example example-app example-text` 的字符串会被存储在`<datapath>/com.example/example-app/example-text`。在Linux和macOS系统下，`<datapath>`是 `$XDG_DATA_HOME/clitheme/theme-data`或`~/.local/share/clitheme/theme-data`。
+For example, the contents of string definition `com.example example-app example-text` is stored in the directory `<datapath>/com.example/example-app`. `<datapath>` is `$XDG_DATA_HOME/clitheme/theme-data` or `~/.local/share/clitheme/theme-data` under Linux and macOS systems.
 
-在Windows系统下，`<datapath>`是`%USERPROFILE%\.local\share\clitheme\theme-data`。（`C:\Users\<用户名称>\.local\share\clitheme\theme-data`）
+Under Windows systems, `<datapath>` is `%USERPROFILE%\.local\share\clitheme\theme-data` or `C:\Users\<username>\.local\share\clitheme\theme-data`.
 
-如果需要访问该字符串的其他语言，直接在路径的最后添加`__`加上locale名称就可以了。比如：`<datapath>/com.example/example-app/example-text__zh_CN`
+To access a specific language of a string definition, add `__` plus the locale name to the end of the directory path. For example: `<datapath>/com.example/example-app/example-text__en_US`
 
-所以说，如果需要直接访问字符串信息，只需要访问对应的文件路径就可以了。
+In conclusion, to directly access a specific string definition, convert the path name to a directory path and access the file located there.
 
-## 前端实施和编写主题文件
+## Frontend implementation and writing theme definition files
 
-### 使用内置frontend模块
+### Using the built-in frontend module
 
-使用CLItheme的frontend模块非常简单。只需要新建一个`frontend.FetchDescriptor`实例然后调用该实例中的`retrieve_entry_or_fallback`即可。
+Using the frontend module provided by CLItheme is very easy and straightforward. To access a string definition in the current theme setting, create a new `frontend.FetchDescriptor` object and use the provided `retrieve_entry_or_fallback` function.
 
-该函数需要提供路径名称和默认字符串。如果当前主题设定没有适配该字符串，则函数会返回提供的默认字符串。
+You need to pass the path name and a fallback string to this function. If the current theme setting does not provide the specified path name and string definition, the function will return the fallback string.
 
-如果新建`FetchDescriptor`时提供了`domain_name`，`app-name`，或`subsections`，则调用函数时会自动把它添加到路径名称前。
+You can pass the `domain_name`, `app_name`, and `subsections` arguments when creating a new `frontend.FetchDescriptor` object. When specified, these arguments will be automatically appended in front of the path name provided when calling the `retrieve_entry_or_fallback` function.
 
-我们拿上面的样例来示范：
+Let's demonstrate it using the previous examples:
 
 ```py
 from clitheme import frontend
 
-# 新建FetchDescriptor实例
+# Create a new FetchDescriptor object
 f=frontend.FetchDescriptor(domain_name="com.example", app_name="example-app")
 
-# 对应 “在当前目录找到了2个文件”
+# Corresponds to "Found 2 files in current directory"
 fcount="[...]"
 f.retrieve_entry_or_fallback("found-file", "在当前目录找到了{}个文件".format(str(fcount)))
 
-# 对应 “-> 正在安装 "example-file"...”
+# Corresponds to "-> Installing "example-file"..."
 filename="[...]"
 f.retrieve_entry_or_fallback("installing-file", "-> 正在安装\"{}\"...".format(filename))
 
-# 对应 “已成功安装2个文件”
+# Corresponds to "Successfully installed 2 files"
 f.retrieve_entry_or_fallback("install-success", "已成功安装{}个文件".format(str(fcount)))
 
-# 对应 “错误：找不到文件 "foo-nonexist"”
+# Corresponds to "Error: File "foo-nonexist" not found"
 filename_err="[...]"
 f.retrieve_entry_or_fallback("file-not-found", "错误：找不到文件 \"{}\"".format(filename_err))
 ```
 
-### 使用fallback模块
+### Using the fallback frontend module
 
-应用程序还可以在src中内置本项目提供的fallback模块，以便更好的处理CLItheme模块不存在时的情况。该fallback模块包括了frontend模块中的所有定义和功能，并且会永远返回失败时的默认值（fallback）。
+You can integrate the fallback frontend module provided by this project to better handle situations when CLItheme does not exist on the system. This fallback module contains all the functions in the frontend module, and its functions will always return fallback values.
 
-如需使用，请在你的项目文件中导入`frontend_fallback.py`文件，并且在你的程序中包括以下代码：
+Import the `frontend_fallback.py` file from the repository and insert the following code in your project to use it:
 
 ```py
 try:
@@ -69,62 +69,62 @@ except (ModuleNotFoundError, ImportError):
     import frontend_fallback as frontend
 ```
 
-本项目提供的fallback文件会随版本更新而更改，所以请定期往你的项目里导入最新的fallback文件以适配最新的功能。
+The fallback module provided by this project will update accordingly with new versions. Therefore, it is recommended to import the latest version of this module to adopt the latest features.
 
-### 应用程序应该提供的信息
+### Information your application should provide
 
-为了让用户更容易编写主题文件，应用程序应该加入输出字符串定义的功能。该输出信息应该包含路径名称和默认字符串。
+To allow users to write theme definition files of your application, your application should provide information about supported string definitions with its path name and default string.
 
-比如说，应用程序可以通过`--clitheme-output-defs`来输出所有的字符串定义：
+For example, your app can implement a feature to output all supported string definitions:
 
 ```
 $ example-app --clitheme-output-defs
 com.example example-app found-file
-在当前目录找到了{}个文件
+Found {} files in current directory
 
 com.example example-app installing-file
--> 正在安装"{}"...
+-> Installing "{}"...
 
 com.example example-app install-success
-已成功安装{}个文件
+Successfully installed {} files
 
 com.example example-app file-not-found
-错误：找不到文件 "{}"
+Error: file "{}" not found
 ```
 
-应用程序还可以在对应的官方文档中包括此信息。如需样例，请参考本仓库中`example-clithemedef`文件夹的[README文件](example-clithemedef/README.zh-CN.md)。
+You can also include this information in your project's official documentation. The demo application in this repository provides an example of it and the corresponding README file is located in the folder `example-clithemedef`.
 
-### 编写主题文件
+### Writing theme definition files
 
-关于主题文件的详细语法请见Wiki文档，下面将展示一个样例：
+Consult the Wiki pages and documentation for detailed syntax of theme definition files. An example is provided below:
 
 ```
 {header_section}
-    name 样例主题
+    name Example theme
     version 1.0
-    locales zh_CN
+    locales en_US
     supported_apps frontend_demo
 {/header_section}
 
 {entries_section}
     in_domainapp com.example example-app
         [entry] found-file
-            locale:default o(≧v≦)o 太好了，在当前目录找到了{}个文件！
-            locale:zh_CN o(≧v≦)o 太好了，在当前目录找到了{}个文件！
+            locale:default o(≧v≦)o Great! Found {} files in current directory!
+            locale:en_US o(≧v≦)o Great! Found {} files in current directory!
         [/entry]
         [entry] installing-file
-            locale:default (>^ω^<) 正在安装 "{}"...
-            locale:zh_CN (>^ω^<) 正在安装 "{}"...
+            locale:default (>^ω^<) Installing "{}"...
+            locale:en_US (>^ω^<) Installing "{}"...
         [/entry]
         [entry] install-success
-            locale:default o(≧v≦)o 已成功安装{}个文件！
-            locale:zh_CN o(≧v≦)o 已成功安装{}个文件！
+            locale:default o(≧v≦)o Successfully installed {} files!
+            locale:en_US o(≧v≦)o Successfully installed {} files!
         [/entry]
         [entry] file-not-found
-            locale:default ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
-            locale:zh_CN ಥ_ಥ 糟糕，出错啦！找不到文件 "{}"
+            locale:default ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+            locale:en_US ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
         [/entry]
 {/entries_section}
 ```
 
-编写好主题文件后，使用 `clitheme apply-theme <file>`来应用主题。应用程序会直接采用主题中适配的字符串。
+Use the command `clitheme apply-theme <file>` to apply the theme definition file onto the system. Supported applications will start using the string definitions listed in this file.
