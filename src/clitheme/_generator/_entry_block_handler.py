@@ -19,19 +19,17 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     # Workaround to circular import issue
     from . import _parser_handlers
     self: _parser_handlers.GeneratorObject=obj
-    # substrules_options: {effective_commands: list, is_regex: bool, strictness: int}
+    # substrules_options: {effective_commands: list, command_is_regex: bool, is_regex: bool, strictness: int}
 
     names_processed=False # Set to True when no more entry names are being specified
 
-    # For supporting specifying multiple entries at once (0: name, 1: uuid, 2: debug_linenumber)
     class EntryName(NamedTuple):
         value: str
         is_multiline: bool
         id: uuid.UUID
         line_number: str
     entry_names: List[EntryName]=[]
-    # For substrules_section: (0: match_content, 1: substitute_content, 2: locale, 3: entry_name_uuid, 4: content_linenumber_str, 5: match_content_linenumber)
-    # For entries_section: (0: target_entry, 1: content, 2: debug_linenumber, 3: entry_name_uuid, 4: entry_name_linenumber)
+
     class Entry(NamedTuple):
         entry_name: EntryName # /match_content =entry_name.value
         content: str # /substitute_content
