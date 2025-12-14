@@ -13,8 +13,8 @@ import stat
 from ctypes import wintypes
 from typing import Optional, Any, List, Tuple, Union
 from ... import _globalvar
-from .base_template import BaseHandler
-from .windows_headers import *
+from ._base_template import BaseHandler
+from ._windows_headers import *
 
 def errmsg() -> str:
     buffer = ctypes.create_unicode_buffer(1024)

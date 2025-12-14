@@ -22,7 +22,7 @@ from typing import Optional, List
 from ... import frontend
 from ..._globalvar import _direct_exit
 from .. import _labeled_print
-from .base_template import BaseHandler
+from ._base_template import BaseHandler
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 
