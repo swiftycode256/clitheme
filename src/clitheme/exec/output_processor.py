@@ -37,10 +37,11 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=Fa
             wrapper=b"\x1b[4;32m{}\x1b[0m"
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
-            line=line.replace(b'\r', wrapper.replace(b'{}',b'\\r'))
-            line=line.replace(b'\n', wrapper.replace(b'{}',b'\\n')+b'\n')
-            line=line.replace(b'\b', wrapper.replace(b'{}',b'\\x08'))
-            line=line.replace(b'\a', wrapper.replace(b'{}',b'\\x07'))
+            line=re.sub(rb'\r(?!\n)', wrapper.replace(b'{}',rb'\\r'), line)
+            line=re.sub(rb'(?<!\r)\n', wrapper.replace(b'{}',rb'\\n')+b'\n', line)
+            line=line.replace(b'\r\n', wrapper.replace(b'{}',rb'\r\n')+b'\r\n')
+            line=line.replace(b'\b', wrapper.replace(b'{}',rb'\x08'))
+            line=line.replace(b'\a', wrapper.replace(b'{}',rb'\x07'))
         if do_subst and "newlines" in debug_mode:
             if not line.endswith(b'\n'):
                 line+=b"\n"
@@ -135,11 +136,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 def handle_output(is_stderr: bool):
                     nonlocal unfinished_output, output_lines, unfinished_output_handled, last_input_content
 
+                    term_attrs=handler.get_process_term_attrs(no_buffering=True)
+                    foreground_pid=handler.get_foreground_pid()
                     data=handler.read_pty(is_stderr=is_stderr)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return
-                    term_attrs=handler.get_process_term_attrs(no_buffering=True)
-                    foreground_pid=handler.get_foreground_pid()
 
                     unfinished_output_time=time.perf_counter()
                     if unfinished_output!=None:
