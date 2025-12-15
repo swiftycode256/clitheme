@@ -25,9 +25,9 @@ db_path=""
 debug_mode=False
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
 
-class need_db_regenerate(Exception): pass
+class need_db_regenerate(FileNotFoundError): pass
 class bad_pattern(Exception): pass
-class db_not_found(Exception): pass
+class db_not_found(need_db_regenerate): pass
 
 def _handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
@@ -73,7 +73,7 @@ def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_f
     global db_path
     db_path=path
     if not os.path.exists(path):
-        raise FileNotFoundError("No theme set or theme does not contain substrules")
+        raise db_not_found("No theme set or theme does not contain substrules")
     global connection
     connection=sqlite3.connect(db_path)
     # check db version
@@ -131,16 +131,16 @@ _matches_cache: Dict[Optional[str],List[Item]]={}
 
 def _is_db_updated() -> bool:
     global _db_last_state
-    cur_state: Optional[float]
     try:
         # Check modification time
         cur_state=os.stat(db_path).st_mtime
-    except FileNotFoundError: cur_state=None
-    updated=False
+    except FileNotFoundError:
+        cur_state=None
+
     if cur_state!=_db_last_state:
-        updated=True
         _db_last_state=cur_state
-    return updated
+        return True
+    else: return False
 
 def _fetch_matches(command: Optional[str]) -> List[Item]:
     global _matches_cache
@@ -154,20 +154,29 @@ def _fetch_matches(command: Optional[str]) -> List[Item]:
     return _matches_cache[command]
 
 def _get_matches(command: Optional[str]) -> List[Item]:
-    matches=[]
-    fetch_items=Item._fields
     # get locales
     locales=_globalvar.get_locale()
     # get all unique entry IDs
     entry_ids=connection.execute(f"SELECT DISTINCT unique_id FROM {_globalvar.db_data_tablename}").fetchall()
     # for each entry, fetch in locale order and then `default` locale
+    match_items=[]
     for eid in entry_ids:
         for locale in locales+[None]:
             locale_condition="effective_locale=?" if locale!=None else "typeof(effective_locale)=typeof(?)"
-            matches+=connection.execute(f"SELECT {','.join(fetch_items)} FROM {_globalvar.db_data_tablename} WHERE unique_id=? AND {locale_condition};", (eid[0], locale)).fetchall()
-    match_items=[]
-    for item in matches:
-        match_items.append(Item(*item))
+            fetches=[
+                Item(*data) for data in \
+                    connection.execute(f"SELECT {','.join(Item._fields)} FROM {_globalvar.db_data_tablename} WHERE unique_id=? AND {locale_condition};", (eid[0], locale)).fetchall()
+            ]
+            for match_item in fetches:
+                # Filter based on command condition
+                if command!=None and match_item.effective_command!=None and \
+                _check_command(
+                    match_item.effective_command,
+                    match_item.command_match_strictness,
+                    command,
+                    match_item.command_is_regex
+                )==False: continue
+                match_items.append(match_item)
     return match_items
 
 ## Output processing and matching
