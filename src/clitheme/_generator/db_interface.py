@@ -219,51 +219,55 @@ def _check_command(match_cmd: str, strictness: int, target_command: str, is_rege
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> bytes:
     # pids: (main_pid, current_tcpgrp)
 
-    matches=_fetch_matches(command)
-    content_str=_handle_subst(matches, content, is_stderr, pids, command)
-    return content_str
-
-# timeout value for each match operation
-match_timeout=_globalvar.output_subst_timeout
-
-def _handle_subst(matches: List[Item], content: bytes, is_stderr: bool, pids: Tuple[int,int], target_command: Optional[str]) -> bytes:
     content_str=copy.copy(content)
+    # Convert to str if possible
+    try: content_str=content_str.decode('utf-8')
+    except: pass
+
     encountered_ids=set()
     skipped_files=set() # File ids skipped with endmatchhere option
-    for match_data in matches:
-        # check stdout/stderr constraint
+    for match_data in _fetch_matches(command):
         if match_data.stdout_stderr_only!=0 and is_stderr+1!=match_data.stdout_stderr_only: continue
         if match_data.unique_id in encountered_ids: continue
+        # TODO: Check endmatchhere
         if match_data.file_id in skipped_files: continue 
         # Check command
-        if target_command!=None and match_data.effective_command!=None and \
+        if command!=None and match_data.effective_command!=None and \
             _check_command(
                 match_data.effective_command,
                 match_data.command_match_strictness,
-                target_command,
+                command,
                 match_data.command_is_regex
             )==False: continue
         if match_data.foreground_only==True: # Foreground only
             if pids[0]!=pids[1]: continue
+        # Match operation
         matched=False
         if match_data.is_regex==True: # is regex 
-            try: 
-                ret_val: tuple=re.subn(match_data.match_pattern, match_data.substitute_pattern, content_str.decode('utf-8'))
-                matched=ret_val[1]>0
-                content_str=bytes(ret_val[0], 'utf-8')
-            except UnicodeDecodeError: 
-                ret_val: tuple=re.subn(bytes(match_data.match_pattern,'utf-8'), bytes(match_data.substitute_pattern, 'utf-8'), content_str)
-                matched=ret_val[1]>0
-                content_str=ret_val[0]
+            flags=re.MULTILINE
+            if type(content_str)==str:
+                ret_val: tuple=re.subn(match_data.match_pattern, match_data.substitute_pattern, content_str, flags=flags)
+            elif type(content_str)==bytes:
+                ret_val: tuple=re.subn(bytes(match_data.match_pattern,'utf-8'), bytes(match_data.substitute_pattern, 'utf-8'), content_str, flags=flags)
+            else: raise AssertionError
+            content_str=ret_val[0]
+            matched=ret_val[1]>0
         else: # is string
-            try: 
-                matched=match_data.match_pattern in content_str.decode('utf-8')
-                content_str=bytes(content_str.decode('utf-8').replace(match_data.match_pattern, match_data.substitute_pattern), 'utf-8')
-            except UnicodeDecodeError: 
+            if type(content_str)==str:
+                matched=match_data.match_pattern in content_str
+                content_str=content_str.replace(match_data.match_pattern, match_data.substitute_pattern)
+            elif type(content_str)==bytes:
                 matched=bytes(match_data.match_pattern, 'utf-8') in content_str
                 content_str=content_str.replace(bytes(match_data.match_pattern,'utf-8'), bytes(match_data.substitute_pattern,'utf-8'))
+            else: raise AssertionError
         if matched:
             encountered_ids.add(match_data.unique_id)
             if match_data.end_match_here==True: # endmatchhere is set
                 skipped_files.add(match_data.file_id)
-    return content_str
+    if type(content_str)==str:
+        return bytes(content_str, 'utf-8')
+    elif type(content_str)==bytes: return content_str
+    else: raise AssertionError
+
+# timeout value for each match operation
+match_timeout=_globalvar.output_subst_timeout
