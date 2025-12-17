@@ -196,7 +196,7 @@ def _check_command(match_cmd: str, strictness: int, target_command: str, is_rege
     valid_first_phrases=(
         first_phrase,
         os.path.basename(first_phrase),
-        re.sub(r"(\.exe|\.com|\.ps1|\.bat)$",'',os.path.basename(first_phrase)),
+        re.sub(r"(\.exe|\.com|\.ps1|\.bat|\.sh)$",'',os.path.basename(first_phrase)),
     )
     if is_regex:
         # Match start of target command
