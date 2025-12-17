@@ -72,6 +72,8 @@ db_version=6
 ## clitheme-exec timeout value for each output substitution operation
 output_subst_timeout=0.4
 
+newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
+
 ## Sanity check function
 entry_banphrases=['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 startswith_banphrases=['.']

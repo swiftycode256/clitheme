@@ -27,7 +27,6 @@ from . import _labeled_print
 
 fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
 # https://docs.python.org/3/library/stdtypes.html#str.splitlines
-newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e',b'\x85') 
 
 def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=False, matched: bool=False, failed: bool=False, do_subst: bool=False) -> List[bytes]:
     final_lines=[]
@@ -191,7 +190,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             if re.search(input_equals, data)!=None:
                                 do_subst_operation=False
                     # if last line of output did not end with newlines, leave for next iteration
-                    if not data.endswith(newlines):
+                    if not data.endswith(_globalvar.newlines):
                         unfinished_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, unfinished_output_time)
                     else: push_output((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
                     return True

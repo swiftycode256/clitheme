@@ -15,7 +15,7 @@ import re
 import copy
 import uuid
 import gc
-from typing import Optional, List, Tuple, Dict, NamedTuple
+from typing import Optional, List, Tuple, Dict, NamedTuple, Union
 from .. import _globalvar, frontend
 
 # spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp nolocale
@@ -235,44 +235,105 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
 
     encountered_ids=set()
     skipped_files=set() # File ids skipped with endmatchhere option
-    for match_data in _fetch_matches(command):
-        if match_data.stdout_stderr_only!=0 and is_stderr+1!=match_data.stdout_stderr_only: continue
-        if match_data.unique_id in encountered_ids: continue
-        # TODO: Check endmatchhere
-        if match_data.file_id in skipped_files: continue 
+    # endmatchhere checking algorithm:
+    # - Keep track of condition mapping with same length as content
+    # - After each substitution, mark affected range in condition map as '1'
+    # - When file ID changes, reset condition mapping (re-occurring ID should never happen)
+    # -> Check if affected *lines* in the substitution contains '1'
+    if type(content_str)==bytes: nl_match=b'['+b''.join(_globalvar.newlines)+b']'
+    else: nl_match=rf"[{''.join(s.decode('utf-8') for s in _globalvar.newlines)}]"
+    encountered_files=set()
+    last_file_id=''
+    # > \x00: not replaced; \x01: replaced; [other]: newline character
+    condition_map=bytearray()
+    def init_condition_map():
+        nonlocal condition_map
+        condition_map=bytearray(len(content_str))
+        for obj in re.finditer(nl_match, content_str): # type: ignore
+            condition_map[obj.start()]=ord(obj.group())
+    init_condition_map()
+
+    for rule in _fetch_matches(command):
+        if rule.stdout_stderr_only!=0 and is_stderr+1!=rule.stdout_stderr_only: continue
+        if rule.unique_id in encountered_ids: continue
+
+        if rule.file_id in skipped_files: continue 
+        if rule.file_id!=last_file_id:
+            assert rule.file_id not in encountered_files, "Revisited file ID"
+            encountered_files.add(rule.file_id)
+            last_file_id=rule.file_id
+            init_condition_map()
         # Check command
-        if command!=None and match_data.effective_command!=None and \
+        if command!=None and rule.effective_command!=None and \
             _check_command(
-                match_data.effective_command,
-                match_data.command_match_strictness,
+                rule.effective_command,
+                rule.command_match_strictness,
                 command,
-                match_data.command_is_regex
+                rule.command_is_regex
             )==False: continue
-        if match_data.foreground_only==True: # Foreground only
-            if pids[0]!=pids[1]: continue
+        if rule.foreground_only==True and pids[0]!=pids[1]: continue # Foreground only
         # Match operation
         matched=False
-        if match_data.is_regex==True: # is regex 
+        def subst(match: re.Match) -> Union[str, bytes]:
+            # Check endmatchhere
+            # Determine start range: seek backward before newline is reached
+            line_start=match.start()
+            for pos in range(match.start()-1, 0-1, -1):
+                ch=condition_map[pos]
+                if ch not in (0,1) and condition_map[pos:pos+2]!=b'\r\n': # Newline character
+                    break
+                else: line_start=pos
+            # Determine end range: seek forward after newline is reached
+            line_end=match.end()
+            for pos in range(match.end(), len(condition_map)+1):
+                ch=condition_map[pos-1]
+                line_end=pos
+                if ch not in (0,1): # Newline character
+                    if condition_map[pos-1:pos-1+2]==b'\r\n':
+                        line_end=pos+1
+                    break
+            if re.compile(b'\x01').search(condition_map, line_start, line_end)!=None:
+                return match.group() # Original string if marked sections found
+            if type(content_str)==str: new_str=match.expand(rule.substitute_pattern)
+            elif type(content_str)==bytes: new_str=match.expand(rule.substitute_pattern.encode('utf-8'))
+            else: raise AssertionError
+            # Update endmatchhere if option is set
+            if rule.end_match_here==True:
+                nonlocal condition_map
+                sub=bytearray(b'\x01'*len(new_str)) # Sub pattern length
+                for obj in re.finditer(nl_match, new_str): # type: ignore
+                    sub[obj.start()]=ord(obj.group()) # Replace newline characters
+
+                # Update condition map
+                new_map, count=re.subn(rb'(?<=\A.{'+str(match.start()).encode()+b'})'+ \
+                                    b'.{'+str(match.end()-match.start()).encode()+b'}',
+                                    sub, condition_map)
+                assert count==1, f"{'No match found' if count==0 else 'Extra matches'} for updating condition map"
+                condition_map=bytearray(new_map)
+            return new_str # Substituted string
+        if rule.is_regex==True: # is regex 
             flags=re.MULTILINE
             if type(content_str)==str:
-                ret_val: tuple=re.subn(match_data.match_pattern, match_data.substitute_pattern, content_str, flags=flags)
+                ret_val: tuple=re.subn(rule.match_pattern, rule.substitute_pattern, content_str, flags=flags)
             elif type(content_str)==bytes:
-                ret_val: tuple=re.subn(bytes(match_data.match_pattern,'utf-8'), bytes(match_data.substitute_pattern, 'utf-8'), content_str, flags=flags)
+                ret_val: tuple=re.subn(bytes(rule.match_pattern,'utf-8'), bytes(rule.substitute_pattern, 'utf-8'), content_str, flags=flags)
             else: raise AssertionError
             content_str=ret_val[0]
             matched=ret_val[1]>0
         else: # is string
             if type(content_str)==str:
-                matched=match_data.match_pattern in content_str
-                content_str=content_str.replace(match_data.match_pattern, match_data.substitute_pattern)
+                matched=rule.match_pattern in content_str
+                content_str=content_str.replace(rule.match_pattern, rule.substitute_pattern)
             elif type(content_str)==bytes:
-                matched=bytes(match_data.match_pattern, 'utf-8') in content_str
-                content_str=content_str.replace(bytes(match_data.match_pattern,'utf-8'), bytes(match_data.substitute_pattern,'utf-8'))
+                matched=bytes(rule.match_pattern, 'utf-8') in content_str
+                content_str=content_str.replace(bytes(rule.match_pattern,'utf-8'), bytes(rule.substitute_pattern,'utf-8'))
             else: raise AssertionError
+        assert len(condition_map)==len(content_str), \
+            f"Length mismatch: {len(condition_map)}!={len(content_str)}"
         if matched:
-            encountered_ids.add(match_data.unique_id)
-            if match_data.end_match_here==True: # endmatchhere is set
-                skipped_files.add(match_data.file_id)
+            encountered_ids.add(rule.unique_id)
+            if rule.end_match_here==True: # endmatchhere is set
+                skipped_files.add(rule.file_id)
     if type(content_str)==str:
         return bytes(content_str, 'utf-8')
     elif type(content_str)==bytes: return content_str
