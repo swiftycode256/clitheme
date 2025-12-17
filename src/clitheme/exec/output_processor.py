@@ -132,15 +132,14 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     try: handler.write_pty(data)
                     except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
-                unfinished_output_handled=False
-                def handle_output(is_stderr: bool):
-                    nonlocal unfinished_output, output_lines, unfinished_output_handled, last_input_content
+                def handle_output(is_stderr: bool) -> bool:
+                    nonlocal unfinished_output, output_lines, last_input_content
 
                     term_attrs=handler.get_process_term_attrs(no_buffering=True)
                     foreground_pid=handler.get_foreground_pid()
                     data=handler.read_pty(is_stderr=is_stderr)
                     # If pipe closed and returns empty data, ignore
-                    if data==b'': return
+                    if data==b'': return False
 
                     unfinished_output_time=time.perf_counter()
                     if unfinished_output!=None:
@@ -160,9 +159,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             # Shouldn't join them together in this case
                             push_output(unfinished_output)
                             # Don't push the current line just yet; leave it for newline check
-                        unfinished_output_handled=True
                     # If all data was appended to previous unfinished output and pushed, don't do anything
-                    if data==b'': return
+                    if data==b'': return True
                     # Check if the output is user input
                     do_subst_operation=True
                     if last_input_content!=None:
@@ -195,20 +193,23 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     # if last line of output did not end with newlines, leave for next iteration
                     if not data.endswith(newlines):
                         unfinished_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, unfinished_output_time)
-                        unfinished_output_handled=True
                     else: push_output((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
-
-                if "stdout" in fds: handle_output(is_stderr=False)
-                if "stderr" in fds: handle_output(is_stderr=True)
+                    return True
+                had_output=False
+                if "stdout" in fds:
+                    had_output=had_output or handle_output(is_stderr=False)
+                if "stderr" in fds:
+                    had_output=had_output or handle_output(is_stderr=True)
                 # if no unfinished_output is handled by handle_output, append the unfinished output if exists
-                if not unfinished_output_handled and unfinished_output!=None:
+                if not had_output and unfinished_output!=None:
                     push_output(unfinished_output)
                     unfinished_output=None
                 # Reset last input content if no output is made within timeout
                 if not "stdin" in fds and unfinished_output==None:
                     last_input_content=None
-
-                if handler.get_proc_status()!=None and unfinished_output==None: 
+                # End loop if process terminated and no output available for this round
+                if handler.get_proc_status()!=None \
+                    and had_output==False and unfinished_output==None: 
                     # Send termination signal
                     push_output(None)
                     break
