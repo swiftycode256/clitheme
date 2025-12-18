@@ -154,8 +154,9 @@ class PosixHandler(BaseHandler):
     def _signal_handler_function(self, sig, frame):
         if sig==signal.SIGCONT: # continue signal
             self.process.send_signal(sig)
+            # Reset signal handler
             def signal_handler(*args): self._signal_handler_function(*args)
-            signal.signal(signal.SIGTSTP, signal_handler) # Reset signal handler
+            signal.signal(signal.SIGTSTP, signal_handler)
             # Set term attributes after re-entering
             attrs=self.get_process_term_attrs(no_buffering=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
@@ -190,11 +191,11 @@ class PosixHandler(BaseHandler):
         exit_code=self.get_proc_status()
         try:
             if exit_code!=None and exit_code<0: # Terminated by signal
-                # Block signal handlers before the kill operation to prevent unexpected behavior
-                for sig in self.handle_signals:
-                    signal.signal(sig, signal.SIG_IGN)
+                # Reset signal handlers before the kill operation to prevent unexpected behavior
+                for sig in self.handle_signals+[signal.SIGUSR1, signal.SIGUSR2]:
+                    signal.signal(sig, signal.SIG_DFL)
                 os.kill(os.getpid(), abs(exit_code))
-                # Properly return exit code for corresponding signals
+                # Return exit code if os.kill doesn't terminate process
                 return 128+abs(exit_code)
         except: pass
         return exit_code if exit_code!=None else 0
