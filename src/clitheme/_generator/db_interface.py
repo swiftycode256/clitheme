@@ -316,20 +316,35 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             nonlocal matched; matched=True
             return new_str # Substituted string
         match_pattern=rule.match_pattern if rule.is_regex else re.escape(rule.match_pattern)
+        if type(content_str)==bytes: match_pattern=match_pattern.encode('utf-8')
         sub_pattern=rule.substitute_pattern
+
         flags=re.MULTILINE
-        if type(content_str)==str:
+        if rule.match_is_multiline:
+            # Perform sub on all lines
             content_str=re.sub(match_pattern, subst, content_str, flags=flags) # type: ignore
-        elif type(content_str)==bytes:
-            content_str=re.sub(match_pattern.encode('utf-8'), subst, content_str, flags=flags) # type: ignore
-        else: raise AssertionError
+        else:
+            # Single line matching
+            offset=0
+            line_lens=[len(line) for line in content_str.splitlines()]
+            cur_start=0
+            for length in line_lens:
+                # Perform sub on each line
+                obj_list=list(re.compile(match_pattern, flags=flags) \
+                    .finditer(content_str, cur_start+offset, cur_start+offset+length)) # type: ignore
+                for obj in obj_list:
+                    sub=subst(obj)
+                    content_str=content_str[:obj.start()+offset]+sub+content_str[obj.end()+offset:] # type: ignore
+                    offset+=len(sub)-(obj.end()-obj.start())
+                cur_start+=length
+        
+        if matched: encountered_ids.add(rule.unique_id)
         assert len(condition_map)==len(content_str), \
             f"Length mismatch: {len(condition_map)}!={len(content_str)}"
-
-        if matched: encountered_ids.add(rule.unique_id)
     if type(content_str)==str:
         return bytes(content_str, 'utf-8')
-    elif type(content_str)==bytes: return content_str
+    elif type(content_str)==bytes:
+        return content_str
     else: raise AssertionError
 
 # timeout value for each match operation
