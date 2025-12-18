@@ -125,7 +125,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             if generator_msgs.getvalue()!='':
                 print(newline+generator_msgs.getvalue(), end='')
         finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
-    print((line_prefix.rstrip(' ') if print_progress else "")+f.reof("process-files-success", "Successfully processed files"))
+    print((line_prefix.rstrip(' ') if print_progress else "")+f.reof("process-files-success", "==> Successfully processed files"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":
@@ -156,7 +156,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    print(f.reof("apply-theme-success", "==> Theme applied successfully"))
+    print(f.reof("apply-theme-success", "Theme applied successfully"))
     if not preserve_temp:
         try: shutil.rmtree(final_path)
         except: pass

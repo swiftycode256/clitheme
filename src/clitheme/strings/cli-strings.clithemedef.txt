@@ -86,16 +86,16 @@ in_domainapp swiftycode clitheme
                 locale:zh_CN > 正在处理文件{filename}...
             [/entry]
             [entry] process-files-success
-                # locale:default Successfully processed files
-                locale:zh_CN 已成功处理文件
+                # locale:default ==> Successfully processed files
+                locale:zh_CN ==> 已成功处理文件
             [/entry]
             [entry] view-temp-dir
                 # locale:default View at {path}
                 locale:zh_CN 生成的数据可以在"{path}"查看
             [/entry]
             [entry] apply-theme-success
-                # locale:default ==> Theme applied successfully
-                locale:zh_CN ==> 已成功应用主题
+                # locale:default Theme applied successfully
+                locale:zh_CN 已成功应用主题
             [/entry]
             [entry] read-file-error
                 # [locale] default
