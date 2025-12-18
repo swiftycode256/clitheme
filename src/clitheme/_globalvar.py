@@ -74,6 +74,10 @@ output_subst_timeout=0.4
 
 newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
 
+## Frontend domain name and app name
+fd_domain_name="swiftycode"
+fd_app_name="clitheme"
+
 ## Sanity check function
 entry_banphrases=['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 startswith_banphrases=['.']
@@ -96,7 +100,7 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
     global sanity_check_error_message, banphrase_error_message, startswith_error_message, empty_error_message
     if not msg_retrieved and not use_orig:
         msg_retrieved=True
-        f=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator", debug_mode=False)
+        f=frontend.FetchDescriptor(domain_name=fd_domain_name, app_name=fd_app_name, subsections="generator", debug_mode=False)
         banphrase_error_message=f.feof("sanity-check-msg-banphrase-err", banphrase_error_message, char="{char}")
         startswith_error_message=f.feof("sanity-check-msg-startswith-err", startswith_error_message, char="{char}")
         empty_error_message=f.reof("sanity-check-msg-empty-err", empty_error_message)
@@ -209,7 +213,7 @@ def handle_exception():
         raise
 
 def handle_stdin_prompt(path: str) -> bool:
-    fi=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="cli apply-theme")
+    fi=frontend.FetchDescriptor(domain_name=fd_domain_name, app_name=fd_app_name, subsections="cli apply-theme")
     is_stdin=False
     try:
         if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino:

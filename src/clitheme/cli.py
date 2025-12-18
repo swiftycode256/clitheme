@@ -24,8 +24,8 @@ from typing import List, Optional, Tuple
 
 # spell-checker:ignore pathnames lsdir inpstr
 
-frontend.set_domain("swiftycode")
-frontend.set_appname("clitheme")
+frontend.set_domain(_globalvar.fd_domain_name)
+frontend.set_appname(_globalvar.fd_app_name)
 frontend.set_subsections("cli")
 
 last_data_path=""

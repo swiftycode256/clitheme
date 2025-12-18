@@ -24,8 +24,8 @@ from typing import List
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
 
-frontend.set_domain("swiftycode")
-frontend.set_appname("clitheme")
+frontend.set_domain(_globalvar.fd_domain_name)
+frontend.set_appname(_globalvar.fd_app_name)
 fd=frontend.FetchDescriptor(subsections="exec")
 
 # Prevent recursion dead loops and accurately simulate that regeneration is only triggered once

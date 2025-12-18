@@ -21,8 +21,8 @@ from typing import List
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)
 
-frontend.set_domain("swiftycode")
-frontend.set_appname("clitheme")
+frontend.set_domain(_globalvar.fd_domain_name)
+frontend.set_appname(_globalvar.fd_app_name)
 fd=frontend.FetchDescriptor(subsections="man")
 
 def main(args: List[str]):

@@ -23,7 +23,7 @@ class DataHandlers:
         if not os.path.exists(self.path): os.mkdir(self.path)
         self.datapath=self.path+"/"+_globalvar.generator_data_pathname
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
-        self.fd=self.frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+        self.fd=self.frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
         self.fmt=_globalvar.make_printable # alias for the make_printable function
     def handle_error(self, message: str, not_syntax_error: bool=False):
         output=message if not_syntax_error else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)

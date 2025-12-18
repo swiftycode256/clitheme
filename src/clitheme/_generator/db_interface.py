@@ -23,7 +23,7 @@ from .. import _globalvar, frontend
 connection=sqlite3.connect(":memory:") # placeholder
 db_path=""
 debug_mode=False
-fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="generator")
+fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
 
 class need_db_regenerate(FileNotFoundError): pass
 class bad_pattern(Exception): pass

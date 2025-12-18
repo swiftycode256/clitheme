@@ -19,12 +19,12 @@ import struct
 import copy
 import threading
 from typing import Optional, List
-from ... import frontend
+from ... import frontend, _globalvar
 from ..._globalvar import _direct_exit
 from .. import _labeled_print
 from ._base_template import BaseHandler
 
-fd=frontend.FetchDescriptor(domain_name="swiftycode", app_name="clitheme", subsections="exec")
+fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 
 class PosixHandler(BaseHandler):
     def __init__(self, command):
