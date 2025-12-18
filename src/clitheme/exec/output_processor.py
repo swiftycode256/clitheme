@@ -103,12 +103,12 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
         nonlocal output_lines
-        unfinished_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time)
+        pending_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time)
         # Just in case where input is read in multiple segments before output arrives
         last_input_content=None
         def push_output(content):
-            nonlocal unfinished_output, last_input_content
-            unfinished_output=None; last_input_content=None
+            nonlocal pending_output, last_input_content
+            pending_output=None; last_input_content=None
             output_lines.put(content)
         try:
             while True:
@@ -118,9 +118,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if thread_debug==1: raise Exception
                 elif thread_debug==2: break
 
-                # Set a short timeout value if there are unfinished outputs
+                # Set a short timeout value if there are pending outputs
                 # Else, wait longer to reduce CPU usage
-                timeout=0.005 if unfinished_output!=None or last_input_content!=None else 0.1
+                timeout=0.005 if pending_output!=None or last_input_content!=None else 0.1
                 fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
                 if "stdin" in fds:
@@ -132,7 +132,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     except OSError: pass # Handle input/output error that might occur after program terminates
                 # Handle output from stdout and stderr
                 def handle_output(is_stderr: bool) -> bool:
-                    nonlocal unfinished_output, output_lines, last_input_content
+                    nonlocal pending_output, output_lines, last_input_content
 
                     term_attrs=handler.get_process_term_attrs(no_buffering=True)
                     foreground_pid=handler.get_foreground_pid()
@@ -140,27 +140,32 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return False
 
-                    unfinished_output_time=time.perf_counter()
-                    if unfinished_output!=None:
-                        orig_data=unfinished_output[0]
-                        if unfinished_output[3]==foreground_pid and unfinished_output[1]==is_stderr:
-                            # If exceeds maximum time or differing terminal attributes, append first line of data into unfinished output and process it
-                            if time.perf_counter()-unfinished_output[5]>0.05 or term_attrs!=unfinished_output[4]:
+                    pending_output_time=time.perf_counter()
+                    if pending_output!=None:
+                        orig_data=pending_output[0]
+                        if pending_output[3]==foreground_pid and pending_output[1]==is_stderr:
+                            # If exceeds maximum time or differing terminal attributes
+                            if time.perf_counter()-pending_output[5]>0.05 or term_attrs!=pending_output[4]:
                                 lines=data.splitlines(keepends=True)
-                                push_output((unfinished_output[0]+lines[0],)+unfinished_output[1:])
-                                data=data[len(lines[0]):] # Remove first line from data
+                                if not orig_data.endswith(_globalvar.newlines):
+                                    # Append first line of data into pending output and process it
+                                    push_output((orig_data+lines[0],)+pending_output[1:])
+                                    data=data[len(lines[0]):] # Remove first line from data
+                                else: 
+                                    # Don't need to join lines together
+                                    push_output(pending_output)
                             else:
                                 # Modify existing line data instead of directly pushing it
                                 # to better handle multiple fragments in a single line
                                 data=orig_data+data
-                                unfinished_output_time=unfinished_output[5]
+                                pending_output_time=pending_output[5]
                         else:
                             # Shouldn't join them together in this case
-                            push_output(unfinished_output)
+                            push_output(pending_output)
                             # Don't push the current line just yet; leave it for newline check
-                    # If all data was appended to previous unfinished output and pushed, don't do anything
+                    # If all data was pushed, don't do anything
                     if data==b'': return True
-                    # Check if the output is user input
+                    # region: Check if the output is user input
                     do_subst_operation=True
                     if last_input_content!=None:
                         # Windows keystroke input: "\x1b[0;0;0;0;0;0_"
@@ -189,26 +194,26 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
                             if re.search(input_equals, data)!=None:
                                 do_subst_operation=False
-                    # if last line of output did not end with newlines, leave for next iteration
-                    if not data.endswith(_globalvar.newlines):
-                        unfinished_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, unfinished_output_time)
-                    else: push_output((data, is_stderr, do_subst_operation, foreground_pid, term_attrs))
+                    # endregion
+                    
+                    # Update pending output
+                    pending_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, pending_output_time)
                     return True
                 had_output=False
                 if "stdout" in fds:
                     had_output=had_output or handle_output(is_stderr=False)
                 if "stderr" in fds:
                     had_output=had_output or handle_output(is_stderr=True)
-                # if no unfinished_output is handled by handle_output, append the unfinished output if exists
-                if not had_output and unfinished_output!=None:
-                    push_output(unfinished_output)
-                    unfinished_output=None
+                # if no pending output is handled by handle_output, push it
+                if not had_output and pending_output!=None:
+                    push_output(pending_output)
+                    pending_output=None
                 # Reset last input content if no output is made within timeout
-                if not "stdin" in fds and unfinished_output==None:
+                if not "stdin" in fds and pending_output==None:
                     last_input_content=None
                 # End loop if process terminated and no output available for this round
                 if handler.get_proc_status()!=None \
-                    and had_output==False and unfinished_output==None: 
+                    and had_output==False and pending_output==None: 
                     # Send termination signal
                     push_output(None)
                     break
