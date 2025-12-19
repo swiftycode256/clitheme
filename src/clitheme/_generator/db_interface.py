@@ -253,15 +253,9 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     init_condition_map()
 
     for rule in _fetch_matches(command):
-        if rule.stdout_stderr_only!=0 and (is_stderr==True)+1!=rule.stdout_stderr_only: continue
+        # region: Condition checking
         if rule.unique_id in encountered_ids: continue
-
-        if rule.file_id!=last_file_id:
-            assert rule.file_id not in encountered_files, "Revisited file ID"
-            encountered_files.add(rule.file_id)
-            last_file_id=rule.file_id
-            init_condition_map()
-        # Check command
+        if rule.stdout_stderr_only!=0 and (is_stderr==True)+1!=rule.stdout_stderr_only: continue
         if command!=None and rule.effective_command!=None and \
             _check_command(
                 rule.effective_command,
@@ -269,12 +263,20 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                 command,
                 rule.command_is_regex
             )==False: continue
-        if rule.foreground_only==True and pids[0]!=pids[1]: continue # Foreground only
-        # Match operation
+        if rule.foreground_only==True and pids[0]!=pids[1]: continue
+        # Reset endmatchhere condition map for new files
+        if rule.file_id!=last_file_id:
+            assert rule.file_id not in encountered_files, "Revisited file ID"
+            encountered_files.add(rule.file_id)
+            last_file_id=rule.file_id
+            init_condition_map()
+        # endregion
+
+        # region: Match operation
         matched=False
         def subst(match: re.Match) -> Union[str, bytes]:
             nonlocal condition_map
-            # Check endmatchhere
+            # region: Check endmatchhere
             # Determine start range: seek backward before newline is reached
             line_start=match.start()
             for pos in range(match.start()-1, 0-1, -1):
@@ -293,6 +295,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                     break
             if re.compile(b'\x01').search(condition_map, line_start, line_end)!=None:
                 return match.group() # Original string if marked sections found
+            # endregion
 
             nonlocal sub_pattern
             if type(content_str)==str: sub=sub_pattern
@@ -301,8 +304,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             # Retrieve substituted string
             if rule.is_regex: new_str=match.expand(sub)
             else: new_str=sub
-
-            # Update condition map if endmatchhere is set
+            
+            # region: Update condition map if endmatchhere is set
             # \x01 and \x00 for T/F endmatchhere condition
             sub=bytearray([rule.end_match_here==True]*len(new_str)) # Sub pattern length
             for obj in re.finditer(nl_match, new_str): # type: ignore
@@ -312,6 +315,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
                                 sub, condition_map)
             assert count==1, f"{'No match found' if count==0 else 'Extra matches'} for updating condition map"
             condition_map=bytearray(new_map)
+            # endregion
 
             nonlocal matched; matched=True
             return new_str # Substituted string
@@ -341,6 +345,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         if matched: encountered_ids.add(rule.unique_id)
         assert len(condition_map)==len(content_str), \
             f"Length mismatch: {len(condition_map)}!={len(content_str)}"
+    # endregion
+
     if type(content_str)==str:
         return bytes(content_str, 'utf-8')
     elif type(content_str)==bytes:
