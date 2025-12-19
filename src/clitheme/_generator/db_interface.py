@@ -225,7 +225,7 @@ def _check_command(match_cmd: str, strictness: int, target_command: str, is_rege
                 if phrase not in target_command.split()[1:]: return False
         return True
 
-def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> bytes:
+def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> Tuple[bytes, set]:
     # pids: (main_pid, current_tcpgrp)
 
     content_str=copy.copy(content)
@@ -240,13 +240,9 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # - After each substitution, mark affected range in condition map as '1'
     # - When file ID changes, reset condition mapping (re-occurring ID should never happen)
     # -> Check if affected *lines* in the substitution contains '1'
-    line_match_bytes=b'.*?('+b'|'.join(_globalvar.newlines)+b'|$)'
     if type(content_str)==bytes:
-        nl_match=b'['+b''.join(_globalvar.newlines)+b']'
-        line_match=line_match_bytes
-    else:
-        nl_match=rf"[{''.join(s.decode('utf-8') for s in _globalvar.newlines)}]"
-        line_match=rf".*?({'|'.join(s.decode('utf-8') for s in _globalvar.newlines)}|$)"
+        line_match=_globalvar.line_match_bytes
+    else: line_match=_globalvar.line_match
     encountered_files=set()
     last_file_id=''
     # > \x00: not matched; \x01: matched; \x02: end match here; [other]: newline character
@@ -357,11 +353,21 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             f"Length mismatch: {len(condition_map)}!={len(content_str)}"
         condition_map=new_condition_map
     # endregion
+    # region: Check modified lines
+    line_lengths=[len(m.group()) for m in re.finditer(line_match, content_str)] # type: ignore
+    changed_line_indices=set()
+    cur_start=0
+    for x in range(len(line_lengths)):
+        length=line_lengths[x]
+        if re.compile(b'\x01|\x02').search(condition_map, cur_start, cur_start+length)!=None:
+            changed_line_indices.add(x)
+        cur_start+=length
+    # endregion
     
     if type(content_str)==str:
-        return bytes(content_str, 'utf-8')
+        return (bytes(content_str, 'utf-8'), changed_line_indices)
     elif type(content_str)==bytes:
-        return content_str
+        return (content_str, changed_line_indices)
     else: raise AssertionError
 
 # timeout value for each match operation

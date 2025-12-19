@@ -171,7 +171,8 @@ print("Successfully recorded data\nTesting sample outputs: ")
 for x in range(len(sample_inputs)):
     inp=sample_inputs[x]
     expected=expected_outputs[x]
-    content=db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1]).decode('utf-8')
+    content, changed_lines=db_interface.match_content(bytes(inp[0],'utf-8'),command=inp[1])
+    content=content.decode('utf-8')
     if content in expected:
         print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
     else:

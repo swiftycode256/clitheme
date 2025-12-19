@@ -74,6 +74,8 @@ output_subst_timeout=0.4
 
 # '\r\n' MUST come before '\r' and '\n' characters
 newlines=(b'\r\n',b'\r',b'\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
+line_match=rf".*?({'|'.join(s.decode('utf-8') for s in newlines)}|$)"
+line_match_bytes=b'.*?('+b'|'.join(newlines)+b'|$)'
 
 ## Frontend domain name and app name
 fd_domain_name="swiftycode"

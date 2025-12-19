@@ -16,7 +16,7 @@ import re
 import time
 import threading
 import queue
-from typing import Optional, List
+from typing import Optional, List, Set
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from .handlers._base_template import BaseHandler
@@ -27,8 +27,8 @@ from . import _labeled_print
 
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 
-def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=False, matched: bool=False, failed: bool=False, do_subst: bool=False) -> List[bytes]:
-    final_lines=[]
+def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, matched_lines: Set[int], failed: bool, do_subst: bool) -> bytes:
+    final_output=b''
     for x in range(len(lines)):
         line=lines[x]
         if do_subst and "showchars" in debug_mode:
@@ -53,9 +53,21 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=Fa
             except UnicodeDecodeError: line=re.sub(bytes(match_pattern, 'utf-8'), bytes(sub_pattern, 'utf-8'), line)
             line+=b'\x1b[0m'
         if do_subst and "normal" in debug_mode:
-            line=bytes(f"\x1b[0;1;{'31' if is_stderr else '32'}{';47' if matched else ''}{';37;41' if failed else ''}m"+('e' if is_stderr else 'o')+'\x1b[0;1m'+(">")+"\x1b[0m ",'utf-8')+line+b"\x1b[0m"
-        final_lines.append(line)
-    return final_lines
+            line=bytes(f"\x1b[0;1;" # Bold
+                       f"{'31' if is_stderr else '32'}" # Red/green
+                       f"{';47;30' if x==0 else ''}" # White highlighting
+                       f"{';44' if x in matched_lines else ''}" # Blue highlighting
+                       f"{';37;41' if failed else ''}" # Red highlighting
+                       'm'
+                       f"{'e' if is_stderr else 'o'}"
+
+                       f"\x1b[0;1;"
+                       f"{';47;30' if x==0 else ''}"
+                       'm'
+                       f"{'>' if x==0 else '['}\x1b[0m ",
+                       'utf-8')+line
+        final_output+=line
+    return final_output
 
 def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True):
     do_subst=subst
@@ -145,11 +157,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         if pending_output[3]==foreground_pid and pending_output[1]==is_stderr:
                             # If exceeds maximum time or differing terminal attributes
                             if time.perf_counter()-pending_output[5]>0.05 or term_attrs!=pending_output[4]:
-                                lines=data.splitlines(keepends=True)
                                 if not orig_data.endswith(_globalvar.newlines):
                                     # Append first line of data into pending output and process it
-                                    push_output((orig_data+lines[0],)+pending_output[1:])
-                                    data=data[len(lines[0]):] # Remove first line from data
+                                    first_line=re.match(_globalvar.line_match_bytes, data).group() # type: ignore
+                                    push_output((orig_data+first_line,)+pending_output[1:])
+                                    data=data[len(first_line):] # Remove first line from data
                                 else: 
                                     # Don't need to join lines together
                                     push_output(pending_output)
@@ -231,46 +243,42 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if thread_exception_handled: break # Prevent conflict with setting terminal attributes
 
             # Process outputs
-            def process_line(line: bytes, line_data):
-                nonlocal last_tcgetpgrp
-                # subst operation
-                subst_line=copy.copy(line)
-                failed=False
-                foreground_pid=line_data[3]
-                if do_subst and line_data[2]==True:
-                    if os.name=="posix":
-                        def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
-                        signal.signal(signal.SIGALRM, raise_error)
-                        signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
-                    try: 
-                        subst_line=db_interface.match_content(line, _globalvar.splitarray_to_string(command), is_stderr=line_data[1], pids=(handler.process_pid, foreground_pid))
-                    except TimeoutError: failed=True
-                    # Happens when no theme is set/no subst-data.db
-                    except db_interface.db_not_found: pass
-                    # remove the interval timer to prevent exception when function finishes before timeout
-                    if os.name=="posix": signal.setitimer(signal.ITIMER_REAL, 0)
-                subst_line=_process_debug([subst_line], debug_mode, is_stderr=line_data[1], matched=not subst_line==line, failed=failed, do_subst=line_data[2])[0] 
-                return subst_line
             if output_lines.empty():
                 handle_debug_pgrp(handler.get_foreground_pid())
-            try: line_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.1)
+            try: block_data=output_lines.get(block=True, timeout=0.05 if had_output else 0.1)
             except queue.Empty: 
                 had_output=False
                 continue
             # --Output processing--
             had_output=True
             # None: termination signal
-            if line_data==None: break
+            if block_data==None: break
             # Process output line by line
             output=b''
-            for line in line_data[0].splitlines(keepends=True):
-                output+=process_line(line, line_data)
+            # subst operation
+            new_output=block_data[0]
+            failed=False
+            foreground_pid=block_data[3]
+            if do_subst and block_data[2]==True:
+                if os.name=="posix":
+                    def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
+                    signal.signal(signal.SIGALRM, raise_error)
+                    signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
+                try: 
+                    new_output, changed_lines=db_interface.match_content(new_output, _globalvar.splitarray_to_string(command), is_stderr=block_data[1], pids=(handler.process_pid, foreground_pid))
+                except TimeoutError: failed=True
+                # Happens when no theme is set/no subst-data.db
+                except db_interface.db_not_found: pass
+                # remove the interval timer to prevent exception when function finishes before timeout
+                if os.name=="posix": signal.setitimer(signal.ITIMER_REAL, 0)
+            new_output=_process_debug([m.group() for m in re.finditer(_globalvar.line_match_bytes, new_output)][:-1], debug_mode, is_stderr=block_data[1], matched_lines=changed_lines, failed=failed, do_subst=block_data[2])
+            output+=new_output
             # Print message if foreground process changed and not user input
-            if line_data[2]==True: handle_debug_pgrp(line_data[3])
+            if block_data[2]==True: handle_debug_pgrp(block_data[3])
             # update terminal attributes from what the program sets
-            if line_data[4]!=None: handler.set_host_term_attrs(line_data[4])
+            if block_data[4]!=None: handler.set_host_term_attrs(block_data[4])
             # subst operation and print output
-            handler.write_output(output, is_stderr=line_data[1])
+            handler.write_output(output, is_stderr=block_data[1])
         except _direct_exit: break
         except: 
             if not thread_exception_handled: handle_exception()
