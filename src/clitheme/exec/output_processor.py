@@ -26,7 +26,6 @@ from . import _labeled_print
 # spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp pids
 
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
-# https://docs.python.org/3/library/stdtypes.html#str.splitlines
 
 def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool=False, matched: bool=False, failed: bool=False, do_subst: bool=False) -> List[bytes]:
     final_lines=[]
