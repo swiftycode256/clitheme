@@ -72,7 +72,8 @@ db_version=6
 ## clitheme-exec timeout value for each output substitution operation
 output_subst_timeout=0.4
 
-newlines=(b'\n',b'\r',b'\r\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
+# '\r\n' MUST come before '\r' and '\n' characters
+newlines=(b'\r\n',b'\r',b'\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
 
 ## Frontend domain name and app name
 fd_domain_name="swiftycode"

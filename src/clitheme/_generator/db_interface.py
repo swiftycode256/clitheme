@@ -232,6 +232,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # Convert to str if possible
     try: content_str=content_str.decode('utf-8')
     except: pass
+    assert len(content_str)>0, "Empty content string"
 
     encountered_ids=set()
     # endmatchhere checking algorithm:
@@ -239,17 +240,20 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     # - After each substitution, mark affected range in condition map as '1'
     # - When file ID changes, reset condition mapping (re-occurring ID should never happen)
     # -> Check if affected *lines* in the substitution contains '1'
-    if type(content_str)==bytes: nl_match=b'['+b''.join(_globalvar.newlines)+b']'
-    else: nl_match=rf"[{''.join(s.decode('utf-8') for s in _globalvar.newlines)}]"
+    line_match_bytes=b'.*?('+b'|'.join(_globalvar.newlines)+b'|$)'
+    if type(content_str)==bytes:
+        nl_match=b'['+b''.join(_globalvar.newlines)+b']'
+        line_match=line_match_bytes
+    else:
+        nl_match=rf"[{''.join(s.decode('utf-8') for s in _globalvar.newlines)}]"
+        line_match=rf".*?({'|'.join(s.decode('utf-8') for s in _globalvar.newlines)}|$)"
     encountered_files=set()
     last_file_id=''
-    # > \x00: not replaced; \x01: replaced; [other]: newline character
+    # > \x00: not matched; \x01: matched; \x02: end match here; [other]: newline character
     condition_map=bytearray()
     def init_condition_map():
         nonlocal condition_map
         condition_map=bytearray(len(content_str))
-        for obj in re.finditer(nl_match, content_str): # type: ignore
-            condition_map[obj.start()]=ord(obj.group())
     init_condition_map()
 
     for rule in _fetch_matches(command):
@@ -278,22 +282,23 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             nonlocal condition_map
             # region: Check endmatchhere
             # Determine start range: seek backward before newline is reached
+            assert len(content_str)==len(condition_map)
             line_start=match.start()
             for pos in range(match.start()-1, 0-1, -1):
-                ch=condition_map[pos]
-                if ch not in (0,1) and condition_map[pos:pos+2]!=b'\r\n': # Newline character
+                ch=content_str[pos]
+                if ch not in (0,1) and content_str[pos:pos+2] not in (b'\r\n','\r\n'): # Newline character
                     break
                 else: line_start=pos
             # Determine end range: seek forward after newline is reached
             line_end=match.end()
-            for pos in range(match.end(), len(condition_map)+1):
-                ch=condition_map[pos-1]
+            for pos in range(match.end(), len(content_str)+1):
+                ch=content_str[pos-1]
                 line_end=pos
                 if ch not in (0,1): # Newline character
-                    if condition_map[pos-1:pos-1+2]==b'\r\n':
+                    if content_str[pos-1:pos-1+2] in (b'\r\n', '\r\n'):
                         line_end=pos+1
                     break
-            if re.compile(b'\x01').search(condition_map, line_start, line_end)!=None:
+            if re.compile(b'\x02').search(condition_map, line_start, line_end)!=None:
                 return match.group() # Original string if marked sections found
             # endregion
 
@@ -305,16 +310,15 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             if rule.is_regex: new_str=match.expand(sub)
             else: new_str=sub
             
-            # region: Update condition map if endmatchhere is set
-            # \x01 and \x00 for T/F endmatchhere condition
-            sub=bytearray([rule.end_match_here==True]*len(new_str)) # Sub pattern length
-            for obj in re.finditer(nl_match, new_str): # type: ignore
-                sub[obj.start()]=ord(obj.group()) # Replace newline characters
-            new_map, count=re.subn(rb'(?<=\A.{'+str(match.start()).encode()+b'})'+ \
-                                b'.{'+str(match.end()-match.start()).encode()+b'}',
-                                sub, condition_map)
-            assert count==1, f"{'No match found' if count==0 else 'Extra matches'} for updating condition map"
-            condition_map=bytearray(new_map)
+            # region: Update new condition map
+            # \x02 and \x01 for T/F endmatchhere condition
+            nonlocal new_condition_map, new_condition_map_offset
+            sub=bytearray([(rule.end_match_here==True)+1]*len(new_str)) # Sub pattern length
+            new_condition_map=\
+                new_condition_map[:match.start()+new_condition_map_offset] \
+                +sub \
+                +new_condition_map[match.end()+new_condition_map_offset:]
+            new_condition_map_offset+=len(sub)-(match.end()-match.start())
             # endregion
 
             nonlocal matched; matched=True
@@ -324,29 +328,36 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         sub_pattern=rule.substitute_pattern
 
         flags=re.MULTILINE
+        new_condition_map=condition_map
+        new_condition_map_offset=0
         if rule.match_is_multiline:
-            # Perform sub on all lines
-            content_str=re.sub(match_pattern, subst, content_str, flags=flags) # type: ignore
+            # Search in entire block
+            line_lengths=[len(content_str)]
         else:
-            # Single line matching
-            offset=0
-            line_lens=[len(line) for line in content_str.splitlines()]
-            cur_start=0
-            for length in line_lens:
-                # Perform sub on each line
-                obj_list=list(re.compile(match_pattern, flags=flags) \
-                    .finditer(content_str, cur_start+offset, cur_start+offset+length)) # type: ignore
-                for obj in obj_list:
-                    sub=subst(obj)
-                    content_str=content_str[:obj.start()+offset]+sub+content_str[obj.end()+offset:] # type: ignore
-                    offset+=len(sub)-(obj.end()-obj.start())
-                cur_start+=length
+            # Search in individual lines
+            line_lengths=[len(m.group()) for m in re.finditer(line_match, content_str)] # type: ignore
+            # The EOL delimiter might match empty string at end of line
+            if line_lengths[-1]==0: line_lengths.pop(-1)
+        new_str=content_str
+        offset=0
+        cur_start=0
+        for length in line_lengths:
+            # Perform sub on each line
+            obj_list=list(re.compile(match_pattern, flags=flags) \
+                .finditer(content_str, cur_start, cur_start+length)) # type: ignore
+            for obj in obj_list:
+                sub=subst(obj)
+                new_str=new_str[:obj.start()+offset]+sub+new_str[obj.end()+offset:] # type: ignore
+                offset+=len(sub)-(obj.end()-obj.start())
+            cur_start+=length
+        content_str=new_str
         
         if matched: encountered_ids.add(rule.unique_id)
-        assert len(condition_map)==len(content_str), \
+        assert len(new_condition_map)==len(content_str), \
             f"Length mismatch: {len(condition_map)}!={len(content_str)}"
+        condition_map=new_condition_map
     # endregion
-
+    
     if type(content_str)==str:
         return bytes(content_str, 'utf-8')
     elif type(content_str)==bytes:
