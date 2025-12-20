@@ -9,7 +9,8 @@ from clitheme import _generator, _globalvar
 import shutil
 
 # sample input for testing
-sample_inputs=[("rm: missing operand\ntype rm --help for more information", "rm"),
+sample_inputs=[("rm: missing operand\r\n"
+                "type rm --help for more information", "rm"),
                ("rm: /etc/folder: Permission denied", "rm /etc/folder -rf"),
                ("rm: /etc/file: Permission denied", "rm /etc/folder"), # test multiple phrase detection (substitution should not happen)
                ("cat: /dev/mem: Permission denied","cat /dev/mem"),
@@ -26,11 +27,14 @@ sample_inputs=[("rm: missing operand\ntype rm --help for more information", "rm"
                ("Error: sample message", "/usr/bin/app_example.exe install-stuff"), # test command basename handling in regex
                ("Error: sample message", "app --wef install"),
                ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
-               ("example_app: using recursive directories", "example_app -rlc"), # test smartcmdmatch
-               ("example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
+               ("example_app: using recursive directories\r\n"
+                "example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
 ]
 expected_outputs=[
-    ("rm says: missing arguments and options (>﹏<)\nFor more information, use rm --help (｡ì _ í｡)", "rm 说：缺少参数和选项 (>﹏<)\n关于更多信息，请使用rm --help (｡ì _ í｡)"),
+    ("rm says: missing arguments and options (>﹏<)\n"
+     "For more information, use rm --help (｡ì _ í｡)",
+     "rm 说：缺少参数和选项 (>﹏<)\n"
+     "关于更多信息，请使用rm --help (｡ì _ í｡)"),
     ("rm says: Access denied to /etc/folder! ಥ_ಥ", "rm 说：文件\"/etc/folder\"拒绝访问！ಥ_ಥ"),
     ("rm: /etc/file: Permission denied",),
     ("cat says: Access denied to /dev/mem! ಥ_ಥ", "cat 说：文件\"/dev/mem\"拒绝访问！ಥ_ಥ"),
@@ -46,9 +50,13 @@ expected_outputs=[
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
-    ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)", "o(≧v≦)o example_app 说： 正在使用子路径！(｡ì _ í｡)"),
-    ("o(≧v≦)o example_app says: using list options! (⊙ω⊙)", "o(≧v≦)o example_app 说： 正在使用列表选项！(⊙ω⊙)"),
+    ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)\n"
+     "o(≧v≦)o example_app says: using list options! (⊙ω⊙)",
+     "o(≧v≦)o example_app 说： 正在使用recursive路径！(｡ì _ í｡)\n"
+     "o(≧v≦)o example_app 说： 正在使用列表options！(⊙ω⊙)"),
 ]
+assert len(sample_inputs)==len(expected_outputs), \
+    "Sample inputs and expected outputs array have different lengths"
 # substitute patterns
 substrules_file=r"""
 {header_section}
@@ -140,28 +148,30 @@ substrules_file=r"""
             locale:zh_CN \g<shell> 说：不允许的操作！ಥ_ಥ
         [/subst_regex]
 
+    # test substchar
+    set_options substchar
+    set_options smartcmdmatch
+    filter_cmd example_app -rl
+        [subst_regex>>
+            ^example_app: using (.+) directories
+            ^example_app: using list (.+)
+        <<subst_regex]
+            # \x21=!
+            [locale] default
+                example_app: using \g<1> directories{{[x21]}} (｡ì _ í｡)
+                example_app: using list \g<2>! (⊙ω⊙)
+            [/locale]
+            [locale] zh_CN
+                example_app: 正在使用\g<1>路径！(｡ì _ í｡)
+                example_app: 正在使用列表\g<2>！(⊙ω⊙)
+            [/locale]
+        [/subst_regex]
     set_options normalcmdmatch
     filter_cmd example_app
         [subst_string] example_app:
             locale:default o(≧v≦)o example_app says:
             locale:zh_CN o(≧v≦)o example_app 说：
         [/subst_string]
-
-    # test substchar
-    set_options substchar
-    set_options smartcmdmatch
-    filter_cmd example_app -r
-        [subst_string] using recursive directories
-            # \x21=!
-            locale:default using recursive directories{{[x21]}} (｡ì _ í｡)
-            locale:zh_CN 正在使用子路径！(｡ì _ í｡)
-        [/subst_string]
-    filter_cmd example_app -l
-        [subst_string] using list options
-            locale:default using list options! (⊙ω⊙)
-            locale:zh_CN 正在使用列表选项！(⊙ω⊙)
-        [/subst_string]
-    set_options normalcmdmatch
 {/substrules_section}
 """
 
