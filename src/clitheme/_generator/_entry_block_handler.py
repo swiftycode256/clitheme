@@ -78,7 +78,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             ))
         elif phrases[0]==start_phrase.replace(']','>>') and is_substrules:
             # e.g. '[subst_regex>>' syntax
-            assert re.match(r"^\[.+\]$", phrases[0])!=None, "Start phrase doesn't follow [<name>] format"
+            assert re.match(r"^\[.+\]$", start_phrase)!=None, "Start phrase doesn't follow [<name>] format"
             self.check_extra_args(phrases, 1)
             begin_line_number=self.linenum()+1
             # Only allow indent options in this block input

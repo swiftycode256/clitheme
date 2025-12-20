@@ -48,10 +48,20 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
     db_interface.debug_mode=not self.silence_warn
     while self.goto_next_line():
         phrases=self.get_current_line().split()
-        if phrases[0] in ("[filter_cmds]", "[filter_commands]", "[filter_cmds_regex]", "[filter_commands_regex]"):
+        subst_pat=re.fullmatch(r"\[(?P<name>subst(itute)?_(string|regex))(\]|>>)", phrases[0])
+        if subst_pat!=None:
+            options={"effective_commands": copy.copy(command_filters),
+                      "command_is_regex": command_filter_is_regex,
+                      "is_regex": re.fullmatch(r"\[subst(itute)?_regex(\]|>>)", phrases[0])!=None,
+                      "strictness": command_filter_strictness}
+            self.handle_entry(
+                start_phrase=f"[{subst_pat.group('name')}]",
+                end_phrase=f"[/{subst_pat.group('name')}]",
+                is_substrules=True, substrules_options=options)
+        elif re.fullmatch(r"\[filter_(cmds|commands)(_regex)?\]", phrases[0])!=None:
             self.check_extra_args(phrases, 1)
             reset_outline_foregroundonly()
-            command_filter_is_regex=phrases[0] in ("[filter_commands_regex]", "[filter_cmds_regex]")
+            command_filter_is_regex=re.fullmatch(r"\[filter_(cmds|commands)_regex\]", phrases[0])!=None
 
             prev_linenum=self.linenum()
             # read commands
@@ -105,12 +115,6 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             self.check_extra_args(phrases, 1)
             reset_outline_foregroundonly()
             command_filters=None
-        elif phrases[0] in ("[subst_string]", "[substitute_string]", "[subst_regex]", "[substitute_regex]"):
-            options={"effective_commands": copy.copy(command_filters),
-                      "command_is_regex": command_filter_is_regex,
-                      "is_regex": phrases[0] in ("[subst_regex]", "[substitute_regex]"),
-                      "strictness": command_filter_strictness}
-            self.handle_entry(start_phrase=phrases[0], end_phrase=phrases[0].replace('[', '[/'), is_substrules=True, substrules_options=options)
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)
