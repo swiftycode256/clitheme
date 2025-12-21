@@ -37,7 +37,8 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
             line=re.sub(rb'\r(?!\n)', wrapper.replace(b'{}',rb'\\r'), line)
             line=re.sub(rb'(?<!\r)\n', wrapper.replace(b'{}',rb'\\n')+b'\n', line)
-            line=line.replace(b'\r\n', wrapper.replace(b'{}',rb'\r\n')+b'\r\n')
+            for c in (r'\r\n', r'\v', r'\f', r'\x1c', r'\x1d', r'\x1e'):
+                line=line.replace(eval(f"b'{c}'"), wrapper.replace(b'{}', c.encode('utf-8'))+eval(f"b'{c}'"))
             line=line.replace(b'\b', wrapper.replace(b'{}',rb'\x08'))
             line=line.replace(b'\a', wrapper.replace(b'{}',rb'\x07'))
         if do_subst and "newlines" in debug_mode:
