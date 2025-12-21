@@ -163,7 +163,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
         encountered_ids.add(entry.entry_name.id)
 
-        if is_substrules: check_valid_pattern(match_pattern, entry.content_line_number)
+        if is_substrules: check_valid_pattern(match_pattern, entry.entry_name.line_number)
         else:
             # Prevent leading . & prevent /,\ in entry name
             if _globalvar.sanity_check(match_pattern)==False:
