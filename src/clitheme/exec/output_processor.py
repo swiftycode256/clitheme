@@ -257,6 +257,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             output=b''
             # subst operation
             new_output=block_data[0]
+            changed_lines=set()
             failed=False
             foreground_pid=block_data[3]
             if do_subst and block_data[2]==True:
