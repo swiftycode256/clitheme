@@ -64,6 +64,12 @@ substrules_file=r"""
 {/header_section}
 {substrules_section}
     filter_cmd rm
+        # Single line pattern should not match multiple lines
+        [subst_regex] rm: missing operand\r\ntype rm --help for more information
+            [locale] default zh_CN
+                Should not match
+            [/locale]
+        [/subst_regex]
         [subst_string>>
             rm: missing operand
             type rm --help for more information
@@ -161,8 +167,9 @@ substrules_file=r"""
                 example_app: using \g<1> directories{{[x21]}} (｡ì _ í｡)
                 example_app: using list \g<2>! (⊙ω⊙)
             [/locale]
+            # \uff01=！
             [locale] zh_CN
-                example_app: 正在使用\g<1>路径！(｡ì _ í｡)
+                example_app: 正在使用\g<1>路径{{[uff01]}}(｡ì _ í｡)
                 example_app: 正在使用列表\g<2>！(⊙ω⊙)
             [/locale]
         [/subst_regex]
