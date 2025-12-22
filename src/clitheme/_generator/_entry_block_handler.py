@@ -21,8 +21,6 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     self: _parser_handlers.GeneratorObject=obj
     # substrules_options: {effective_commands: list, command_is_regex: bool, is_regex: bool, strictness: int}
 
-    names_processed=False # Set to True when no more entry names are being specified
-
     class EntryName(NamedTuple):
         value: str
         is_multiline: bool
@@ -51,22 +49,15 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
 
+    names_processed=False # Set to True when no more entry names are allowed
     self.lineindex-=1 # Process current line
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         line_content=self.get_current_line()
-        # Support specifying multiple match pattern/entry names in one definition block
-        if phrases[0]!=start_phrase and not names_processed:
-            names_processed=True # Prevent specifying it after other definition syntax
-            # --Process entry names--
-            for x in range(len(entry_names)):
-                each_entry=entry_names[x]
-                name=each_entry[0]
-                if not is_substrules:
-                    if self.in_subsection!="": name=self.in_subsection+" "+name
-                    if self.in_domainapp!="": name=self.in_domainapp+" "+name
-                entry_names[x]=EntryName(value=name, is_multiline=each_entry.is_multiline, id=each_entry.id, line_number=each_entry.line_number)
-                    
+        # Stop allowing more match pattern/entry names after other content
+        if phrases[0] not in (start_phrase, start_phrase.replace(']', '>>')):
+            names_processed=True
+
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
@@ -76,7 +67,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 id=uuid.uuid4(),
                 line_number=str(self.linenum())
             ))
-        elif phrases[0]==start_phrase.replace(']','>>') and is_substrules:
+        elif phrases[0]==start_phrase.replace(']','>>') and not names_processed and is_substrules:
             # e.g. '[subst_regex>>' syntax
             assert re.match(r"^\[.+\]$", start_phrase)!=None, "Start phrase doesn't follow [<name>] format"
             self.check_extra_args(phrases, 1)
@@ -187,6 +178,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=sys.exc_info()[1]))
         else:
             target_entry=copy.copy(match_pattern).strip()
-            if entry.locale!=None:
-                target_entry+="__"+entry.locale
+            if entry.locale!=None: target_entry+="__"+entry.locale
+            if self.in_subsection!="": target_entry=self.in_subsection+" "+target_entry
+            if self.in_domainapp!="": target_entry=self.in_domainapp+" "+target_entry
             self.add_entry(self.datapath, target_entry, entry.content, entry.content_line_number)
