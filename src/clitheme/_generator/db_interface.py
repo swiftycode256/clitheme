@@ -339,19 +339,28 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
             line_lengths=[len(m.group()) for m in re.finditer(line_match, content_str)] # type: ignore
             # The EOL delimiter might match empty string at end of line
             if line_lengths[-1]==0: line_lengths.pop(-1)
-        new_str=content_str
+        new_content=content_str
         offset=0
         cur_start=0
         for length in line_lengths:
+            assert cur_start==0 or content_str[cur_start-1:cur_start] in \
+                _globalvar.newlines+tuple(s.decode('utf-8') for s in _globalvar.newlines), \
+                "Previous character is not a newline"
+            if cur_start>0:
+                # Replace previous newline character with '\n' to ensure re.MULTILINE works
+                match_str=content_str[:cur_start-1]+(b'\n' if type(content_str)==bytes else '\n')+content_str[cur_start:] # type: ignore
+            else: match_str=content_str
+            assert len(match_str)==len(content_str), \
+                f"Length mismatch: {len(match_str)}!={len(content_str)}"
             # Perform sub on each line
             obj_list=list(re.compile(match_pattern, flags=flags) \
-                .finditer(content_str, cur_start, cur_start+length)) # type: ignore
+                .finditer(match_str, cur_start, cur_start+length)) # type: ignore
             for obj in obj_list:
                 sub=subst(obj)
-                new_str=new_str[:obj.start()+offset]+sub+new_str[obj.end()+offset:] # type: ignore
+                new_content=new_content[:obj.start()+offset]+sub+new_content[obj.end()+offset:] # type: ignore
                 offset+=len(sub)-(obj.end()-obj.start())
             cur_start+=length
-        content_str=new_str
+        content_str=new_content
         
         if matched: encountered_ids.add(rule.unique_id)
         assert len(new_condition_map)==len(content_str), \
