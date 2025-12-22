@@ -77,9 +77,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         success=len(phrases)>=count
 
         # Check processed phrases after the first
-        processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
-        # If rest of content only contains spaces
-        if check_processed and len(processed.split())+1<count: success=False
+        if check_processed:
+            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+            # If rest of content only contains spaces
+            if len(processed.split())+1<count: success=False
 
         if not success:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
@@ -89,8 +90,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         success=len(phrases)<=count
 
         # Check processed phrases after the first
-        processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
-        if check_processed and len(processed.split())+1>count: success=False
+        if check_processed:
+            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+            # If rest of content only contains spaces
+            if len(processed.split())+1>count: success=False
 
         if not success:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(phrases[0])))
