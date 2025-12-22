@@ -42,12 +42,16 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         first_phrase=phrases[0]
         is_content=True
         if first_phrase in ("begin_header", r"{header_section}"):
+            self.check_extra_args(phrases, 1)
             _header_parser.handle_header_section(self, first_phrase)
         elif first_phrase in ("begin_main", r"{entries_section}"):
+            self.check_extra_args(phrases, 1)
             _entries_parser.handle_entries_section(self, first_phrase)
         elif first_phrase==r"{substrules_section}":
+            self.check_extra_args(phrases, 1)
             _substrules_parser.handle_substrules_section(self, first_phrase)
         elif first_phrase==r"{manpage_section}":
+            self.check_extra_args(phrases, 1)
             _manpage_parser.handle_manpage_section(self, first_phrase)
         elif self.handle_setters(really_really_global=True): pass
         elif first_phrase=="!require_version":
