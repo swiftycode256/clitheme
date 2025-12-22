@@ -52,6 +52,10 @@ in_domainapp swiftycode clitheme
             # locale:default Missing or incomplete header or content sections
             locale:zh_CN 文件缺少或包含不完整的header或内容段落
         [/entry]
+        [entry] unterminated-content-block-err
+            # locale:default Unterminated content block at line {num}
+            locale:zh_CN 第{num}行：未结束的内容段落
+        [/entry]
         [entry] db-regenerate-fail-err
             # locale:default Failed to migrate existing substrules database; try performing the operation without using "--overlay"
             locale:zh_CN 无法升级当前的substrules的数据库；请尝试不使用"--overlay"再次执行此操作

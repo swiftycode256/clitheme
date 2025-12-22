@@ -363,6 +363,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 line=re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
             # write to data
             blockinput_data+="\n"+line
+        else: # File terminated without reaching end phrase
+            self.handle_error(self.fd.feof("unterminated-content-block-err", "Unterminated content block at line {num}", num=begin_line_number-1))
         # remove the extra leading newline
         blockinput_data=re.sub(r"\A\n", "", blockinput_data)
         # remove all whitespaces except common minspaces
