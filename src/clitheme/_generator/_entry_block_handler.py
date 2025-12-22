@@ -81,13 +81,11 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             assert re.match(r"^\[.+\]$", start_phrase)!=None, "Start phrase doesn't follow [<name>] format"
             self.check_extra_args(phrases, 1)
             begin_line_number=self.linenum()+1
-            # Only allow indent options in this block input
             pattern=self.handle_block_input(
                 # e.g. '<<subst_regex]' syntax
                 end_phrase=start_phrase.replace('[', '<<'),
                 preserve_empty_lines=True,
                 preserve_indents=True,
-                disable_char_subst=True, disable_content_subst=True
             )
             entry_names.append(EntryName(
                 value=pattern,
@@ -152,15 +150,16 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     encountered_ids=set()
     for entry in entry_items:
         match_pattern=entry.entry_name.value
-        # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
-        match_pattern=self.handle_subst(match_pattern, 
-                subst_var=opt('substvar'),
-                subst_esc=opt('substesc') and is_substrules,
-                subst_chars=opt('substchar') and is_substrules, 
-                line_number_debug=entry.entry_name.line_number, 
-                # Don't show warnings for the same match_pattern
-                silence_warnings=True if entry.entry_name.id in encountered_ids else (False, not is_substrules, not is_substrules))
-        match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
+        if not entry.entry_name.is_multiline:
+            # substvar MUST come before substesc or "{{ESC}}" in variable content will not be processed
+            match_pattern=self.handle_subst(match_pattern, 
+                    subst_var=opt('substvar'),
+                    subst_esc=opt('substesc') and is_substrules,
+                    subst_chars=opt('substchar') and is_substrules, 
+                    line_number_debug=entry.entry_name.line_number, 
+                    # Don't show warnings for the same match_pattern
+                    silence_warnings=True if entry.entry_name.id in encountered_ids else (False, not is_substrules, not is_substrules))
+            match_pattern=self.handle_linebounds(match_pattern, condition=opt('linebounds'), preserve_indents=is_substrules)
         encountered_ids.add(entry.entry_name.id)
 
         if is_substrules: check_valid_pattern(match_pattern, entry.entry_name.line_number)
