@@ -60,10 +60,10 @@ assert len(sample_inputs)==len(expected_outputs), \
 # substitute patterns
 substrules_file=r"""
 {header_section}
-    name test
+    name: test
 {/header_section}
 {substrules_section}
-    filter_cmd rm
+    <filter_cmd> rm
         # Single line pattern should not match multiple lines
         [subst_regex] rm: missing operand\r\ntype rm --help for more information
             [locale] default zh_CN
@@ -97,8 +97,8 @@ substrules_file=r"""
         [/subst_regex] substvar
 
     # test substvar
-    set_options substvar
-    filter_cmd ls
+    (set_options) substvar
+    <filter_cmd> ls
         # testing repeated entry detection
         [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
             locale:default wef
@@ -107,27 +107,27 @@ substrules_file=r"""
             locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
             locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/subst_regex]
-    unset_filter_cmd
+    <unset_filter_cmd>
 
     # test substesc
-    set_options substesc
-    set_options strictcmdmatch
-    filter_cmd example_app install-stuff
+    (set_options) substesc
+    (set_options) strictcmdmatch
+    <filter_cmd> example_app install-stuff
         [subst_string] Error: sample message
             locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
             locale:zh_CN 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
-    unset_filter_cmd
+    <unset_filter_cmd>
 
     # Test regex filter and substvar
     setvar:pattern app(_example)? (.*)install(-stuff)?
-    filter_cmd_regex {{pattern}}
+    <filter_cmd_regex> {{pattern}}
         [subst_string] Error: sample message
             locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
             locale:zh_CN 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
-    unset_filter_cmd
-    set_options nosubstesc
+    <unset_filter_cmd>
+    (set_options) nosubstesc
     # global substitutions
     [subst_regex] ^Warning:( )
         locale:default o(≧v≦)o Note:\g<1>
@@ -144,8 +144,8 @@ substrules_file=r"""
 
     setvar:style {{[x1b]}}[1;4m
     setvar:orig {{ESC}}[0m
-    set_options exactcmdmatch
-    filter_cmd rm file.ban
+    (set_options) exactcmdmatch
+    <filter_cmd> rm file.ban
         [subst_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
             # test substchar and substesc specified in block
             [locale] default
@@ -155,9 +155,9 @@ substrules_file=r"""
         [/subst_regex]
 
     # test substchar
-    set_options substchar
-    set_options smartcmdmatch
-    filter_cmd example_app -rl
+    (set_options) substchar
+    (set_options) smartcmdmatch
+    <filter_cmd> example_app -rl
         [subst_regex>>
             ^example_app: using (.+) directories
             ^example_app: using list (.+)
@@ -173,8 +173,8 @@ substrules_file=r"""
                 example_app: 正在使用列表\g<2>！(⊙ω⊙)
             [/locale]
         [/subst_regex]
-    set_options normalcmdmatch
-    filter_cmd example_app
+    (set_options) normalcmdmatch
+    <filter_cmd> example_app
         [subst_string] example_app:
             locale:default o(≧v≦)o example_app says:
             locale:zh_CN o(≧v≦)o example_app 说：
