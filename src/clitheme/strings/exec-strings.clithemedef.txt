@@ -7,19 +7,19 @@
 # spell-checker:ignore nosubst
 
 {header_section}
-    name CLItheme message text translations (clitheme-exec)
-    version 2.1
-    locales zh_CN
-    supported_apps clitheme
+    name: CLItheme message text translations (clitheme-exec)
+    version: 2.1
+    locales: zh_CN
+    supported_apps: clitheme
 {/header_section}
 
-set_options linebounds
+(set_options) linebounds
 
 {entries_section}
-in_domainapp |swiftycode clitheme|
+<in_domainapp> |swiftycode clitheme|
     # 用于clitheme-exec --help的字符串定义
     # String entries used for "clitheme-exec --help"
-    in_subsection |exec help-message|
+    <in_subsection> |exec help-message|
         [entry] |usage-str|
             # locale:default |Usage:|
             locale:zh_CN |使用方式：|
@@ -52,7 +52,7 @@ in_domainapp |swiftycode clitheme|
             # locale:default |--nosubst: Do not perform any output substitutions even if a theme is set|
             locale:zh_CN |--nosubst：不进行任何输出替换，即使已设定主题|
         [/entry]
-    in_subsection |exec|
+    <in_subsection> |exec|
         [entry] |windows-version-err|
             # locale:default |Error: Windows 10 version 1809 or later is required ({errmsg})|
             locale:zh_CN |错误：需要Windows 10版本1809或以上版本 ({errmsg})|

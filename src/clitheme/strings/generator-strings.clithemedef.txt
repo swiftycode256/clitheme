@@ -6,17 +6,17 @@
 
 # spell-checker:ignore subdir banphrase startswith
 {header_section}
-    name CLItheme message text translations (generator)
-    version 2.1
-    locales zh_CN
-    supported_apps clitheme
+    name: CLItheme message text translations (generator)
+    version: 2.1
+    locales: zh_CN
+    supported_apps: clitheme
 {/header_section}
 
-set_options linebounds
+(set_options) linebounds
 
 {entries_section}
-in_domainapp |swiftycode clitheme|
-    in_subsection |generator|
+<in_domainapp> |swiftycode clitheme|
+    <in_subsection> |generator|
         # 错误提示
         # error messages
         [entry] |error-str|

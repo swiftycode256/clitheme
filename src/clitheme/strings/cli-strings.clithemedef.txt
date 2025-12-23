@@ -5,17 +5,17 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 {header_section}
-    name CLItheme message text translations (cli)
-    version 2.1
-    locales zh_CN
-    supported_apps clitheme
+    name: CLItheme message text translations (cli)
+    version: 2.1
+    locales: zh_CN
+    supported_apps: clitheme
 {/header_section}
 
-set_options linebounds
+(set_options) linebounds
 
 {entries_section}
-in_domainapp |swiftycode clitheme|
-    in_subsection |cli|
+<in_domainapp> |swiftycode clitheme|
+    <in_subsection> |cli|
         [entry] |no-command|
             # locale:default |Error: no command or option specified|
             locale:zh_CN |错误：没有提供指令或选项|
@@ -46,7 +46,7 @@ in_domainapp |swiftycode clitheme|
         [/entry]
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands
-        in_subsection |cli apply-theme|
+        <in_subsection> |cli apply-theme|
             [entry] |reading-file|
                 # locale:default |==> Reading file {filename}...|
                 locale:zh_CN |==> 正在读取文件{filename}...|
@@ -141,7 +141,7 @@ in_domainapp |swiftycode clitheme|
             [/entry]
         # remove-theme 指令
         # remove-theme command
-        in_subsection |cli remove-theme|
+        <in_subsection> |cli remove-theme|
             [entry] |no-theme-err|
                 # locale:default |Error: no theme currently set|
                 locale:zh_CN |错误：当前没有设定主题|
@@ -162,7 +162,7 @@ in_domainapp |swiftycode clitheme|
             [/entry]
         # show-info 指令
         # show-info command
-        in_subsection |cli show-info|
+        <in_subsection> |cli show-info|
             [entry] |no-theme|
                 # locale:default |No theme currently set|
                 locale:zh_CN |当前没有设定任何主题|
@@ -189,7 +189,7 @@ in_domainapp |swiftycode clitheme|
             [/entry]
         # update-theme 指令
         # update-theme command
-        in_subsection |cli update-theme|
+        <in_subsection> |cli update-theme|
             [entry] |no-theme-err|
                 # locale:default |Error: no theme currently set|
                 locale:zh_CN |错误：当前没有设定主题|
@@ -216,7 +216,7 @@ in_domainapp |swiftycode clitheme|
             [/entry]
         # repair-theme 指令
         # repair-theme command
-        in_subsection |cli repair-theme|
+        <in_subsection> |cli repair-theme|
             [entry] |no-theme-err|
                 # locale:default |Error: no theme currently set|
                 locale:zh_CN |错误：当前没有设定主题|
@@ -244,7 +244,7 @@ in_domainapp |swiftycode clitheme|
 
         # 用于clitheme --help的字符串定义
         # String entries used for "clitheme --help"
-        in_subsection |cli help-message|
+        <in_subsection> |cli help-message|
             [entry] |usage-str|
                 # locale:default |Usage:|
                 locale:zh_CN |使用方式：|

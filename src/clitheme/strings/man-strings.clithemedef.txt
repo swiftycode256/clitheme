@@ -5,17 +5,17 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 {header_section}
-    name CLItheme message text translations (man)
-    version 2.1
-    locales zh_CN
-    supported_apps clitheme
+    name: CLItheme message text translations (man)
+    version: 2.1
+    locales: zh_CN
+    supported_apps: clitheme
 {/header_section}
 
-set_options linebounds
+(set_options) linebounds
 
 {entries_section}
-in_domainapp |swiftycode clitheme|
-    in_subsection |man|
+<in_domainapp> |swiftycode clitheme|
+    <in_subsection> |man|
         [entry] |man-not-installed|
             # locale:default |Error: "man" is not installed on this system|
             locale:zh_CN |错误："man"未安装在此系统中|
