@@ -12,113 +12,115 @@
     supported_apps clitheme
 {/header_section}
 
+set_options linebounds
+
 {entries_section}
-in_domainapp swiftycode clitheme 
-    in_subsection generator
+in_domainapp |swiftycode clitheme|
+    in_subsection |generator|
         # 错误提示
         # error messages
-        [entry] error-str
-            # locale:default Syntax error: {msg}
-            locale:zh_CN 语法错误：{msg}
+        [entry] |error-str|
+            # locale:default |Syntax error: {msg}|
+            locale:zh_CN |语法错误：{msg}|
         [/entry]
         
         # 以下定义会是上方定义"{msg}"中的内容
         # The following definitions are the contents of "{msg}" in the above definition
-        [entry] subsection-conflict-err
-            # locale:default Line {num}: cannot create subsection "{name}" because an entry with the same name already exists
-            locale:zh_CN 第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在
+        [entry] |subsection-conflict-err|
+            # locale:default |Line {num}: cannot create subsection "{name}" because an entry with the same name already exists|
+            locale:zh_CN |第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在|
         [/entry]
-        [entry] entry-conflict-err
-            # locale:default Line {num}: cannot create entry "{name}" because a subsection with the same name already exists
-            locale:zh_CN 第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在
+        [entry] |entry-conflict-err|
+            # locale:default |Line {num}: cannot create entry "{name}" because a subsection with the same name already exists|
+            locale:zh_CN |第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在|
         [/entry]
-        [entry] extra-arguments-err
-            # locale:default Extra arguments after "{phrase}" on line {num}
-            locale:zh_CN 第{num}行："{phrase}"后的参数太多
+        [entry] |extra-arguments-err|
+            # locale:default |Extra arguments after "{phrase}" on line {num}|
+            locale:zh_CN |第{num}行："{phrase}"后的参数太多|
         [/entry]
-        [entry] repeated-section-err
-            # locale:default Repeated {section} section at line {num}
-            locale:zh_CN 第{num}行：重复的{phrase}段落
+        [entry] |repeated-section-err|
+            # locale:default |Repeated {section} section at line {num}|
+            locale:zh_CN |第{num}行：重复的{phrase}段落|
         [/entry]
-        [entry] invalid-phrase-err
-            # locale:default Unexpected "{phrase}" on line {num}
-            locale:zh_CN 第{num}行：无效的"{phrase}"语句
+        [entry] |invalid-phrase-err|
+            # locale:default |Unexpected "{phrase}" on line {num}|
+            locale:zh_CN |第{num}行：无效的"{phrase}"语句|
         [/entry]
-        [entry] not-enough-args-err
-            # locale:default Not enough arguments for "{phrase}" at line {num}
-            locale:zh_CN 第{num}行："{phrase}"后参数不够
+        [entry] |not-enough-args-err|
+            # locale:default |Not enough arguments for "{phrase}" at line {num}|
+            locale:zh_CN |第{num}行："{phrase}"后参数不够|
         [/entry]
-        [entry] incomplete-section-err
-            # locale:default Missing or incomplete header or content sections
-            locale:zh_CN 文件缺少或包含不完整的header或内容段落
+        [entry] |incomplete-section-err|
+            # locale:default |Missing or incomplete header or content sections|
+            locale:zh_CN |文件缺少或包含不完整的header或内容段落|
         [/entry]
-        [entry] unterminated-content-block-err
-            # locale:default Unterminated content block at line {num}
-            locale:zh_CN 第{num}行：未结束的内容段落
+        [entry] |unterminated-content-block-err|
+            # locale:default |Unterminated content block at line {num}|
+            locale:zh_CN |第{num}行：未结束的内容段落|
         [/entry]
-        [entry] db-regenerate-fail-err
-            # locale:default Failed to migrate existing substrules database; try performing the operation without using "--overlay"
-            locale:zh_CN 无法升级当前的substrules的数据库；请尝试不使用"--overlay"再次执行此操作
+        [entry] |db-regenerate-fail-err|
+            # locale:default |Failed to migrate existing substrules database; try performing the operation without using "--overlay"|
+            locale:zh_CN |无法升级当前的substrules的数据库；请尝试不使用"--overlay"再次执行此操作|
         [/entry]
-        [entry] invalid-version-err
-            # locale:default Invalid version information "{ver}" on line {num}
-            locale:zh_CN 第{num}行：无效版本信息"{ver}"
+        [entry] |invalid-version-err|
+            # locale:default |Invalid version information "{ver}" on line {num}|
+            locale:zh_CN |第{num}行：无效版本信息"{ver}"|
         [/entry]
-        [entry] unsupported-version-err
-            # locale:default Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)
-            locale:zh_CN 当前版本的CLItheme（{cur_ver}）不支持此文件（需要 {req_ver} 或更高版本）
+        [entry] |unsupported-version-err|
+            # locale:default |Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)|
+            locale:zh_CN |当前版本的CLItheme（{cur_ver}）不支持此文件（需要 {req_ver} 或更高版本）|
         [/entry]
-        [entry] phrase-precedence-err
-            # locale:default Line {num}: header macro "{phrase}" must be specified before other lines
-            locale:zh_CN 第{num}行：头定义"{phrase}"必须在其他行之前声明
+        [entry] |phrase-precedence-err|
+            # locale:default |Line {num}: header macro "{phrase}" must be specified before other lines|
+            locale:zh_CN |第{num}行：头定义"{phrase}"必须在其他行之前声明|
         [/entry]
         # 选项错误提示信息
         # Options error messages
-        [entry] option-not-allowed-err
-            # locale:default Option "{phrase}" not allowed here at line {num}
-            locale:zh_CN 第{num}行：选项"{phrase}"不允许在这里指定
+        [entry] |option-not-allowed-err|
+            # locale:default |Option "{phrase}" not allowed here at line {num}|
+            locale:zh_CN |第{num}行：选项"{phrase}"不允许在这里指定|
         [/entry]
-        [entry] unknown-option-err
-            # locale:default Unknown option "{phrase}" on line {num}
-            locale:zh_CN 第{num}行：未知选项"{phrase}"
+        [entry] |unknown-option-err|
+            # locale:default |Unknown option "{phrase}" on line {num}|
+            locale:zh_CN |第{num}行：未知选项"{phrase}"|
         [/entry]
-        [entry] option-without-value-err
-            # locale:default No value specified for option "{phrase}" on line {num}
-            locale:zh_CN 第{num}行：选项"{phrase}"未指定数值
+        [entry] |option-without-value-err|
+            # locale:default |No value specified for option "{phrase}" on line {num}|
+            locale:zh_CN |第{num}行：选项"{phrase}"未指定数值|
         [/entry]
-        [entry] optional-value-not-int-err 
-            # locale:default The value specified for option "{phrase}" is not an integer on line {num}
-            locale:zh_CN 第{num}行：选项"{phrase}"指定的数值不是整数
+        [entry] |optional-value-not-int-err|
+            # locale:default |The value specified for option "{phrase}" is not an integer on line {num}|
+            locale:zh_CN |第{num}行：选项"{phrase}"指定的数值不是整数|
         [/entry]
-        [entry] option-conflict-err
-            # locale:default The option "{option1}" can't be set at the same time with "{option2}" on line {num}
-            locale:zh_CN 第{num}行：选项"{option1}"和"{option2}"不能同时指定
+        [entry] |option-conflict-err|
+            # locale:default |The option "{option1}" can't be set at the same time with "{option2}" on line {num}|
+            locale:zh_CN |第{num}行：选项"{option1}"和"{option2}"不能同时指定|
         [/entry]
-        [entry] bad-match-pattern-err
-            # locale:default Bad match pattern at line {num} ({error_msg})
-            locale:zh_CN 第{num}行：无效的匹配正则表达式（{error_msg}）
+        [entry] |bad-match-pattern-err|
+            # locale:default |Bad match pattern at line {num} ({error_msg})|
+            locale:zh_CN |第{num}行：无效的匹配正则表达式（{error_msg}）|
         [/entry]
-        [entry] bad-cmd-filter-pattern-err
-            # locale:default Bad command filter pattern at line {num} ({error_msg})
-            locale:zh_CN 第{num}行：无效的命令限制正则表达式（{error_msg}）
+        [entry] |bad-cmd-filter-pattern-err|
+            # locale:default |Bad command filter pattern at line {num} ({error_msg})|
+            locale:zh_CN |第{num}行：无效的命令限制正则表达式（{error_msg}）|
         [/entry]
-        [entry] bad-subst-pattern-err
-            # locale:default Bad substitute pattern at line {num} ({error_msg})
-            locale:zh_CN 第{num}行：无效的替换正则表达式（{error_msg}）
+        [entry] |bad-subst-pattern-err|
+            # locale:default |Bad substitute pattern at line {num} ({error_msg})|
+            locale:zh_CN |第{num}行：无效的替换正则表达式（{error_msg}）|
         [/entry]
-        [entry] linebounds-format-err
-            # locale:default Invalid line boundary format at line {num}
-            locale:zh_CN 第{num}行：无效行边界格式
+        [entry] |linebounds-format-err|
+            # locale:default |Invalid line boundary format at line {num}|
+            locale:zh_CN |第{num}行：无效行边界格式|
         [/entry]
-        [entry] bad-var-name-err
-            # locale:default Line {num}: "{name}" is not a valid variable name
-            locale:zh_CN 第{num}行："{name}"不是一个有效的变量名称
+        [entry] |bad-var-name-err|
+            # locale:default |Line {num}: "{name}" is not a valid variable name|
+            locale:zh_CN |第{num}行："{name}"不是一个有效的变量名称|
         [/entry]
-        [entry] manpage-subdir-file-conflict-err
-            # locale:default Line {num}: conflicting files and subdirectories; please check previous definitions
-            locale:zh_CN 第{num}行：子路径和文件有冲突；请检查之前的定义
+        [entry] |manpage-subdir-file-conflict-err|
+            # locale:default |Line {num}: conflicting files and subdirectories; please check previous definitions|
+            locale:zh_CN |第{num}行：子路径和文件有冲突；请检查之前的定义|
         [/entry]
-        [entry] include-file-read-err
+        [entry] |include-file-read-err|
             # [locale] default
             #     Line {num}: unable to read file "{filepath}":
             #     {error_msg}
@@ -128,103 +130,103 @@ in_domainapp swiftycode clitheme
                 {error_msg}
             [/locale]
         [/entry]
-        [entry] include-file-missing-phrase-err
-            # locale:default Missing "as <filename>" phrase on next line of line {num}
-            locale:zh_CN 第{num}行：在下一行缺少"as <文件名>"语句
+        [entry] |include-file-missing-phrase-err|
+            # locale:default |Missing "as <filename>" phrase on next line of line {num}|
+            locale:zh_CN |第{num}行：在下一行缺少"as <文件名>"语句|
         [/entry]
-        [entry] missing-info-err
-            # locale:default {sect_name} section missing required entries: {entries}
-            locale:zh_CN {sect_name}段落缺少必要条目：{entries}
+        [entry] |missing-info-err|
+            # locale:default |{sect_name} section missing required entries: {entries}|
+            locale:zh_CN |{sect_name}段落缺少必要条目：{entries}|
         [/entry]
         # 警告提示
         # Warning messages
-        [entry] warning-str
-            # locale:default Warning: {msg}
-            locale:zh_CN 警告：{msg}
+        [entry] |warning-str|
+            # locale:default |Warning: {msg}|
+            locale:zh_CN |警告：{msg}|
         [/entry]
         
         # 以下定义会是上方定义"{msg}"中的内容
         # The following definitions are the contents of "{msg}" in the above definition
-        [entry] repeated-entry-warn
-            # locale:default Line {num}: repeated entry "{name}", overwriting
-            locale:zh_CN 第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖
+        [entry] |repeated-entry-warn|
+            # locale:default |Line {num}: repeated entry "{name}", overwriting|
+            locale:zh_CN |第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖|
         [/entry]
-        [entry] repeated-substrules-warn
-            # locale:default Repeated substrules entry at line {num}, overwriting
-            locale:zh_CN 第{num}行：重复的substrules定义；之前的定义内容将会被覆盖
+        [entry] |repeated-substrules-warn|
+            # locale:default |Repeated substrules entry at line {num}, overwriting|
+            locale:zh_CN |第{num}行：重复的substrules定义；之前的定义内容将会被覆盖|
         [/entry]
-        [entry] repeated-header-warn
-            # locale:default Line {num}: repeated header info "{name}", overwriting
-            locale:zh_CN 第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖
+        [entry] |repeated-header-warn|
+            # locale:default |Line {num}: repeated header info "{name}", overwriting|
+            locale:zh_CN |第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖|
         [/entry]
-        [entry] syntax-phrase-deprecation-warn
-            # locale:default Line {num}: phrase "{old_phrase}" is deprecated in this version; please use "{new_phrase}" instead
-            locale:zh_CN 第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"
+        [entry] |syntax-phrase-deprecation-warn|
+            # locale:default |Line {num}: phrase "{old_phrase}" is deprecated in this version; please use "{new_phrase}" instead|
+            locale:zh_CN |第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"|
         [/entry]
-        [entry] invalid-charcode-warn
-            # locale:default Line {num}: invalid character code "{name}", not performing substitution
-            locale:zh_CN 第{num}行：无效字符代码"{name}"，不会进行替换
+        [entry] |invalid-charcode-warn|
+            # locale:default |Line {num}: invalid character code "{name}", not performing substitution|
+            locale:zh_CN |第{num}行：无效字符代码"{name}"，不会进行替换|
         [/entry]
-        [entry] invalid-substchar-format-warn
-            # locale:default Line {num}: invalid substchar format "{name}", not performing substitution
-            locale:zh_CN 第{num}行：无效的substchar格式"{name}"，不会进行替换
+        [entry] |invalid-substchar-format-warn|
+            # locale:default |Line {num}: invalid substchar format "{name}", not performing substitution|
+            locale:zh_CN |第{num}行：无效的substchar格式"{name}"，不会进行替换|
         [/entry]
-        [entry] unknown-variable-warn
-            # locale:default Line {num}: unknown variable "{name}", not performing substitution
-            locale:zh_CN 第{num}行：未知变量名称"{name}"，不会进行替换
+        [entry] |unknown-variable-warn|
+            # locale:default |Line {num}: unknown variable "{name}", not performing substitution|
+            locale:zh_CN |第{num}行：未知变量名称"{name}"，不会进行替换|
         [/entry]
-        [entry] repeated-manpage-warn
-            # locale:default Line {num}: repeated manpage file, overwriting
-            locale:zh_CN 第{num}行：重复的manpage文件；之前的文件内容将会被覆盖
+        [entry] |repeated-manpage-warn|
+            # locale:default |Line {num}: repeated manpage file, overwriting|
+            locale:zh_CN |第{num}行：重复的manpage文件；之前的文件内容将会被覆盖|
         [/entry]
-        [entry] set-substvar-warn
-            # locale:default Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled
-            locale:zh_CN 第{num}行：尝试引用定义的变量，但"substvar"选项未被启用
+        [entry] |set-substvar-warn|
+            # locale:default |Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled|
+            locale:zh_CN |第{num}行：尝试引用定义的变量，但"substvar"选项未被启用|
         [/entry]
-        [entry] set-substesc-warn
+        [entry] |set-substesc-warn|
             # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
-            # locale:default Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled
-            locale:zh_CN Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用
+            # locale:default |Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled|
+            locale:zh_CN |Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用|
         [/entry]
-        [entry] set-substchar-warn
-            # locale:default Line {num}: attempted to use character substitution, but "substchar" option is not enabled
-            locale:zh_CN 第{num}行：尝试使用字符替换，但"substchar"选项未被启用
+        [entry] |set-substchar-warn|
+            # locale:default |Line {num}: attempted to use character substitution, but "substchar" option is not enabled|
+            locale:zh_CN |第{num}行：尝试使用字符替换，但"substchar"选项未被启用|
         [/entry]
-        [entry] set-linebounds-warn
-            # locale:default Line {num}: Attempted to use line boundaries, but "linebounds" option is not enabled
-            locale:zh_CN 第{num}行：尝试使用行边界，但"linebounds"选项未被启用
+        [entry] |set-linebounds-warn|
+            # locale:default |Line {num}: Attempted to use line boundaries, but "linebounds" option is not enabled|
+            locale:zh_CN |第{num}行：尝试使用行边界，但"linebounds"选项未被启用|
         [/entry]
         # 路径检查功能提示
         # Sanity check feature messages
-        [entry] sanity-check-entry-err
-            # locale:default Line {num}: entry subsections/names {sanitycheck_msg}
-            locale:zh_CN 第{num}行：定义路径名称{sanitycheck_msg}
+        [entry] |sanity-check-entry-err|
+            # locale:default |Line {num}: entry subsections/names {sanitycheck_msg}|
+            locale:zh_CN |第{num}行：定义路径名称{sanitycheck_msg}|
         [/entry]
-        [entry] sanity-check-domainapp-err
-            # locale:default Line {num}: domain and app names {sanitycheck_msg}
-            locale:zh_CN 第{num}行：开发者和应用程序名称{sanitycheck_msg}
+        [entry] |sanity-check-domainapp-err|
+            # locale:default |Line {num}: domain and app names {sanitycheck_msg}|
+            locale:zh_CN |第{num}行：开发者和应用程序名称{sanitycheck_msg}|
         [/entry]
-        [entry] sanity-check-subsection-err
-            # locale:default Line {num}: subsection names {sanitycheck_msg}
-            locale:zh_CN 第{num}行：子路径名称{sanitycheck_msg}
+        [entry] |sanity-check-subsection-err|
+            # locale:default |Line {num}: subsection names {sanitycheck_msg}|
+            locale:zh_CN |第{num}行：子路径名称{sanitycheck_msg}|
         [/entry]
-        [entry] sanity-check-manpage-err
-            # locale:default Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories
-            locale:zh_CN 第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径
+        [entry] |sanity-check-manpage-err|
+            # locale:default |Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories|
+            locale:zh_CN |第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径|
         [/entry]
         # 以下提示会是上方定义中"{sanitycheck_msg}"的内容
         # The following messages are the contents of "{sanitycheck_msg}" in the above entries
-        [entry] sanity-check-msg-banphrase-err
-            # locale:default cannot contain '{char}'
-            locale:zh_CN 不能包含'{char}'
+        [entry] |sanity-check-msg-banphrase-err|
+            # locale:default |cannot contain '{char}'|
+            locale:zh_CN |不能包含'{char}'|
         [/entry]
-        [entry] sanity-check-msg-startswith-err
-            # locale:default cannot start with '{char}'
-            locale:zh_CN 不能以'{char}'开头
+        [entry] |sanity-check-msg-startswith-err|
+            # locale:default |cannot start with '{char}'|
+            locale:zh_CN |不能以'{char}'开头|
         [/entry]
-        [entry] sanity-check-msg-empty-err
-            # locale:default cannot be empty
-            locale:zh_CN 不能为空
+        [entry] |sanity-check-msg-empty-err|
+            # locale:default |cannot be empty|
+            locale:zh_CN |不能为空|
         [/entry]
 {/entries_section}
     
