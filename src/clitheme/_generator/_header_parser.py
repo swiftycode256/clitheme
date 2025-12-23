@@ -22,7 +22,8 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
         if phrases[0] in ("name", "version", "description"):
             self.check_enough_args(phrases, 2)
             content=_globalvar.extract_content(self.get_current_line())
-            content=self.parse_content(content, pure_name=True, preserve_indents=phrases[0]=="description")
+            content=self.parse_content(content, pure_name=True,
+                    preserve_indents=phrases[0] in ("name", "description"))
             self.write_infofile( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 _globalvar.generator_info_filename.format(info=phrases[0]),\
