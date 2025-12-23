@@ -92,10 +92,10 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
                 self.global_options['foregroundonly']=inline_options['foregroundonly']
             command_filters=command_strings
             command_filter_strictness=strictness
-        elif phrases[0] in ("filter_cmd", "filter_command", "filter_cmd_regex", "filter_command_regex"):
+        elif re.fullmatch(r"(\<)?filter_(cmd|command)(_regex)?(?(1)\>|)", phrases[0])!=None:
             self.check_enough_args(phrases, 2) 
             reset_outline_foregroundonly()
-            command_filter_is_regex=phrases[0] in ("filter_command_regex", "filter_cmd_regex")
+            command_filter_is_regex=re.fullmatch(r"(\<)?filter_(cmd|command)_regex(?(1)\>|)", phrases[0])!=None
 
             content=_globalvar.splitarray_to_string(phrases[1:])
             content=self.parse_content(content, pure_name=True)
@@ -111,7 +111,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
                 strictness=-1
             command_filters=[content]
             command_filter_strictness=strictness
-        elif phrases[0] in ("unset_filter_command", "unset_filter_cmd"):
+        elif re.fullmatch(r"(\<)?unset_filter_(cmd|command)(?(1)\>|)", phrases[0])!=None:
             self.check_extra_args(phrases, 1)
             reset_outline_foregroundonly()
             command_filters=None

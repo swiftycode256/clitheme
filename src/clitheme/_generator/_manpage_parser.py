@@ -61,7 +61,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/file_content]")
             for filepath in file_paths:
                 self.write_manpage_file(filepath, content, self.linenum())
-        elif phrases[0]=="include_file":
+        elif phrases[0] in ("<include_file>", "include_file"):
             self.check_enough_args(phrases, 2)
             filepath=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
             if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
@@ -69,7 +69,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
 
             filecontent=get_file_content(filepath)
             # expect "as" clause on next line
-            if self.goto_next_line() and len(self.get_current_line().split())>0 and self.get_current_line().split()[0]=="as":
+            if self.goto_next_line() and self.get_current_line().split()[0] in ("as:", "as"):
                 target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
                 if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
                     self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
@@ -84,7 +84,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
             filecontent=get_file_content(filepath)
             while self.goto_next_line():
                 p=self.get_current_line().split()
-                if p[0]=="as":
+                if p[0] in ("as:", "as"):
                     self.check_enough_args(p, 2)
                     target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
                     if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:

@@ -21,7 +21,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
     self.in_subsection=""
     while self.goto_next_line():
         phrases=self.get_current_line().split()
-        if phrases[0]=="in_domainapp":
+        if phrases[0] in ("<in_domainapp>", "in_domainapp"):
             self.check_enough_args(phrases, 3)
             self.check_extra_args(phrases, 3)
             this_phrases=self.parse_content(_globalvar.extract_content(self.get_current_line()), pure_name=True).split()
@@ -30,18 +30,18 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             if _globalvar.sanity_check(self.in_domainapp)==False:
                 self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
             self.in_subsection="" # clear subsection
-        elif phrases[0]=="in_subsection":
+        elif phrases[0] in ("<in_subsection>", "in_subsection"):
             self.check_enough_args(phrases, 2)
             self.in_subsection=self.parse_content(_globalvar.extract_content(self.get_current_line()), pure_name=True)
             if _globalvar.sanity_check(self.in_subsection)==False:
                 self.handle_error(self.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
-        elif phrases[0]=="unset_domainapp":
+        elif phrases[0] in ("<unset_domainapp>", "unset_domainapp"):
             self.check_extra_args(phrases, 1)
             self.in_domainapp=""; self.in_subsection=""
-        elif phrases[0]=="unset_subsection":
+        elif phrases[0] in ("<unset_subsection>", "unset_subsection"):
             self.check_extra_args(phrases, 1)
             self.in_subsection=""
-        elif phrases[0] in ("entry", "[entry]"):
+        elif phrases[0] in ("[entry]", "entry"):
             self.handle_entry(start_phrase=phrases[0], end_phrase="[/entry]" if phrases[0]=="[entry]" else "end_entry")
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:

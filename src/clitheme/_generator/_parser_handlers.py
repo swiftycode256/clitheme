@@ -323,7 +323,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
         phrases=self.get_current_line().split()
-        if phrases[0]=="set_options":
+        if phrases[0] in ("(set_options)", "set_options"):
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
         elif phrases[0].startswith("setvar:"): 
