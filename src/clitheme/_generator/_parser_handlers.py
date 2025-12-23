@@ -73,27 +73,27 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
     def check_enough_args(self, phrases: List[str], count: int, check_processed: bool=True):
-        # Check unprocessed phrases
-        success=len(phrases)>=count
-
-        # Check processed phrases after the first
         if check_processed:
+            # Check processed phrases after the first
             processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
             # If rest of content only contains spaces
-            if len(processed.split())+1<count: success=False
+            success=len(processed.split())+1>=count
+        else:
+            # Check unprocessed phrases
+            success=len(phrases)>=count
 
         if not success:
             self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
         
     def check_extra_args(self, phrases: List[str], count: int, check_processed: bool=True):
-        # Check unprocessed phrases
-        success=len(phrases)<=count
-
-        # Check processed phrases after the first
         if check_processed:
+            # Check processed phrases after the first
             processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
             # If rest of content only contains spaces
-            if len(processed.split())+1>count: success=False
+            success=len(processed.split())+1<=count
+        else:
+            # Check unprocessed phrases
+            success=len(phrases)<=count
 
         if not success:
             self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(phrases[0])))
