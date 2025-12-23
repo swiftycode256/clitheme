@@ -1,5 +1,7 @@
 # Sample theme definition file for parser/generator testing
 
+set_options linebounds
+
 # Header information
 {header_section}
     name Example theem
@@ -7,29 +9,29 @@
     locales en_US
 
     # Testing repeated handling of entries
-    locales en_US zh_CN
-    version 1.0
-    name Example theme
-    supported_apps example-app example-app-two another-example should_unset-app
+    locales |en_US zh_CN|
+    version |1.0|
+    name |Example theme|
+    supported_apps |example-app example-app-two another-example should_unset-app|
 {/header_section}
 
 # Main block
 {entries_section}
     set_options substvar
-    setvar:example com.example example-app
-    [entry] {{example}} text-one
-        locale:default Some example text one
-        locale:en_US Some example text one
-        locale:zh_CN 一些样例文字（一）
+    setvar:example | com.example example-app  |
+    [entry] |{{example}} text-one|
+        locale:default |Some example text one|
+        locale:en_US |Some example text one|
+        locale:zh_CN |一些样例文字（一）|
     [/entry]
-    [entry] {{example}} text-two
-        locale:default Some example text two
-        locale:en_US Some example text two
-        locale:zh_CN 一些样例文字（二）
+    [entry] |{{example}} text-two|
+        locale:default |Some example text two|
+        locale:en_US |Some example text two|
+        locale:zh_CN |一些样例文字（二）|
     [/entry]
     
     # Testing in_domainapp
-    in_domainapp com.example example-app-two
+    in_domainapp |  com.example example-app-two  |
         [entry] text_one
             locale:default Some text
             locale:en_US Some text
@@ -49,7 +51,7 @@
         [/entry]
         
         # Testing in_subsection
-        in_subsection subsection-two
+        in_subsection |  subsection-two  |
             [entry] text_one
                 locale:default Some text
                 locale:en_US Some text
