@@ -326,6 +326,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if phrases[0] in ("(set_options)", "set_options"):
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
+        elif phrases[0]=="(enable_subst)":
+            self.check_extra_args(phrases, 1)
+            self.handle_set_global_options(self.subst_options, really_really_global)
+        elif phrases[0]=="(disable_subst)":
+            self.check_extra_args(phrases, 1)
+            self.handle_set_global_options([f"no{opt}" for opt in self.subst_options], really_really_global)
         elif phrases[0].startswith("setvar:"): 
             self.check_enough_args(phrases, 2, check_processed=False)
             self.handle_set_variable(self.get_current_line(), really_really_global)
