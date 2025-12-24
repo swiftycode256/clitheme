@@ -83,7 +83,7 @@ substrules_file=r"""
                 关于更多信息，请使用rm --help (｡ì _ í｡)
             [/locale]
         [/subst_string]
-    setvar:shell (?P<shell>.+)
+    setvar[shell shell2]: (?P<shell>.+)
     [filter_cmds]
         rm -rf
         cat
@@ -101,9 +101,10 @@ substrules_file=r"""
     <filter_cmd> ls
         # testing repeated entry detection
         [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
-            locale:default wef
+            locale:default (Error: Repeated entry detection failed)
         [/subst_regex]
-        [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
+        # {{shell}} should equal to {{shell2}} 
+        [subst_regex] {{shell2}}: unrecognized option '(?P<opt>.+)'
             locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
             locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/subst_regex]
@@ -120,7 +121,7 @@ substrules_file=r"""
     <unset_filter_cmd>
 
     # Test regex filter and substvar
-    setvar:pattern app(_example)? (.*)install(-stuff)?
+    setvar[pattern]: app(_example)? (.*)install(-stuff)?
     <filter_cmd_regex> {{pattern}}
         [subst_string] Error: sample message
             locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
@@ -142,8 +143,8 @@ substrules_file=r"""
         locale:zh_CN 无效输入！ಥ_ಥ
     [/subst_regex]
 
-    setvar:style {{[x1b]}}[1;4m
-    setvar:orig {{ESC}}[0m
+    setvar[style]: {{[x1b]}}[1;4m
+    setvar[orig]: {{ESC}}[0m
     (set_options) exactcmdmatch
     <filter_cmd> rm file.ban
         [subst_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted

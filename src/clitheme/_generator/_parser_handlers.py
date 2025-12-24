@@ -278,21 +278,13 @@ class GeneratorObject(_data_handlers.DataHandlers):
             return content if preserve_indents else content.strip()
         else:
             self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
-    def handle_set_variable(self, line_content: str, really_really_global: bool=False):
-        if not line_content.split()[0].startswith("setvar:"): return
-        # match variable name
-        results=re.search(r"setvar:(?P<name>.+)", line_content.split()[0])
-        var_name: str
-        if results==None:
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="setvar:<variable>", num=self.linenum()))
-        else: var_name=results.groupdict()['name']
+    def handle_set_variable(self, var_name: str, var_content: str, really_really_global: bool=False):
         # sanity check var_name
         def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=self.linenum()))
         if var_name=='ESC': bad_var()
         for char in self.substvar_banphrases:
             if char in var_name: bad_var()
 
-        var_content=_globalvar.extract_content(line_content)
         # Parse content without substesc (subst variable content)
         var_content=self.parse_content(var_content, pure_name=True, preserve_indents=True)
         # set variable
@@ -323,7 +315,23 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
         phrases=self.get_current_line().split()
-        if phrases[0] in ("(set_options)", "set_options"):
+        setvar_match=re.match(r"^setvar\[(?P<names>.+?)\]: ", self.get_current_line().strip())
+        setvar_match_old=re.fullmatch(r"setvar:(?P<name>.+)", phrases[0])
+        if phrases[0].startswith('setvar['):
+            if setvar_match!=None and len(setvar_match.group('names').split())>0:
+                argc=len(setvar_match.group().split())
+                self.check_enough_args(phrases, argc+1, check_processed=False)
+                var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
+                for var_name in setvar_match.group('names').split():
+                    self.handle_set_variable(var_name, var_content, really_really_global)
+            else:
+                self.handle_error(self.fd.feof("phrase-format-err", "Invalid {phrase} format on line {num}", phrase="setvar", num=self.linenum()))
+        elif setvar_match_old!=None:
+            self.check_enough_args(phrases, 2, check_processed=False)
+            var_name=setvar_match_old.group('name')
+            var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=1)
+            self.handle_set_variable(var_name, var_content, really_really_global)
+        elif phrases[0] in ("(set_options)", "set_options"):
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
         elif phrases[0]=="(enable_subst)":
@@ -332,9 +340,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
         elif phrases[0]=="(disable_subst)":
             self.check_extra_args(phrases, 1)
             self.handle_set_global_options([f"no{opt}" for opt in self.subst_options], really_really_global)
-        elif phrases[0].startswith("setvar:"): 
-            self.check_enough_args(phrases, 2, check_processed=False)
-            self.handle_set_variable(self.get_current_line(), really_really_global)
         else: return False
         return True
     

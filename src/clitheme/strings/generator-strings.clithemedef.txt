@@ -111,7 +111,11 @@
         [/entry]
         [entry] |linebounds-format-err|
             # locale:default |Invalid line boundary format at line {num}|
-            locale:zh_CN |第{num}行：无效行边界格式|
+            locale:zh_CN |第{num}行：无效的行边界格式|
+        [/entry]
+        [entry] |phrase-format-err|
+            # locale:default |Invalid {phrase} format on line {num}|
+            locale:zh_CN |第{num}行：无效的{phrase}格式|
         [/entry]
         [entry] |bad-var-name-err|
             # locale:default |Line {num}: "{name}" is not a valid variable name|

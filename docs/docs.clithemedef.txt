@@ -11,7 +11,7 @@
 {manpage_section}
     (enable_subst)
     # Test substvar feature
-    setvar:name clitheme
+    setvar[name]: clitheme
     <include_file> {{name}}.1
         as: man1 {{name}}.1
     <include_file> {{name}}-exec.1
