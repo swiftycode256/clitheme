@@ -1,11 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Source: https://gitee.com/swiftycode/clitheme
 Upstream-Name: clitheme
-Upstream-Contact: swiftycode <3291929745@qq.com>
+Upstream-Contact: swiftycode <closure_mops.9k@icloud.com>
 
 Files:
  *
-Copyright: 2023 swiftycode <3291929745@qq.com>
+Copyright: 2023 swiftycode <closure_mops.9k@icloud.com>
 License: GPL-3.0+
 
 License: GPL-3.0+

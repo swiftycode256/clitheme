@@ -1,4 +1,4 @@
-# Maintainer: swiftycode <3291929745@qq.com>
+# Maintainer: swiftycode <closure_mops.9k@icloud.com>
 
 # spell-checker: disable
 pkgname='clitheme'

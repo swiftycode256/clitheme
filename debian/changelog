@@ -2,13 +2,13 @@ clitheme (2.1-dev20251223) unstable; urgency=low
 
   * In development; see commit logs for changes
 
- -- swiftycode <3291929745@qq.com>  Tue, 23 Dec 2025 23:43:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Tue, 23 Dec 2025 23:43:00 +0800
 
 clitheme (2.0.1-1) unstable; urgency=medium
 
   * Fix temporary directory mechanism
 
- -- swiftycode <3291929745@qq.com>  Tue, 09 Sep 2025 16:16:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Tue, 09 Sep 2025 16:16:00 +0800
  
 clitheme (2.0-1) unstable; urgency=medium
 
@@ -25,7 +25,7 @@ clitheme (2.0-1) unstable; urgency=medium
 
   See https://gitee.com/swiftycode/clitheme/releases/v2.0 for v2.0 release notes
 
- -- swiftycode <3291929745@qq.com>  Sun, 29 Jun 2025 17:29:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Sun, 29 Jun 2025 17:29:00 +0800
 
 clitheme (2.0-beta3-1) unstable; urgency=low
 
@@ -61,7 +61,7 @@ clitheme (2.0-beta3-1) unstable; urgency=low
   * Fix an issue when in multi-line block content and `substesc` option is enabled, `{{ESC}}` in content variables might not be processed
   * Important change: `endmatchhere` option only applies to substitution rules in the current file; other files are not affected
 
- -- swiftycode <3291929745@qq.com>  Wed, 01 Jan 2025 11:54:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Wed, 01 Jan 2025 11:54:00 +0800
 
 clitheme (2.0-beta2-1) unstable; urgency=low
 
@@ -95,13 +95,13 @@ clitheme (2.0-beta2-1) unstable; urgency=low
 
   Full release notes for v2.0: [please see v2.0-beta1 release page]
 
- -- swiftycode <3291929745@qq.com>  Thu, 18 Jul 2024 00:12:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Thu, 18 Jul 2024 00:12:00 +0800
 
 clitheme (2.0-beta1-2) unstable; urgency=low
 
   * Fixed an issue where clitheme-man might use system man pages instead of custom defined man pages
 
- -- swiftycode <3291929745@qq.com>  Sat, 15 Jun 2024 23:55:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Sat, 15 Jun 2024 23:55:00 +0800
 
 clitheme (2.0-beta1-1) unstable; urgency=low
 
@@ -122,7 +122,7 @@ clitheme (2.0-beta1-1) unstable; urgency=low
 
   Full release notes for v2.0: [please see v2.0-beta1 release page]
 
- -- swiftycode <3291929745@qq.com>  Thu, 13 Jun 2024 08:44:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Thu, 13 Jun 2024 08:44:00 +0800
  
 clitheme (1.1-r2-1) unstable; urgency=medium
 
@@ -135,7 +135,7 @@ clitheme (1.1-r2-1) unstable; urgency=medium
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r2
 
- -- swiftycode <3291929745@qq.com>  Sat, 02 Mar 2024 23:49:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Sat, 02 Mar 2024 23:49:00 +0800
   
 clitheme (1.1-r1-1) unstable; urgency=medium
 
@@ -158,7 +158,7 @@ clitheme (1.1-r1-1) unstable; urgency=medium
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.1-r1
 
- -- swiftycode <3291929745@qq.com>  Wed, 17 Jan 2024 22:14:00 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Wed, 17 Jan 2024 22:14:00 +0800
 
 clitheme (1.0-r2-1) unstable; urgency=medium
 
@@ -167,10 +167,10 @@ clitheme (1.0-r2-1) unstable; urgency=medium
   For more information please see: 
   https://gitee.com/swiftycode/clitheme/releases/tag/v1.0-r2
 
- -- swiftycode <3291929745@qq.com>  Fri, 15 Dec 2023 12:42:28 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Fri, 15 Dec 2023 12:42:28 +0800
 
 clitheme (1.0-r1-1) unstable; urgency=medium
 
   Version 1.0 release 1
 
- -- swiftycode <3291929745@qq.com>  Wed, 13 Dec 2023 17:16:33 +0800
+ -- swiftycode <closure_mops.9k@icloud.com>  Wed, 13 Dec 2023 17:16:33 +0800

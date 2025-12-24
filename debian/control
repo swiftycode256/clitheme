@@ -1,7 +1,7 @@
 Source: clitheme
 Section: libs
 Priority: optional
-Maintainer: swiftycode <3291929745@qq.com>
+Maintainer: swiftycode <closure_mops.9k@icloud.com>
 Rules-Requires-Root: no
 Build-Depends: debhelper-compat (= 13), python3, dh-python, python3-setuptools, pybuild-plugin-pyproject
 Standards-Version: 4.6.2

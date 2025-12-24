@@ -16,7 +16,7 @@ include = ["clitheme", "clitheme.*"]
 name = "clitheme"
 dynamic = ["version"]
 authors = [
-  { name="swiftycode", email="3291929745@qq.com" },
+  { name="swiftycode", email="closure_mops.9k@icloud.com" },
 ]
 description = "Command line customization utility"
 readme = "README.md"
