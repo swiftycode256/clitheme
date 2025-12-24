@@ -1,6 +1,6 @@
 # Sample theme definition file for parser/generator testing
 
-set_options linebounds
+(enable_subst)
 
 # Header information
 {header_section}
@@ -17,7 +17,6 @@ set_options linebounds
 
 # Main block
 {entries_section}
-    set_options substvar
     setvar:example | com.example example-app  |
     [entry] |{{example}} text-one|
         locale:default |Some example text one|
@@ -115,4 +114,6 @@ set_options linebounds
         locale:en_US Global entry in app
         locale:zh_CN app内的通用实例
     [/entry]
+    # Test disable_subst
+    (disable_subst)
 {/entries_section}

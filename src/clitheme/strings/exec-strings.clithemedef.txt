@@ -6,14 +6,14 @@
 
 # spell-checker:ignore nosubst
 
+(enable_subst)
+
 {header_section}
     name: CLItheme message text translations (clitheme-exec)
     version: 2.1
     locales: zh_CN
     supported_apps: clitheme
 {/header_section}
-
-(set_options) linebounds
 
 {entries_section}
 <in_domainapp> |swiftycode clitheme|

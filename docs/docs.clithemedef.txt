@@ -9,7 +9,7 @@
 {/header_section}
 
 {manpage_section}
-    (set_options) substvar
+    (enable_subst)
     # Test substvar feature
     setvar:name clitheme
     <include_file> {{name}}.1

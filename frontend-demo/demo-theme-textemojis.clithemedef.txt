@@ -20,7 +20,7 @@
 {/header_section}
 
 {entries_section}
-    (set_options) linebounds
+    (enable_subst)
     <in_domainapp> com.example example-app
         [entry] |found-file|
             locale:default |o(≧v≦)o 太好了，在当前目录找到了{}个文件！|
