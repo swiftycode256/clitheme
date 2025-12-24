@@ -1,11 +1,8 @@
 #!/usr/bin/python3
 
-# This program is a demo of the CLItheme frontend API for applications. Apply a theme definition file in the folder "demo-clithemedef" to see it in action.
-# 这个程序展示了CLItheme的应用程序frontend API。请应用一个在"demo-clithemedef"文件夹中的任意一个主题定义文件以观察它的效果。
-
 import os
 import sys
-from src.clitheme import frontend
+from clitheme import frontend
 
 demo_message="""正在展示{}演示（不会修改系统上的文件）："""
 

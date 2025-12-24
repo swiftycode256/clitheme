@@ -162,7 +162,9 @@ $ clitheme-man ls
 
 ## Application frontend API and string entries
 
-Please see [this article](./README-frontend.md)
+Please see files in the `frontend-demo` folder, which contains a sample definition file and app that demonstrates usage of the `frontend` module.
+
+For more information, please see [this article](./README-frontend.md).
 
 # Download and install
 
