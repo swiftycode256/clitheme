@@ -136,7 +136,7 @@ def splitarray_to_string(split_content: List[str]) -> str:
         final+=phrase+" "
     return final.strip()
 def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
-    results=re.search(r"(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
+    results=re.match(r"^(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
 def list_directory(dirname: str):
