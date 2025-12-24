@@ -17,13 +17,11 @@ bool *func(int *a) {
 test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int *' [-Wincompatible-pointer-types]
         b=a;
          ^~
-2 errors generated
+2 errors generated.
 ```
 ```plaintext
 $ clitheme apply-theme clang-theme.clithemedef.txt
-==> Processing files...
-Successfully processed files
-==> Applying theme...
+==> Successfully processed files
 Theme applied successfully
 ```
 ```plaintext
@@ -51,6 +49,8 @@ Other characteristics:
     - This means that you can also use CLItheme to add i18n (internationalization) support for command line applications
 - Easy-to-understand **theme definition file** syntax
 - The string entries in the current theme setting can be accessed without using the frontend API (easy-to-understand data structure)
+
+## Documentation
 
 For more information, please see the project's Wiki documentation page. It can be accessed through the following links:
 
@@ -82,10 +82,8 @@ e> {{ESC}}[0m2 errors generated.\r\n
 Write theme definition file and substitution rules based on the output:
 
 ```plaintext
-# Define basic information for this theme in header_section; required
 {header_section}
-    # `name` is a required entry in header_section
-    name clang example theme
+    name: clang example theme
     [description]
         An example theme for clang (for demonstration purposes)
     [/description]
@@ -93,22 +91,22 @@ Write theme definition file and substitution rules based on the output:
 
 {substrules_section}
     # Set "substesc" option: "{{ESC}}" in content will be replaced with the ASCII Escape terminal control character
-    set_options substesc
-    # Command filter: following substitution rules will be applied only if these commands are invoked. It is recommended as it can prevent unwanted output substitutions.
-    [filter_commands]
+    (set_options) substesc substvar
+    [filter_cmds]
         clang
         clang++
         gcc
         g++
-    [/filter_commands]
-    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
-        # Use "locale:en_US" if you only want the substitution rule to applied when the system locale setting is English (en_US)
-        # Use "locale:default" to not apply any locale filters
-        locale:default \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
-    [/subst_regex]
-    [subst_regex] (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
-        locale:default \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
-    [/subst_regex]
+    [/filter_cmds]
+        setvar[prefix_group]: (?P<prefix>^({{ESC}}.*?m)*(.+:\d+:\d+:) ({{ESC}}.*?m)*)
+        [subst_regex] {{prefix_group}}warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
+            # Use "locale[en_US]" if you only want the substitution rule to applied when the system locale setting is English (en_US)
+            # Use "locale[default]" to not apply any locale filters
+            locale[default]: \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
+        [/subst_regex]
+        [subst_regex] {{prefix_group}}error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
+            locale[default]: \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
+        [/subst_regex]
 {/substrules_section}
 ```
 
@@ -141,17 +139,16 @@ Write a theme definition file:
 
 ```plaintext
 {header_section}
-    name Example manual page theme
-    description An example man page theme
+    name: Example manual page theme
+    description: An example man page theme
 {/header_section}
 
 {manpage_section}
-    # Add the file path *separated by spaces* after "include_file" (with the directory the theme definition file is placed as the parent directory)
-    # Add the target file path (e.g. where the file is placed under `/usr/share/man`) *separated by spaces* after "as"
-    include_file man-pages 1 ls-custom.txt
-        as man1 ls.1
-    include_file man-pages 1 cat-custom.txt
-        as man1 cat.1
+    # '/' in file paths are denoted with spaces
+    <include_file> man-pages 1 ls-custom.txt
+        as: man1 ls.1
+    <include_file> man-pages 1 cat-custom.txt
+        as: man1 cat.1
 {/manpage_section}
 ```
 
@@ -167,11 +164,11 @@ $ clitheme-man ls
 
 Please see [this article](./README-frontend.md)
 
-# Installing and building
+# Download and install
 
 CLItheme can be installed through pip package, Debian package, and Arch Linux package.
 
-### Install using Python/pip package
+## Install using Python/pip package
 
 First, ensure that Python 3 is installed on the system. CLItheme requires Python 3.8 or higher.
 
@@ -187,21 +184,21 @@ Download the `.whl` file from latest distribution page and install it using `pip
     
     $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
-### Install using Arch Linux package
+## Install using Arch Linux package
 
 Because each build of the Arch Linux package only supports a specific Python version and upgrading Python will break the package, pre-built packages are not provided and you need to build the package. Please see **Building Arch Linux package** below.
 
-### Install using Debian package
+## Install using Debian package
 
 Download the `.deb` file from the latest distribution page and install using `apt`:
 
     $ sudo apt install ./clitheme_<version>_all.deb
 
-## Building packages
+# Building packages
 
 You can build the package from the repository source code, which includes any latest or custom changes. You can also use this method to install the latest development version.
 
-### Build pip package
+## Build pip package
 
 CLItheme uses the `setuptools` build system, so it needs to be installed beforehand.
 
@@ -215,7 +212,7 @@ Then, switch to project directory and use the following command to build the pac
 
 The package file can be found in the `dist` folder after build finishes.
 
-### Build Arch Linux package
+## Build Arch Linux package
 
 Ensure that the `base-devel` package is installed before building. Use the following command to install:
 
@@ -235,14 +232,11 @@ rm -rf buildtmp srctmp
 makepkg -si
 # -s: Automatically install required build dependencies (e.g. python-setuptools, python-build)
 # -i：Automatically install the built package
-
-# You can delete the temporary directories after it completes
-rm -rf buildtmp srctmp
 ```
 
 **Note:** The package must be re-built every time Python is upgraded, because the package only works with the version of Python installed during build
 
-### Build Debian package
+## Build Debian package
 
 Install the following packages before building:
 
@@ -256,11 +250,4 @@ You can use the following command to install:
 
     sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
 
-While in the repo directory, execute `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated at the parent directory (`..`) after build completes.
-
-# More information
-
-- This repository is also synced onto GitHub (using Gitee automatic sync feature): https://github.com/swiftycode256/clitheme
-- The latest developments, future plans, and in-development features of this project are detailed in the Issues section of the Gitee repository: https://gitee.com/swiftycode/clitheme/issues
-- Feel free to propose suggestions and changes using Issues and Pull Requests
-    - Use the Wiki repositories listed above for Wiki-related suggestions
+In the repo directory, execute `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated at the parent directory (`..`) after build completes.
