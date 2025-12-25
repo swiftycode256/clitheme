@@ -89,12 +89,6 @@ clitheme (2.0-beta2-1) unstable; urgency=low
   * Theme definition file: Fix and optimize content variable processing
   * Theme definition file: Fix missing "Unexpected phrase" error in `{manpage_section}` when encountering invalid file syntax
 
-  Latest code changes and development version: https://gitee.com/swiftycode/clitheme/tree/v1.2_dev
-
-  Documentation: https://gitee.com/swiftycode/clitheme-wiki-repo
-
-  Full release notes for v2.0: [please see v2.0-beta1 release page]
-
  -- swiftycode <closure_mops.9k@icloud.com>  Thu, 18 Jul 2024 00:12:00 +0800
 
 clitheme (2.0-beta1-2) unstable; urgency=low
@@ -116,11 +110,34 @@ clitheme (2.0-beta1-1) unstable; urgency=low
   * Command line output substitution feature does not currently support Windows systems
       * This feature might be delayed for version `v2.1`
 
-  Code repository and latest code changes: https://gitee.com/swiftycode/clitheme/tree/v1.2_dev
+  Major new features
 
-  Documentation: https://gitee.com/swiftycode/clitheme-wiki-repo/tree/v1.2_dev
+  * New command line output substitution feature
+      * Modify and customize the output of any command line application by defining substitution rules
+  * Support customizing Unix/Linux manual pages (man pages)
+  * Redesigned theme definition file syntax
 
-  Full release notes for v2.0: [please see v2.0-beta1 release page]
+  Other features
+
+  - Theme definition file -
+  * Support adding tabs and indents at the start of each line in multi-line content block
+  * Support using \<end phrase> in multi-line content block to express the end phrase, preventing conflict with the command
+  * Support using {{ESC}} in content to express the ASCII Escape terminal control character
+  * New content variable feature
+  * Support defining multiple entry names at once
+  * New options system
+
+  - clitheme CLI utility -
+  * New update-theme command: re-apply theme definition files recorded in the current theme setting
+  * Add Chinese support for output messages
+
+  Improvements and bug fixes
+
+  * Build backend changed to setuptools
+  * Theme definition file: Fixed and issue where multiple continuous spaces are not preserved correctly in single-line content
+  * Fixed and issue where when frontend.set_local_themedef function fails, subsequent invokes will always succeed
+  * Theme definition file: Removed requirement that in_domainapp must be set before using in_subsection
+  * Further optimizations to system locale detection (based on GNU gettext)
 
  -- swiftycode <closure_mops.9k@icloud.com>  Thu, 13 Jun 2024 08:44:00 +0800
  
