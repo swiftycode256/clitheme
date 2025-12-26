@@ -33,7 +33,7 @@ begin_main
         end_block
     end_entry
     [entry] test_entry-2
-        locale[default]: |   this and that  |
+        default: |   this and that  |
     [/entry]
 end_main
 """

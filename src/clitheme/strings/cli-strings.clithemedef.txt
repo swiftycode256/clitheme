@@ -17,86 +17,86 @@
 <in_domainapp> |swiftycode clitheme|
     <in_subsection> |cli|
         [entry] |no-command|
-            # locale[default]: |Error: no command or option specified|
+            # default: |Error: no command or option specified|
             locale[zh_CN]: |错误：没有提供指令或选项|
         [/entry]
         [entry] |not-enough-arguments|
-            # locale[default]: |Error: not enough arguments|
+            # default: |Error: not enough arguments|
             locale[zh_CN]: |错误：参数不够|
         [/entry]
         [entry] |unknown-option|
-            # locale[default]: |Error: unknown option "{option}"|
+            # default: |Error: unknown option "{option}"|
             locale[zh_CN]: |错误：未知选项"{option}"|
         [/entry]
         [entry] |unknown-command|
-            # locale[default]: |Error: unknown command "{cmd}"|
+            # default: |Error: unknown command "{cmd}"|
             locale[zh_CN]: |错误：未知指令"{cmd}"|
         [/entry]
         [entry] |too-many-arguments|
-            # locale[default]: |Error: too many arguments|
+            # default: |Error: too many arguments|
             locale[zh_CN]: |错误：参数太多|
         [/entry]
         [entry] |help-usage-prompt|
-            # locale[default]: |Run "{clitheme} --help" for usage information|
+            # default: |Run "{clitheme} --help" for usage information|
             locale[zh_CN]: |使用"{clitheme} --help"以获取使用方法|
         [/entry]
         [entry] |version-str|
-            # locale[default]: |CLItheme version {ver}|
+            # default: |CLItheme version {ver}|
             locale[zh_CN]: |CLItheme 版本：{ver}|
         [/entry]
         # apply-theme 和 generate-data 指令
         # apply-theme and generate-data commands
         <in_subsection> |cli apply-theme|
             [entry] |reading-file|
-                # locale[default]: |==> Reading file {filename}...|
+                # default: |==> Reading file {filename}...|
                 locale[zh_CN]: |==> 正在读取文件{filename}...|
             [/entry]
             [entry] |reading-stdin-note|
-                # locale[default]: |Reading from standard input|
+                # default: |Reading from standard input|
                 locale[zh_CN]: |正在从stdin读取文件|
             [/entry]
             [entry] |stdin-interactive-finish-prompt|
-                # locale[default]: |Input file content here and press {shortcut} to finish|
+                # default: |Input file content here and press {shortcut} to finish|
                 locale[zh_CN]: |在此输入文件内容，并按下{shortcut}以结束|
             [/entry]
             [entry] |generate-data-msg|
-                # locale[default]: |The theme data will be generated from the following definition files in the following order:|
+                # default: |The theme data will be generated from the following definition files in the following order:|
                 locale[zh_CN]: |主题定义数据将会从以下顺序的主题定义文件生成：|
             [/entry]
             [entry] |apply-theme-msg|
-                # locale[default]: |The following definition files will be applied in the following order:|
+                # default: |The following definition files will be applied in the following order:|
                 locale[zh_CN]: |这些主题定义文件将会通过以下顺序被应用：|
             [/entry]
             [entry] |overwrite-notice|
-                # locale[default]: |The existing theme data will be overwritten if you continue.|
+                # default: |The existing theme data will be overwritten if you continue.|
                 locale[zh_CN]: |如果继续，当前的主题数据将会被覆盖。|
             [/entry]
             [entry] |overlay-notice|
-                # locale[default]: |The definition files will be appended on top of the existing theme data.|
+                # default: |The definition files will be appended on top of the existing theme data.|
                 locale[zh_CN]: |这些主题定义文件会被叠加在当前的数据上。|
             [/entry]
             [entry] |confirm-prompt|
-                # locale[default]: |Do you want to continue? [y/n]|
+                # default: |Do you want to continue? [y/n]|
                 locale[zh_CN]: |是否继续操作？[y/n]|
             [/entry]
             [entry] |overlay-msg|
-                # locale[default]: |Overlay specified|
+                # default: |Overlay specified|
                 locale[zh_CN]: |已使用数据叠加模式|
             [/entry]
             [entry] |processing-file|
-                # locale[default]: |> Processing file {filename}...|
+                # default: |> Processing file {filename}...|
                 locale[zh_CN]: |> 正在处理文件{filename}...|
             [/entry]
             [entry] |process-files-success|
-                # locale[default]: |==> Successfully processed files|
+                # default: |==> Successfully processed files|
                 locale[zh_CN]: |==> 已成功处理文件|
             [/entry]
             [entry] |view-temp-dir|
-                # locale[default]: |View at {path}|
+                # default: |View at {path}|
                 locale[zh_CN]: |生成的数据可以在"{path}"查看|
             [/entry]
             [entry] |apply-theme-success|
-                # locale[default]: |Theme applied successfully|
+                # default: |Theme applied successfully|
                 locale[zh_CN]: |已成功应用主题|
             [/entry]
             [entry] |read-file-error|
@@ -143,7 +143,7 @@
         # remove-theme command
         <in_subsection> |cli remove-theme|
             [entry] |no-theme-err|
-                # locale[default]: |Error: no theme currently set|
+                # default: |Error: no theme currently set|
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |remove-data-error|
@@ -157,41 +157,41 @@
                 [/locale]
             [/entry]
             [entry] |remove-data-success|
-                # locale[default]: |Successfully removed the current theme data|
+                # default: |Successfully removed the current theme data|
                 locale[zh_CN]: |已成功移除当前主题数据|
             [/entry]
         # show-info 指令
         # show-info command
         <in_subsection> |cli show-info|
             [entry] |no-theme|
-                # locale[default]: |No theme currently set|
+                # default: |No theme currently set|
                 locale[zh_CN]: |当前没有设定任何主题|
             [/entry]
             [entry] |current-theme-msg|
-                # locale[default]: |Currently installed theme(s):|
+                # default: |Currently installed theme(s):|
                 locale[zh_CN]: |当前设定的主题：|
             [/entry] 
             [entry] |version-str|
-                # locale[default]: |Version: {ver}|
+                # default: |Version: {ver}|
                 locale[zh_CN]: |版本：{ver}|
             [/entry]
             [entry] |description-str|
-                # locale[default]: |Description:|
+                # default: |Description:|
                 locale[zh_CN]: |详细说明：|
             [/entry]
             [entry] |locales-str|
-                # locale[default]: |Supported locales:|
+                # default: |Supported locales:|
                 locale[zh_CN]: |支持的语言：|
             [/entry]
             [entry] |supported-apps-str|
-                # locale[default]: |Supported apps:|
+                # default: |Supported apps:|
                 locale[zh_CN]: |支持的应用程序：|
             [/entry]
         # update-theme 指令
         # update-theme command
         <in_subsection> |cli update-theme|
             [entry] |no-theme-err|
-                # locale[default]: |Error: no theme currently set|
+                # default: |Error: no theme currently set|
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |not-available-err|
@@ -218,7 +218,7 @@
         # repair-theme command
         <in_subsection> |cli repair-theme|
             [entry] |no-theme-err|
-                # locale[default]: |Error: no theme currently set|
+                # default: |Error: no theme currently set|
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |not-available-err|
@@ -246,11 +246,11 @@
         # String entries used for "clitheme --help"
         <in_subsection> |cli help-message|
             [entry] |usage-str|
-                # locale[default]: |Usage:|
+                # default: |Usage:|
                 locale[zh_CN]: |使用方式：|
             [/entry]
             [entry] |options-str|
-                # locale[default]: |Options:|
+                # default: |Options:|
                 locale[zh_CN]: |选项：|
             [/entry]
             [entry] |options-apply-theme|
@@ -280,31 +280,31 @@
                 [/locale]
             [/entry]
             [entry] |options-remove-theme|
-                # locale[default]: |remove-theme: Remove the current theme data from the system|
+                # default: |remove-theme: Remove the current theme data from the system|
                 locale[zh_CN]: |remove-theme：取消设定当前主题定义和数据|
             [/entry]
             [entry] |options-update-theme|
-                # locale[default]: |update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)|
+                # default: |update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)|
                 locale[zh_CN]: |update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）|
             [/entry]
             [entry] |options-generate-data|
-                # locale[default]: |generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory|
+                # default: |generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory|
                 locale[zh_CN]: |generate-data：【仅供调试用途】对于指定的主题定义文件在临时目录中生成一个数据结构|
             [/entry]
             [entry] |options-repair-theme|
-                # locale[default]: |repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data|
+                # default: |repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data|
                 locale[zh_CN]: |repair-theme：【仅供调试用途】从当前数据中存储的定义文件重新应用主题|
             [/entry]
             [entry] |options-yes|
-                # locale[default]: |[For supported commands, specify --yes to skip the confirmation prompt]|
+                # default: |[For supported commands, specify --yes to skip the confirmation prompt]|
                 locale[zh_CN]: |【在支持的指令中，指定"--yes"以跳过确认提示】|
             [/entry]
             [entry] |options-version|
-                # locale[default]: |--version: Show the current version of clitheme|
+                # default: |--version: Show the current version of clitheme|
                 locale[zh_CN]: |--version：显示clitheme的当前版本信息|
             [/entry]
             [entry] |options-help|
-                # locale[default]: |--help: Show this help message|
+                # default: |--help: Show this help message|
                 locale[zh_CN]: |--help：显示这个帮助提示|
             [/entry]
 {/entries_section}

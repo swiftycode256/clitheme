@@ -102,10 +102,10 @@ Write theme definition file and substitution rules based on the output:
         [subst_regex] {{prefix_group}}warning: (?P<esc>({{ESC}}.*?m)*)incompatible pointer types assigning to '(?P<name1>.+)' from '(?P<name2>.+)'
             # Use "locale[en_US]" if you only want the substitution rule to applied when the system locale setting is English (en_US)
             # Use "locale[default]" to not apply any locale filters
-            locale[default]: \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
+            default: \g<prefix>note: \g<esc>incompatible pointer types '\g<name1>' and '\g<name2>', they're so……so incompatible!~
         [/subst_regex]
         [subst_regex] {{prefix_group}}error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
-            locale[default]: \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
+            default: \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
         [/subst_regex]
 {/substrules_section}
 ```
