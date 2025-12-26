@@ -48,13 +48,13 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 raise ValueError("empty pattern")
             re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
-    def add_entry(content: str, locales: List[str], line_number: str):
+    def add_entry(content: str, locales: List[str], line_number: Optional[str]=None):
         for this_locale in locales:
             for each_name in entry_names:
                 entry_items.append(Entry(
                     entry_name=each_name,
                     content=content,
-                    content_line_number=line_number,
+                    content_line_number=line_number if line_number!=None else str(self.linenum()),
                     locale=None if this_locale=="default" else this_locale
                 ))
 
@@ -99,9 +99,13 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 argc=len(locale_match.group().split())
                 self.check_enough_args(phrases, argc+1, disp=locale_match.group(), check_processed=False)
                 content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
-                add_entry(self.parse_content(content), locale_match.group('names').split(), str(self.linenum())) 
+                add_entry(self.parse_content(content), locale_match.group('names').split()) 
             else: 
                 self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="locale", num=self.linenum()))
+        elif phrases[0]=="default:": # Shorthand for "locale[default]:"
+            self.check_enough_args(phrases, 2, check_processed=False)
+            content=_globalvar.extract_content(self.get_current_line())
+            add_entry(self.parse_content(content), ['default'])
         # Old syntax
         elif phrases[0]=="locale" or re.fullmatch(r"locale:(.+)", phrases[0])!=None:
             if phrases[0].startswith("locale:"):
@@ -117,13 +121,13 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             locales=self.parse_content(locale, pure_name=True).split()
             if len(locales)==0:
                 self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<name>", num=self.linenum()))
-            add_entry(self.parse_content(content), locales, str(self.linenum()))
+            add_entry(self.parse_content(content), locales)
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
             locales=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
             begin_line_number=self.linenum()+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
-            add_entry(content, locales, self.handle_linenumber_range(begin_line_number, self.linenum()-1))
+            add_entry(content, locales, line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
         elif phrases[0]==end_phrase:
             got_options=self.parse_options(phrases[1:], merge_global_options=True, \
                     allowed_options=\
