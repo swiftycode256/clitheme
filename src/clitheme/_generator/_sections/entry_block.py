@@ -128,6 +128,11 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             begin_line_number=self.linenum()+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
             add_entry(content, locales, line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
+        elif phrases[0]=="[default]": # Shorthand for "[locale] default"
+            self.check_extra_args(phrases, 1)
+            begin_line_number=self.linenum()+1
+            content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/default]")
+            add_entry(content, ['default'], line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
         elif phrases[0]==end_phrase:
             got_options=self.parse_options(phrases[1:], merge_global_options=True, \
                     allowed_options=\
