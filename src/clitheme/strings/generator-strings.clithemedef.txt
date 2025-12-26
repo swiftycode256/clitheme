@@ -114,8 +114,8 @@
             locale:zh_CN |第{num}行：无效的行边界格式|
         [/entry]
         [entry] |phrase-format-err|
-            # locale:default |Invalid {phrase} format on line {num}|
-            locale:zh_CN |第{num}行：无效的{phrase}格式|
+            # locale:default |Invalid format for "{phrase}" on line {num}|
+            locale:zh_CN |第{num}行：无效的"{phrase}"格式|
         [/entry]
         [entry] |bad-var-name-err|
             # locale:default |Line {num}: "{name}" is not a valid variable name|

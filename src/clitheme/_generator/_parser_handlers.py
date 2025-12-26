@@ -72,7 +72,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         return self.lineindex+1
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
-    def check_enough_args(self, phrases: List[str], count: int, check_processed: bool=True):
+    def check_enough_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
             # Check processed phrases after the first
             processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
@@ -83,9 +83,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
             success=len(phrases)>=count
 
         if not success:
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(phrases[0]), num=self.linenum()))
+            if disp==None: disp=phrases[0]
+            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(disp), num=self.linenum()))
         
-    def check_extra_args(self, phrases: List[str], count: int, check_processed: bool=True):
+    def check_extra_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
             # Check processed phrases after the first
             processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
@@ -96,7 +97,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             success=len(phrases)<=count
 
         if not success:
-            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(phrases[0])))
+            if disp==None: disp=phrases[0]
+            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(disp)))
     def check_version(self, version_str: str):
         # allow_bugfix is disabled to allow interoperability with other release variants
         allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
@@ -315,17 +317,17 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
         phrases=self.get_current_line().split()
-        setvar_match=re.match(r"^setvar\[(?P<names>.+?)\]: ", self.get_current_line().strip())
         setvar_match_old=re.fullmatch(r"setvar:(?P<name>.+)", phrases[0])
         if phrases[0].startswith('setvar['):
+            setvar_match=re.match(r"^setvar\[(?P<names>.+?)\]:(?!\S+)", self.get_current_line().strip())
             if setvar_match!=None and len(setvar_match.group('names').split())>0:
                 argc=len(setvar_match.group().split())
-                self.check_enough_args(phrases, argc+1, check_processed=False)
+                self.check_enough_args(phrases, argc+1, disp=setvar_match.group(), check_processed=False)
                 var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
                 for var_name in setvar_match.group('names').split():
                     self.handle_set_variable(var_name, var_content, really_really_global)
             else:
-                self.handle_error(self.fd.feof("phrase-format-err", "Invalid {phrase} format on line {num}", phrase="setvar", num=self.linenum()))
+                self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="setvar", num=self.linenum()))
         elif setvar_match_old!=None:
             self.check_enough_args(phrases, 2, check_processed=False)
             var_name=setvar_match_old.group('name')
