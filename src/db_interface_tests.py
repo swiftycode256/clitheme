@@ -75,10 +75,10 @@ substrules_file=r"""
             rm: missing operand
             type rm --help for more information
         <<subst_string]
-            [locale] default
+            [default]
                 rm says: missing arguments and options (>﹏<)
                 For more information, use rm --help (｡ì _ í｡)
-            [/locale]
+            [/default]
             [locale] zh_CN
                 rm 说：缺少参数和选项 (>﹏<)
                 关于更多信息，请使用rm --help (｡ì _ í｡)
@@ -150,9 +150,9 @@ substrules_file=r"""
     <filter_cmd> rm file.ban
         [subst_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
             # test substchar and substesc specified in block
-            [locale] default
+            [default]
                 \g<shell> says: {{style}}Operation not permitted!{{orig}} ಥ_ಥ
-            [/locale] substchar substesc
+            [/default] substchar substesc
             locale[zh_CN]: \g<shell> 说：不允许的操作！ಥ_ಥ
         [/subst_regex]
 
@@ -165,10 +165,10 @@ substrules_file=r"""
             ^example_app: using list (.+)
         <<subst_regex]
             # \x21=!
-            [locale] default
+            [default]
                 example_app: using \g<1> directories{{[x21]}} (｡ì _ í｡)
                 example_app: using list \g<2>! (⊙ω⊙)
-            [/locale]
+            [/default]
             # \uff01=！
             [locale] zh_CN
                 example_app: 正在使用\g<1>路径{{[uff01]}}(｡ì _ í｡)

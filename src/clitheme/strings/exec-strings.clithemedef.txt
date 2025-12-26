@@ -86,20 +86,20 @@
             locale[zh_CN]: |无法生成数据（完整日志在此）：|
         [/entry]
         [entry] |db-update-err|
-            # [locale] default
+            # [default]
             #     An error occurred while updating the database: {msg}
             #     Please re-apply the theme and try again
-            # [/locale]
+            # [/default]
             [locale] zh_CN 
                 更新数据库时发生了错误：{msg}
                 请重新应用当前主题，然后重试
             [/locale]
         [/entry]
         [entry] |db-read-err|
-            # [locale] default
+            # [default]
             #     An error occurred while reading the database: {msg}
             #     Please re-apply the theme and try again
-            # [/locale]
+            # [/default]
             [locale] zh_CN 
                 读取数据库时发生了错误：{msg}
                 请重新应用当前主题，然后重试

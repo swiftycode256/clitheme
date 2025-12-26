@@ -100,40 +100,40 @@
                 locale[zh_CN]: |已成功应用主题|
             [/entry]
             [entry] |read-file-error|
-                # [locale] default
+                # [default]
                 #     [File {index}] An error occurred while reading the file: 
                 #     {message} 
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     [文件{index}] 读取文件时出现了错误：
                     {message}
                 [/locale]
             [/entry]
             [entry] |overlay-no-data|
-                # [locale] default
+                # [default]
                 #     Error: no theme set or the current data is corrupt
                 #     Try setting a theme first 
-                # [/locale]
+                # [/default]
                 [locale] zh_CN 
                     错误：当前没有设定主题或当前数据损坏
                     请尝试设定主题
                 [/locale]
             [/entry]
             [entry] |overlay-data-error|
-                # [locale] default
+                # [default]
                 #     Error: the current data is corrupt
                 #     Remove the current theme, set the theme, and try again 
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     错误：当前主题数据损坏
                     请移除当前数据和重新设定主题后重试
                 [/locale]
             [/entry]
             [entry] |process-files-error|
-                # [locale] default
+                # [default]
                 #     [File {index}] An error occurred while processing the file:
                 #     {message}
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     [文件{index}] 处理文件时发生了错误：
                     {message}
@@ -147,10 +147,10 @@
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |remove-data-error|
-                # [locale] default
+                # [default]
                 #     An error occurred while removing the data:
                 #     {message}
-                # [/locale]
+                # [/default]
                 [locale] zh_CN 
                     移除当前数据时发生了错误：
                     {message}
@@ -195,20 +195,20 @@
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |not-available-err|
-                # [locale] default
+                # [default]
                 #     update-theme cannot be used with the current theme setting
                 #     Please re-apply the current theme and try again
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     update-theme在当前主题设定上无法使用
                     请重新应用当前主题后重试
                 [/locale]
             [/entry]
             [entry] |other-err|
-                # [locale] default
+                # [default]
                 #     An error occurred while processing file path information: {msg}
                 #     Please re-apply the current theme and try again
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     处理文件路径信息时发生错误：{msg}
                     请重新应用当前主题后重试
@@ -222,20 +222,20 @@
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
             [entry] |not-available-err|
-                # [locale] default
+                # [default]
                 #     repair-theme cannot be used with the current theme setting
                 #     Please re-apply the current theme and try again
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     repair-theme在当前主题设定上无法使用
                     请重新应用当前主题后重试
                 [/locale]
             [/entry]
             [entry] |other-err|
-                # [locale] default
+                # [default]
                 #     An error occurred: {msg}
                 #     Please re-apply the current theme and try again
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     发生了错误：{msg}
                     请重新应用当前主题后重试
@@ -254,11 +254,11 @@
                 locale[zh_CN]: |选项：|
             [/entry]
             [entry] |options-apply-theme|
-                # [locale] default
+                # [default]
                 #     apply-theme: Apply the given theme definition file(s).
                 #     Specify --overlay to add file(s) onto the current data.
                 #     Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)
-                # [/locale]
+                # [/default]
                 [locale] zh_CN
                     apply-theme：应用指定的主题定义文件
                     指定"--overlay"选项以将文件添加到当前数据中
@@ -266,12 +266,12 @@
                 [/locale]
             [/entry]
             [entry] |options-show-info|
-                # [locale] default
+                # [default]
                 #     show-info: Show information about the currently applied theme(s)
                 #     Specify --name to only display the name of each theme
                 #     Specify --file-path to only display the source file path of each theme
                 #     (Both will be displayed when both specified)
-                # [/locale]
+                # [/default]
                 [locale] zh_CN 
                     show-info：显示当前主题设定的详细信息
                     指定"--name"以仅显示每个主题的名称

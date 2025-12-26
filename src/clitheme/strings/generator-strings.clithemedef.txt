@@ -126,10 +126,10 @@
             locale[zh_CN]: |第{num}行：子路径和文件有冲突；请检查之前的定义|
         [/entry]
         [entry] |include-file-read-err|
-            # [locale] default
+            # [default]
             #     Line {num}: unable to read file "{filepath}":
             #     {error_msg}
-            # [/locale]
+            # [/default]
             [locale] zh_CN
                 第{num}行：无法读取文件"{filepath}"：
                 {error_msg}
