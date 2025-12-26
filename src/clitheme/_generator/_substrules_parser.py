@@ -97,7 +97,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             reset_outline_foregroundonly()
             command_filter_is_regex=re.fullmatch(r"(\<)?filter_(cmd|command)_regex(?(1)\>|)", phrases[0])!=None
 
-            content=_globalvar.splitarray_to_string(phrases[1:])
+            content=' '.join(phrases[1:])
             content=self.parse_content(content, pure_name=True)
             # If regex, check if pattern is valid
             if command_filter_is_regex: check_pattern(content)

@@ -30,7 +30,7 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: 
                 content,self.linenum(),phrases[0]) # e.g. [...]/theme-info/1/clithemeinfo_name
         elif re.fullmatch(r"(locales|supported_apps)(:)?", phrases[0])!=None:
             self.check_enough_args(phrases, 2)
-            content=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
+            content=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
             self.write_infofile_newlines( \
                 self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, \
                 _globalvar.generator_info_v2filename.format(info=phrases[0]),\

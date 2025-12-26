@@ -26,7 +26,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
             # if no filename provided, use current working directory as parent path; else, use the directory the file is in as the parent path
             if self.filename.strip()!="":
                 parent_dir+=os.path.dirname(self.filename)
-            file_dir=parent_dir+("/" if parent_dir!="" else "")+_globalvar.splitarray_to_string(filepath).replace(" ","/")
+            file_dir=parent_dir+("/" if parent_dir!="" else "")+' '.join(filepath).replace(" ","/")
             # get file content
             orig_stdout=sys.stdout
             sys.stdout=sys.__stdout__
@@ -42,9 +42,9 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
         if phrases[0]=="[file_content]":
             def handle(p: List[str]) -> List[str]:
                 self.check_enough_args(p, 2)
-                filepath=self.parse_content(_globalvar.splitarray_to_string(p[1:]), pure_name=True).split()
+                filepath=self.parse_content(' '.join(p[1:]), pure_name=True).split()
                 # sanity check the file path
-                if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
+                if _globalvar.sanity_check(' '.join(filepath))==False:
                     self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 return filepath
             file_paths=[handle(phrases)]
@@ -63,31 +63,31 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
                 self.write_manpage_file(filepath, content, self.linenum())
         elif phrases[0] in ("<include_file>", "include_file"):
             self.check_enough_args(phrases, 2)
-            filepath=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
-            if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
+            filepath=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
+            if _globalvar.sanity_check(' '.join(filepath))==False:
                 self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
 
             filecontent=get_file_content(filepath)
             # expect "as" clause on next line
             if self.goto_next_line() and self.get_current_line().split()[0] in ("as:", "as"):
-                target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
-                if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
+                target_file=self.parse_content(' '.join(self.get_current_line().split()[1:]), pure_name=True).split()
+                if _globalvar.sanity_check(' '.join(target_file))==False:
                     self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 self.write_manpage_file(target_file, filecontent, self.linenum())
             else:
                 self.handle_error(self.fd.feof("include-file-missing-phrase-err", "Missing \"as <filename>\" phrase on next line of line {num}", num=str(self.linenum()-1)))
         elif phrases[0]=="[include_file]":
             self.check_enough_args(phrases, 2)
-            filepath=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
-            if _globalvar.sanity_check(_globalvar.splitarray_to_string(filepath))==False:
+            filepath=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
+            if _globalvar.sanity_check(' '.join(filepath))==False:
                 self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
             filecontent=get_file_content(filepath)
             while self.goto_next_line():
                 p=self.get_current_line().split()
                 if p[0] in ("as:", "as"):
                     self.check_enough_args(p, 2)
-                    target_file=self.parse_content(_globalvar.splitarray_to_string(self.get_current_line().split()[1:]), pure_name=True).split()
-                    if _globalvar.sanity_check(_globalvar.splitarray_to_string(target_file))==False:
+                    target_file=self.parse_content(' '.join(self.get_current_line().split()[1:]), pure_name=True).split()
+                    if _globalvar.sanity_check(' '.join(target_file))==False:
                         self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     self.write_manpage_file(target_file, filecontent, self.linenum())
                 elif p[0]=="[/include_file]":

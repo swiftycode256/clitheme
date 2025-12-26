@@ -212,7 +212,7 @@ def _check_command(match_cmd: str, strictness: int, target_command: str, is_rege
         if strictness==1: # must start with pattern in terms of space-separated phrases
             return len(match_cmd.split())<=len(target_command.split()) and target_command.split()[1:len(match_cmd.split())]==match_cmd.split()[1:]
         elif strictness==2: # must equal to pattern
-            process=lambda cmd: _globalvar.splitarray_to_string(cmd[1:])
+            process=lambda cmd: ' '.join(cmd[1:])
             return process(match_cmd)==process(target_command)
         elif strictness==-1: # smartcmdmatch: split phrases starting with one '-' and split them. Then, perform strictness==0 check
             # process both phrases

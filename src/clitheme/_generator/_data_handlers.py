@@ -76,7 +76,7 @@ class DataHandlers:
             f.write(line+"\n")
     def write_manpage_file(self, file_path: List[str], content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
         parent_path=custom_parent_path if custom_parent_path!=None else self.path+"/"+_globalvar.generator_manpage_pathname
-        parent_path+='/'+os.path.dirname(_globalvar.splitarray_to_string(file_path).replace(" ","/"))
+        parent_path+='/'+os.path.dirname(' '.join(file_path).replace(" ","/"))
         # create the parent directory
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):

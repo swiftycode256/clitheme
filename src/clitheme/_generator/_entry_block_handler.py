@@ -113,7 +113,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     ))
         elif phrases[0] in ("locale_block", "[locale]"):
             self.check_enough_args(phrases, 2)
-            locales=self.parse_content(_globalvar.splitarray_to_string(phrases[1:]), pure_name=True).split()
+            locales=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
             begin_line_number=self.linenum()+1
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
             for this_locale in locales:

@@ -267,7 +267,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     signal.signal(signal.SIGALRM, raise_error)
                     signal.setitimer(signal.ITIMER_REAL, db_interface.match_timeout)
                 try: 
-                    new_output, changed_lines=db_interface.match_content(new_output, _globalvar.splitarray_to_string(command), is_stderr=block_data[1], pids=(handler.process_pid, foreground_pid))
+                    new_output, changed_lines=db_interface.match_content(new_output, ' '.join(command), is_stderr=block_data[1], pids=(handler.process_pid, foreground_pid))
                 except TimeoutError: failed=True
                 # Happens when no theme is set/no subst-data.db
                 except db_interface.db_not_found: pass

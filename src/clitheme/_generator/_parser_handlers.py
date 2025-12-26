@@ -130,7 +130,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
-        options_data=self.parse_content(_globalvar.splitarray_to_string(options_data), pure_name=True).split()
+        options_data=self.parse_content(' '.join(options_data), pure_name=True).split()
         for each_option in options_data:
             option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
@@ -333,7 +333,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             self.handle_set_variable(var_name, var_content, really_really_global)
         elif phrases[0] in ("(set_options)", "set_options"):
             self.check_enough_args(phrases, 2)
-            self.handle_set_global_options(_globalvar.splitarray_to_string(phrases[1:]).split(), really_really_global)
+            self.handle_set_global_options(' '.join(phrases[1:]).split(), really_really_global)
         elif phrases[0]=="(enable_subst)":
             self.check_extra_args(phrases, 1)
             self.handle_set_global_options(self.subst_options, really_really_global)
