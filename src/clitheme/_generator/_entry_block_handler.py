@@ -177,7 +177,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     unique_id=entry.entry_name.id)
             except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=sys.exc_info()[1]))
         else:
-            target_entry=copy.copy(match_pattern).strip()
+            target_entry=' '.join(match_pattern.split()) # Remove extra spaces
             if entry.locale!=None: target_entry+="__"+entry.locale
             if self.in_subsection!="": target_entry=self.in_subsection+" "+target_entry
             if self.in_domainapp!="": target_entry=self.in_domainapp+" "+target_entry

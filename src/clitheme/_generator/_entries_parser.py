@@ -26,13 +26,14 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             self.check_extra_args(phrases, 3)
             this_phrases=self.parse_content(_globalvar.extract_content(self.get_current_line()), pure_name=True).split()
             assert len(this_phrases)==2
-            self.in_domainapp=' '.join(this_phrases)
+            self.in_domainapp=' '.join(this_phrases) # Remove extra spaces
             if _globalvar.sanity_check(self.in_domainapp)==False:
                 self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
             self.in_subsection="" # clear subsection
         elif phrases[0] in ("<in_subsection>", "in_subsection"):
             self.check_enough_args(phrases, 2)
             self.in_subsection=self.parse_content(_globalvar.extract_content(self.get_current_line()), pure_name=True)
+            self.in_subsection=' '.join(self.in_subsection.split()) # Remove extra spaces
             if _globalvar.sanity_check(self.in_subsection)==False:
                 self.handle_error(self.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
         elif phrases[0] in ("<unset_domainapp>", "unset_domainapp"):
