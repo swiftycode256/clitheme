@@ -19,7 +19,7 @@ def _labeled_print(msg: str):
 
 from .. import _globalvar, cli, frontend
 from .._generator import db_interface
-from . import output_processor
+from . import _output_processor
 from typing import List
 
 # spell-checker:ignore lsdir showhelp argcount nosubst
@@ -127,6 +127,6 @@ def main(arguments: List[str]):
         else: 
             if not _check_regenerate_db(): return 1
     # Start the process
-    return output_processor.handler_main(arguments[1+argcount:], debug_mode, subst)
+    return _output_processor.handler_main(arguments[1+argcount:], debug_mode, subst)
 def _script_main(): # for script
     return main(sys.argv)

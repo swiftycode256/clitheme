@@ -19,7 +19,7 @@ import queue
 from typing import Optional, List, Set
 from .._generator import db_interface
 from .. import _globalvar, frontend
-from .handlers._base_template import BaseHandler
+from ._handlers._base_template import BaseHandler
 from .._globalvar import _direct_exit
 from . import _labeled_print
 
@@ -79,10 +79,10 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     try:
         handler: BaseHandler
         if os.name=="posix":
-            from .handlers.posix import PosixHandler
+            from ._handlers.posix import PosixHandler
             handler=PosixHandler(command)
         else: 
-            from .handlers.windows import WindowsHandler
+            from ._handlers.windows import WindowsHandler
             handler=WindowsHandler(command)
     except:
         _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
