@@ -109,20 +109,20 @@ Consult the Wiki pages and documentation for detailed syntax of theme definition
 {entries_section}
     in_domainapp com.example example-app
         [entry] found-file
-            locale:default o(≧v≦)o Great! Found {} files in current directory!
-            locale:en_US o(≧v≦)o Great! Found {} files in current directory!
+            locale[default]: o(≧v≦)o Great! Found {} files in current directory!
+            locale[en_US]: o(≧v≦)o Great! Found {} files in current directory!
         [/entry]
         [entry] installing-file
-            locale:default (>^ω^<) Installing "{}"...
-            locale:en_US (>^ω^<) Installing "{}"...
+            locale[default]: (>^ω^<) Installing "{}"...
+            locale[en_US]: (>^ω^<) Installing "{}"...
         [/entry]
         [entry] install-success
-            locale:default o(≧v≦)o Successfully installed {} files!
-            locale:en_US o(≧v≦)o Successfully installed {} files!
+            locale[default]: o(≧v≦)o Successfully installed {} files!
+            locale[en_US]: o(≧v≦)o Successfully installed {} files!
         [/entry]
         [entry] file-not-found
-            locale:default ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
-            locale:en_US ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+            locale[default]: ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
+            locale[en_US]: ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
         [/entry]
 {/entries_section}
 ```

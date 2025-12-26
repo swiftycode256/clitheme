@@ -91,8 +91,8 @@ substrules_file=r"""
         ls
     [/filter_cmds]
         [subst_regex] {{shell}}: (?P<filename>.+): Permission denied
-            locale:default \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
-            locale:zh_CN \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
+            locale[default]: \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
+            locale[zh_CN]: \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
         # Test substvar specified in block
         [/subst_regex] substvar
 
@@ -101,12 +101,12 @@ substrules_file=r"""
     <filter_cmd> ls
         # testing repeated entry detection
         [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
-            locale:default (Error: Repeated entry detection failed)
+            locale[default]: (Error: Repeated entry detection failed)
         [/subst_regex]
         # {{shell}} should equal to {{shell2}} 
         [subst_regex] {{shell2}}: unrecognized option '(?P<opt>.+)'
-            locale:default \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
-            locale:zh_CN \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
+            locale[default]: \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
+            locale[zh_CN]: \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/subst_regex]
     <unset_filter_cmd>
 
@@ -115,8 +115,8 @@ substrules_file=r"""
     (set_options) strictcmdmatch
     <filter_cmd> example_app install-stuff
         [subst_string] Error: sample message
-            locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
-            locale:zh_CN 错误：样例提示！(>﹏<)
+            locale[default]: Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
+            locale[zh_CN]: 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
     <unset_filter_cmd>
 
@@ -124,23 +124,23 @@ substrules_file=r"""
     setvar[pattern]: app(_example)? (.*)install(-stuff)?
     <filter_cmd_regex> {{pattern}}
         [subst_string] Error: sample message
-            locale:default Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
-            locale:zh_CN 错误：样例提示！(>﹏<)
+            locale[default]: Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
+            locale[zh_CN]: 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
     <unset_filter_cmd>
     (set_options) nosubstesc
     # global substitutions
     [subst_regex] ^Warning:( )
-        locale:default o(≧v≦)o Note:\g<1>
-        locale:zh_CN o(≧v≦)o 提示：\g<1>
+        locale[default]: o(≧v≦)o Note:\g<1>
+        locale[zh_CN]: o(≧v≦)o 提示：\g<1>
     [/subst_regex]
     [subst_regex] ^Error:( )
-        locale:default (ToT)/~~~ Error:\g<1>
-        locale:zh_CN (ToT)/~~~ 错误：
+        locale[default]: (ToT)/~~~ Error:\g<1>
+        locale[zh_CN]: (ToT)/~~~ 错误：
     [/subst_regex]
     [subst_regex] invalid input( )*$
-        locale:default input is invalid! ಥ_ಥ
-        locale:zh_CN 无效输入！ಥ_ಥ
+        locale[default]: input is invalid! ಥ_ಥ
+        locale[zh_CN]: 无效输入！ಥ_ಥ
     [/subst_regex]
 
     setvar[style]: {{[x1b]}}[1;4m
@@ -152,7 +152,7 @@ substrules_file=r"""
             [locale] default
                 \g<shell> says: {{style}}Operation not permitted!{{orig}} ಥ_ಥ
             [/locale] substchar substesc
-            locale:zh_CN \g<shell> 说：不允许的操作！ಥ_ಥ
+            locale[zh_CN]: \g<shell> 说：不允许的操作！ಥ_ಥ
         [/subst_regex]
 
     # test substchar
@@ -177,8 +177,8 @@ substrules_file=r"""
     (set_options) normalcmdmatch
     <filter_cmd> example_app
         [subst_string] example_app:
-            locale:default o(≧v≦)o example_app says:
-            locale:zh_CN o(≧v≦)o example_app 说：
+            locale[default]: o(≧v≦)o example_app says:
+            locale[zh_CN]: o(≧v≦)o example_app 说：
         [/subst_string]
 {/substrules_section}
 """

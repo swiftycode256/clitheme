@@ -17,19 +17,19 @@
 <in_domainapp> |swiftycode clitheme|
     <in_subsection> |man|
         [entry] |man-not-installed|
-            # locale:default |Error: "man" is not installed on this system|
-            locale:zh_CN |错误："man"未安装在此系统中|
+            # locale[default]: |Error: "man" is not installed on this system|
+            locale[zh_CN]: |错误："man"未安装在此系统中|
         [/entry]
         [entry] |no-theme-warn|
-            # locale:default |Warning: no theme set or theme does not contain manpages|
-            locale:zh_CN |警告：没有设定主题或当前主题没有manpages定义|
+            # locale[default]: |Warning: no theme set or theme does not contain manpages|
+            locale[zh_CN]: |警告：没有设定主题或当前主题没有manpages定义|
         [/entry]
         [entry] |win32-not-supported|
-            # locale:default |Error: Windows platform not supported|
-            locale:zh_CN |错误：不支持Windows平台|
+            # locale[default]: |Error: Windows platform not supported|
+            locale[zh_CN]: |错误：不支持Windows平台|
         [/entry]
         [entry] |prev-command-fail|
-            locale:zh_CN |设定自定义路径执行"man"时发生错误，正在尝试以正常设定执行|
+            locale[zh_CN]: |设定自定义路径执行"man"时发生错误，正在尝试以正常设定执行|
         [/entry]
 {/entries_section}
 

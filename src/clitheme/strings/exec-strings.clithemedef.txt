@@ -21,69 +21,69 @@
     # String entries used for "clitheme-exec --help"
     <in_subsection> |exec help-message|
         [entry] |usage-str|
-            # locale:default |Usage:|
-            locale:zh_CN |使用方式：|
+            # locale[default]: |Usage:|
+            locale[zh_CN]: |使用方式：|
         [/entry]
         [entry] |options-str|
-            # locale:default |Options:|
-            locale:zh_CN |选项：|
+            # locale[default]: |Options:|
+            locale[zh_CN]: |选项：|
         [/entry]
         [entry] |options-debug|
-            # locale:default |--debug: Display indicator at the beginning of each read output by line|
-            locale:zh_CN |--debug：在每一行被读取的输出前显示标记|
+            # locale[default]: |--debug: Display indicator at the beginning of each read output by line|
+            locale[zh_CN]: |--debug：在每一行被读取的输出前显示标记|
         [/entry]
         [entry] |options-debug-color|
-            # locale:default |--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)|
-            locale:zh_CN |--debug-color：为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）|
+            # locale[default]: |--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)|
+            locale[zh_CN]: |--debug-color：为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）|
         [/entry]
         [entry] |options-debug-newlines|
-            # locale:default |--debug-newlines: Use newlines to display output that does not end on a newline|
-            locale:zh_CN |--debug-newlines：使用新的一行来显示没有新行的输出|
+            # locale[default]: |--debug-newlines: Use newlines to display output that does not end on a newline|
+            locale[zh_CN]: |--debug-newlines：使用新的一行来显示没有新行的输出|
         [/entry]
         [entry] |options-showchars|
-            # locale:default |--showchars: Display various control characters in plain text|
-            locale:zh_CN |--showchars：使用明文显示终端控制符号|
+            # locale[default]: |--showchars: Display various control characters in plain text|
+            locale[zh_CN]: |--showchars：使用明文显示终端控制符号|
         [/entry]
         [entry] |options-foreground-stat|
-            # locale:default |--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)|
-            locale:zh_CN |--foreground-stat: 当进程的前台状态（tcgetpgrp的返回值）变动时，显示提示信息|
+            # locale[default]: |--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)|
+            locale[zh_CN]: |--foreground-stat: 当进程的前台状态（tcgetpgrp的返回值）变动时，显示提示信息|
         [/entry]
         [entry] |options-nosubst|
-            # locale:default |--nosubst: Do not perform any output substitutions even if a theme is set|
-            locale:zh_CN |--nosubst：不进行任何输出替换，即使已设定主题|
+            # locale[default]: |--nosubst: Do not perform any output substitutions even if a theme is set|
+            locale[zh_CN]: |--nosubst：不进行任何输出替换，即使已设定主题|
         [/entry]
     <in_subsection> |exec|
         [entry] |windows-version-err|
-            # locale:default |Error: Windows 10 version 1809 or later is required ({errmsg})|
-            locale:zh_CN |错误：需要Windows 10版本1809或以上版本 ({errmsg})|
+            # locale[default]: |Error: Windows 10 version 1809 or later is required ({errmsg})|
+            locale[zh_CN]: |错误：需要Windows 10版本1809或以上版本 ({errmsg})|
         [/entry]
         [entry] |help-usage-prompt|
-            # locale:default |Run "clitheme-exec --help" for usage information|
-            locale:zh_CN |使用"clitheme-exec --help"以获取使用方式|
+            # locale[default]: |Run "clitheme-exec --help" for usage information|
+            locale[zh_CN]: |使用"clitheme-exec --help"以获取使用方式|
         [/entry]
         [entry] |unknown-option-err|
-            # locale:default |Error: unknown option "{phrase}"|
-            locale:zh_CN |错误：未知选项"{phrase}"|
+            # locale[default]: |Error: unknown option "{phrase}"|
+            locale[zh_CN]: |错误：未知选项"{phrase}"|
         [/entry]
         [entry] |debug-newlines-not-with-debug|
-            # locale:default |Error: "--debug-newlines" must be used with "--debug" option|
-            locale:zh_CN |错误："--debug-newlines"选项必须与"--debug"选项同时指定|
+            # locale[default]: |Error: "--debug-newlines" must be used with "--debug" option|
+            locale[zh_CN]: |错误："--debug-newlines"选项必须与"--debug"选项同时指定|
         [/entry]
         [entry] |no-command-err|
-            # locale:default |Error: no command specified|
-            locale:zh_CN |错误：未指定命令|
+            # locale[default]: |Error: no command specified|
+            locale[zh_CN]: |错误：未指定命令|
         [/entry]
         [entry] |no-theme-warn|
-            # locale:default |Warning: no theme set or theme does not have substrules|
-            locale:zh_CN |警告：没有设定主题或当前主题没有substrules定义|
+            # locale[default]: |Warning: no theme set or theme does not have substrules|
+            locale[zh_CN]: |警告：没有设定主题或当前主题没有substrules定义|
         [/entry]
         [entry] |substrules-update-msg|
-            # locale:default |Updating database...|
-            locale:zh_CN |正在更新数据库...|
+            # locale[default]: |Updating database...|
+            locale[zh_CN]: |正在更新数据库...|
         [/entry]
         [entry] |db-update-generator-err|
-            # locale:default |Failed to generate data (full log below):|
-            locale:zh_CN |无法生成数据（完整日志在此）：|
+            # locale[default]: |Failed to generate data (full log below):|
+            locale[zh_CN]: |无法生成数据（完整日志在此）：|
         [/entry]
         [entry] |db-update-err|
             # [locale] default
@@ -106,23 +106,23 @@
             [/locale]
         [/entry]
         [entry] |db-invalid-version|
-            # locale:default |Invalid database version information|
-            locale:zh_CN |无效数据库版本信息|
+            # locale[default]: |Invalid database version information|
+            locale[zh_CN]: |无效数据库版本信息|
         [/entry]
         [entry] |db-update-success-msg|
-            # locale:default |Successfully updated database, proceeding execution|
-            locale:zh_CN |数据库更新完成，继续执行命令|
+            # locale[default]: |Successfully updated database, proceeding execution|
+            locale[zh_CN]: |数据库更新完成，继续执行命令|
         [/entry]
         [entry] |command-fail-err|
-            # locale:default |Error: failed to run command: {msg}|
-            locale:zh_CN |错误：无法执行命令：{msg}|
+            # locale[default]: |Error: failed to run command: {msg}|
+            locale[zh_CN]: |错误：无法执行命令：{msg}|
         [/entry]
         [entry] |internal-error-err|
-            # locale:default |Error: an internal error has occurred while executing the command (execution halted):|
-            locale:zh_CN |错误：执行命令时发生内部错误（执行已终止）：|
+            # locale[default]: |Error: an internal error has occurred while executing the command (execution halted):|
+            locale[zh_CN]: |错误：执行命令时发生内部错误（执行已终止）：|
         [/entry]
         [entry] |output-interrupted-exit|
-            # locale:default |Output interrupted after command exit|
-            locale:zh_CN |输出在命令退出后被中断|
+            # locale[default]: |Output interrupted after command exit|
+            locale[zh_CN]: |输出在命令退出后被中断|
         [/entry]
 {/entries_section}
