@@ -8,8 +8,8 @@
 header_section parser function (internal module)
 """
 import re
-from .. import _globalvar
-from . import _parser_handlers
+from ... import _globalvar
+from .. import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 

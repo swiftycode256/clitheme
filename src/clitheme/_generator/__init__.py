@@ -10,9 +10,11 @@ Generator function used in applying themes (should not be invoked directly)
 import os
 import string
 import random
+
+from ._sections import entries, header, manpage
 from .. import _globalvar
 from . import _parser_handlers
-from . import _header_parser, _entries_parser, _substrules_parser, _manpage_parser
+from ._sections import substrules
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -43,16 +45,16 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         is_content=True
         if first_phrase in ("begin_header", r"{header_section}"):
             self.check_extra_args(phrases, 1)
-            _header_parser.handle_header_section(self, first_phrase)
+            header.handle_header_section(self, first_phrase)
         elif first_phrase in ("begin_main", r"{entries_section}"):
             self.check_extra_args(phrases, 1)
-            _entries_parser.handle_entries_section(self, first_phrase)
+            entries.handle_entries_section(self, first_phrase)
         elif first_phrase==r"{substrules_section}":
             self.check_extra_args(phrases, 1)
-            _substrules_parser.handle_substrules_section(self, first_phrase)
+            substrules.handle_substrules_section(self, first_phrase)
         elif first_phrase==r"{manpage_section}":
             self.check_extra_args(phrases, 1)
-            _manpage_parser.handle_manpage_section(self, first_phrase)
+            manpage.handle_manpage_section(self, first_phrase)
         elif self.handle_setters(really_really_global=True): pass
         elif first_phrase=="!require_version":
             is_content=False

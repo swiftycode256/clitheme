@@ -13,8 +13,10 @@ import math
 import copy
 import uuid
 from typing import Optional, Union, List, Dict, Tuple
+
+from ._sections import entry_block
 from .. import _globalvar, _version
-from . import _data_handlers, _entry_block_handler
+from . import _data_handlers
 # spell-checker:ignore lineindex banphrases minspaces blockinput optline datapath matchoption
 
 class GeneratorObject(_data_handlers.DataHandlers):
@@ -429,4 +431,4 @@ class GeneratorObject(_data_handlers.DataHandlers):
             offset+=1
         blockinput_data="\n".join(blockinput_lines)
         return blockinput_data
-    handle_entry=_entry_block_handler.handle_entry
+    handle_entry=entry_block.handle_entry

@@ -10,14 +10,14 @@ import copy
 import uuid
 from typing import Union, List, Dict, Any, Optional
 from typing import NamedTuple
-from .. import _globalvar
-from . import db_interface
+from ... import _globalvar
+from .. import db_interface
 
 # spell-checker:ignore matchoption datapath lineindex
 
 def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
-    from . import _parser_handlers
+    from .. import _parser_handlers
     self: _parser_handlers.GeneratorObject=obj
     # substrules_options: {effective_commands: list, command_is_regex: bool, is_regex: bool, strictness: int}
 

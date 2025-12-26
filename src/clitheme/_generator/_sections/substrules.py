@@ -12,8 +12,8 @@ import copy
 import re
 import sys
 from typing import Optional
-from .. import _globalvar
-from . import _parser_handlers, db_interface
+from ... import _globalvar
+from .. import _parser_handlers, db_interface
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
@@ -41,7 +41,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
         try: db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
         except db_interface.need_db_regenerate:
-            from ..exec import _check_regenerate_db
+            from ...exec import _check_regenerate_db
             if not _check_regenerate_db(self.path): self.handle_error(self.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
             db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
     else: db_interface.init_db(self.path+"/"+_globalvar.db_filename)
