@@ -21,7 +21,7 @@ from .. import _globalvar, frontend
 # spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp nolocale
 
 connection=sqlite3.connect(":memory:") # placeholder
-db_path=""
+db_path=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
 debug_mode=False
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
 
@@ -69,9 +69,10 @@ def init_db(file_path: str):
     connection.execute(f"CREATE TABLE {_globalvar.db_data_tablename}_version (value INTEGER NOT NULL);")
     connection.execute(f"INSERT INTO {_globalvar.db_data_tablename}_version (value) VALUES (?)", (_globalvar.db_version,)) 
     connection.commit()
-def connect_db(path: str=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"):
+def connect_db(path: Optional[str]=None):
     global db_path
-    db_path=path
+    if path==None: path=db_path
+    else: db_path=path
     if not os.path.exists(path):
         raise db_not_found("No theme set or theme does not contain substrules")
     global connection
@@ -139,6 +140,7 @@ def _is_db_updated() -> bool:
 
     if cur_state!=_db_last_state:
         _db_last_state=cur_state
+        if cur_state!=None: connect_db()
         return True
     else: return False
 
