@@ -176,7 +176,7 @@ First, ensure that Python 3 is installed on the system. CLItheme requires Python
 
 - On Linux distributions, you can use relevant package manager to install 
 - On macOS, you can install Python through Xcode command line developer tools (use `xcode-select --install` command), or through Python website ( https://www.python.org/downloads )
-- On Windows, you can install Python through Microsoft Store ([Python 3.13 link](https://apps.microsoft.com/detail/9pnrbtzxmb4z)), or through Python website ( https://www.python.org/downloads )
+- On Windows, you can install Python through the [Python Install Manager](https://apps.microsoft.com/detail/9nq7512cxl7t), or through the installers that can be downloaded from Python website ( https://www.python.org/downloads )
 
 Then, ensure that `pip` is installed within Python. The following command will perform an offline install of `pip` if it's not detected.
 

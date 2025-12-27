@@ -174,7 +174,7 @@ $ clitheme-man ls
 
 - 在Linux发行版上，你可以通过对应的软件包管理器安装Python
 - 在macOS上，你可以通过Xcode命令行开发者工具安装Python（使用`xcode-select --install`命令），或者通过Python官网（ https://www.python.org/downloads ）下载
-- 在Windows上，你可以通过Microsoft Store安装Python（[Python 3.13链接](https://apps.microsoft.com/detail/9pnrbtzxmb4z)），或者通过Python官网（ https://www.python.org/downloads ）下载
+- 在Windows上，你可以通过[Python Install Manager](https://apps.microsoft.com/detail/9nq7512cxl7t)安装Python，或者通过Python官网（ https://www.python.org/downloads ）下载安装包
 
 然后，确保`pip`软件包管理器已安装在Python中。以下命令将会通过本地安装`pip`，如果检测到没有安装。
 
