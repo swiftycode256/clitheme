@@ -349,18 +349,3 @@ kernel32.GetWindowsDirectoryW.argtypes=[
 ]
 kernel32.GetWindowsDirectoryW.restype=wintypes.UINT
 # endregion
-
-def errmsg():
-    buffer = ctypes.create_unicode_buffer(1024)
-    chars = kernel32.FormatMessageW(
-        FORMAT_MESSAGE_FROM_SYSTEM,
-        None,
-        ctypes.GetLastError(),
-        0,
-        buffer,
-        ctypes.sizeof(buffer) // ctypes.sizeof(ctypes.c_wchar),
-        None
-    )
-    if chars == 0:
-        return f"Unknown error code"
-    return buffer.value.strip('\x00')
