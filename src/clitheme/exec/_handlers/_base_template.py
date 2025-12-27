@@ -21,7 +21,7 @@ class BaseHandler:
         raise NotImplementedError
     def write_pty(self, data: bytes):
         raise NotImplementedError
-    def get_readable_descriptors(self, timeout: float) -> List:
+    def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
         # for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
         raise NotImplementedError

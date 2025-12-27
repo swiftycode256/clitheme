@@ -234,40 +234,32 @@ class WindowsHandler(BaseHandler):
         else: return data
     def write_pty(self, data: bytes):
         self._write_data(self.stdin_fd, data)
-    def _read_available(self, handle) -> bool:
-        # Check if available for reading
-        handle_type=kernel32.GetFileType(handle)
-        w_assert(handle_type!=FILE_TYPE_UNKNOWN)
-        bytes_available = wintypes.DWORD()
-        if handle_type==FILE_TYPE_CHAR:
-            w_assert(kernel32.GetNumberOfConsoleInputEvents(handle, ctypes.byref(bytes_available)))
-        elif handle_type==FILE_TYPE_PIPE:
-            w_assert(kernel32.PeekNamedPipe(handle, None, 0, None, ctypes.byref(bytes_available), None))
-        else: raise AssertionError("Unsupported handle type")
-        return bytes_available.value>0
-    def get_readable_descriptors(self, timeout: float) -> List:
+    def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
+        avail_handles=set()
         init_time=time.perf_counter()
-        # Simulate timeout
         counter=0
         while counter==0 or time.perf_counter()-init_time<timeout:
             counter+=1
 
-            avail_handles=[]
             stdin_handle=self._get_std_handles()[0]
-            # stdin
-            try:
-                if self._read_available(stdin_handle):
-                    avail_handles.append("stdin")
-            except AssertionError: pass
-            # stdout
-            try:
-                if self._read_available(self.stdout_fd):
-                    avail_handles.append("stdout")
-            except AssertionError: pass
-            if len(avail_handles)!=0: return avail_handles
+            # Check stdin
+            input_available = wintypes.DWORD()
+            w_assert(kernel32.GetNumberOfConsoleInputEvents(stdin_handle, ctypes.byref(input_available)))
+            if input_available.value>0:
+                avail_handles.add("stdin")
+            # Check stdout
+            output_available = wintypes.DWORD()
+            w_assert(kernel32.PeekNamedPipe(
+                self.stdout_fd, None, 0, None,
+                ctypes.byref(output_available), # Get available bytes
+                None # lpBytesLeftThisMessage
+            ))
+            if output_available.value>0:
+                avail_handles.add("stdout")
+            if len(avail_handles)>0: break
             time.sleep(0.001)
-        return []
+        return avail_handles
     def get_process_term_attrs(self, no_buffering=False) -> Optional[Any]:
         try:
             stdin_handle, stdout_handle=self._get_std_handles()

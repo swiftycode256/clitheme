@@ -113,13 +113,13 @@ class PosixHandler(BaseHandler):
         return os.read(self.stderr_fd if is_stderr else self.stdout_fd, io.DEFAULT_BUFFER_SIZE)
     def write_pty(self, data: bytes):
         os.write(self.stdout_fd, data)
-    def get_readable_descriptors(self, timeout: float) -> List:
+    def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
         try: fds=select.select([self.stdout_fd, sys.stdin, self.stderr_fd], [], [], timeout)[0]
         except OSError: fds=select.select([self.stdout_fd, self.stderr_fd], [], [], timeout)[0]
-        fd_names=[]
+        fd_names=set()
         for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
-            if pair[0] in fds: fd_names.append(pair[1])
+            if pair[0] in fds: fd_names.add(pair[1])
         return fd_names
     def get_window_size(self):
         return fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack('HHHH',0,0,0,0))
