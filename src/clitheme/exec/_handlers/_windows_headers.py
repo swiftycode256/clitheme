@@ -25,6 +25,7 @@ EXTENDED_STARTUPINFO_PRESENT = 0x00080000
 CREATE_NO_WINDOW = 0x08000000
 FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100
 FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000
+FORMAT_MESSAGE_IGNORE_INSERTS=0x00000200
 STILL_ACTIVE=259
 WAIT_TIMEOUT=0x00000102
 WAIT_OBJECT_0=0x00000000
@@ -348,4 +349,10 @@ kernel32.GetWindowsDirectoryW.argtypes=[
     wintypes.UINT, # uSize
 ]
 kernel32.GetWindowsDirectoryW.restype=wintypes.UINT
+
+kernel32.LocaleNameToLCID.argtypes=[
+    wintypes.LPCWSTR, # lpName
+    wintypes.DWORD, # dwFlags
+]
+kernel32.LocaleNameToLCID.restype=wintypes.LCID
 # endregion

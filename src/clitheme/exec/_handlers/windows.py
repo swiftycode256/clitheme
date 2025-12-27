@@ -17,19 +17,27 @@ from ._base_template import BaseHandler
 from ._windows_headers import *
 
 def errmsg() -> str:
+    # Last error code
+    errcode=kernel32.GetLastError()
+    # Determine Language ID to use
+    target_locale=0
+    for locale in _globalvar.get_locale():
+        if locale in ('en-US', 'en_US', 'zh-CN', 'zh_CN'):
+            target_locale=kernel32.LocaleNameToLCID(locale, 0)
+            break
+    # Retrieve message
     buffer = ctypes.create_unicode_buffer(1024)
     result = kernel32.FormatMessageW(
-        FORMAT_MESSAGE_FROM_SYSTEM,
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         None, # lpSource: None for system error
-        ctypes.GetLastError(),
-        0, # dwLanguageId: 0 to use system language
+        errcode,
+        target_locale, # dwLanguageId: 0 to use system language
         buffer,
         ctypes.sizeof(buffer) // ctypes.sizeof(wintypes.WCHAR),
         None # Arguments: None for this one
     )
-    if result==0: message="(Unknown error)"
-    else: message=buffer.value
-    return message
+    if result!=0: return buffer.value.replace("%1", "[command]")
+    else: return f"(Unknown error {errcode})"
 
 def w_assert(condition, msg: Optional[str]=None):
     if not condition:
