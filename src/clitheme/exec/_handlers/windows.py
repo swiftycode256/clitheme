@@ -131,7 +131,8 @@ class WindowsHandler(BaseHandler):
         pi = PROCESS_INFORMATION()
         w_assert(kernel32.CreateProcessW(
             None,  # lpApplicationName
-            ' '.join([f'"{part}"' for part in command]),  # lpCommandLine
+            ' '.join([f'"{part}"' if len(part.split())>1 else part \
+                    for part in command]),  # lpCommandLine
             None,  # lpProcessAttributes
             None,  # lpThreadAttributes
             True, # bInheritHandles: VERY Important!
