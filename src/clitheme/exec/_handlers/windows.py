@@ -272,13 +272,13 @@ class WindowsHandler(BaseHandler):
                 input_mode.value |= ENABLE_VIRTUAL_TERMINAL_INPUT
                 output_mode.value |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING
             return [input_mode.value, output_mode.value]
-        except AssertionError: return None
+        except OSError: return None
     def set_host_term_attrs(self, term_attrs):
         try:
             stdin_handle, stdout_handle=self._get_std_handles()
             w_assert(kernel32.SetConsoleMode(stdin_handle, term_attrs[0]))
             w_assert(kernel32.SetConsoleMode(stdout_handle, term_attrs[1]))
-        except AssertionError: return None
+        except OSError: return None
     def get_foreground_pid(self) -> Optional[int]:
         # Not applicable for Windows processes
         return None
