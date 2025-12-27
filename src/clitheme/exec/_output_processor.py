@@ -130,9 +130,15 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if thread_debug==1: raise Exception
                 elif thread_debug==2: break
 
-                # Set a short timeout value if there are pending outputs
-                # Else, wait longer to reduce CPU usage
-                timeout=0.005 if pending_output!=None or last_input_content!=None else 0.1
+                if last_input_content!=None: 
+                    # Shorter timeout for inputs to reduce lag
+                    timeout=0.005
+                elif pending_output!=None:
+                    # Short timeout if there are pending outputs
+                    timeout=0.02
+                else:
+                    # Wait longer to reduce CPU usage
+                    timeout=0.1
                 fds=handler.get_readable_descriptors(timeout)
                 # Handle user input from stdin
                 if "stdin" in fds:
@@ -157,7 +163,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         orig_data=pending_output[0]
                         if pending_output[3]==foreground_pid and pending_output[1]==is_stderr:
                             # If exceeds maximum time or differing terminal attributes
-                            if time.perf_counter()-pending_output[5]>0.05 or term_attrs!=pending_output[4]:
+                            if time.perf_counter()-pending_output[5]>0.1 or term_attrs!=pending_output[4]:
                                 if not orig_data.endswith(_globalvar.newlines):
                                     # Append first line of data into pending output and process it
                                     first_line=re.match(_globalvar.line_match_bytes, data).group() # type: ignore
@@ -216,16 +222,17 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     had_output=had_output or handle_output(is_stderr=False)
                 if "stderr" in fds:
                     had_output=had_output or handle_output(is_stderr=True)
-                # if no pending output is handled by handle_output, push it
-                if not had_output and pending_output!=None:
+                no_io_available=not "stdin" in fds and not had_output
+                # if no input and output available, push what we have right now
+                if no_io_available and pending_output!=None:
                     push_output(pending_output)
                     pending_output=None
                 # Reset last input content if no output is made within timeout
                 if not "stdin" in fds and pending_output==None:
                     last_input_content=None
-                # End loop if process terminated and no output available for this round
+                # End loop if process terminated and no input/output available for this round
                 if handler.get_proc_status()!=None \
-                    and had_output==False and pending_output==None: 
+                    and no_io_available and pending_output==None: 
                     # Send termination signal
                     push_output(None)
                     break
