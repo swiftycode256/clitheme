@@ -10,9 +10,9 @@ Version information definition file
 # spell-checker:ignore buildnumber
 
 # Version definition file; define the package version here
-version_disp="2.1-dev20251226"
+version_disp="2.1-dev20251227"
 # Build version: must be a literal string
-__version__="2.1_dev20251226"
+__version__="2.1_dev20251227"
 # For PKGBUILD
 version_buildnumber=1
 
