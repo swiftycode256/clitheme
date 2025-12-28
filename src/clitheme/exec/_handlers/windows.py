@@ -13,7 +13,7 @@ import stat
 from ctypes import wintypes
 from typing import Optional, Any, List, Tuple, Union
 from ... import _globalvar
-from ._base_template import BaseHandler
+from ._base_template import BaseHandler, command_failed
 from ._windows_headers import *
 
 def errmsg() -> str:
@@ -137,19 +137,22 @@ class WindowsHandler(BaseHandler):
         ## Start process
 
         pi = PROCESS_INFORMATION()
-        w_assert(kernel32.CreateProcessW(
-            None,  # lpApplicationName
-            ' '.join([f'"{part}"' if len(part.split())>1 else part \
-                    for part in command]),  # lpCommandLine
-            None,  # lpProcessAttributes
-            None,  # lpThreadAttributes
-            True, # bInheritHandles: VERY Important!
-            EXTENDED_STARTUPINFO_PRESENT, # dwCreationFlags
-            None,  # lpEnvironment
-            None,  # lpCurrentDirectory
-            ctypes.byref(si),  # lpStartupInfo
-            ctypes.byref(pi)  # lpProcessInformation
-        ))
+        try:
+            w_assert(kernel32.CreateProcessW(
+                None,  # lpApplicationName
+                ' '.join([f'"{part}"' if len(part.split())>1 else part \
+                        for part in command]),  # lpCommandLine
+                None,  # lpProcessAttributes
+                None,  # lpThreadAttributes
+                True, # bInheritHandles: VERY Important!
+                EXTENDED_STARTUPINFO_PRESENT, # dwCreationFlags
+                None,  # lpEnvironment
+                None,  # lpCurrentDirectory
+                ctypes.byref(si),  # lpStartupInfo
+                ctypes.byref(pi)  # lpProcessInformation
+            ))
+        except:
+            raise command_failed(str(sys.exc_info()[1]))
         self.process_pid=int(pi.dwProcessId)
         self.process_handle=pi.hProcess
         ## Set terminal attributes

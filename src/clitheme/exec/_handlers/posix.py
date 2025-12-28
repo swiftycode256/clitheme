@@ -22,7 +22,7 @@ from typing import Optional, List
 from ... import frontend, _globalvar
 from ..._globalvar import _direct_exit
 from .. import _labeled_print
-from ._base_template import BaseHandler
+from ._base_template import BaseHandler, command_failed
 
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 
@@ -84,7 +84,10 @@ class PosixHandler(BaseHandler):
                     # --From source code of pty.fork()--
                     tmp_fd = os.open(os.ttyname(fd), os.O_RDWR)
                     os.close(tmp_fd)
-        self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
+        try:
+            self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
+        except:
+            raise command_failed(str(sys.exc_info()[1]))
         self.process_pid=self.process.pid
 
         # Terminal attributes

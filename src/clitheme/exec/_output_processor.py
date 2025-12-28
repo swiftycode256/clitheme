@@ -19,7 +19,7 @@ import queue
 from typing import Optional, List, Set, Tuple, Union
 from .._generator import db_interface
 from .. import _globalvar, frontend
-from ._handlers._base_template import BaseHandler
+from ._handlers._base_template import BaseHandler, command_failed
 from .._globalvar import _direct_exit
 from . import _labeled_print
 
@@ -84,9 +84,13 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         else: 
             from ._handlers.windows import WindowsHandler
             handler=WindowsHandler(command)
-    except:
-        _labeled_print(fd.feof("command-fail-err", "Error: failed to run command: {msg}", msg=_globalvar.make_printable(str(sys.exc_info()[1]))))
-        _globalvar.handle_exception()
+    except Exception as exc:
+        if type(exc)==command_failed:
+            _labeled_print(fd.feof("command-fail-err", "Failed to run command: {msg}", msg=_globalvar.make_printable(str(exc))))
+            _globalvar.handle_exception()
+        else:
+            _labeled_print(fd.feof("init-fail-err", "Initialization failed: {msg}", msg=_globalvar.make_printable(str(exc))))
+            raise # Always show full traceback
         return 1
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)
     last_tcgetpgrp=handler.get_foreground_pid()
@@ -101,7 +105,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     def handle_exception(exc: Optional[Exception]=None):
         nonlocal thread_exception_handled; thread_exception_handled=True
         handler.reset_terminal()
-        _labeled_print(fd.reof("internal-error-err", "Error: an internal error has occurred while executing the command (execution halted):"))
+        _labeled_print(fd.reof("internal-error-err", "An internal error has occurred (process terminated):"))
         if exc!=None: raise exc
         else: raise
 

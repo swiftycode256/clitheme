@@ -6,6 +6,8 @@
 
 from typing import Optional, Any, List
 
+class command_failed(OSError): pass
+
 class BaseHandler:
     """
     Template for handler class
