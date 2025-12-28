@@ -47,7 +47,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             if len(pattern)==0:
                 raise ValueError("empty pattern")
             re.compile(pattern)
-        except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=sys.exc_info()[1]))
+        except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=self.fmt(str(sys.exc_info()[1]))))
     def add_entry(content: str, locales: List[str], line_number: Optional[str]=None):
         for this_locale in locales:
             for each_name in entry_names:
@@ -184,7 +184,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     line_number_debug=entry.content_line_number,
                     file_id=self.file_id,
                     unique_id=entry.entry_name.id)
-            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=sys.exc_info()[1]))
+            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
         else:
             target_entry=' '.join(match_pattern.split()) # Remove extra spaces
             if entry.locale!=None: target_entry+="__"+entry.locale

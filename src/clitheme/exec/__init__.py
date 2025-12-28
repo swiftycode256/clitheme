@@ -18,6 +18,7 @@ def _labeled_print(msg: str):
         print("[clitheme-exec] "+line)
 
 from .. import _globalvar, cli, frontend
+from .._globalvar import make_printable as fmt
 from .._generator import db_interface
 from . import _output_processor
 from typing import List
@@ -108,7 +109,7 @@ def main(arguments: List[str]):
         elif arg=="--help":
             showhelp=True
         else: 
-            return _handle_error(fd.feof("unknown-option-err", "Error: unknown option \"{phrase}\"", phrase=arg))
+            return _handle_error(fd.feof("unknown-option-err", "Error: unknown option \"{phrase}\"", phrase=fmt(arg)))
     if "newlines" in debug_mode and not "normal" in debug_mode:
         return _handle_error(fd.reof("debug-newlines-not-with-debug", "Error: \"--debug-newlines\" must be used with \"--debug\" option"))
     if len(arguments)<=1+argcount:

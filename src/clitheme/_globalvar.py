@@ -145,11 +145,7 @@ def make_printable(content: str) -> str:
     final_str=""
     for character in content:
         if character.isprintable() or character in string.whitespace: final_str+=character
-        else:
-            exp=repr(character)
-            # Remove quotes in repr(character)
-            exp=re.sub(r"""^(?P<quote>['"]?)(?P<content>.+)(?P=quote)$""", r"<\g<content>>", exp)
-            final_str+=exp
+        else: final_str+=f"<{hex(ord(character))}>"
     return final_str
 def get_locale(debug_mode: bool=False) -> List[str]:
     lang=[]

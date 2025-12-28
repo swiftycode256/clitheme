@@ -19,7 +19,7 @@ from typing import Optional, List, Set, Tuple, Union
 from .._generator import db_interface
 from .. import _globalvar, frontend
 from ._handlers._base_template import BaseHandler, command_failed
-from .._globalvar import _direct_exit
+from .._globalvar import _direct_exit, make_printable as fmt
 from . import _labeled_print
 
 # spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp pids
@@ -85,10 +85,10 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             handler=WindowsHandler(command)
     except Exception as exc:
         if type(exc)==command_failed:
-            _labeled_print(fd.feof("command-fail-err", "Failed to run command: {msg}", msg=_globalvar.make_printable(str(exc))))
+            _labeled_print(fd.feof("command-fail-err", "Failed to run command: {msg}", msg=fmt(str(exc))))
             _globalvar.handle_exception()
         else:
-            _labeled_print(fd.feof("init-fail-err", "Initialization failed: {msg}", msg=_globalvar.make_printable(str(exc))))
+            _labeled_print(fd.feof("init-fail-err", "Initialization failed: {msg}", msg=fmt(str(exc))))
             raise # Always show full traceback
         return 1
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)

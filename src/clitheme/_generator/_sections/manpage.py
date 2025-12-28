@@ -33,7 +33,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
             is_stdin=_globalvar.handle_stdin_prompt(file_dir)
             filecontent: str
             try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
-            except: self.handle_error(self.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=self.linenum(), filepath=self.fmt(file_dir), error_msg=sys.exc_info()[1]), not_syntax_error=True)
+            except: self.handle_error(self.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=self.linenum(), filepath=self.fmt(file_dir), error_msg=self.fmt(str(sys.exc_info()[1]))), not_syntax_error=True)
             if is_stdin: print()
             sys.stdout=orig_stdout
             # write manpage files in theme-info for db migration feature to work successfully

@@ -35,7 +35,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
             outline_foregroundonly=None
     def check_pattern(pattern: str, linenum: Optional[int]=None):
         try: re.compile(pattern)
-        except re.error: self.handle_error(self.fd.feof("bad-cmd-filter-pattern-err", "Bad command filter pattern at line {num} ({error_msg})", num=str(linenum if linenum!=None else self.linenum()), error_msg=sys.exc_info()[1]))
+        except re.error: self.handle_error(self.fd.feof("bad-cmd-filter-pattern-err", "Bad command filter pattern at line {num} ({error_msg})", num=str(linenum if linenum!=None else self.linenum()), error_msg=self.fmt(str(sys.exc_info()[1]))))
 
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
         # Connect to existing database
