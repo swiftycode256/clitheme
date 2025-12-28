@@ -85,26 +85,6 @@
             # default: |Failed to generate data (full log below):|
             locale[zh_CN]: |无法生成数据（完整日志在此）：|
         [/entry]
-        [entry] |db-update-err|
-            # [default]
-            #     An error occurred while updating the database: {msg}
-            #     Please re-apply the theme and try again
-            # [/default]
-            [locale] zh_CN 
-                更新数据库时发生了错误：{msg}
-                请重新应用当前主题，然后重试
-            [/locale]
-        [/entry]
-        [entry] |db-read-err|
-            # [default]
-            #     An error occurred while reading the database: {msg}
-            #     Please re-apply the theme and try again
-            # [/default]
-            [locale] zh_CN 
-                读取数据库时发生了错误：{msg}
-                请重新应用当前主题，然后重试
-            [/locale]
-        [/entry]
         [entry] |db-invalid-version|
             # default: |Invalid database version information|
             locale[zh_CN]: |无效数据库版本信息|

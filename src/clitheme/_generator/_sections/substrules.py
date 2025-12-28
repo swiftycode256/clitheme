@@ -37,14 +37,14 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phra
         try: re.compile(pattern)
         except re.error: self.handle_error(self.fd.feof("bad-cmd-filter-pattern-err", "Bad command filter pattern at line {num} ({error_msg})", num=str(linenum if linenum!=None else self.linenum()), error_msg=sys.exc_info()[1]))
 
-    # initialize the database
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
+        # Connect to existing database
         try: db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
-        except db_interface.need_db_regenerate:
-            from ...exec import _check_regenerate_db
-            if not _check_regenerate_db(self.path): self.handle_error(self.fd.reof("db-regenerate-fail-err", "Failed to migrate existing substrules database; try performing the operation without using \"--overlay\""), not_syntax_error=True)
-            db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
-    else: db_interface.init_db(self.path+"/"+_globalvar.db_filename)
+        except:
+            self.handle_error(self.fd.reof("db-compat-err", "The current substrules database version is incompatible; please run \"clitheme repair-theme\" and try again"))
+    else:
+        # Initialize the database
+        db_interface.init_db(self.path+"/"+_globalvar.db_filename)
     db_interface.debug_mode=not self.silence_warn
     while self.goto_next_line():
         phrases=self.get_current_line().split()

@@ -21,13 +21,14 @@ from .. import _globalvar, frontend
 
 match_timeout=_globalvar.output_subst_timeout
 connection=sqlite3.connect(":memory:") # placeholder
-db_path=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
+__db_path__=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
+db_path=__db_path__
 debug_mode=False
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
 
-class need_db_regenerate(FileNotFoundError): pass
+class need_db_regenerate(Exception): pass
 class bad_pattern(Exception): pass
-class db_not_found(need_db_regenerate): pass
+class db_not_found(Exception): pass
 
 def _handle_warning(message: str):
     if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
@@ -72,8 +73,8 @@ def init_db(file_path: str):
 def connect_db(path: Optional[str]=None):
     global db_path
     if path==None: path=db_path
-    db_path=path
-    if not os.path.exists(path):
+    else: db_path=path # Update db_path variable
+    if not os.path.exists(db_path):
         raise db_not_found("No theme set or theme does not contain substrules")
     global connection
     connection=sqlite3.connect(db_path)

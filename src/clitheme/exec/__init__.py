@@ -39,16 +39,14 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             db_already_regenerated=True
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
         else: db_interface.connect_db(f"{dest_root_path}/{_globalvar.db_filename}")
-    except db_interface.need_db_regenerate:
+    except db_interface.db_not_found: pass
+    except:
         _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
         if cli.repair_theme()!=0: return False
         _labeled_print(fd.reof("db-update-success-msg", "Successfully updated database, proceeding execution")+"\n")
-    except FileNotFoundError: pass
-    except Exception as exc: 
-        msg=str(sys.exc_info()[1])
-        _labeled_print(fd.feof("db-read-err", "An error occurred while reading the database: {msg}\nPlease re-apply the theme and try again", msg=msg))
-        _globalvar.handle_exception()
-        return False
+    finally:
+        # Reset db_path after execution
+        db_interface.db_path=db_interface.__db_path__
     return True
 
 def _handle_help_message(full_help: bool=False):

@@ -59,9 +59,9 @@
             # default: |Unterminated content block at line {num}|
             locale[zh_CN]: |第{num}行：未结束的内容段落|
         [/entry]
-        [entry] |db-regenerate-fail-err|
-            # default: |Failed to migrate existing substrules database; try performing the operation without using "--overlay"|
-            locale[zh_CN]: |无法升级当前的substrules的数据库；请尝试不使用"--overlay"再次执行此操作|
+        [entry] |db-compat-err|
+            # default: |The current substrules database version is incompatible; please run "clitheme repair-theme" and try again|
+            locale[zh_CN]: |当前的substrules数据库版本不兼容；请运行"clitheme repair-theme"后重试|
         [/entry]
         [entry] |invalid-version-err|
             # default: |Invalid version information "{ver}" on line {num}|

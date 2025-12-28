@@ -74,7 +74,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     do_subst=subst
     if do_subst==True: 
         try: db_interface.connect_db()
-        except FileNotFoundError: pass
+        except db_interface.db_not_found: pass
     
     try:
         handler: BaseHandler
