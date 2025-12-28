@@ -19,7 +19,6 @@ from .. import _globalvar, frontend
 
 # spell-checker:ignore matchoption cmdlist exactmatch rowid pids tcpgrp nolocale
 
-match_timeout=_globalvar.output_subst_timeout
 connection=sqlite3.connect(":memory:") # placeholder
 __db_path__=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
 db_path=__db_path__
