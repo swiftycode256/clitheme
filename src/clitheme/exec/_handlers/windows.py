@@ -20,11 +20,11 @@ def errmsg() -> str:
     # Last error code
     errcode=kernel32.GetLastError()
     # Determine Language ID to use
-    target_locale=0
     for locale in _globalvar.get_locale():
         if locale in ('en-US', 'en_US', 'zh-CN', 'zh_CN'):
             target_locale=kernel32.LocaleNameToLCID(locale, 0)
             break
+    else: target_locale=kernel32.LocaleNameToLCID('en-US', 0)
     # Retrieve message
     buffer = ctypes.create_unicode_buffer(1024)
     result = kernel32.FormatMessageW(
