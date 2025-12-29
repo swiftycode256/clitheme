@@ -74,18 +74,16 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
 
             strictness=0
             # parse strictcmdmatch, exactcmdmatch, and other cmdmatch options here
-            got_options=copy.copy(self.global_options)
+            got_options=self.global_options
             inline_options={}
-            if len(phrases)>1:
+            end_options=self.get_current_line().split()[1:]
+            if len(end_options)>0:
                 allowed_options=self.block_input_options+(self.command_filter_options if not command_filter_is_regex else ["foregroundonly"])
-                got_options=self.parse_options(phrases[1:], merge_global_options=True, allowed_options=allowed_options)
-                inline_options=self.parse_options(phrases[1:], merge_global_options=False, allowed_options=allowed_options)
-            if got_options.get('strictcmdmatch')==True:
-                strictness=1
-            if got_options.get('exactcmdmatch')==True:
-                strictness=2
-            if got_options.get('smartcmdmatch')==True:
-                strictness=-1
+                got_options=self.parse_options(end_options, merge_global_options=True, allowed_options=allowed_options)
+                inline_options=self.parse_options(end_options, merge_global_options=False, allowed_options=allowed_options)
+            if got_options.get('strictcmdmatch')==True: strictness=1
+            if got_options.get('exactcmdmatch')==True: strictness=2
+            if got_options.get('smartcmdmatch')==True: strictness=-1
             if "foregroundonly" in inline_options.keys():
                 outline_foregroundonly=self.global_options.get('foregroundonly')==True
                 self.global_options['foregroundonly']=inline_options['foregroundonly']
