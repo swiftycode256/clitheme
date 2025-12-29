@@ -10,13 +10,13 @@ Version information definition file
 # spell-checker:ignore buildnumber
 
 # Version definition file; define the package version here
-version_disp="2.1-dev20251228"
+version_disp="2.1-dev20251229"
 # Build version: must be a literal string
-__version__="2.1_dev20251228"
+__version__="2.1_dev20251229"
 # For PKGBUILD
 version_buildnumber=1
 
 major=2
 minor=1
-release=-1 # -1 stands for "dev"
+release=0 # -1 stands for "dev"
 beta_release=None # None if not beta
