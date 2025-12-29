@@ -74,6 +74,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
         return self.lineindex+1
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
+    def handle_invalid_phrase(self, name: str):
+        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
+    def handle_unterminated_section(self, name: str):
+        self.handle_error(self.fd.feof("unterminated-section-err", "Unterminated {name} section at end of file", name=name))
     def check_enough_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
             # Check processed phrases after the first
@@ -125,8 +129,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
                             # For "dev" versions: output corresponding beta milestone
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _globalvar.clitheme_version else ""),
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
-    def handle_invalid_phrase(self, name: str):
-        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None, ban_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         assert not (allowed_options!=None and ban_options!=None), "Cannot specify allowed and banned options at the same time"

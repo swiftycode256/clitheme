@@ -120,3 +120,4 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
             self.handle_end_section("substrules")
             break
         else: self.handle_invalid_phrase(phrases[0])
+    else: self.handle_unterminated_section("substrules")

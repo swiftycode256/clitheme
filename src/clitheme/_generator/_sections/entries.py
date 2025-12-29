@@ -50,3 +50,4 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: s
                 self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="end_main", new_phrase=r"{/entries}"))
             break
         else: self.handle_invalid_phrase(phrases[0])
+    else: self.handle_unterminated_section("entries")

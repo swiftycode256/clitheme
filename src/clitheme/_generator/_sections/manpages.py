@@ -99,3 +99,4 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             self.handle_end_section("manpages")
             break
         else: self.handle_invalid_phrase(phrases[0])
+    else: self.handle_unterminated_section("manpages")

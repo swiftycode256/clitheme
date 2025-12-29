@@ -55,6 +55,10 @@
             # default: |Missing or incomplete header or content sections|
             locale[zh_CN]: |文件缺少或包含不完整的header或内容段落|
         [/entry]
+        [entry] |unterminated-section-err|
+            # default: |Unterminated {name} section at end of file|
+            locale[zh_CN]: |在文件结尾未结束{name}段落|
+        [/entry]
         [entry] |unterminated-content-block-err|
             # default: |Unterminated content block at line {num}|
             locale[zh_CN]: |第{num}行：未结束的内容段落|

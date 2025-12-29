@@ -70,3 +70,4 @@ def handle_header_section(self: _parser_handlers.GeneratorObject, end_phrase: st
             self.handle_end_section("header")
             break
         else: self.handle_invalid_phrase(phrases[0])
+    else: self.handle_unterminated_section("header")
