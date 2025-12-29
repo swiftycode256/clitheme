@@ -272,17 +272,10 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             failed=False
             foreground_pid=block_data[3]
             if do_subst and block_data[2]==True:
-                if os.name=="posix":
-                    def raise_error(sig_num, frame): raise TimeoutError("Execution time out")
-                    signal.signal(signal.SIGALRM, raise_error)
-                    signal.setitimer(signal.ITIMER_REAL, _globalvar.output_subst_timeout)
                 try: 
                     new_output, changed_lines=_substrules_processor.match_content(new_output, ' '.join(command), is_stderr=block_data[1], pids=(handler.process_pid, foreground_pid))
-                except TimeoutError: failed=True
-                # Happens when no theme is set/no subst-data.db
                 except db_interface.db_not_found: pass
-                # remove the interval timer to prevent exception when function finishes before timeout
-                if os.name=="posix": signal.setitimer(signal.ITIMER_REAL, 0)
+                except TimeoutError: failed=True
             new_output=_process_debug([m.group() for m in re.finditer(_globalvar.line_match_bytes, new_output)][:-1], debug_mode, is_stderr=block_data[1], matched_lines=changed_lines, failed=failed, do_subst=block_data[2])
             output+=new_output
             # Print message if foreground process changed and not user input

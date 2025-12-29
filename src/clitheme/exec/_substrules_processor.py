@@ -10,6 +10,8 @@ Handler for applying substrules onto output (internal module)
 
 import copy
 import re
+import os
+import signal
 from typing import Optional, List, Set, Tuple
 from .._generator import db_interface
 from .. import _globalvar
@@ -22,6 +24,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
     try: content_str=content_str.decode('utf-8')
     except: pass
     assert len(content_str)>0, "Empty content string"
+
+    substrules=db_interface.fetch_substrules(command)
 
     encountered_ids=set()
     # endmatchhere checking algorithm:
@@ -41,7 +45,12 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         condition_map=bytearray(len(content_str))
     init_condition_map()
 
-    for rule in db_interface.fetch_substrules(command):
+    if os.name=="posix":
+        # Set timeout handler
+        def timeout(sig_num, frame): raise TimeoutError
+        signal.signal(signal.SIGALRM, timeout)
+        signal.setitimer(signal.ITIMER_REAL, _globalvar.output_subst_timeout)
+    for rule in substrules:
         # region: Condition checking
         if rule.unique_id in encountered_ids: continue
         if rule.stdout_stderr_only!=0 and (is_stderr==True)+1!=rule.stdout_stderr_only: continue
@@ -147,6 +156,9 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         condition_map=new_condition_map
         if matched: encountered_ids.add(rule.unique_id)
     # endregion
+    if os.name=="posix":
+        # Remove timeout trigger
+        signal.setitimer(signal.ITIMER_REAL, 0)
     # region: Check modified lines
     line_lengths=[len(m.group()) for m in re.finditer(line_match, content_str)] # type: ignore
     changed_line_indices=set()
