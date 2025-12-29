@@ -284,18 +284,18 @@ class GeneratorObject(_data_handlers.DataHandlers):
             return (text, options_str)
         else:
             self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
-    def handle_set_variable(self, var_name: str, var_content: str, really_really_global: bool=False):
-        # sanity check var_name
-        def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(var_name), num=self.linenum()))
-        if var_name=='ESC': bad_var()
-        for char in self.substvar_banphrases:
-            if char in var_name: bad_var()
-
+    def handle_set_variable(self, var_names: List[str], var_content: str, really_really_global: bool=False):
         # Parse content without substesc (subst variable content)
         var_content=self.parse_content(var_content, pure_name=True, preserve_indents=True)
-        # set variable
-        if really_really_global: self.really_really_global_variables[var_name]=var_content
-        self.global_variables[var_name]=var_content
+        for name in var_names:
+            # sanity check var_name
+            def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(name), num=self.linenum()))
+            if name=='ESC': bad_var()
+            for char in self.substvar_banphrases:
+                if char in name: bad_var()
+            # set variable
+            if really_really_global: self.really_really_global_variables[name]=var_content
+            self.global_variables[name]=var_content
     def handle_begin_section(self, section_name: str):
         if section_name in self.parsed_sections: 
             self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=self.linenum(), section=section_name))
@@ -344,15 +344,14 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 argc=len(setvar_match.group().split())
                 self.check_enough_args(phrases, argc+1, disp=setvar_match.group(), check_processed=False)
                 var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
-                for var_name in setvar_match.group('names').split():
-                    self.handle_set_variable(var_name, var_content, really_really_global)
+                self.handle_set_variable(setvar_match.group('names').split(), var_content, really_really_global)
             else:
                 self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="setvar", num=self.linenum()))
         elif setvar_match_old!=None:
             self.check_enough_args(phrases, 2, check_processed=False)
             var_name=setvar_match_old.group('name')
             var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=1)
-            self.handle_set_variable(var_name, var_content, really_really_global)
+            self.handle_set_variable([var_name], var_content, really_really_global)
         elif phrases[0] in ("(set_options)", "set_options"):
             self.check_enough_args(phrases, 2)
             self.handle_set_global_options(' '.join(phrases[1:]).split(), really_really_global)
