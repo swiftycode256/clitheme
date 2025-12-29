@@ -121,8 +121,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 if _version.beta_release!=None:
                     version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
             else:
-                # If did not specify beta, current version cannot be beta
-                version_ok=version_ok and _version.beta_release==None
+                # If did not specify beta, current version cannot be beta or dev
+                version_ok=version_ok and _version.beta_release==None and not _version.release<0
 
             if not version_ok:
                 self.handle_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
