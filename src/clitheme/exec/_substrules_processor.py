@@ -41,7 +41,7 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         condition_map=bytearray(len(content_str))
     init_condition_map()
 
-    for rule in db_interface.fetch_matches(command):
+    for rule in db_interface.fetch_substrules(command):
         # region: Condition checking
         if rule.unique_id in encountered_ids: continue
         if rule.stdout_stderr_only!=0 and (is_stderr==True)+1!=rule.stdout_stderr_only: continue

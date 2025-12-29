@@ -128,7 +128,7 @@ def add_subst_entry(
 ## Database fetching and caching
 
 _db_last_state: Optional[float]=None
-_matches_cache: Dict[Optional[str],List[Item]]={}
+_substrules_cache: Dict[Optional[str],List[Item]]={}
 
 def _is_db_updated() -> bool:
     global _db_last_state
@@ -144,16 +144,16 @@ def _is_db_updated() -> bool:
         return True
     else: return False
 
-def fetch_matches(command: Optional[str]) -> List[Item]:
-    global _matches_cache
+def fetch_substrules(command: Optional[str]) -> List[Item]:
+    global _substrules_cache
     updated=_is_db_updated()
     if _db_last_state==None: raise db_not_found("file at db_path does not exist")
-    if updated or _matches_cache.get(command)==None:
+    if updated or _substrules_cache.get(command)==None:
         if updated:
-            _matches_cache.clear()
+            _substrules_cache.clear()
             gc.collect() # Reduce memory leak
-        _matches_cache[command]=_get_matches(command)
-    return _matches_cache[command]
+        _substrules_cache[command]=_get_matches(command)
+    return _substrules_cache[command]
 
 def _get_matches(command: Optional[str]) -> List[Item]:
     # get locales
