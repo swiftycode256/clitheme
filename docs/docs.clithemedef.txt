@@ -1,4 +1,4 @@
-{header_section}
+{header}
     name: CLItheme manual pages
     version: 2.1
     [description]
@@ -6,9 +6,9 @@
         Apply this theme to install the manual pages contained in the "docs" directory.
         After that, use "clitheme-man" to access them.
     [/description]
-{/header_section}
+{/header}
 
-{manpage_section}
+{manpages}
     (enable_subst)
     # Test substvar feature
     setvar[name]: clitheme
@@ -18,4 +18,4 @@
         as: man1 {{name}}-exec.1
     <include_file> {{name}}-man.1
         as: man1 {{name}}-man.1
-{/manpage_section}
+{/manpages}

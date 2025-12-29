@@ -8,14 +8,14 @@
 
 (enable_subst)
 
-{header_section}
+{header}
     name: CLItheme message text translations (clitheme-exec)
     version: 2.1
     locales: zh_CN
     supported_apps: clitheme
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
 <in_domainapp> |swiftycode clitheme|
     # 用于clitheme-exec --help的字符串定义
     # String entries used for "clitheme-exec --help"
@@ -109,4 +109,4 @@
             # default: |Output interrupted after command exit|
             locale[zh_CN]: |输出在命令退出后被中断|
         [/entry]
-{/entries_section}
+{/entries}

@@ -6,14 +6,14 @@
 
 (enable_subst)
 
-{header_section}
+{header}
     name: CLItheme message text translations (cli)
     version: 2.1
     locales: zh_CN
     supported_apps: clitheme
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
 <in_domainapp> |swiftycode clitheme|
     <in_subsection> |cli|
         [entry] |no-command|
@@ -307,4 +307,4 @@
                 # default: |--help: Show this help message|
                 locale[zh_CN]: |--help：显示这个帮助提示|
             [/entry]
-{/entries_section}
+{/entries}

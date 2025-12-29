@@ -3,7 +3,7 @@
 (enable_subst)
 
 # Header information
-{header_section}
+{header}
     name: Example theem
     version: 0.1
     locales: en_US
@@ -13,10 +13,10 @@
     version: |1.0|
     name: |Example theme|
     supported_apps: |example-app example-app-two another-example should_unset-app|
-{/header_section}
+{/header}
 
 # Main block
-{entries_section}
+{entries}
     setvar:example | com.example example-app  |
     [entry] |{{example}} text-one|
         locale[default en_US]: |Some example text one|
@@ -101,4 +101,4 @@
     [/entry]
     # Test disable_subst
     (disable_subst)
-{/entries_section}
+{/entries}

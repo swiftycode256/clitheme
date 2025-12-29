@@ -82,14 +82,14 @@ o[ {{ESC}}[0m2 errors generated.\r\n
 根据输出内容编写主题定义文件和替换规则：
 
 ```plaintext
-{header_section}
+{header}
     name: clang样例主题
     [description]
         一个为clang打造的的样例主题，为了演示作用
     [/description]
-{/header_section}
+{/header}
 
-{substrules_section}
+{substrules}
     # `substesc`选项：内容中的"{{ESC}}"字样会被替换成ASCII Escape终端控制符号
     (set_options) substesc substvar
     [filter_cmds]
@@ -107,7 +107,7 @@ o[ {{ESC}}[0m2 errors generated.\r\n
         [subst_regex] {{prefix_group}}error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
             default: \g<prefix>错误！: \g<esc>未知的类型名'\g<type>',忘记定义了～ಥ_ಥ
         [/subst_regex]
-{/substrules_section}
+{/substrules}
 ```
 
 使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-exec`执行命令以对输出应用这些替换规则：
@@ -138,18 +138,18 @@ $ nano man-pages/1/cat-custom.txt
 编写主题定义文件：
 
 ```plaintext
-{header_section}
+{header}
     name: 样例文档手册主题
     description: 一个manpage文档手册样例主题
-{/header_section}
+{/header}
 
-{manpage_section}
+{manpages}
     # 文件路径中的'/'由空格替代
     <include_file> man-pages 1 ls-custom.txt
         as: man1 ls.1
     <include_file> man-pages 1 cat-custom.txt
         as: man1 cat.1
-{/manpage_section}
+{/manpages}
 ```
 
 使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-man`查看这些自定义文档（使用方法和选项和`man`一样）：

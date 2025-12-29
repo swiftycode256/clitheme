@@ -60,10 +60,10 @@ assert len(sample_inputs)==len(expected_outputs), \
     "Sample inputs and expected outputs array have different lengths"
 # substitute patterns
 substrules_file=r"""
-{header_section}
+{header}
     name: test
-{/header_section}
-{substrules_section}
+{/header}
+{substrules}
     <filter_cmd> rm
         # Single line pattern should not match multiple lines
         [subst_regex] rm: missing operand\r\ntype rm --help for more information
@@ -181,7 +181,7 @@ substrules_file=r"""
             default: o(≧v≦)o example_app says:
             locale[zh_CN]: o(≧v≦)o example_app 说：
         [/subst_string]
-{/substrules_section}
+{/substrules}
 """
 
 db_interface.debug_mode=True

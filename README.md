@@ -82,14 +82,14 @@ e> {{ESC}}[0m2 errors generated.\r\n
 Write theme definition file and substitution rules based on the output:
 
 ```plaintext
-{header_section}
+{header}
     name: clang example theme
     [description]
         An example theme for clang (for demonstration purposes)
     [/description]
-{/header_section}
+{/header}
 
-{substrules_section}
+{substrules}
     # Set "substesc" option: "{{ESC}}" in content will be replaced with the ASCII Escape terminal control character
     (set_options) substesc substvar
     [filter_cmds]
@@ -107,7 +107,7 @@ Write theme definition file and substitution rules based on the output:
         [subst_regex] {{prefix_group}}error: (?P<esc>({{ESC}}.*?m)*)unknown type name '(?P<type>.+)'
             default: \g<prefix>Error! : \g<esc>unknown type name '\g<type>', you forgot to d……define it!~ಥ_ಥ
         [/subst_regex]
-{/substrules_section}
+{/substrules}
 ```
 
 After applying the theme with `clitheme apply-theme <file>`, execute the command with `clitheme-exec` to apply the substitution rules onto the output: 
@@ -138,18 +138,18 @@ $ nano man-pages/1/cat-custom.txt
 Write a theme definition file:
 
 ```plaintext
-{header_section}
+{header}
     name: Example manual page theme
     description: An example man page theme
-{/header_section}
+{/header}
 
-{manpage_section}
+{manpages}
     # '/' in file paths are denoted with spaces
     <include_file> man-pages 1 ls-custom.txt
         as: man1 ls.1
     <include_file> man-pages 1 cat-custom.txt
         as: man1 cat.1
-{/manpage_section}
+{/manpages}
 ```
 
 After applying the theme with `clitheme apply-theme <file>`, use `clitheme-man` to view these custom man pages (arguments and options are the same as `man`):

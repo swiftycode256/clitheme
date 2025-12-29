@@ -6,14 +6,14 @@
 
 (enable_subst)
 
-{header_section}
+{header}
     name: CLItheme message text translations (man)
     version: 2.1
     locales: zh_CN
     supported_apps: clitheme
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
 <in_domainapp> |swiftycode clitheme|
     <in_subsection> |man|
         [entry] |man-not-installed|
@@ -31,5 +31,5 @@
         [entry] |prev-command-fail|
             locale[zh_CN]: |设定自定义路径执行"man"时发生错误，正在尝试以正常设定执行|
         [/entry]
-{/entries_section}
+{/entries}
 

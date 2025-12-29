@@ -8,14 +8,14 @@
 
 (enable_subst)
 
-{header_section}
+{header}
     name: CLItheme message text translations (generator)
     version: 2.1
     locales: zh_CN
     supported_apps: clitheme
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
 <in_domainapp> |swiftycode clitheme|
     <in_subsection> |generator|
         # 错误提示
@@ -233,5 +233,5 @@
             # default: |cannot be empty|
             locale[zh_CN]: |不能为空|
         [/entry]
-{/entries_section}
+{/entries}
     

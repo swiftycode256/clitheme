@@ -1,4 +1,4 @@
-{header_section}
+{header}
     name: 颜文字样例主题
     version: 1.0
     [locales]
@@ -17,9 +17,9 @@
 
             不要小看我的年龄，人家可是非常萌的～！
     [/description]
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
     (enable_subst)
     <in_domainapp> com.example example-app
         [entry] |found-file|
@@ -54,4 +54,4 @@
             [entry] |unknown-command|
                 locale[default zh_CN]: |ಥ_ಥ 找不到指令"{}"！呜呜呜～|
             [/entry]
-{/entries_section}
+{/entries}

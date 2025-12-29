@@ -99,14 +99,14 @@ You can also include this information in your project's official documentation. 
 Consult the Wiki pages and documentation for detailed syntax of theme definition files. An example is provided below:
 
 ```
-{header_section}
+{header}
     name Example theme
     version 1.0
     locales en_US
     supported_apps frontend_demo
-{/header_section}
+{/header}
 
-{entries_section}
+{entries}
     in_domainapp com.example example-app
         [entry] found-file
             default: o(≧v≦)o Great! Found {} files in current directory!
@@ -124,7 +124,7 @@ Consult the Wiki pages and documentation for detailed syntax of theme definition
             default: ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
             locale[en_US]: ಥ_ಥ Oh no, something went wrong! File "foo-nonexist" not found
         [/entry]
-{/entries_section}
+{/entries}
 ```
 
 Use the command `clitheme apply-theme <file>` to apply the theme definition file onto the system. Supported applications will start using the string definitions listed in this file.
