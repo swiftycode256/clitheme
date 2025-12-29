@@ -44,9 +44,6 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     if file_contents==None:
         try: file_contents=_get_file_contents(filenames)
         except _direct_exit as exc: return exc.code
-        except: 
-            _globalvar.handle_exception()
-            return 1
     if len(filenames)>0 and len(file_contents)!=len(filenames): # unlikely to happen
         raise ValueError("file_contents and filenames have different lengths")
     f=frontend.FetchDescriptor(subsections="cli apply-theme")
@@ -396,22 +393,28 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
     fi=frontend.FetchDescriptor(subsections="cli apply-theme")
     content_list=[]
     line_prefix="\x1b[2K\r" # clear current line content and move cursor to beginning
+    has_error=False
     for i in range(len(file_paths)):
         path=file_paths[i]
         try:
             print(line_prefix+fi.feof("reading-file","==> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
-            # Detect standard input
+            # Skip stdin input if had error
+            if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino and has_error:
+                continue
             is_stdin=_globalvar.handle_stdin_prompt(path)
             content_list.append(open(path, 'r', encoding="utf-8").read())
             if is_stdin: print() # Print an extra newline
         except KeyboardInterrupt: 
             print();raise _direct_exit(130)
-        except:
-            print("\n"+fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
-                index=str(i+1), message=fmt(path+": "+str(sys.exc_info()[1]))))
-            raise
+        except Exception as exc:
+            print(line_prefix+ \
+                fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
+                    index=str(i+1), message=fmt(path+": "+str(sys.exc_info()[1]))))
+            _globalvar.handle_exception()
+            has_error=True
     print(line_prefix, end='')
-    return content_list
+    if has_error: raise _direct_exit(1)
+    else: return content_list
 
 def main(cli_args: List[str]):
     """
