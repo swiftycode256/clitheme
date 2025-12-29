@@ -21,6 +21,7 @@ from . import _data_handlers
 
 class GeneratorObject(_data_handlers.DataHandlers):
 
+    OptionsDict=Dict[str, Union[int,bool]]
     ## Defined option groups
     lead_indent_options=["leadtabindents", "leadspaces"]
     content_subst_options=["substvar", "linebounds"]
@@ -81,7 +82,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def check_enough_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
             # Check processed phrases after the first
-            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True, ignore_options=True)
             # If rest of content only contains spaces
             success=len(processed.split())+1>=count
         else:
@@ -95,7 +96,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def check_extra_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
             # Check processed phrases after the first
-            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True)
+            processed=self.parse_content(' '.join(phrases[1:]), pure_name=True, ignore_options=True)
             # If rest of content only contains spaces
             success=len(processed.split())+1<=count
         else:
@@ -131,7 +132,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                         req_ver=self.fmt(version_str)), not_syntax_error=True)
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None, ban_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
-        assert not (allowed_options!=None and ban_options!=None), "Cannot specify allowed and banned options at the same time"
+        # When allowed_options and ban_options specified at same time, ban_options overrides allowed_options
 
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
@@ -266,22 +267,21 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())
         return new_content
-    def handle_linebounds(self, content: str, condition: Optional[bool]=None, preserve_indents: bool=True, debug_linenumber: Optional[int]=None) -> str:
-        # Skip if not starts with |
-        if not content.strip().startswith('|'): return content
-
-        match=re.match(r"^\|(.*)\|$", content.strip())
+    def handle_linebounds(self, content: str, condition: Optional[bool]=None, preserve_indents: bool=True, allow_options: bool=True, debug_linenumber: Optional[int]=None) -> Tuple[str, Optional[str]]:
+        match=re.match(rf"^\|(?P<content>.*)\|(\s+(?P<options>[^\|]+)){'?' if allow_options else r'{0}'}$", content.strip())
         condition=self.global_options.get('linebounds')==True if condition==None else condition
-        if condition==False:
+        if condition==False or not content.strip().startswith("|"):
             # Linebounds warning
             if match!=None and self.warnings.get('linebounds')!=False:
                 self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
                 # self.warnings['linebounds']=False
-            return content
+            return (content, None)
         # Match pattern |...|
         if match!=None:
-            content=match.group(1)
-            return content if preserve_indents else content.strip()
+            text=match.group("content")
+            if not preserve_indents: text=text.strip()
+            options_str: Optional[str]=match.group("options")
+            return (text, options_str)
         else:
             self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
     def handle_set_variable(self, var_name: str, var_content: str, really_really_global: bool=False):
@@ -308,16 +308,32 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
-    def parse_content(self, content: str, pure_name: bool=False, preserve_indents: Optional[bool]=None) -> str:
-        target_content=self.handle_subst(content,
-            subst_chars=pure_name==False and self.global_options.get("substchar")==True,
-            subst_esc=pure_name==False and self.global_options.get("substesc")==True,
+    def parse_content(self, content: str, pure_name: bool=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> str:
+        return self.parse_content_with_options(content, [], pure_name, preserve_indents, ignore_options)[0]
+    def parse_content_with_options(self, content: str, extra_options: List[str], pure_name: bool=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> Tuple[str, OptionsDict, OptionsDict]:
+        if preserve_indents==None: preserve_indents=not pure_name
+        subst_options=self.content_subst_options if pure_name else self.subst_options
+
+        target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents)
+        if options_str!=None:
+            options=self.parse_options(options_str.split(), merge_global_options=True,
+                        allowed_options=subst_options+extra_options if not ignore_options else None,
+                        ban_options=["linebounds"])
+            inline_options=self.parse_options(options_str.split(), merge_global_options=False,
+                        allowed_options=subst_options+extra_options if not ignore_options else None,
+                        ban_options=["linebounds"])
+        else:
+            options=self.global_options
+            inline_options={}
+        target_content=self.handle_subst(target_content,
+            subst_var=options.get("substvar")==True,
+            subst_chars=pure_name==False and options.get("substchar")==True,
+            subst_esc=pure_name==False and options.get("substesc")==True,
             # Don't show substchar/substesc warnings if not using char subst
             silence_warnings=(False, pure_name, pure_name)
         )
-        if preserve_indents==None: preserve_indents=not pure_name
-        target_content=self.handle_linebounds(target_content, preserve_indents=preserve_indents)
-        return target_content if preserve_indents else target_content.strip()
+        if not preserve_indents: target_content=target_content.strip()
+        return (target_content, options, inline_options)
     def handle_setters(self, really_really_global: bool=False) -> bool:
         # Handle set_options and setvar
         phrases=self.get_current_line().split()
@@ -429,7 +445,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             ws_match=re.match(r"^(?P<spc>\s*)", line)
             assert ws_match!=None
             leading_whitespace=ws_match.groupdict()['spc']
-            blockinput_lines.append(leading_whitespace+self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, debug_linenumber=begin_line_number+offset))
+            blockinput_lines.append(leading_whitespace+ \
+                self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, allow_options=False, debug_linenumber=begin_line_number+offset)[0])
             offset+=1
         blockinput_data="\n".join(blockinput_lines)
         return blockinput_data

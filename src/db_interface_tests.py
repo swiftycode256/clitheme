@@ -27,7 +27,8 @@ sample_inputs=[("rm: missing operand\r\n"
                # Test regex filters
                ("Error: sample message", "/usr/bin/app_example.exe install-stuff"), # test command basename handling in regex
                ("Error: sample message", "app --wef install"),
-               ("rm: <no filename>: Operation not permitted", "rm file.ban"), # test exactcmdmatch
+               ("rm: file: Operation not permitted", "rm file.ban"), # test exactcmdmatch
+               ("rm: file: Operation not permitted", "rm file.ban -r"), # should not match
                ("example_app: using recursive directories\r\n"
                 "example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
 ]
@@ -51,6 +52,7 @@ expected_outputs=[
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
+    ("rm: file: Operation not permitted",),
     ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)\n"
      "o(≧v≦)o example_app says: using list options! (⊙ω⊙)",
      "o(≧v≦)o example_app 说： 正在使用recursive路径！(｡ì _ í｡)\n"
@@ -91,11 +93,13 @@ substrules_file=r"""
         cd
         ls
     [/filter_cmds]
-        [subst_regex] {{shell}}: (?P<filename>.+): Permission denied
+        # Test substvar and substchar specified after line bounds
+        (set_options) linebounds
+        # \x20 = Space
+        [subst_regex] |{{shell}}: (?P<filename>.+): Permission{{[x20]}}denied| substvar substchar
             default: \g<shell> says: Access denied to \g<filename>! ಥ_ಥ
             locale[zh_CN]: \g<shell> 说：文件"\g<filename>"拒绝访问！ಥ_ಥ
-        # Test substvar specified in block
-        [/subst_regex] substvar
+        [/subst_regex]
 
     # test substvar
     (set_options) substvar
@@ -112,16 +116,17 @@ substrules_file=r"""
     <unset_filter_cmd>
 
     # test substesc
-    (set_options) substesc
-    (set_options) strictcmdmatch
-    <filter_cmd> example_app install-stuff
+    [filter_cmds]
+        example_app install-stuff
+    [/filter_cmds] strictcmdmatch
         [subst_string] Error: sample message
-            default: Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)
+            default: |Error: {{ESC}}[1;4msample message!{{ESC}}[m (>﹏<)| substesc
             locale[zh_CN]: 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
     <unset_filter_cmd>
 
-    # Test regex filter and substvar
+    # Test regex filter and substesc
+    (set_options) substesc
     setvar[pattern]: app(_example)? (.*)install(-stuff)?
     <filter_cmd_regex> {{pattern}}
         [subst_string] Error: sample message
@@ -129,7 +134,6 @@ substrules_file=r"""
             locale[zh_CN]: 错误：样例提示！(>﹏<)
         [/subst_string] endmatchhere
     <unset_filter_cmd>
-    (set_options) nosubstesc
     # global substitutions
     [subst_regex] ^Warning:( )
         default: o(≧v≦)o Note:\g<1>
@@ -146,8 +150,7 @@ substrules_file=r"""
 
     setvar[style]: {{[x1b]}}[1;4m
     setvar[orig]: {{ESC}}[0m
-    (set_options) exactcmdmatch
-    <filter_cmd> rm file.ban
+    <filter_cmd> |rm file.ban| exactcmdmatch
         [subst_regex] (?P<shell>.+): (?P<filename>.+): Operation not permitted
             # test substchar and substesc specified in block
             [default]

@@ -95,17 +95,18 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
             command_filter_is_regex=re.fullmatch(r"(\<)?filter_(cmd|command)_regex(?(1)\>|)", phrases[0])!=None
 
             content=' '.join(phrases[1:])
-            content=self.parse_content(content, pure_name=True)
+            content, got_options, inline_options=self.parse_content_with_options(content, pure_name=True,
+                        extra_options=(self.command_filter_options if not command_filter_is_regex else ["foregroundonly"]))
             # If regex, check if pattern is valid
             if command_filter_is_regex: check_pattern(content)
 
             strictness=0
-            if self.global_options.get('strictcmdmatch')==True:
-                strictness=1
-            if self.global_options.get('exactcmdmatch')==True:
-                strictness=2
-            if self.global_options.get('smartcmdmatch')==True:
-                strictness=-1
+            if got_options.get('strictcmdmatch')==True: strictness=1
+            if got_options.get('exactcmdmatch')==True: strictness=2
+            if got_options.get('smartcmdmatch')==True: strictness=-1
+            if "foregroundonly" in inline_options.keys():
+                outline_foregroundonly=self.global_options.get('foregroundonly')==True
+                self.global_options['foregroundonly']=inline_options['foregroundonly']
             command_filters=[content]
             command_filter_strictness=strictness
         elif re.fullmatch(r"(\<)?unset_filter_(cmd|command)(?(1)\>|)", phrases[0])!=None:
