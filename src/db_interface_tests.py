@@ -6,7 +6,7 @@
 
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
-from clitheme.exec import _output_processor
+from clitheme.exec import _substrules_processor
 import shutil
 
 # sample input for testing
@@ -192,7 +192,7 @@ print("Successfully recorded data\nTesting sample outputs: ")
 for x in range(len(sample_inputs)):
     inp=sample_inputs[x]
     expected=expected_outputs[x]
-    content, changed_lines=_output_processor._match_content(bytes(inp[0],'utf-8'),command=inp[1])
+    content, changed_lines=_substrules_processor.match_content(bytes(inp[0],'utf-8'),command=inp[1])
     content=content.decode('utf-8')
     if content in expected:
         print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
