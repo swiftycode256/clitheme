@@ -98,8 +98,9 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             if locale_match!=None and len(locale_match.group('names').split())>0:
                 argc=len(locale_match.group().split())
                 self.check_enough_args(phrases, argc+1, disp=locale_match.group(), check_processed=False)
+                locales=self.parse_content(locale_match.group('names').strip(), pure_name=True).split()
                 content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
-                add_entry(self.parse_content(content), locale_match.group('names').split()) 
+                add_entry(self.parse_content(content), locales) 
             else: 
                 self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="locale", num=self.linenum()))
         elif phrases[0]=="default:": # Shorthand for "locale[default]:"
