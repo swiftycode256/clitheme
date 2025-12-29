@@ -12,11 +12,8 @@ from .. import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase: str):
+def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("entries")
-    end_phrase="end_main" if first_phrase=="begin_main" else r"{/entries_section}"
-    if first_phrase=="begin_main":
-        self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="begin_main", new_phrase=r"{entries_section}"))
     self.in_domainapp=""
     self.in_subsection=""
     while self.goto_next_line():
@@ -50,6 +47,6 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, first_phrase:
             self.handle_end_section("entries")
             # deprecation warning
             if phrases[0]=="end_main":
-                self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="end_main", new_phrase=r"{/entries_section}"))
+                self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="end_main", new_phrase=r"{/entries}"))
             break
         else: self.handle_invalid_phrase(phrases[0])

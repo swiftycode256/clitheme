@@ -53,7 +53,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.really_really_global_options={} # options defined outside any sections
         self.global_variables={}
         self.really_really_global_variables={} # variables defined outside any sections
-        # For in_domainapp and in_subsection in {entries_section}
+        # For in_domainapp and in_subsection in {entries}
         self.in_domainapp=""
         self.in_subsection=""
 

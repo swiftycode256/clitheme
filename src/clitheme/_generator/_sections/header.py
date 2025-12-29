@@ -14,9 +14,8 @@ from typing import Optional
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_header_section(self: _parser_handlers.GeneratorObject, first_phrase: str):
+def handle_header_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("header")
-    end_phrase="end_header" if first_phrase=="begin_header" else r"{/header_section}"
     name_specified=True
     while self.goto_next_line():
         phrases=self.get_current_line().split()

@@ -17,9 +17,8 @@ from .. import _parser_handlers, db_interface
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_substrules_section(self: _parser_handlers.GeneratorObject, first_phrase: str):
+def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("substrules")
-    end_phrase=r"{/substrules_section}"
     command_filters: Optional[list]=None
     command_filter_is_regex=False
     command_filter_strictness=0

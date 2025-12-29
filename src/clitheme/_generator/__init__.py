@@ -10,8 +10,8 @@ Generator function used in applying themes (should not be invoked directly)
 import os
 import string
 import random
-
-from ._sections import entries, header, manpage
+import re
+from ._sections import entries, header, manpages
 from .. import _globalvar
 from . import _parser_handlers
 from ._sections import substrules
@@ -20,7 +20,6 @@ from ._sections import substrules
 
 path=""
 silence_warn=False
-__all__=["generate_data_hierarchy"]
 
 def generate_custom_path() -> str:
     # Generate a temporary path
@@ -29,7 +28,6 @@ def generate_custom_path() -> str:
     for x in range(8):
         path+=random.choice(string.ascii_letters)
     return path
-
 
 def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_infofile_name="1", filename: str="") -> str:
     # make directories
@@ -43,18 +41,29 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         phrases=self.get_current_line().split()
         first_phrase=phrases[0]
         is_content=True
-        if first_phrase in ("begin_header", r"{header_section}"):
+        def end_phrase() -> str:
+            nonlocal first_phrase
+            if first_phrase.startswith('{'):
+                ret, count=re.subn(r"^\{", r"{/", first_phrase)
+            elif first_phrase.startswith("begin_"):
+                ret, count=re.subn(r"^begin_","end_", first_phrase)
+            else: raise AssertionError("Invalid first phrase")
+            assert count==1
+            return ret
+        if re.fullmatch(r"\{header(_section)?\}|begin_header", first_phrase)!=None:
             self.check_extra_args(phrases, 1)
-            header.handle_header_section(self, first_phrase)
-        elif first_phrase in ("begin_main", r"{entries_section}"):
+            header.handle_header_section(self, end_phrase())
+        elif re.fullmatch(r"\{entries(_section)?\}|begin_main", first_phrase)!=None:
             self.check_extra_args(phrases, 1)
-            entries.handle_entries_section(self, first_phrase)
-        elif first_phrase==r"{substrules_section}":
+            if first_phrase=="begin_main":
+                self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="begin_main", new_phrase=r"{entries}"))
+            entries.handle_entries_section(self, end_phrase())
+        elif re.fullmatch(r"\{substrules(_section)?\}", first_phrase)!=None:
             self.check_extra_args(phrases, 1)
-            substrules.handle_substrules_section(self, first_phrase)
-        elif first_phrase==r"{manpage_section}":
+            substrules.handle_substrules_section(self, end_phrase())
+        elif re.fullmatch(r"\{(manpages|manpage_section)\}", first_phrase)!=None:
             self.check_extra_args(phrases, 1)
-            manpage.handle_manpage_section(self, first_phrase)
+            manpages.handle_manpage_section(self, end_phrase())
         elif self.handle_setters(really_really_global=True): pass
         elif first_phrase=="!require_version":
             is_content=False
@@ -68,7 +77,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
         if is_content: before_content_lines=False
 
     def is_content_parsed() -> bool:
-        content_sections=["entries", "substrules", "manpage"]
+        content_sections=["entries", "substrules", "manpages"]
         for section in content_sections:
             if section in self.parsed_sections: return True
         return False

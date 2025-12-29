@@ -15,9 +15,8 @@ from .. import _parser_handlers
 
 # spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
 
-def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase: str):
-    self.handle_begin_section("manpage")
-    end_phrase="{/manpage_section}"
+def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
+    self.handle_begin_section("manpages")
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         def get_file_content(filepath: List[str]) -> str:
@@ -97,6 +96,6 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, first_phrase:
         elif self.handle_setters(): pass
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)
-            self.handle_end_section("manpage")
+            self.handle_end_section("manpages")
             break
         else: self.handle_invalid_phrase(phrases[0])
