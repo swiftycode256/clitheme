@@ -27,7 +27,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     char_subst_options=["substesc", "substchar"]
     subst_options=content_subst_options+char_subst_options
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
-    subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere"]
+    subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere", "foregroundonly"]
     
     # options used in handle_block_input
     block_input_options=lead_indent_options+subst_options
