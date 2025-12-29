@@ -280,6 +280,10 @@ class FetchDescriptor():
                 if self.debug_mode: print("[Debug] Locale: Using defined self.lang")
                 if not _globalvar.sanity_check(self.lang, use_orig=True)==False:
                     lang=[self.lang]
+                    if re.match(r"^(?P<locale>.+)[\.].+$", self.lang)!=None:
+                        # e.g. en_US.UTF-8 -> en_US
+                        no_encoding=re.sub(r"^(?P<locale>.+)[\.].+$", r"\g<locale>", self.lang)
+                        lang.append(no_encoding)
                 else:
                     if self.debug_mode: print("[Debug] Locale: sanity check failed ({})".format(_globalvar.sanity_check_error_message))
             else:
