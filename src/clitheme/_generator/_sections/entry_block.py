@@ -71,10 +71,10 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
 
         ## Entry names/Match patterns
         if phrases[0]==start_phrase and not names_processed:
-            self.check_enough_args(phrases, 2, check_processed=False)
+            self.check_enough_args(phrases, 2, check_processed=not is_substrules)
             pattern=_globalvar.extract_content(line_content)
             entry_names.append(EntryName(
-                value=self.parse_content(pattern),
+                value=self.parse_content(pattern, pure_name=not is_substrules),
                 is_multiline=False,
                 id=uuid.uuid4(),
                 line_number=str(self.linenum())
