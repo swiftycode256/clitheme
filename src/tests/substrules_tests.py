@@ -69,6 +69,17 @@ substrules_file=r"""
     name: test
 {/header}
 {substrules}
+    # Test "Option not enabled" warnings
+    setvar[_var]: Text
+    [subst_string] |{{ESC}} {{[x1b]}} {{_var}}|
+        default: None
+    [/subst_string]
+    # Test subst warnings
+    (enable_subst)
+    [subst_string] |{{[invalid]}} {{nonexistent}}|
+        default: None
+    [/subst_string]
+    (disable_subst)
     <filter_cmd> rm
         # Single line pattern should not match multiple lines
         [subst_regex] rm: missing operand\r\ntype rm --help for more information
