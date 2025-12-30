@@ -180,6 +180,8 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     
     This function returns True if successful, otherwise returns False.
     """
+    if len(file_contents)==0:
+        raise ValueError("Empty file_contents array")
     global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index
     # File hash generation
     # if overlay, update hash with new contents of file
