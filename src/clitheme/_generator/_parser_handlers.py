@@ -368,14 +368,14 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
     def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False, disable_content_subst: bool=False) -> str:
         minspaces=math.inf
-        blockinput_data=""
+        blockinput_lines=[]
         begin_line_number=self.linenum()+1
         while self.lineindex<len(self.lines_data)-1:
             self.lineindex+=1
             # read line
-            line=self.get_current_line().rstrip()
+            line=self.get_current_line()
             if line.strip()=="": # empty line
-                if preserve_empty_lines: blockinput_data+="\n"
+                if preserve_empty_lines: blockinput_lines.append('')
                 continue
             if line.split()[0]==end_phrase: break
             # if preserve_indents, update minspaces
@@ -388,24 +388,24 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     leading_whitespace=re.sub(r"\t", " "*8, leading_whitespace)
                     # update line content
                     # replace \end_block with end_block
-                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
+                    line=leading_whitespace+re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.lstrip())
                     # update minspaces
                     minspaces=min(minspaces, len(leading_whitespace))
             else: # don't preserve whitespaces
-                line=re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.strip())
+                line=re.sub(r"^\\([\\]*)"+re.escape(end_phrase), r"\g<1>"+end_phrase, line.lstrip())
             # write to data
-            blockinput_data+="\n"+line
+            blockinput_lines.append(line.rstrip())
         else: # File terminated without reaching end phrase
             self.handle_error(self.fd.feof("unterminated-content-block-err", "Unterminated content block at line {num}", num=begin_line_number-1))
-        # remove the extra leading newline
-        blockinput_data=re.sub(r"\A\n", "", blockinput_data)
+        # Return empty string if there are no lines
+        if len(blockinput_lines)==0: return ""
+
         # remove all whitespaces except common minspaces
         if preserve_indents:
-            pattern=r"(?P<optline>\n|^)[ ]{"+str(minspaces)+"}"
-            blockinput_data=re.sub(pattern,r"\g<optline>", blockinput_data, flags=re.MULTILINE)
+            blockinput_lines=[re.sub(rf"^\s{{{minspaces}}}", "", line) for line in blockinput_lines]
 
         ## Parse options
-        got_options=copy.copy(self.global_options)
+        got_options=self.global_options
         def opt(name: str): return got_options.get(name)
 
         if len(self.get_current_line().split())>1:
@@ -424,11 +424,25 @@ class GeneratorObject(_data_handlers.DataHandlers):
             got_options=self.parse_options(self.get_current_line().split()[1:],
                 merge_global_options=True,
                 allowed_options=allowed_options, ban_options=ban_options)
-        # Process lead indent options
-        if preserve_indents and opt("leadtabindents")!=None:
-            blockinput_data=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), blockinput_data, flags=re.MULTILINE)
-        if preserve_indents and opt("leadspaces")!=None:
-            blockinput_data=re.sub(r"^", " "*int(got_options['leadspaces']), blockinput_data, flags=re.MULTILINE)
+
+        for x in range(len(blockinput_lines)):
+            line=blockinput_lines[x]
+            # Process lead indent options
+            if preserve_indents and opt("leadtabindents")!=None:
+                line=re.sub(r"^", r"\t"*int(got_options['leadtabindents']), line)
+            if preserve_indents and opt("leadspaces")!=None:
+                line=re.sub(r"^", " "*int(got_options['leadspaces']), line)
+            # Process linebounds
+            line_offset=0
+            ws_match=re.match(r"^(?P<spc>\s*)", line)
+            assert ws_match!=None
+            leading_whitespace=ws_match.groupdict()['spc']
+            line=leading_whitespace+ \
+                self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, allow_options=False, debug_linenumber=begin_line_number+line_offset)[0]
+            line_offset+=1
+            blockinput_lines[x]=line
+        blockinput_data="\n".join(blockinput_lines)
+        
         # Process subst options
         debug_linenumber=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
         blockinput_data=self.handle_subst(blockinput_data, 
@@ -437,16 +451,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 subst_chars=opt("substchar")==True and not disable_char_subst,
                 silence_warnings=(False, disable_char_subst, disable_char_subst),
                 line_number_debug=debug_linenumber)
-        # Process linebounds
-        blockinput_lines=[]
-        offset=0
-        for line in blockinput_data.splitlines():
-            ws_match=re.match(r"^(?P<spc>\s*)", line)
-            assert ws_match!=None
-            leading_whitespace=ws_match.groupdict()['spc']
-            blockinput_lines.append(leading_whitespace+ \
-                self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, allow_options=False, debug_linenumber=begin_line_number+offset)[0])
-            offset+=1
-        blockinput_data="\n".join(blockinput_lines)
+
         return blockinput_data
     handle_entry=entry_block.handle_entry
