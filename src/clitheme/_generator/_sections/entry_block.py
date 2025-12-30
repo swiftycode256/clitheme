@@ -6,7 +6,6 @@
 
 import sys
 import re
-import copy
 import uuid
 from typing import Union, List, Dict, Any, Optional
 from typing import NamedTuple
@@ -29,7 +28,6 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     entry_names: List[EntryName]=[]
 
     class Entry(NamedTuple):
-        entry_name: EntryName # /match_content =entry_name.value
         content: str # /substitute_content
         content_line_number: str
         locale: Optional[str]
@@ -52,13 +50,11 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         assert len(locales)>0, "Empty locales array"
         assert len(entry_names)>0, "No entry names defined"
         for this_locale in locales:
-            for each_name in entry_names:
-                entry_items.append(Entry(
-                    entry_name=each_name,
-                    content=content,
-                    content_line_number=line_number if line_number!=None else str(self.linenum()),
-                    locale=None if this_locale=="default" else this_locale
-                ))
+            entry_items.append(Entry(
+                content=content,
+                content_line_number=line_number if line_number!=None else str(self.linenum()),
+                locale=None if this_locale=="default" else this_locale
+            ))
 
     names_processed=False # Set to True when no more entry names are allowed
     self.lineindex-=1 # Process current line
@@ -151,35 +147,35 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: return # Skip processing if entry block is unterminated
-    for entry in entry_items:
-        match_pattern=entry.entry_name.value
-
-        if is_substrules: check_valid_pattern(match_pattern, entry.entry_name.line_number)
-        else:
-            # Prevent leading . & prevent /,\ in entry name
-            if _globalvar.sanity_check(match_pattern)==False:
-                self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry.entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
-        if is_substrules:
-            try: 
-                db_interface.add_subst_entry(
-                    match_pattern=match_pattern,
-                    substitute_pattern=entry.content,
-                    is_regex=substrules_options['is_regex'],
-                    match_is_multiline=entry.entry_name.is_multiline,
-                    effective_commands=substrules_options['effective_commands'],
-                    command_match_strictness=substrules_options['strictness'],
-                    command_is_regex=substrules_options['command_is_regex'],
-                    effective_locale=entry.locale,
-                    end_match_here=opt('endmatchhere'),
-                    stdout_stderr_matchoption=substrules_stdout_stderr_option,
-                    foreground_only=opt('foregroundonly'),
-                    line_number_debug=entry.content_line_number,
-                    file_id=self.file_id,
-                    unique_id=entry.entry_name.id)
-            except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
-        else:
-            target_entry=' '.join(match_pattern.split()) # Remove extra spaces
-            if entry.locale!=None: target_entry+="__"+entry.locale
-            if self.in_subsection!="": target_entry=self.in_subsection+" "+target_entry
-            if self.in_domainapp!="": target_entry=self.in_domainapp+" "+target_entry
-            self.add_entry(self.datapath, target_entry, entry.content, entry.content_line_number)
+    for entry_name in entry_names:
+        for entry in entry_items:
+            # Check match pattern/entry path for validity
+            if is_substrules: check_valid_pattern(entry_name.value, entry_name.line_number)
+            else:
+                # Prevent leading . & prevent /,\ in entry name
+                if _globalvar.sanity_check(entry_name.value)==False:
+                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
+            if is_substrules:
+                try: 
+                    db_interface.add_subst_entry(
+                        match_pattern=entry_name.value,
+                        substitute_pattern=entry.content,
+                        is_regex=substrules_options['is_regex'],
+                        match_is_multiline=entry_name.is_multiline,
+                        effective_commands=substrules_options['effective_commands'],
+                        command_match_strictness=substrules_options['strictness'],
+                        command_is_regex=substrules_options['command_is_regex'],
+                        effective_locale=entry.locale,
+                        end_match_here=opt('endmatchhere'),
+                        stdout_stderr_matchoption=substrules_stdout_stderr_option,
+                        foreground_only=opt('foregroundonly'),
+                        line_number_debug=entry.content_line_number,
+                        file_id=self.file_id,
+                        unique_id=entry_name.id)
+                except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
+            else:
+                target_entry=' '.join(entry_name.value.split()) # Remove extra spaces
+                if entry.locale!=None: target_entry+="__"+entry.locale
+                if self.in_subsection!="": target_entry=self.in_subsection+" "+target_entry
+                if self.in_domainapp!="": target_entry=self.in_domainapp+" "+target_entry
+                self.add_entry(self.datapath, target_entry, entry.content, entry.content_line_number)
