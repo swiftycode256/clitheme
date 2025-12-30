@@ -7,10 +7,13 @@
 # Program for testing multi-line (block) processing of _generator
 import sys
 import os
+import shutil
+import tempfile
+import pathlib
 sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
 from clitheme import frontend
 
-file_data="""
+file_data=r"""
 begin_header
     name untitled
 end_header
@@ -23,13 +26,13 @@ begin_main
 
             this
             and
-          | that|
+          | that |
 
                 is just good
                     #enough
-        |   should have leading 2 lines and trailing 3 lines|
+         |  should have leading 2 lines and trailing 3 lines   |
+            \end_block
             \\end_block
-            \\\\end_block
 
 
 
@@ -41,7 +44,7 @@ begin_main
 end_main
 """
 
-file_data_2="""
+file_data_2=r"""
 begin_header
     name untitled
 end_header
@@ -58,29 +61,38 @@ begin_main
                 #非常好
                     ...
             should have leading 3 lines and trailing 2 lines
+            \[/locale]
             \\[/locale]
-            \\\\[/locale]
 
 
         [/locale] leadtabindents:1
     end_entry
-    set_options leadspaces:2
+    set_options leadspaces:2 linebounds
+    setvar:test |that and this  |
     [entry] test_entry-2
         [locale] zh_CN
-            |   that and this  |
-        [/locale] linebounds
+            |   {{test}}|
+        [/locale] linebounds substvar
     [/entry]
 end_main
 """
 
+# Remove cache folders
+for path in pathlib.PosixPath(tempfile.gettempdir()).glob("clitheme-data-*"):
+    shutil.rmtree(path)
+frontend.set_debugmode(True)
 if frontend.set_local_themedef(file_data)==False:
     print("Error: set_local_themedef failed")
     exit(1)
 if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
     print("Error: set_local_themedef with overlay failed")
     exit(1)
-def disp(content):
-    print(f"\"{content}\"")
+frontend.set_debugmode(False)
+def disp(content: str):
+    print("---")
+    for line in content.split('\n'):
+        print(f">{line}|")
+    print("---")
     print()
 f=frontend.FetchDescriptor()
 print("Default locale:")
