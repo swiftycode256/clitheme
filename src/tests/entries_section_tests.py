@@ -8,6 +8,7 @@ import shutil
 import random
 import string
 import os
+import io
 import sys
 sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
 from clitheme import _generator
@@ -50,7 +51,7 @@ for line in expected_data.splitlines():
         current_path=""
 
 # Test frontend
-print("Testing frontend...")
+print("\nTesting frontend...")
 from clitheme import frontend
 frontend.set_debugmode(True)
 frontend.set_lang("en_US.UTF-8")
@@ -77,15 +78,20 @@ for line in expected_data_frontend.splitlines():
         fallback_string=""
         for x in range(30): # reduce inaccuracies
             fallback_string+=random.choice(string.ascii_letters)
+        msg=io.StringIO()
+        sys.stdout=msg
         received_content=descriptor.retrieve_entry_or_fallback(entry_path, fallback_string)
+        sys.stdout=sys.__stdout__
         if expected_content.strip()!=received_content.strip():
+            print() # Newline
             if received_content.strip()==fallback_string:
-                print("[Error] Failed to retrieve entry for \""+current_path_frontend+"\"")
+                print("[Error] Failed to retrieve entry for \""+current_path_frontend+"\":")
             else:
-                print("[Content] Content mismatch on path \""+current_path_frontend+"\"")
+                print("[Content] Content mismatch on path \""+current_path_frontend+"\":")
             errorcount_frontend+=1
+            print(msg.getvalue(), end='')
         current_path_frontend=""
-print("\n\nTest results:")
+print("\nTest results:")
 print("==> ",end='')
 if errorcount>0:
     print("Generator test error: "+str(errorcount)+" errors found")
