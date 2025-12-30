@@ -5,11 +5,13 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import shutil
-from clitheme import _generator
-from clitheme import _globalvar
 import random
 import string
 import os
+import sys
+sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
+from clitheme import _generator
+from clitheme import _globalvar
 
 # spell-checker:ignore rootpath errorcount mainfile
 
@@ -19,8 +21,8 @@ root_directory="" # directory where the script files are in
 for part in l:
     root_directory+=part+os.sep
 print("Testing generator function...")
-mainfile_data=open(root_directory+"/testprogram-data/clithemedef-test_mainfile.clithemedef.txt",'r', encoding="utf-8").read()
-expected_data=open(root_directory+"/testprogram-data/clithemedef-test_expected.txt",'r', encoding="utf-8").read()
+mainfile_data=open(root_directory+"/entries_test_data/mainfile.clithemedef.txt",'r', encoding="utf-8").read()
+expected_data=open(root_directory+"/entries_test_data/expected.txt",'r', encoding="utf-8").read()
 generator_path=_generator.generate_data_hierarchy(mainfile_data)
 
 errorcount=0
@@ -36,7 +38,7 @@ for line in expected_data.splitlines():
         contents=""
         try:
             contents=open(rootpath+"/"+current_path, 'r', encoding="utf-8").read()
-            print("File "+rootpath+"/"+current_path+" OK")
+            # print("File "+rootpath+"/"+current_path+" OK")
         except FileNotFoundError:
             print("[File] file "+rootpath+"/"+current_path+" does not exist")
             errorcount+=1
@@ -53,7 +55,7 @@ from clitheme import frontend
 frontend.set_debugmode(True)
 frontend.set_lang("en_US.UTF-8")
 frontend.data_path=generator_path+"/"+_globalvar.generator_data_pathname
-expected_data_frontend=open(root_directory+"/testprogram-data/clithemedef-test_expected-frontend.txt", 'r', encoding="utf-8").read()
+expected_data_frontend=open(root_directory+"/entries_test_data/expected-frontend.txt", 'r', encoding="utf-8").read()
 current_path_frontend=""
 errorcount_frontend=0
 for line in expected_data_frontend.splitlines():

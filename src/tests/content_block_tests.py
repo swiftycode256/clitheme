@@ -5,7 +5,10 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Program for testing multi-line (block) processing of _generator
-from clitheme import _generator, frontend
+import sys
+import os
+sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
+from clitheme import frontend
 
 file_data="""
 begin_header

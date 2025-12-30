@@ -4,10 +4,13 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import shutil
+import sys
+import os
+sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
 from clitheme.exec import _substrules_processor
-import shutil
 
 # sample input for testing
 sample_inputs=[("rm: missing operand\r\n"
