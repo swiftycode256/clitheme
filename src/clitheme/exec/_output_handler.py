@@ -138,7 +138,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     timeout=0.005
                 elif pending_output!=None:
                     # Short timeout if there are pending outputs
-                    timeout=0.02
+                    timeout=0.03
                 else:
                     # Wait longer to reduce CPU usage
                     timeout=0.1
