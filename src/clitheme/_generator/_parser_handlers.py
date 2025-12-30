@@ -217,7 +217,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 # self.warnings['substesc']=False
         # Handle substchar warning
         if not silence_warn[2] and subst_chars!=True and self.warnings.get('substchar')!=False:
-            if re.match(substchar_pattern, content)!=None:
+            if re.search(substchar_pattern, content)!=None:
                 self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                 # self.warnings['substchar']=False
                 
@@ -236,7 +236,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 try: 
                     var_content=self.global_variables[var_name]
                 except KeyError: 
-                    if not silence_warnings and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
+                    if not silence_warn[0] and var_name not in encountered_variables: self.handle_warning(self.fd.feof("unknown-variable-warn", "Line {num}: unknown variable \"{name}\", not performing substitution", \
                         num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(var_name)))
                 if var_content!=None:
                     new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
@@ -260,9 +260,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     # Convert to character
                     try: char_content=chr(int(m.string[1:], base=16))
                     except ValueError: 
-                        if not silence_warnings: self.handle_warning(self.fd.feof("invalid-charcode-warn", "Line {num}: invalid character code \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(m.string[1:])))
+                        if not silence_warn[2]: self.handle_warning(self.fd.feof("invalid-charcode-warn", "Line {num}: invalid character code \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(m.string[1:])))
                 else:
-                    if not silence_warnings: self.handle_warning(self.fd.feof("invalid-substchar-format-warn", "Line {num}: invalid substchar format \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(pattern)))
+                    if not silence_warn[2]: self.handle_warning(self.fd.feof("invalid-substchar-format-warn", "Line {num}: invalid substchar format \"{name}\", not performing substitution", num=line_number_debug if line_number_debug!=None else self.linenum(), name=self.fmt(pattern)))
                 if char_content!=None:
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())

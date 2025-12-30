@@ -195,7 +195,7 @@
         [entry] |set-substesc-warn|
             # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
             # default: |Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled|
-            locale[zh_CN]: |Line {num}: 尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用|
+            locale[zh_CN]: |第{num}行：尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用| nosubstesc
         [/entry]
         [entry] |set-substchar-warn|
             # default: |Line {num}: attempted to use character substitution, but "substchar" option is not enabled|
