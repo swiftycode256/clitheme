@@ -49,6 +49,8 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             re.compile(pattern)
         except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=self.fmt(str(sys.exc_info()[1]))))
     def add_entry(content: str, locales: List[str], line_number: Optional[str]=None):
+        assert len(locales)>0, "Empty locales array"
+        assert len(entry_names)>0, "No entry names defined"
         for this_locale in locales:
             for each_name in entry_names:
                 entry_items.append(Entry(
@@ -67,6 +69,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         if phrases[0] not in (start_phrase, start_phrase.replace(']', '>>')):
             names_processed=True
 
+        ## Entry names/Match patterns
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=False)
             pattern=_globalvar.extract_content(line_content)
@@ -93,12 +96,15 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 id=uuid.uuid4(),
                 line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
             ))
+        ## Entry contents/Subst patterns
         elif phrases[0].startswith('locale['):
             locale_match=re.match(r"^locale\[(?P<names>.+?)\]:(?!\S+)", self.get_current_line().strip())
             if locale_match!=None and len(locale_match.group('names').split())>0:
                 argc=len(locale_match.group().split())
                 self.check_enough_args(phrases, argc+1, disp=locale_match.group(), check_processed=False)
                 locales=self.parse_content(locale_match.group('names').strip(), pure_name=True).split()
+                if len(locales)==0: # e.g. Empty variable content
+                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="<name> @ locale[<name>]:", num=self.linenum()))
                 content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
                 add_entry(self.parse_content(content), locales) 
             else: 
@@ -120,10 +126,11 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
             locales=self.parse_content(locale, pure_name=True).split()
-            if len(locales)==0:
-                self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="locale:<name>", num=self.linenum()))
+            if len(locales)==0: # e.g. Empty variable content
+                self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="<name> @ locale:<name>", num=self.linenum()))
             add_entry(self.parse_content(content), locales)
-        elif phrases[0] in ("locale_block", "[locale]"):
+        ## Content blocks for entry contents/subst patterns
+        elif phrases[0] in ("[locale]", "locale_block"):
             self.check_enough_args(phrases, 2)
             locales=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
             begin_line_number=self.linenum()+1
@@ -143,6 +150,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 substrules_stdout_stderr_option=2
             break
         else: self.handle_invalid_phrase(phrases[0])
+    else: return # Skip processing if entry block is unterminated
     for entry in entry_items:
         match_pattern=entry.entry_name.value
 
