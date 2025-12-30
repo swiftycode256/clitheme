@@ -61,7 +61,7 @@
         [/entry]
         [entry] |unterminated-content-block-err|
             # default: |Unterminated content block at line {num}|
-            locale[zh_CN]: |第{num}行：未结束的内容段落|
+            locale[zh_CN]: |第{num}行：未结束的文本段落|
         [/entry]
         [entry] |db-compat-err|
             # default: |The current substrules database version is incompatible; please run "clitheme repair-theme" and try again|
@@ -202,7 +202,7 @@
             locale[zh_CN]: |第{num}行：尝试使用字符替换，但"substchar"选项未被启用|
         [/entry]
         [entry] |set-linebounds-warn|
-            # default: |Line {num}: Attempted to use line boundaries, but "linebounds" option is not enabled|
+            # default: |Line {num}: attempted to use line boundaries, but "linebounds" option is not enabled|
             locale[zh_CN]: |第{num}行：尝试使用行边界，但"linebounds"选项未被启用|
         [/entry]
         # 路径检查功能提示
