@@ -26,7 +26,7 @@ sample_inputs=[("rm: missing operand\r\n"
                ("Error: invalid input   ","input anything"), # test extra spaces
                ("Error: sample message", "example_app --this install-stuff"), # test strictcmdmatch (substitution should not happen)
                ("Error: sample message", "example_app install-stuff --this"), # test strictcmdmatch and endmatchhere options
-               ("Error: sample message", "example_app install-stuff"), # test strictcmdmatch with SAME command as defined in filter
+               ("Error: sample message\nWarning: sample message", "example_app install-stuff"), # test strictcmdmatch and endmatchhere on multi-line outputs
                # Test regex filters
                ("Error: sample message", "/usr/bin/app_example.exe install-stuff"), # test command basename handling in regex
                ("Error: sample message", "app --wef install"),
@@ -51,7 +51,7 @@ expected_outputs=[
     ("(ToT)/~~~ Error: input is invalid! ಥ_ಥ", "(ToT)/~~~ 错误：无效输入！ಥ_ಥ"),
     ("(ToT)/~~~ Error: sample message", "(ToT)/~~~ 错误：sample message"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
-    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
+    ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)\no(≧v≦)o Note: sample message", "错误：样例提示！(>﹏<)\no(≧v≦)o 提示： sample message"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
