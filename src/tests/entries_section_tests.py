@@ -10,9 +10,9 @@ import string
 import os
 import io
 import sys
-sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
-from clitheme import _generator
-from clitheme import _globalvar
+sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
+from clitheme import frontend
+from clitheme import _generator, _globalvar
 
 # spell-checker:ignore rootpath errorcount mainfile
 
@@ -52,7 +52,6 @@ for line in expected_data.splitlines():
 
 # Test frontend
 print("\nTesting frontend...")
-from clitheme import frontend
 frontend.set_debugmode(True)
 frontend.set_lang("en_US.UTF-8")
 frontend.data_path=generator_path+"/"+_globalvar.generator_data_pathname

@@ -2,6 +2,7 @@
 
 import os
 import sys
+sys.path=[f"{os.path.dirname(__file__)}/../src"]+sys.path
 from clitheme import frontend
 
 demo_message="""正在展示{}演示（不会修改系统上的文件）："""

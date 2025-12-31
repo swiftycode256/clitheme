@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 import pathlib
-sys.path=[os.path.dirname(os.path.dirname(__file__))]+sys.path
+sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import frontend
 
 file_data=r"""
