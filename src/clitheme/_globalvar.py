@@ -72,7 +72,7 @@ db_filename="subst-data.db" # e.g. ~/.local/share/clitheme/subst-data.db
 db_version=6
 
 ## clitheme-exec timeout value for each output substitution operation
-output_subst_timeout=0.4
+output_subst_timeout=1.0
 
 # '\r\n' MUST come before '\r' and '\n' characters
 newlines=(b'\r\n',b'\r',b'\n',b'\v',b'\f',b'\x1c',b'\x1d',b'\x1e') 
