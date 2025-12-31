@@ -127,7 +127,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             output_lines.put(content)
         try:
             while True:
-                time.sleep(0.001)
                 # Testing thread exception handling
                 nonlocal thread_debug
                 if thread_debug==1: raise Exception
