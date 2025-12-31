@@ -273,7 +273,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if condition==False or not content.strip().startswith("|"):
             # Linebounds warning
             if match!=None and self.warnings.get('linebounds')!=False:
-                self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: Attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
+                self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
                 # self.warnings['linebounds']=False
             return (content, None)
         # Match pattern |...|
