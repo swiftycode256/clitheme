@@ -16,6 +16,8 @@ import string
 import stat
 import tempfile
 import ctypes
+import uuid
+import hashlib
 from copy import copy
 from . import _version
 from typing import List
@@ -130,6 +132,12 @@ class _direct_exit(Exception):
         Custom exception for handling return code inside another function callback
         """
         self.code=code
+_hash_index=0
+def gen_uuid() -> uuid.UUID:
+    global _hash_index
+    _hash_index+=1
+    hash=hashlib.shake_128(_hash_index.to_bytes(length=8, byteorder="big"))
+    return uuid.UUID(bytes=hash.digest(16))
 def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
     results=re.match(r"^(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")

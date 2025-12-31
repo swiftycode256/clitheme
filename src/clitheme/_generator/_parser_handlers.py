@@ -61,7 +61,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.custom_infofile_name=custom_infofile_name
         self.filename=filename
         self.file_content=file_content
-        self.file_id=uuid.uuid4()
+        self.file_id=_globalvar.gen_uuid()
         _data_handlers.DataHandlers.__init__(self, path, silence_warn)
     def is_ignore_line(self) -> bool:
         return self.get_current_line().strip()=="" or self.get_current_line().strip().startswith('#')

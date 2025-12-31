@@ -99,7 +99,6 @@ def add_subst_entry(
     file_id: uuid.UUID,
     line_number_debug: str
 ):
-    if unique_id==uuid.UUID(int=0): unique_id=uuid.uuid4()
     cmdlist: List[Optional[str]]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))

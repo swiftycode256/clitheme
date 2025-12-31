@@ -72,7 +72,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             entry_names.append(EntryName(
                 value=self.parse_content(pattern, pure_name=not is_substrules),
                 is_multiline=False,
-                id=uuid.uuid4(),
+                id=_globalvar.gen_uuid(),
                 line_number=str(self.linenum())
             ))
         elif phrases[0]==start_phrase.replace(']','>>') and not names_processed and is_substrules:
@@ -89,7 +89,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             entry_names.append(EntryName(
                 value=pattern,
                 is_multiline=True,
-                id=uuid.uuid4(),
+                id=_globalvar.gen_uuid(),
                 line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
             ))
         ## Entry contents/Subst patterns
