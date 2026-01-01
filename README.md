@@ -20,7 +20,7 @@ test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int 
 2 errors generated.
 ```
 ```plaintext
-$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme apply-theme clang-theme.ctdef.txt
 ==> Successfully processed files
 Theme applied successfully
 ```
@@ -113,7 +113,7 @@ Write theme definition file and substitution rules based on the output:
 After applying the theme with `clitheme apply-theme <file>`, execute the command with `clitheme-exec` to apply the substitution rules onto the output: 
 
 ```plaintext
-$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme apply-theme clang-theme.ctdef.txt
 $ clitheme-exec clang test.c
 test.c:1:1: Error! : unknown type name 'bool', you forgot to d……define it!~ಥ_ಥ
 bool *func(int *a) {
@@ -155,7 +155,7 @@ Write a theme definition file:
 After applying the theme with `clitheme apply-theme <file>`, use `clitheme-man` to view these custom man pages (arguments and options are the same as `man`):
 
 ```plaintext
-$ clitheme apply-theme manpage-theme.clithemedef.txt
+$ clitheme apply-theme manpage-theme.ctdef.txt
 $ clitheme-man cat
 $ clitheme-man ls
 ```

@@ -22,7 +22,7 @@ root_directory="" # directory where the script files are in
 for part in l:
     root_directory+=part+os.sep
 print("Testing generator function...")
-mainfile_data=open(root_directory+"/entries_test_data/mainfile.clithemedef.txt",'r', encoding="utf-8").read()
+mainfile_data=open(root_directory+"/entries_test_data/mainfile.ctdef.txt",'r', encoding="utf-8").read()
 expected_data=open(root_directory+"/entries_test_data/expected.txt",'r', encoding="utf-8").read()
 generator_path=_generator.generate_data_hierarchy(mainfile_data)
 

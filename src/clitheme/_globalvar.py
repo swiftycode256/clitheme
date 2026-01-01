@@ -231,7 +231,7 @@ def handle_set_themedef(debug_name: str): # type: ignore
     # Prevent interference with other code piping stdout
     orig_stdout=sys.stdout
     try:
-        files=["strings/generator-strings.clithemedef.txt", "strings/cli-strings.clithemedef.txt", "strings/exec-strings.clithemedef.txt", "strings/man-strings.clithemedef.txt"]
+        files=["strings/generator-strings.ctdef.txt", "strings/cli-strings.ctdef.txt", "strings/exec-strings.ctdef.txt", "strings/man-strings.ctdef.txt"]
         file_contents=list(map(lambda name: open(f"{os.path.dirname(__file__)}/{name}", encoding='utf-8').read(), files))
         msg=io.StringIO()
         sys.stdout=msg

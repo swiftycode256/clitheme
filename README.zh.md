@@ -20,7 +20,7 @@ test.c:4:3: warning: incompatible pointer types assigning to 'char *' from 'int 
 2 errors generated.
 ```
 ```plaintext
-$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme apply-theme clang-theme.ctdef.txt
 ==> Successfully processed files
 Theme applied successfully
 ```
@@ -113,7 +113,7 @@ o[ {{ESC}}[0m2 errors generated.\r\n
 使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-exec`执行命令以对输出应用这些替换规则：
 
 ```plaintext
-$ clitheme apply-theme clang-theme.clithemedef.txt
+$ clitheme apply-theme clang-theme.ctdef.txt
 $ clitheme-exec clang test.c
 test.c:1:1: 错误！: 未知的类型名'bool',忘记定义了～ಥ_ಥ
 bool *func(int *a) {
@@ -155,7 +155,7 @@ $ nano man-pages/1/cat-custom.txt
 使用`clitheme apply-theme <文件>`应用主题后，使用`clitheme-man`查看这些自定义文档（使用方法和选项和`man`一样）：
 
 ```plaintext
-$ clitheme apply-theme manpage-theme.clithemedef.txt
+$ clitheme apply-theme manpage-theme.ctdef.txt
 $ clitheme-man cat
 $ clitheme-man ls
 ```
