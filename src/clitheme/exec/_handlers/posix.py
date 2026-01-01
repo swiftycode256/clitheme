@@ -148,10 +148,18 @@ class PosixHandler(BaseHandler):
                 term_attrs[tty.CFLAG] &= ~(termios.PARENB | termios.CSIZE)
                 term_attrs[tty.CFLAG] |= termios.CS8
                 term_attrs[tty.LFLAG] &= ~(termios.ECHO | termios.ECHOE | termios.ECHOK | termios.ECHONL | termios.ICANON | termios.IEXTEN | termios.ISIG | termios.NOFLSH | termios.TOSTOP)
+
+                try: child_attrs=termios.tcgetattr(self.stdout_fd)
+                except termios.error: pass
+                else:
+                    # Use character settings from child process
+                    term_attrs[tty.CC]=child_attrs[tty.CC]
+                    # If not disabled by child process, enable ISIG for proper signal handling
+                    if child_attrs[tty.LFLAG] & termios.ISIG > 0:
+                        term_attrs[tty.LFLAG] |= termios.ISIG
+                # Ensure settings are correct for non-canonical input mode
                 term_attrs[tty.CC][termios.VMIN] = 1
                 term_attrs[tty.CC][termios.VTIME] = 0
-                # However, enable ISIG to ensure signal handling works
-                term_attrs[tty.LFLAG] |= termios.ISIG
             return term_attrs
         except termios.error: return None
     def set_host_term_attrs(self, term_attrs: list):
