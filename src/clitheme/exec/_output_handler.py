@@ -154,7 +154,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 def handle_output(is_stderr: bool) -> bool:
                     nonlocal pending_output, output_lines, last_input_content
 
-                    term_attrs=handler.get_process_term_attrs(no_buffering=True)
+                    term_attrs=handler.get_term_attrs(make_raw=True)
                     foreground_pid=handler.get_foreground_pid()
                     data=handler.read_pty(is_stderr=is_stderr)
                     # If pipe closed and returns empty data, ignore

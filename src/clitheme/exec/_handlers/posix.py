@@ -91,9 +91,9 @@ class PosixHandler(BaseHandler):
         self.process_pid=self.process.pid
 
         # Terminal attributes
-        self.prev_attrs=self.get_process_term_attrs()
+        self.prev_attrs=self.get_term_attrs()
         # Set term attributes for first time
-        attrs=self.get_process_term_attrs(no_buffering=True)
+        attrs=self.get_term_attrs(make_raw=True)
         if attrs!=None: self.set_host_term_attrs(attrs)
         
         # Set initial window size
@@ -136,10 +136,10 @@ class PosixHandler(BaseHandler):
                 fcntl.ioctl(self.stderr_fd, termios.TIOCSWINSZ, new_term_size)
                 self.process.send_signal(signal.SIGWINCH)
         except: pass
-    def get_process_term_attrs(self, no_buffering=False) -> Optional[list]:
+    def get_term_attrs(self, make_raw=False) -> Optional[list]:
         try:
             term_attrs=termios.tcgetattr(self.stdout_fd)
-            if no_buffering:
+            if make_raw:
                 # disable canonical and echo mode (enable cbreak) no matter what
                 term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
             return term_attrs
@@ -161,7 +161,7 @@ class PosixHandler(BaseHandler):
             def signal_handler(*args): self._signal_handler_function(*args)
             signal.signal(signal.SIGTSTP, signal_handler)
             # Set term attributes after re-entering
-            attrs=self.get_process_term_attrs(no_buffering=True)
+            attrs=self.get_term_attrs(make_raw=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
         elif sig==signal.SIGTSTP: # suspend signal
             if self.get_foreground_pid()!=self.process.pid: # e.g. A shell running another process

@@ -27,7 +27,7 @@ class BaseHandler:
         # Possible values: ["stdin", "stdout", "stderr"]
         # for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
         raise NotImplementedError
-    def get_process_term_attrs(self, no_buffering=False) -> Optional[Any]:
+    def get_term_attrs(self, make_raw=False) -> Optional[Any]:
         raise NotImplementedError
     def set_host_term_attrs(self, term_attrs):
         raise NotImplementedError

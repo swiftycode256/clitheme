@@ -157,9 +157,9 @@ class WindowsHandler(BaseHandler):
         self.process_handle=pi.hProcess
         ## Set terminal attributes
         # Save initial attributes
-        self.prev_attrs=self.get_process_term_attrs()
+        self.prev_attrs=self.get_term_attrs()
         # Update terminal attributes
-        attrs=self.get_process_term_attrs(no_buffering=True)
+        attrs=self.get_term_attrs(make_raw=True)
         if attrs!=None: self.set_host_term_attrs(attrs)
 
         self.stdin_fd=inputWriteSide
@@ -272,14 +272,14 @@ class WindowsHandler(BaseHandler):
             if len(avail_handles)>0: break
             time.sleep(0.001)
         return avail_handles
-    def get_process_term_attrs(self, no_buffering=False) -> Optional[Any]:
+    def get_term_attrs(self, make_raw=False) -> Optional[Any]:
         try:
             stdin_handle, stdout_handle=self._get_std_handles()
             input_mode=wintypes.DWORD()
             w_assert(kernel32.GetConsoleMode(stdin_handle, ctypes.byref(input_mode)))
             output_mode=wintypes.DWORD()
             w_assert(kernel32.GetConsoleMode(stdout_handle, ctypes.byref(output_mode)))
-            if no_buffering:
+            if make_raw:
                 input_mode.value &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT)
                 input_mode.value |= ENABLE_VIRTUAL_TERMINAL_INPUT
                 output_mode.value |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING
