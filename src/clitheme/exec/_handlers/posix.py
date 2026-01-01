@@ -10,6 +10,7 @@ import sys
 import os
 import io
 import pty
+import tty
 import termios
 import stat
 import fcntl
@@ -18,7 +19,7 @@ import select
 import struct
 import copy
 import threading
-from typing import Optional, List
+from typing import Optional
 from ... import frontend, _globalvar
 from ..._globalvar import _direct_exit
 from .. import _labeled_print
@@ -138,16 +139,27 @@ class PosixHandler(BaseHandler):
         except: pass
     def get_term_attrs(self, make_raw=False) -> Optional[list]:
         try:
-            term_attrs=termios.tcgetattr(self.stdout_fd)
+            term_attrs=termios.tcgetattr(sys.stdout.fileno())
             if make_raw:
-                # disable canonical and echo mode (enable cbreak) no matter what
-                term_attrs[3] &= ~(termios.ICANON | termios.ECHO)
+                # Set raw mode (from Python 3.14 tty.cfmakeraw function)
+                # Clear all POSIX.1-2017 flags
+                term_attrs[tty.IFLAG] &= ~(termios.IGNBRK | termios.BRKINT | termios.IGNPAR | termios.PARMRK | termios.INPCK | termios.ISTRIP | termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON | termios.IXANY | termios.IXOFF)
+                term_attrs[tty.OFLAG] &= ~termios.OPOST
+                term_attrs[tty.CFLAG] &= ~(termios.PARENB | termios.CSIZE)
+                term_attrs[tty.CFLAG] |= termios.CS8
+                term_attrs[tty.LFLAG] &= ~(termios.ECHO | termios.ECHOE | termios.ECHOK | termios.ECHONL | termios.ICANON | termios.IEXTEN | termios.ISIG | termios.NOFLSH | termios.TOSTOP)
+                term_attrs[tty.CC][termios.VMIN] = 1
+                term_attrs[tty.CC][termios.VTIME] = 0
+                # However, enable ISIG to ensure signal handling works
+                term_attrs[tty.LFLAG] |= termios.ISIG
             return term_attrs
         except termios.error: return None
     def set_host_term_attrs(self, term_attrs: list):
         try:
             termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
         except termios.error: pass
+    def _reset_term_attrs(self):
+        if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
     def get_foreground_pid(self) -> Optional[int]:
         try: 
             value=os.tcgetpgrp(self.stdout_fd)
@@ -164,10 +176,11 @@ class PosixHandler(BaseHandler):
             attrs=self.get_term_attrs(make_raw=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
         elif sig==signal.SIGTSTP: # suspend signal
-            if self.get_foreground_pid()!=self.process.pid: # e.g. A shell running another process
+            if self.get_foreground_pid()!=self.process_pid: # e.g. A shell running another process
                 if self.process.poll()==None: # Process is running
                     self.write_pty(b'\x1a') # Send '^Z' character; don't suspend the entire shell
             else: 
+                self._reset_term_attrs()
                 self.process.send_signal(signal.SIGSTOP) # Stop the process
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
                 os.kill(os.getpid(), signal.SIGTSTP) # Suspend itself
@@ -186,11 +199,11 @@ class PosixHandler(BaseHandler):
     def get_proc_status(self) -> Optional[int]:
         return self.process.poll()
     def reset_terminal(self):
-        if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
+        self._reset_term_attrs()
         if not stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
             self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
     def handle_exit(self) -> int:
-        if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs)
+        self._reset_term_attrs()
         exit_code=self.get_proc_status()
         try:
             if exit_code!=None and exit_code<0: # Terminated by signal

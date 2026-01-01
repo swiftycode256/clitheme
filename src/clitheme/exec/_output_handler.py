@@ -164,8 +164,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     if pending_output!=None:
                         orig_data=pending_output[0]
                         if pending_output[3]==foreground_pid and pending_output[1]==is_stderr:
-                            # If exceeds maximum time or differing terminal attributes
-                            if time.perf_counter()-pending_output[5]>0.1 or term_attrs!=pending_output[4]:
+                            # If exceeds maximum time
+                            if time.perf_counter()-pending_output[5]>0.1:
                                 if not orig_data.endswith(_globalvar.newlines):
                                     # Append first line of data into pending output and process it
                                     first_line=re.match(_globalvar.line_match_bytes, data).group() # type: ignore
@@ -182,7 +182,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         else:
                             # Shouldn't join them together in this case
                             push_output(pending_output)
-                            # Don't push the current line just yet; leave it for newline check
                     # If all data was pushed, don't do anything
                     if data==b'': return True
                     # region: Check if the output is user input
