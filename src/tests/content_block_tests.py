@@ -79,6 +79,7 @@ end_main
 
 # Remove cache folders
 for path in pathlib.PosixPath(tempfile.gettempdir()).glob("clitheme-data-*"):
+    print(f"Remove {path}")
     shutil.rmtree(path)
 frontend.set_debugmode(True)
 if frontend.set_local_themedef(file_data)==False:
@@ -91,6 +92,7 @@ frontend.set_debugmode(False)
 def disp(content: str):
     print("---")
     for line in content.split('\n'):
+        assert not line[-1:]=='\r', r"String entry content should not end in \r\n"
         print(f">{line}|")
     print("---")
     print()

@@ -36,9 +36,9 @@ sample_inputs=[("rm: missing operand\r\n"
                 "example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
 ]
 expected_outputs=[
-    ("rm says: missing arguments and options (>﹏<)\n"
+    ("rm says: missing arguments and options (>﹏<)\r\n"
      "For more information, use rm --help (｡ì _ í｡)",
-     "rm 说：缺少参数和选项 (>﹏<)\n"
+     "rm 说：缺少参数和选项 (>﹏<)\r\n"
      "关于更多信息，请使用rm --help (｡ì _ í｡)"),
     ("rm says: Access denied to /etc/folder! ಥ_ಥ", "rm 说：文件\"/etc/folder\"拒绝访问！ಥ_ಥ"),
     ("rm: /etc/file: Permission denied",),
@@ -56,9 +56,9 @@ expected_outputs=[
     ("Error: \x1b[1;4msample message!\x1b[m (>﹏<)", "错误：样例提示！(>﹏<)"),
     ("rm says: \x1b[1;4mOperation not permitted!\x1b[0m ಥ_ಥ", "rm 说：不允许的操作！ಥ_ಥ"),
     ("rm: file: Operation not permitted",),
-    ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)\n"
+    ("o(≧v≦)o example_app says: using recursive directories! (｡ì _ í｡)\r\n"
      "o(≧v≦)o example_app says: using list options! (⊙ω⊙)",
-     "o(≧v≦)o example_app 说： 正在使用recursive路径！(｡ì _ í｡)\n"
+     "o(≧v≦)o example_app 说： 正在使用recursive路径！(｡ì _ í｡)\r\n"
      "o(≧v≦)o example_app 说： 正在使用列表options！(⊙ω⊙)"),
 ]
 assert len(sample_inputs)==len(expected_outputs), \

@@ -130,12 +130,18 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             self.check_enough_args(phrases, 2)
             locales=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
             begin_line_number=self.linenum()+1
-            content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block")
+            content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True,
+                    end_phrase="[/locale]" if phrases[0]=="[locale]" else "end_block",
+                    line_separator='\r\n' if is_substrules else '\n'
+            )
             add_entry(content, locales, line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
         elif phrases[0]=="[default]": # Shorthand for "[locale] default"
             self.check_extra_args(phrases, 1)
             begin_line_number=self.linenum()+1
-            content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/default]")
+            content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True,
+                    end_phrase="[/default]",
+                    line_separator='\r\n' if is_substrules else '\n'
+            )
             add_entry(content, ['default'], line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
         elif phrases[0]==end_phrase:
             got_options=self.parse_options(phrases[1:], merge_global_options=True, \
