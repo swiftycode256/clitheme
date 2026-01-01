@@ -33,8 +33,8 @@
             locale[zh_CN]: |--debug：在每一行被读取的输出前显示标记|
         [/entry]
         [entry] |options-debug-color|
-            # default: |--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)|
-            locale[zh_CN]: |--debug-color：为输出设定颜色；用于区分stdout和stderr（BETA：stdout/stderr未实现）|
+            # default: |--debug-color: Apply color on different types of output|
+            locale[zh_CN]: |--debug-color：在不同类型的输出上应用颜色|
         [/entry]
         [entry] |options-debug-newlines|
             # default: |--debug-newlines: Use newlines to display output that does not end on a newline|

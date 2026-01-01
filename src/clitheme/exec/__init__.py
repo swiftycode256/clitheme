@@ -58,7 +58,7 @@ def _handle_help_message(full_help: bool=False):
     print(fd2.reof("options-str", "Options:"))
     print("\t"+fd2.reof("options-debug", "--debug: Display indicator at the beginning of each read output by line"))
     print("\t\t"+fd2.reof("options-debug-newlines", "--debug-newlines: Use newlines to display output that does not end on a newline"))
-    print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on output; used to determine stdout or stderr (BETA: stdout/stderr not implemented)"))
+    print("\t"+fd2.reof("options-debug-color", "--debug-color: Apply color on different types of output"))
     print("\t"+fd2.reof("options-showchars", "--showchars: Display various control characters in plain text"))
     print("\t"+fd2.reof("options-foreground-stat", "--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
     print("\t"+fd2.reof("options-nosubst", "--nosubst: Do not perform any output substitutions even if a theme is set"))
