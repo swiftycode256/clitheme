@@ -10,6 +10,7 @@ import time
 import ctypes
 import io
 import stat
+import re
 from ctypes import wintypes
 from typing import Optional, Any, List, Tuple, Union
 from ... import _globalvar
@@ -100,6 +101,7 @@ class WindowsHandler(BaseHandler):
             si.StartupInfo.hStdOutput=outputWriteSide
             si.StartupInfo.hStdError=outputWriteSide
             si.StartupInfo.dwFlags=STARTF_USESTDHANDLES # use std handles specified above
+            self.init_out_seq_left=0
         else:
             # [Use pseudoconsole]
             # region: Initialize lpAttributeList
@@ -133,6 +135,13 @@ class WindowsHandler(BaseHandler):
                 None,  # lpPreviousValue
                 None   # lpReturnSize
             ))
+            # The Pseudoconsole outputs these sets of control sequences before process output:
+            # 1. Query cursor position, when PSEUDOCONSOLE_INHERIT_CURSOR is specified
+            # 2. Setup additional console modes (e.g. Focus event reporting, UTF-8 edit mode)
+            # These set of sequences are VERY important and MUST be directly written to output!
+            self.init_out_seq_left=2
+        # Additionally, each sequence causes the console to emit a corresponding input sequence
+        self.init_in_seq_left=self.init_out_seq_left
 
         ## Start process
 
@@ -165,11 +174,6 @@ class WindowsHandler(BaseHandler):
         self.stdin_fd=inputWriteSide
         self.stdout_fd=outputReadSide
 
-        # The Pseudoconsole outputs these sets of control sequences before process output:
-        # 1. Query cursor position, when PSEUDOCONSOLE_INHERIT_CURSOR is specified
-        # 2. Setup additional console modes (e.g. Focus event reporting, UTF-8 edit mode)
-        # These set of sequences are VERY important and MUST be directly written to output!
-        self.init_seq_left=2
 
         # The last line of console output might end with '\r'
         # In this case, output '\n' when exiting
@@ -224,6 +228,15 @@ class WindowsHandler(BaseHandler):
                 elif record.EventType==WINDOW_BUFFER_SIZE_EVENT:
                     coord=record.Event.WindowBufferSizeEvent.dwSize
                     w_assert(kernel32.ResizePseudoConsole(self.console_handle, coord)==S_OK)
+            if len(total_data)>0:
+                # Initial sequences must be the position response or \x1b[I
+                if re.fullmatch(rb"\x1b\[(\d+;\d+R|I)", total_data)==None:
+                    self.init_in_seq_left=0
+                # Process initial input sequences
+                if self.init_in_seq_left>0:
+                    self.write_pty(total_data)
+                    self.init_in_seq_left-=1
+                    return b''
             return total_data
         elif stdin_type==FILE_TYPE_PIPE:
             return self._read_data(stdin_handle)
@@ -236,14 +249,15 @@ class WindowsHandler(BaseHandler):
         data=self._read_data(self.stdout_fd)
         
         self.ends_with_R=data.endswith(b'\r')
-        # If initial sequences doesn't start with ESC, always assume process output
-        if not data.startswith(b'\x1b'): self.init_seq_left=0
-        # Handle initial control sequences: Write directly to output
-        if self.init_seq_left>0:
-            self.write_output(data)
-            self.init_seq_left-=1
-            return b''
-        else: return data
+        if len(data)>0:
+            # If initial sequences doesn't start with ESC, always assume process output
+            if not data.startswith(b'\x1b'): self.init_out_seq_left=0
+            # Handle initial control sequences: Write directly to output
+            if self.init_out_seq_left>0:
+                self.write_output(data)
+                self.init_out_seq_left-=1
+                return b''
+        return data
     def write_pty(self, data: bytes):
         self._write_data(self.stdin_fd, data)
     def get_readable_descriptors(self, timeout: float) -> set:
