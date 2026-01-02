@@ -46,6 +46,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, silence_warn: bool):
         # data to keep track of
         self.warnings: Dict[str, bool]={}
+        self.parsed_lines=set() # For parse_content functions
         self.section_parsing=False
         self.parsed_sections=[]
         self.lines_data=file_content.splitlines()
@@ -266,12 +267,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+char_content+new_content[match.end()+offset:]
                     offset+=len(char_content)-(match.end()-match.start())
         return new_content
-    def handle_linebounds(self, content: str, condition: Optional[bool]=None, preserve_indents: bool=True, allow_options: bool=True, debug_linenumber: Optional[int]=None) -> Tuple[str, Optional[str]]:
+    def handle_linebounds(self, content: str, condition: Optional[bool]=None, preserve_indents: bool=True, allow_options: bool=True, debug_linenumber: Optional[int]=None, silence_warn: bool=False) -> Tuple[str, Optional[str]]:
         match=re.match(rf"^\|(?P<content>.*)\|(\s+(?P<options>[^\|]+)){'?' if allow_options else r'{0}'}$", content.strip())
         condition=self.global_options.get('linebounds')==True if condition==None else condition
         if condition==False or not content.strip().startswith("|"):
             # Linebounds warning
-            if match!=None and self.warnings.get('linebounds')!=False:
+            if match!=None and not silence_warn and self.warnings.get('linebounds')!=False:
                 self.handle_warning(self.fd.feof("set-linebounds-warn", "Line {num}: attempted to use line boundaries, but \"linebounds\" option is not enabled", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
                 # self.warnings['linebounds']=False
             return (content, None)
@@ -312,8 +313,14 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def parse_content_with_options(self, content: str, extra_options: List[str], pure_name: bool=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> Tuple[str, OptionsDict, OptionsDict]:
         if preserve_indents==None: preserve_indents=not pure_name
         subst_options=self.content_subst_options if pure_name else self.subst_options
+        # Don't show the same warnings for the same line
+        if self.linenum() in self.parsed_lines:
+            no_warn=True
+        else:
+            no_warn=False
+            self.parsed_lines.add(self.linenum())
 
-        target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents)
+        target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents, silence_warn=no_warn)
         if options_str!=None:
             options=self.parse_options(options_str.split(), merge_global_options=True,
                         allowed_options=subst_options+extra_options if not ignore_options else None,
@@ -329,7 +336,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             subst_chars=pure_name==False and options.get("substchar")==True,
             subst_esc=pure_name==False and options.get("substesc")==True,
             # Don't show substchar/substesc warnings if not using char subst
-            silence_warnings=(False, pure_name, pure_name)
+            silence_warnings=True if no_warn else (False, pure_name, pure_name)
         )
         if not preserve_indents: target_content=target_content.strip()
         return (target_content, options, inline_options)
