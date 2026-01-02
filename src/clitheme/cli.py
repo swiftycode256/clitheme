@@ -393,7 +393,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
     for i in range(len(file_paths)):
         path=file_paths[i]
         try:
-            print(line_prefix+fi.feof("reading-file","==> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
+            print(line_prefix+fi.feof("reading-file","> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
             # Skip stdin input if had error
             if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino and has_error:
                 continue

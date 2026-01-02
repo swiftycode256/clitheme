@@ -48,8 +48,8 @@
         # apply-theme and generate-data commands
         <in_subsection> |cli apply-theme|
             [entry] |reading-file|
-                # default: |==> Reading file {filename}...|
-                locale[zh_CN]: |==> 正在读取文件{filename}...|
+                # default: |> Reading file {filename}...|
+                locale[zh_CN]: |> 正在读取文件{filename}...|
             [/entry]
             [entry] |reading-stdin-note|
                 # default: |Reading from standard input|
