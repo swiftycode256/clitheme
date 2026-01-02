@@ -203,8 +203,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             # Construct output match pattern
                             target_output=b''
                             for char_code in re.sub(rb"(\x08 \x08|\x08\x1b\[K)", b'\x08', data):
-                                for pressed in (b'1',b'0'):
-                                    target_output+=rb"\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";"+pressed+rb";\d+?;\d+?_"
+                                target_output+=rb"\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";1;\d+?;\d+?_"
+                                target_output+=rb"(\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";0;\d+?;\d+?_)?"
                             # print(target_input, target_output, re.fullmatch(target_output, target_input)!=None) # DEBUG
                             if re.fullmatch(target_output, target_input)!=None: do_subst_operation=False
                         else:
