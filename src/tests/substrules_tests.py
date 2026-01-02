@@ -70,13 +70,17 @@ substrules_file=r"""
 {/header}
 {substrules}
     # Test "Option not enabled" warnings
-    setvar[_var]: Text
+    setvar[_var]: {{[invalid]}} {{ESC}} 
     [subst_string] |{{ESC}} {{[x1b]}} {{_var}}|
+        default: None
+    [/subst_string]
+    (set_options) substvar linebounds
+    [subst_string] |{{_var}}|
         default: None
     [/subst_string]
     # Test subst warnings
     (enable_subst)
-    [subst_string] |{{[invalid]}} {{nonexistent}}|
+    [subst_string] |{{_var}} {{nonexistent}}|
         default: None
     [/subst_string]
     (disable_subst)

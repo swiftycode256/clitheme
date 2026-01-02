@@ -210,17 +210,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     self.handle_warning(self.fd.feof("set-substvar-warn", "Line {num}: attempted to reference a defined variable, but \"substvar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
                     # self.warnings['substvar']=False
                     break
-        # Handle substesc warning
-        if not silence_warn[1] and subst_esc!=True and self.warnings.get('substesc')!=False:
-            if "{{ESC}}" in content:
-                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                # self.warnings['substesc']=False
-        # Handle substchar warning
-        if not silence_warn[2] and subst_chars!=True and self.warnings.get('substchar')!=False:
-            if re.search(substchar_pattern, content)!=None:
-                self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
-                # self.warnings['substchar']=False
-                
         # get all variables used in content
         new_content=content
         if subst_var:
@@ -242,9 +231,19 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     new_content=new_content[:match.start()+offset]+var_content+new_content[match.end()+offset:]
                     offset+=len(var_content)-(match.end()-match.start())
                 encountered_variables.add(var_name) # Prevent repeated warnings
+        # Handle substesc warning
+        if not silence_warn[1] and subst_esc!=True and self.warnings.get('substesc')!=False:
+            if "{{ESC}}" in new_content:
+                self.handle_warning(self.fd.feof("set-substesc-warn", "Line {num}: attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
+                # self.warnings['substesc']=False
         # substesc
         if subst_esc:
             new_content=new_content.replace("{{ESC}}", "\x1b")
+        # Handle substchar warning
+        if not silence_warn[2] and subst_chars!=True and self.warnings.get('substchar')!=False:
+            if re.search(substchar_pattern, new_content)!=None:
+                self.handle_warning(self.fd.feof("set-substchar-warn", "Line {num}: attempted to use character substitution, but \"substchar\" option is not enabled", num=line_number_debug if line_number_debug!=None else self.linenum()))
+                # self.warnings['substchar']=False
         # substchar
         content=new_content
         if subst_chars:
