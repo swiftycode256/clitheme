@@ -1,16 +1,22 @@
 // cSpell Settings
 {
-    // Version of the setting file.  Always 0.2
+    // Version of the setting file (Always 0.2)
     "version": "0.2",
-    // language - current active spelling language
+    // Current active spelling language
     "language": "en",
-    // words - list of words to be always considered correct
+    // Settings
+    "allowCompoundWords": true,
+    // Ignored phrases
+    "ignoreRegExpList": [
+        "\\[[\\d;]+m", // Escape sequences (followed by a word)
+        "\\\\f[A-Z]", // Man page sequences
+        "tmp",
+    ],
+    // List of words to be always considered correct
     "words": [
-        "globalvar",
-        "swiftycode",
-        "clitheme",
+        "swiftycode", "clitheme",
         "feof", "reof",
-        "themedef", "clithemeinfo", "clithemedef", "infofile", 
+        "themedef", "themedefs", "clithemeinfo", "ctdef", "infofile", 
         "substrules", "manpages",
         "exactcmdmatch", "smartcmdmatch", "endmatchhere",
         "leadtabindents", "leadspaces", 
@@ -19,15 +25,9 @@
         "foregroundonly", "noforegroundonly",
         "substvar", "substesc", "substchar", "linebounds",
         "nosubstvar", "nosubstesc", "nosubstchar", "nolinebounds",
-        "PKGBUILD", "MANPATH",
         "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer", "tcgetpgrp", "tcsetpgrp",
         "TIOCGWINSZ", "TIOCSWINSZ", "TCSADRAIN", "SIGWINCH", "SIGALRM", "ITIMER", "SIGTSTP", "SIGSTOP", "SIGCONT", "SIGUSR1", "SIGUSR2",
-        "showchars", "keepends", "linenum",
-        "appname", "domainapp", "setvar",
-        "sanitycheck", "debugmode", "splitarray", "disablelang"
-    ],
-    // flagWords - list of words to be always considered incorrect
-    // This is useful for offensive words and common spelling errors.
-    "flagWords": [
+        "nosubst",
+        "dpkg", "pybuild", "pyproject", "pycache", "venv",
     ]
 }

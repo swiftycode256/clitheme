@@ -23,8 +23,6 @@ from .._generator import db_interface
 from . import _output_handler
 from typing import List
 
-# spell-checker:ignore lsdir showhelp argcount nosubst
-
 frontend.set_domain(_globalvar.fd_domain_name)
 frontend.set_appname(_globalvar.fd_app_name)
 fd=frontend.FetchDescriptor(subsections="exec")

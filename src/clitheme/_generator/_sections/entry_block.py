@@ -12,8 +12,6 @@ from typing import NamedTuple
 from ... import _globalvar
 from .. import db_interface
 
-# spell-checker:ignore matchoption datapath lineindex
-
 def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=False, substrules_options: Dict[str, Any]={}):
     # Workaround to circular import issue
     from .. import _parser_handlers

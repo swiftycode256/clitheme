@@ -17,6 +17,8 @@ from ... import _globalvar
 from ._base_template import BaseHandler, command_failed
 from ._windows_headers import *
 
+# spell-checker:ignoreRegExp [A-Z]+
+
 def errmsg() -> str:
     # Last error code
     errcode=kernel32.GetLastError()

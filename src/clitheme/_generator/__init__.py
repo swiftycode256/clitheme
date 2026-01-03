@@ -16,8 +16,6 @@ from .. import _globalvar
 from . import _parser_handlers
 from ._sections import substrules
 
-# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
-
 path=""
 silence_warn=False
 

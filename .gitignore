@@ -1,4 +1,3 @@
-# spell-checker: disable
 # Python packaging files
 __pycache__
 dist/

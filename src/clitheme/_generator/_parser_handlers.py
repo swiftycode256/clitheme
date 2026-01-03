@@ -17,7 +17,6 @@ from typing import Optional, Union, List, Dict, Tuple
 from ._sections import entry_block
 from .. import _globalvar, _version
 from . import _data_handlers
-# spell-checker:ignore lineindex banphrases minspaces blockinput optline datapath matchoption
 
 class GeneratorObject(_data_handlers.DataHandlers):
 

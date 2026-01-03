@@ -13,8 +13,6 @@ from typing import List
 from ... import _globalvar
 from .. import _parser_handlers
 
-# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
-
 def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("manpages")
     while self.goto_next_line():

@@ -22,7 +22,7 @@ from ._handlers._base_template import BaseHandler, command_failed
 from .._globalvar import _direct_exit, make_printable as fmt
 from . import _labeled_print
 
-# spell-checker:ignore cbreak ICANON readsize splitarray ttyname RDWR preexec pgrp pids
+# spell-checker:ignore pgrp pids
 
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 

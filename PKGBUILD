@@ -1,6 +1,6 @@
 # Maintainer: swiftycode <closure_mops.9k@icloud.com>
 
-# spell-checker: disable
+# spell-checker:ignore pkgver noextract
 pkgname='clitheme'
 pkgver=unknown
 pkgrel=1

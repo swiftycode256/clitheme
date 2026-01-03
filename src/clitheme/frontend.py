@@ -22,8 +22,6 @@ import inspect
 from typing import Optional, List, Union, Dict
 from . import _globalvar
 
-# spell-checker:ignore newhash numorig numcur
-
 data_path=_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_data_pathname
 
 _setting_defs: Dict[str, type]={

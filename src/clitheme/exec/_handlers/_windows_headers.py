@@ -8,13 +8,15 @@ import ctypes
 from ctypes import wintypes
 import io
 
+# spell-checker:ignoreRegExp [A-Z]+
+
 kernel32 = ctypes.windll.kernel32
 
 # region: Prototypes/Headers
 HRESULT = wintypes.LONG
 HPCON = wintypes.HANDLE
 # Define PPROC_THREAD_ATTRIBUTE_LIST as a pointer to void (opaque type)
-PPROC_THREAD_ATTRIBUTE_LIST = wintypes.LPVOID
+LPPROC_THREAD_ATTRIBUTE_LIST = wintypes.LPVOID
 
 HANDLE_FLAG_INHERIT=0x00000001
 S_OK = 0
@@ -202,7 +204,7 @@ kernel32.HeapAlloc.restype = wintypes.LPVOID
 kernel32.GetProcessHeap.restype = wintypes.HANDLE
 
 kernel32.InitializeProcThreadAttributeList.argtypes = [
-    PPROC_THREAD_ATTRIBUTE_LIST,  # lpAttributeList
+    LPPROC_THREAD_ATTRIBUTE_LIST,  # lpAttributeList
     wintypes.DWORD,               # dwAttributeCount
     wintypes.DWORD,               # dwFlags
     ctypes.POINTER(ctypes.c_size_t)               # lpSize
@@ -210,7 +212,7 @@ kernel32.InitializeProcThreadAttributeList.argtypes = [
 kernel32.InitializeProcThreadAttributeList.restype = wintypes.BOOL
 
 kernel32.UpdateProcThreadAttribute.argtypes = [
-    PPROC_THREAD_ATTRIBUTE_LIST,  # lpAttributeList
+    LPPROC_THREAD_ATTRIBUTE_LIST,  # lpAttributeList
     wintypes.DWORD,               # dwFlags
     wintypes.DWORD,               # Attribute
     wintypes.LPVOID,              # lpValue
@@ -284,7 +286,7 @@ kernel32.GetExitCodeProcess.restype=wintypes.BOOL
 
 kernel32.WaitForSingleObject.argtypes=[
     wintypes.HANDLE, # hHandle
-    wintypes.DWORD, # dwMiliseconds
+    wintypes.DWORD, # dwMilliseconds
 ]
 kernel32.WaitForSingleObject.restype=wintypes.DWORD
 

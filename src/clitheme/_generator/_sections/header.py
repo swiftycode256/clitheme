@@ -12,8 +12,6 @@ from ... import _globalvar
 from .. import _parser_handlers
 from typing import Optional
 
-# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
-
 def handle_header_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("header")
     name_specified=True

@@ -22,7 +22,7 @@ from copy import copy
 from . import _version
 from typing import List
 
-# spell-checker:ignoreRegExp banphrase[s]{0,1}
+# spell-checker:ignore lsdir
 
 error_msg_str= \
 """[CLItheme] Error: unable to get your home directory or invalid home directory information.

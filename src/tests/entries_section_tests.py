@@ -14,8 +14,6 @@ sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import frontend
 from clitheme import _generator, _globalvar
 
-# spell-checker:ignore rootpath errorcount mainfile
-
 l=__file__.split(os.sep)
 l.pop()
 root_directory="" # directory where the script files are in

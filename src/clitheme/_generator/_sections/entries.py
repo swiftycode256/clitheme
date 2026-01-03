@@ -10,8 +10,6 @@ entries_section parser function (internal module)
 from ... import _globalvar
 from .. import _parser_handlers
 
-# spell-checker:ignore infofile splitarray datapath lineindex banphrases cmdmatch minspaces blockinput optline matchoption endphrase filecontent 
-
 def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("entries")
     self.in_domainapp=""

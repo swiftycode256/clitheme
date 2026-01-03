@@ -16,6 +16,8 @@ from typing import Optional, List, Set, Tuple
 from .._generator import db_interface
 from .. import _globalvar
 
+# spell-checker:ignore pids tcpgrp
+
 def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=False, pids: Tuple[int,int]=(-1,-1)) -> Tuple[bytes, Set[int]]:
     # pids: (main_pid, current_tcpgrp)
 

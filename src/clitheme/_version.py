@@ -7,7 +7,6 @@
 """
 Version information definition file
 """
-# spell-checker:ignore buildnumber
 
 # Version definition file; define the package version here
 version_disp="2.1-dev20260102"

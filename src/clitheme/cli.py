@@ -22,7 +22,7 @@ from ._globalvar import make_printable as fmt # A shorter alias of the function
 from ._globalvar import _direct_exit
 from typing import List, Optional, Tuple
 
-# spell-checker:ignore pathnames lsdir inpstr
+# spell-checker:ignore lsdir inpstr
 
 frontend.set_domain(_globalvar.fd_domain_name)
 frontend.set_appname(_globalvar.fd_app_name)

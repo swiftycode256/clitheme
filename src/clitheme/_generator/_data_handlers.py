@@ -12,8 +12,6 @@ import gzip
 from typing import Optional, List
 from .. import _globalvar, frontend
 
-# spell-checker:ignore datapath
-
 class DataHandlers:
     frontend=frontend
 

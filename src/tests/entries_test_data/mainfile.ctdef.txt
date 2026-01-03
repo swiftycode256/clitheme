@@ -4,6 +4,7 @@
 
 # Header information
 {header}
+    # spell-checker:disable-next-line
     name: Example theem
     version: 0.1
     locales: en_US

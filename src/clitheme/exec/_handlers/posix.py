@@ -25,6 +25,8 @@ from ..._globalvar import _direct_exit
 from .. import _labeled_print
 from ._base_template import BaseHandler, command_failed
 
+# spell-checker:ignore RDWR
+
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 
 class PosixHandler(BaseHandler):
@@ -141,6 +143,7 @@ class PosixHandler(BaseHandler):
         try:
             term_attrs=termios.tcgetattr(sys.stdout.fileno())
             if make_raw:
+                # spell-checker:disable
                 # Set raw mode (from Python 3.14 tty.cfmakeraw function)
                 # Clear all POSIX.1-2017 flags
                 term_attrs[tty.IFLAG] &= ~(termios.IGNBRK | termios.BRKINT | termios.IGNPAR | termios.PARMRK | termios.INPCK | termios.ISTRIP | termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON | termios.IXANY | termios.IXOFF)
@@ -160,6 +163,7 @@ class PosixHandler(BaseHandler):
                 # Ensure settings are correct for non-canonical input mode
                 term_attrs[tty.CC][termios.VMIN] = 1
                 term_attrs[tty.CC][termios.VTIME] = 0
+                # spell-checker:enable
             return term_attrs
         except termios.error: return None
     def set_host_term_attrs(self, term_attrs: list):
