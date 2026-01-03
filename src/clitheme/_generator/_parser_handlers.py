@@ -11,7 +11,6 @@ Functions used by various parsers (internal module)
 import re
 import math
 import copy
-import uuid
 from typing import Optional, Union, List, Dict, Tuple
 
 from ._sections import entry_block

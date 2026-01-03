@@ -9,26 +9,17 @@ Command line customization toolkit
 
 __all__=["frontend"] 
 
-# Prevent RuntimeWarning from displaying when running a submodule (e.g. "python3 -m clitheme.exec")
-import warnings
-warnings.simplefilter("ignore", category=RuntimeWarning)
-del warnings 
-
 # Enable processing of escape characters in Windows Command Prompt
 import os
 if os.name=="nt":
     import ctypes
-    
     try:
         handle=ctypes.windll.kernel32.GetStdHandle(-11) # standard output handle
         console_mode=ctypes.c_long()
-        if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))==0: 
-            raise Exception("GetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
+        assert ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))
         console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
-        if ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)==0:
-            raise Exception("SetConsoleMode failed: "+str(ctypes.windll.kernel32.GetLastError()))
-    except:
-        pass
+        assert ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)
+    except: pass
 del os
 
 # Expose these modules when "clitheme" is imported
