@@ -182,9 +182,12 @@ Then, ensure that `pip` is installed within Python. The following command will p
 
     $ python3 -m ensurepip
 
-Download the `.whl` file from latest distribution page and install it using `pip`:
+Download the `.whl` file from the [latest release](../../releases/latest) and install it using `pip`:
     
     $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
+
+> [!IMPORTANT]
+> Official release files are only distributed through the [repository releases page](../../releases). Packages distributed through other channels (e.g. PyPI/pip, Conda, Homebrew, AUR, etc.) are not managed by this author and should be used at your own risk!
 
 ## Install using Arch Linux package
 

@@ -180,9 +180,12 @@ $ clitheme-man ls
 
     $ python3 -m ensurepip
 
-从最新发行版页面下载`.whl`文件，使用`pip`直接安装即可：
+从[最新发行版](../../releases/latest)下载`.whl`文件，使用`pip`直接安装即可：
     
     $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
+
+> [!IMPORTANT]
+> 官方发行版文件仅通过[仓库发行版页面](../../releases)提供。通过其他渠道分发的软件包（如PyPI/pip、Conda、Homebrew、AUR等）不由本作者直接管理；请谨慎使用！
 
 ## 通过Arch Linux软件包安装
 
