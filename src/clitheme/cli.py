@@ -95,7 +95,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     orig_stdout=sys.stdout # Prevent interference with other code piping stdout
     for i in range(len(file_contents)):
         if print_progress:
-            print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='')
+            print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='', flush=True)
         file_content=file_contents[i]
         # Generate data hierarchy, erase current data, copy it to data path
         generator_msgs=io.StringIO()
@@ -140,7 +140,9 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         try: shutil.rmtree(_globalvar.clitheme_root_data_path)
         except FileNotFoundError: pass
         except: raise OSError(f"rmtree: {sys.exc_info()[1]}")
-        shutil.copytree(final_path, _globalvar.clitheme_root_data_path, dirs_exist_ok=True) 
+        assert not os.path.exists(_globalvar.clitheme_root_data_path), \
+            f"Path exists after rmtree: {_globalvar.clitheme_root_data_path}"
+        shutil.move(final_path, _globalvar.clitheme_root_data_path) 
     except:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
@@ -393,7 +395,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
     for i in range(len(file_paths)):
         path=file_paths[i]
         try:
-            print(line_prefix+fi.feof("reading-file","> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='')
+            print(line_prefix+fi.feof("reading-file","> Reading file {filename}...", filename=f"({i+1}/{len(file_paths)})"), end='', flush=True)
             # Skip stdin input if had error
             if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino and has_error:
                 continue
