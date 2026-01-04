@@ -11,6 +11,8 @@ sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
 from clitheme.exec import _substrules_processor
+import unittest
+import warnings
 
 # sample input for testing
 sample_inputs=[("rm: missing operand\r\n"
@@ -205,20 +207,27 @@ substrules_file=r"""
 {/substrules}
 """
 
-db_interface.debug_mode=True
-generator_path=_generator.generate_data_hierarchy(substrules_file)
-db_interface.connect_db(generator_path+"/"+_globalvar.db_filename)
-
-print("Successfully recorded data\nTesting sample outputs: ")
-for x in range(len(sample_inputs)):
-    inp=sample_inputs[x]
-    expected=expected_outputs[x]
-    content, changed_lines=_substrules_processor.match_content(bytes(inp[0],'utf-8'),command=inp[1])
-    content=content.decode('utf-8')
-    if content in expected:
-        print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
-    else:
-        print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+content)
-
-try: shutil.rmtree(generator_path)
-except: pass
+class TestSubstrulesSection(unittest.TestCase):
+    def setUp(self):
+        print()
+        warnings.simplefilter("ignore")
+        _generator.silence_warn=False
+        self.generator_path=_generator.generate_data_hierarchy(substrules_file)
+        db_interface.connect_db(self.generator_path+"/"+_globalvar.db_filename)
+    def tearDown(self):
+        shutil.rmtree(self.generator_path)
+    def test_substrules(self):
+        errcount=0
+        for x in range(len(sample_inputs)):
+            inp=sample_inputs[x]
+            expected=expected_outputs[x]
+            content, changed_lines=_substrules_processor.match_content(bytes(inp[0],'utf-8'),command=inp[1])
+            content=content.decode('utf-8')
+            if content in expected:
+                print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
+            else:
+                print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+content)
+                errcount+=1
+        self.assertEqual(errcount, 0)
+if __name__=="__main__":
+    unittest.main()
