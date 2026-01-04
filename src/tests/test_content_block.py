@@ -12,6 +12,8 @@ import tempfile
 import pathlib
 sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import frontend
+import unittest
+import warnings
 
 file_data=r"""
 begin_header
@@ -77,40 +79,50 @@ begin_main
 end_main
 """
 
-# Remove cache folders
-for path in pathlib.PosixPath(tempfile.gettempdir()).glob("clitheme-data-*"):
-    print(f"Remove {path}")
-    shutil.rmtree(path)
-frontend.set_debugmode(True)
-if frontend.set_local_themedef(file_data)==False:
-    print("Error: set_local_themedef failed")
-    exit(1)
-if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
-    print("Error: set_local_themedef with overlay failed")
-    exit(1)
-frontend.set_debugmode(False)
-def disp(content: str):
-    print("---")
-    for line in content.split('\n'):
-        assert not line[-1:]=='\r', r"String entry content should not end in \r\n"
-        print(f">{line}|")
-    print("---")
-    print()
-f=frontend.FetchDescriptor()
-print("Default locale:")
-f.disable_lang=True
-disp(f.reof("test_entry", "Nonexistent"))
-disp(f.reof("test_entry-2", "Nonexistent"))
-print("zh_CN locale:")
-f.disable_lang=False
-f.lang="zh_CN"
-disp(f.reof("test_entry", "Nonexistent"))
-disp(f.reof("test_entry-2", "Nonexistent"))
-f.debug_mode=False
-for lang in ["C", "en", "en_US", "zh_CN"]:
-    f.disable_lang=True
-    name=f"test_entry__{lang}"
-    if f.entry_exists(name):
-        print(f"{name} found")
-    else:
-        print(f"{name} not found")
+class TestContentBlock(unittest.TestCase):
+    def setUp(self):
+        print()
+        warnings.simplefilter("ignore")
+        # Remove cache folders
+        for path in pathlib.PosixPath(tempfile.gettempdir()).glob("clitheme-data-*"):
+            print(f"Remove {path}")
+            shutil.rmtree(path)
+        frontend.set_debugmode(True)
+        if frontend.set_local_themedef(file_data)==False:
+            print("Error: set_local_themedef failed")
+            exit(1)
+        if frontend.set_local_themedef(file_data_2, overlay=True)==False: # test overlay function
+            print("Error: set_local_themedef with overlay failed")
+            exit(1)
+        frontend.set_debugmode(False)
+    def disp(self, content: str):
+        self.assertNotEqual(content, "Nonexistent")
+        print("---")
+        for line in content.split('\n'):
+            assert not line[-1:]=='\r', r"String entry content should not end in \r\n"
+            print(f">{line}|")
+        print("---")
+        print()
+    def test_content_block(self):
+        f=frontend.FetchDescriptor()
+        print("Default locale:")
+        f.disable_lang=True
+        self.disp(f.reof("test_entry", "Nonexistent"))
+        self.disp(f.reof("test_entry-2", "Nonexistent"))
+        print("zh_CN locale:")
+        f.disable_lang=False
+        f.lang="zh_CN"
+        self.disp(f.reof("test_entry", "Nonexistent"))
+        self.disp(f.reof("test_entry-2", "Nonexistent"))
+        errcount=0
+        for lang in ["C", "en", "en_US", "zh_CN"]:
+            f.disable_lang=True
+            name=f"test_entry__{lang}"
+            if f.entry_exists(name):
+                print(f"{name} found")
+            else:
+                print(f"{name} not found")
+                errcount+=1
+        self.assertEqual(errcount, 0)
+if __name__=="__main__":
+    unittest.main()
