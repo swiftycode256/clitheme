@@ -84,7 +84,7 @@ class TestContentBlock(unittest.TestCase):
         print()
         warnings.simplefilter("ignore")
         # Remove cache folders
-        for path in pathlib.PosixPath(tempfile.gettempdir()).glob("clitheme-data-*"):
+        for path in pathlib.Path(tempfile.gettempdir()).glob("clitheme-data-*"):
             print(f"Remove {path}")
             shutil.rmtree(path)
         frontend.set_debugmode(True)
