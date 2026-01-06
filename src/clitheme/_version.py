@@ -9,9 +9,9 @@ Version information definition file
 """
 
 # Version definition file; define the package version here
-version_disp="2.1-dev20260104"
+version_disp="2.1-dev20260106"
 # Build version: must be a literal string
-__version__="2.1_dev20260104"
+__version__="2.1_dev20260106"
 # For PKGBUILD
 version_buildnumber=1
 
