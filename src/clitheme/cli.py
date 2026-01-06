@@ -140,21 +140,17 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         try: shutil.rmtree(_globalvar.clitheme_root_data_path)
         except FileNotFoundError: pass
         except: raise OSError(f"rmtree: {sys.exc_info()[1]}")
-        assert not os.path.exists(_globalvar.clitheme_root_data_path), \
-            f"Path exists after rmtree: {_globalvar.clitheme_root_data_path}"
-        shutil.move(final_path, _globalvar.clitheme_root_data_path) 
+        if preserve_temp:
+            shutil.copytree(final_path, _globalvar.clitheme_root_data_path) 
+        else:
+            assert not os.path.exists(_globalvar.clitheme_root_data_path), \
+                f"Path exists after rmtree: {_globalvar.clitheme_root_data_path}"
+            shutil.move(final_path, _globalvar.clitheme_root_data_path) 
     except:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
     print(success_msg)
-    if not preserve_temp:
-        try: 
-            # Check if temp dir is in temp directory
-            assert final_path.startswith(_globalvar.clitheme_temp_root) \
-                and len(final_path)>len(_globalvar.clitheme_temp_root)
-            shutil.rmtree(final_path)
-        except: pass
     return 0
 
 def remove_theme():
