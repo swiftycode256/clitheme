@@ -285,7 +285,7 @@ def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Option
         except: raise _invalid_theme("Read error: "+str(sys.exc_info()[1]))
     return (file_paths if get_filepath else None, file_contents if get_file_contents else None)
 
-def update_theme(no_confirm=False):
+def update_theme(no_confirm=False, preserve_temp=False):
     """
     Re-applies theme files from file paths specified in the previous apply-theme command (including all related apply-theme commands if --overlay is used)
 
@@ -307,7 +307,7 @@ def update_theme(no_confirm=False):
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         _globalvar.handle_exception()
         return 1
-    return apply_theme(None, file_paths, overlay=False, no_confirm=no_confirm)
+    return apply_theme(None, file_paths, overlay=False, preserve_temp=preserve_temp, no_confirm=no_confirm)
 
 def repair_theme():
     """
@@ -362,9 +362,9 @@ def _handle_help_message(full_help: bool=False):
     print(fd.reof("usage-str", "Usage:"))
     print(
 """\t{0} apply-theme [file] (--overlay) (--preserve-temp) (--yes)
+\t{0} update-theme (--yes) (--preserve-temp)
 \t{0} show-info (--name) (--file-path)
 \t{0} remove-theme
-\t{0} update-theme (--yes)
 \t{0} generate-data [file] (--overlay)
 \t{0} repair-theme
 \t{0} --version
@@ -373,13 +373,25 @@ def _handle_help_message(full_help: bool=False):
     if not full_help: return
     print(fd.reof("options-str", "Options:"))
     print("\t"+fd.reof("options-apply-theme",
-    "apply-theme: Apply the given theme definition file(s).\nSpecify --overlay to add file(s) onto the current data.\nSpecify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-show-info", "show-info: Show information about the currently applied theme(s)\nSpecify --name to only display the name of each theme\nSpecify --file-path to only display the source file path of each theme\n(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
-    print("\t"+fd.reof("options-remove-theme", "remove-theme: Remove the current theme data from the system"))
-    print("\t"+fd.reof("options-update-theme", "update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)"))
-    print("\t"+fd.reof("options-generate-data", "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
-    print("\t"+fd.reof("options-repair-theme", "repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data"))
-    print("\t"+fd.reof("options-yes", "[For supported commands, specify --yes to skip the confirmation prompt]"))
+        "apply-theme: Apply the given theme definition file(s).\n"
+        "Specify --overlay to add file(s) onto the current data.\n"
+        "Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-update-theme.2",
+        "update-theme: Re-apply the theme definition files specified in previous \"apply-theme\" commands\n"
+        "Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-show-info",
+        "show-info: Show information about the currently applied theme(s)\n"
+        "Specify --name to only display the name of each theme\n"
+        "Specify --file-path to only display the source file path of each theme\n"
+        "(Both will be displayed when both specified)").replace("\n", "\n\t\t"))
+    print("\t"+fd.reof("options-remove-theme",
+        "remove-theme: Remove the current theme data from the system"))
+    print("\t"+fd.reof("options-generate-data",
+        "generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory"))
+    print("\t"+fd.reof("options-repair-theme",
+        "repair-theme: [Debug purposes only] Re-apply theme from stored theme definition files in current data"))
+    print("\t"+fd.reof("options-yes",
+        "[For supported commands, specify --yes to skip the confirmation prompt]"))
     print("\t"+fd.reof("options-version", "--version: Show the current version of clitheme"))
     print("\t"+fd.reof("options-help", "--help: Show this help message"))
 
@@ -449,6 +461,14 @@ def main(cli_args: List[str]):
                 else:
                     paths.append(arg)
             return apply_theme(file_contents=None, overlay=overlay, filenames=paths, preserve_temp=preserve_temp, generate_only=generate_only, no_confirm=no_confirm)
+        elif cli_args[1]=="update-theme":
+            no_confirm=False
+            preserve_temp=False
+            for arg in cli_args[2:]:
+                if arg.strip()=="--yes": no_confirm=True
+                elif arg.strip()=="--preserve-temp": preserve_temp=True
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+            return update_theme(no_confirm=no_confirm, preserve_temp=preserve_temp)
         elif cli_args[1] in ("show-info", "get-current-theme-info"):
             name=False; file_path=False
             for arg in cli_args[2:]:
@@ -459,12 +479,6 @@ def main(cli_args: List[str]):
         elif cli_args[1] in ("remove-theme", "unset-current-theme"):
             check_extra_args(2)
             return remove_theme()
-        elif cli_args[1]=="update-theme":
-            no_confirm=False
-            for arg in cli_args[2:]:
-                if arg.strip()=="--yes": no_confirm=True
-                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
-            return update_theme(no_confirm=no_confirm)
         elif cli_args[1]=="repair-theme":
             check_extra_args(2)
             return repair_theme()

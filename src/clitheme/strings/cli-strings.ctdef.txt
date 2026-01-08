@@ -283,9 +283,15 @@
                 # default: |remove-theme: Remove the current theme data from the system|
                 locale[zh_CN]: |remove-theme：取消设定当前主题定义和数据|
             [/entry]
-            [entry] |options-update-theme|
-                # default: |update-theme: Re-apply the theme definition files specified in the previous \"apply-theme\" command (previous commands if --overlay is used)|
-                locale[zh_CN]: |update-theme：重新应用上一个apply-theme操作中指定的主题定义文件（前几次操作，如果使用了"--overlay"）|
+            [entry] |options-update-theme.2|
+                # [default]
+                #     update-theme: Re-apply the theme definition files specified in previous "apply-theme" commands
+                #     Specify --preserve-temp to preserve the temporary directory after the operation. (Debug purposes only)
+                # [/default]
+                [locale] zh_CN
+                    update-theme：重新应用前次"apply-theme"操作中指定的主题定义文件
+                    指定"--preserve-temp"以保留该操作生成的临时目录（调试用途）
+                [/locale]
             [/entry]
             [entry] |options-generate-data|
                 # default: |generate-data: [Debug purposes only] Generate a data hierarchy from specified theme definition files in a temporary directory|
