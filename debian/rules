@@ -8,7 +8,6 @@ export PYBUILD_INSTALL_DIR=/usr/lib/python3/dist-packages
 
 override_dh_auto_install:
 	dh_auto_install
-	# remove __pycache__
-	echo "Removing __pycache__ directories"
+	## Removing __pycache__ directories
 	find debian/$(PYBUILD_NAME)/usr/lib/python3/dist-packages/$(PYBUILD_NAME) -name __pycache__ -print -exec rm -r {} +
-	echo "Done"
+	## Done
