@@ -153,23 +153,37 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     print(success_msg)
     return 0
 
-def remove_theme():
+def remove_theme(no_confirm=False):
     """
     Delete the current theme data hierarchy from the data path
+
+    - Set no_confirm=True to skip the confirmation prompt
 
     (Invokes 'clitheme remove-theme')
     """
     f=frontend.FetchDescriptor(subsections="cli remove-theme")
-    try: shutil.rmtree(_globalvar.clitheme_root_data_path)
-    except FileNotFoundError:
+    try: _fetch_abs_lsdir()
+    except _invalid_theme:
         print(f.reof("no-theme-err", "Error: no theme currently set"))
         return 1
-    except Exception:
-        print(f.feof("remove-data-error", "An error occurred while removing the data:\n{message}", message=fmt(str(sys.exc_info()[1]))))
-        _globalvar.handle_exception()
-        return 1
-    print(f.reof("remove-data-success", "Successfully removed the current theme data"))
-    return 0
+    
+    if no_confirm: proceed=True
+    else:
+        # Display names of currently applied themes
+        show_info(name=True)
+        inpstr=f.reof("confirm-prompt", "Do you want to remove the theme(s)? [y/n]")
+        proceed=input(inpstr+" ").strip().lower() in ('y', 'yes')
+    if proceed:
+        try:
+            shutil.rmtree(_globalvar.clitheme_root_data_path)
+        except:
+            print(f.feof("remove-data-error", "An error occurred while removing the data:\n{message}", message=fmt(str(sys.exc_info()[1]))))
+            _globalvar.handle_exception()
+            return 1
+        else:
+            print(f.reof("remove-data-success", "Successfully removed the current theme data"))
+            return 0
+    else: return 1
 unset_current_theme=remove_theme
 
 def show_info(name: bool=False, file_path=False):
@@ -364,7 +378,7 @@ def _handle_help_message(full_help: bool=False):
 """\t{0} apply-theme [file] (--overlay) (--preserve-temp) (--yes)
 \t{0} update-theme (--yes) (--preserve-temp)
 \t{0} show-info (--name) (--file-path)
-\t{0} remove-theme
+\t{0} remove-theme (--yes)
 \t{0} generate-data [file] (--overlay)
 \t{0} repair-theme
 \t{0} --version

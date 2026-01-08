@@ -146,6 +146,10 @@
                 # default: |Error: no theme currently set|
                 locale[zh_CN]: |错误：当前没有设定主题|
             [/entry]
+            [entry] |confirm-prompt|
+                # default: |Do you want to remove the theme(s)? [y/n]|
+                locale[zh_CN]: |是否移除这些主题？[y/n]|
+            [/entry]
             [entry] |remove-data-error|
                 # [default]
                 #     An error occurred while removing the data:
