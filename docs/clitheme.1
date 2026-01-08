@@ -1,4 +1,4 @@
-.TH clitheme 1 2024-12-19
+.TH clitheme 1 2026-01-08
 .SH NAME 
 clitheme \- frontend to customize output of applications
 .SH SYNOPSIS 
@@ -27,16 +27,20 @@ Specify \fB--file-path\fR to only display the source file path of each theme.
 (Both will be displayed when both specified)
 
 .TP
-.B remove-theme
+.B remove-theme [--yes]
 Removes the current theme data from the system. Supported applications will immediately stop using the defined values after this operation.
 
+Specify \fB--yes\fR to skip the confirmation prompt.
+
 .TP
-.B update-theme [--yes]
+.B update-theme [--yes] [--preserve-temp]
 Re-applies the theme definition files specified in the previous "apply-theme" command (previous commands if \fB--overlay\fR is used)
 
 Calling this command is equivalent to calling "clitheme apply-theme" with previously-specified files.
 
 Specify \fB--yes\fR to skip the confirmation prompt.
+
+Specify \fB--preserve-temp\fR to preserve the temporary directory after the operation. (Debug purposes only)
 
 .TP
 .B repair-theme
