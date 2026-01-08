@@ -251,6 +251,8 @@ makepkg -si
 
 你可以使用以下命令安装：
 
-    sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
+    $ sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
 
-安装完后，请在仓库目录中执行`dpkg-buildpackage -b`以构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
+安装完后，请使用以下命令构建软件包。完成后，你会在上层目录中获得一个`.deb`的文件。
+
+    $ dpkg-buildpackage -b --no-sign

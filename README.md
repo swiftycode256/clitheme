@@ -253,6 +253,8 @@ Install the following packages before building:
 
 You can use the following command to install:
 
-    sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
+    $ sudo apt install debhelper dh-python python3-setuptools dpkg-dev pybuild-plugin-pyproject
 
-In the repo directory, execute `dpkg-buildpackage -b` to build the package. A `.deb` file will be generated at the parent directory (`..`) after build completes.
+In the repo directory, use the following command to build the package. A `.deb` file will be generated in its parent directory after build completes.
+
+    $ dpkg-buildpackage -b --no-sign
