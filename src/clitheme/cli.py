@@ -491,8 +491,11 @@ def main(cli_args: List[str]):
                 else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
             return show_info(name=name, file_path=file_path)
         elif cli_args[1] in ("remove-theme", "unset-current-theme"):
-            check_extra_args(2)
-            return remove_theme()
+            no_confirm=False
+            for arg in cli_args[2:]:
+                if arg.strip()=="--yes": no_confirm=True
+                else: return _handle_usage_error(f.feof("unknown-option", "Error: unknown option \"{option}\"", option=fmt(arg)), arg_first)
+            return remove_theme(no_confirm=no_confirm)
         elif cli_args[1]=="repair-theme":
             check_extra_args(2)
             return repair_theme()
