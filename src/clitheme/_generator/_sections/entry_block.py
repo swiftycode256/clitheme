@@ -173,7 +173,10 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                         end_match_here=opt('endmatchhere'),
                         stdout_stderr_matchoption=substrules_stdout_stderr_option,
                         foreground_only=opt('foregroundonly'),
-                        line_number_debug=entry.content_line_number,
+                        # Displayed line number: (entry name #)>(entry #)[(locale)] (e.g. 64>65[default])
+                        line_number_debug=\
+                            f"{entry_name.line_number}>{entry.content_line_number}"
+                            f"[{'default' if entry.locale==None else _globalvar.make_printable(entry.locale)}]",
                         file_id=self.file_id,
                         unique_id=entry_name.id)
                 except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
