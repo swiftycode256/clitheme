@@ -65,7 +65,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
                 print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
             inpstr=f.reof("confirm-prompt", "Do you want to continue? [y/n]")
             try: inp=input(inpstr+" ").strip().lower()
-            except (KeyboardInterrupt, EOFError): print();return 130
+            except (KeyboardInterrupt, EOFError): print();return 1
             if not (inp=="y" or inp=="yes"):
                 return 1
     if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
@@ -172,7 +172,8 @@ def remove_theme(no_confirm=False):
         # Display names of currently applied themes
         show_info(name=True)
         inpstr=f.reof("confirm-prompt", "Do you want to remove the theme(s)? [y/n]")
-        proceed=input(inpstr+" ").strip().lower() in ('y', 'yes')
+        try: proceed=input(inpstr+" ").strip().lower() in ('y', 'yes')
+        except (KeyboardInterrupt, EOFError): print();return 1
     if proceed:
         try:
             shutil.rmtree(_globalvar.clitheme_root_data_path)
