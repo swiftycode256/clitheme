@@ -187,7 +187,7 @@ Download the `.whl` file from the [latest release](../../releases/latest) and in
     $ python3 -m pip install ./clitheme-<version>-py3-none-any.whl
 
 > [!IMPORTANT]
-> Official release files are only distributed through the [repository releases page](../../releases). Packages distributed through other channels (e.g. PyPI/pip, Conda, Homebrew, AUR, etc.) are not managed by this author and should be used at your own risk!
+> Official release files are only distributed through the [repository releases page](../../releases). The author does not manage packages distributed through other channels (e.g. PyPI/pip, Conda, Homebrew, AUR, etc.) and does not claim responsibility for its contents!
 
 ## Install using Arch Linux package
 
