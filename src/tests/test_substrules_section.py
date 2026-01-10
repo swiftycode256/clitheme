@@ -126,12 +126,12 @@ substrules_file=r"""
     <filter_cmd> ls
         # testing repeated entry detection
         [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
-            default: (Error: Repeated entry detection failed)
+            locale[default zh_CN zh]: (Error: Repeated entry detection failed)
         [/subst_regex]
         # {{shell}} should equal to {{shell2}} 
         [subst_regex] {{shell2}}: unrecognized option '(?P<opt>.+)'
             default: \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
-            locale[zh_CN]: \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
+            locale[zh_CN zh]: \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
         [/subst_regex]
     <unset_filter_cmd>
 
