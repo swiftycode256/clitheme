@@ -239,6 +239,7 @@ def handle_set_themedef(debug_name: str): # type: ignore
         if not frontend.set_local_themedefs(file_contents): raise RuntimeError("\n"+msg.getvalue())
         frontend.set_debugmode(prev_mode)
         sys.stdout=orig_stdout
+    except KeyboardInterrupt: raise
     except:
         sys.stdout=orig_stdout
         frontend.set_debugmode(prev_mode)
