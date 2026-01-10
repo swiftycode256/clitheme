@@ -99,14 +99,14 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
     """
     Handle generate data operation for set_local_themedef[s] functions
     """
-    from . import _generator
     global global_debugmode, _alt_info_index
-    _generator.generate_custom_path() # prepare _generator.path
-    if _alt_path_dirname!=None and overlay==True: # overlay
-        if not os.path.exists(path_name): shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
     if _get_setting("debugmode"): print("[Debug] set_local_themedef data path: "+path_name)
     # Generate data hierarchy as needed
     if not os.path.exists(path_name):
+        from . import _generator
+        _generator.generate_custom_path() # prepare _generator.path
+        if _alt_path_dirname!=None and overlay==True: # overlay
+            shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
         return_val: str
         d_copy=(global_debugmode, _generator.silence_warn)
         for x in range(len(file_contents)):
@@ -148,7 +148,6 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     This function returns True if successful, otherwise returns False.
     """
     global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index, global_debugmode
-    from . import _generator
     h=hashlib.sha1(bytes(file_content, "utf-8")).digest()
     # File hash generation
     # if overlay, update hash with new contents of file

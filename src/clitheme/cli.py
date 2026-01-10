@@ -17,7 +17,7 @@ import shutil
 import re
 import io
 import functools
-from . import _globalvar, _generator, frontend
+from . import _globalvar, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
 from ._globalvar import _direct_exit
 from typing import List, Optional, Tuple
@@ -70,6 +70,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
                 return 1
     if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
     ## Process files and generate data
+    from . import _generator
     index=1
     generate_path=True
     if overlay:
