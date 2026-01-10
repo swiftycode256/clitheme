@@ -330,6 +330,9 @@ class WindowsHandler(BaseHandler):
         self._reset_output()
     def handle_exit(self) -> int:
         self._reset_output()
+        # Abrorb any remaining standard input to avoid spurious characters
+        if "stdin" in self.get_readable_descriptors(timeout=0.01):
+            self.read_stdin()
         # Close handles when done
         w_assert(kernel32.CloseHandle(self.stdin_fd))
         w_assert(kernel32.CloseHandle(self.stdout_fd))
