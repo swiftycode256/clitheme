@@ -87,6 +87,10 @@
                 # default: |> Processing file {filename}...|
                 locale[zh_CN]: |> 正在处理文件{filename}...|
             [/entry]
+            [entry] |files-contain-error|
+                # default: |==> Errors detected in {count} file(s)|
+                locale[zh_CN]: |==> {count}个文件中存在错误|
+            [/entry]
             [entry] |process-files-success|
                 # default: |==> Successfully processed files|
                 locale[zh_CN]: |==> 已成功处理文件|

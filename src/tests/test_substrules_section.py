@@ -211,8 +211,10 @@ class TestSubstrulesSection(unittest.TestCase):
     def setUp(self):
         print()
         warnings.simplefilter("ignore")
-        _generator.silence_warn=False
-        self.generator_path=_generator.generate_data_hierarchy(substrules_file)
+        self.return_val=_generator.generate_data_hierarchy(substrules_file)
+        self.generator_path=self.return_val.dir_path
+        if len(self.return_val.messages)>0:
+            print("\n".join(self.return_val.messages))
         db_interface.db_path=self.generator_path+"/"+_globalvar.db_filename
     def tearDown(self):
         shutil.rmtree(self.generator_path)

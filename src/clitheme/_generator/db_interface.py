@@ -14,7 +14,7 @@ import sqlite3
 import re
 import uuid
 import gc
-from typing import Optional, List, Dict, NamedTuple
+from typing import Optional, List, Dict, NamedTuple, Callable
 from .. import _globalvar, frontend
 
 connection=sqlite3.connect(":memory:") # placeholder
@@ -26,9 +26,6 @@ fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_glo
 class need_db_regenerate(Exception): pass
 class bad_pattern(Exception): pass
 class db_not_found(Exception): pass
-
-def _handle_warning(message: str):
-    if debug_mode: print(fd.feof("warning-str", "Warning: {msg}", msg=message))
 
 class Item(NamedTuple):
     match_pattern: str
@@ -95,7 +92,8 @@ def add_subst_entry(
     foreground_only: bool,
     unique_id: uuid.UUID,
     file_id: uuid.UUID,
-    line_number_debug: str
+    line_number_debug: str,
+    warning_handler: Callable[[str], None],
 ):
     cmdlist: List[Optional[str]]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
@@ -116,7 +114,7 @@ def add_subst_entry(
         match_condition=f"match_pattern=? AND {cmd_condition} AND command_is_regex=? AND {strictness_condition} AND {locale_condition} AND stdout_stderr_only=? AND is_regex=?"
         match_params=(match_pattern, cmd, command_is_regex, effective_locale, stdout_stderr_matchoption, is_regex)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
-            _handle_warning(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
+            warning_handler(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))

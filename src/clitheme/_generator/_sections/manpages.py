@@ -31,7 +31,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             filecontent: str
             try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
             except:
-                self.handle_error(self.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=self.linenum(), filepath=self.fmt(file_dir), error_msg=self.fmt(str(sys.exc_info()[1]))), not_syntax_error=True)
+                self.handle_error(self.fd.feof("include-file-read-err", "Line {num}: unable to read file \"{filepath}\":\n{error_msg}", num=self.linenum(), filepath=self.fmt(file_dir), error_msg=self.fmt(str(sys.exc_info()[1]))))
                 return ""
             else:
                 if is_stdin: print()

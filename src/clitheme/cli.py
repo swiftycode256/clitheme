@@ -72,7 +72,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     ## Process files and generate data
     from . import _generator
     index=1
-    generate_path=True
+    final_path=_generator.generate_custom_path()
     if overlay:
         # Check if current data exists
         if not os.path.isfile(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename):
@@ -87,44 +87,34 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             _globalvar.handle_exception()
             return 1
         # copy the current data into the temp directory
-        _generator.generate_custom_path()
         shutil.copytree(_globalvar.clitheme_root_data_path, _generator.path)
-        generate_path=False
     line_prefix=f"\x1b[2K\r" # clear current line content and move cursor to beginning
-    print_progress=True #len(file_contents)>1
-    newline="\n" if print_progress else ""
     orig_stdout=sys.stdout # Prevent interference with other code piping stdout
+    err_count=0
     for i in range(len(file_contents)):
-        if print_progress:
-            print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='', flush=True)
+        print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='', flush=True)
         file_content=file_contents[i]
         # Generate data hierarchy, erase current data, copy it to data path
-        generator_msgs=io.StringIO()
         try:
-            _generator.silence_warn=False
             # Output the warning messages correctly (make sure that they start on new line if any exists)
-            sys.stdout=generator_msgs
-            final_path=_generator.generate_data_hierarchy(file_content, custom_path_gen=generate_path,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
-            generate_path=False # Don't generate another temp folder after first one
+            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
             index+=1
-        except Exception as exc:
+            if len(return_val.messages)>0:
+                print()
+                print("\n".join(return_val.messages))
+            if not return_val.success: err_count+=1
+            assert return_val.dir_path==final_path, "Data path not the same"
+        except:
             sys.stdout=orig_stdout
-            print(newline, end='')
-            # Print any output messages if an error occurs
-            if generator_msgs.getvalue()!='':
-                # end='' because the pipe value already contains a newline due to the print statements
-                print(generator_msgs.getvalue(), end='')
+            print()
             print(f.feof("process-files-error", "[File {index}] An error occurred while processing the file:\n{message}", \
                 index=str(i+1), message=fmt(str(sys.exc_info()[1]))))
-            if type(exc)==_generator.syntax_error: _globalvar.handle_exception()
-            else: raise # Always raise exception if other error occurred in _generator
-            return 1
-        else: 
-            sys.stdout=orig_stdout # restore standard output
-            if generator_msgs.getvalue()!='':
-                print(newline+generator_msgs.getvalue(), end='')
-        finally: sys.stdout=orig_stdout # failsafe just in case something didn't work
-    print((line_prefix.rstrip(' ') if print_progress else "")+f.reof("process-files-success", "==> Successfully processed files"))
+            raise
+    print(line_prefix, end='')
+    if err_count>0:
+        print(f.feof("files-contain-error","==> Errors detected in {count} file(s)", count=err_count))
+        return 1
+    else: print(f.reof("process-files-success", "==> Successfully processed files"))
     global last_data_path; last_data_path=final_path
     if preserve_temp or generate_only:
         if os.name=="nt":

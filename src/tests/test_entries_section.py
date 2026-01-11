@@ -16,14 +16,21 @@ from clitheme import _generator, _globalvar
 import unittest
 import warnings
 
+show_warnings=True
 class TestEntriesSection(unittest.TestCase):
+
     def setUp(self):
         print()
         warnings.simplefilter("ignore")
         self.mainfile_data=open(os.path.dirname(__file__)+"/entries_test_data/mainfile.ctdef.txt",'r', encoding="utf-8").read()
         self.expected_data=open(os.path.dirname(__file__)+"/entries_test_data/expected.txt",'r', encoding="utf-8").read()
-        self.generator_path=_generator.generate_data_hierarchy(self.mainfile_data)
-        _generator.silence_warn=True # Don't show warnings for second time
+        self.return_val=_generator.generate_data_hierarchy(self.mainfile_data)
+        self.generator_path=self.return_val.dir_path
+        global show_warnings
+        if show_warnings and len(self.return_val.messages)>0:
+            print("\n".join(self.return_val.messages))
+            show_warnings=False # Don't show messages repeatedly
+        assert self.return_val.success, "Generator failed:\n"+"\n".join(self.return_val.messages)
         self.rootpath=self.generator_path+"/"+_globalvar.generator_data_pathname
     def tearDown(self):
         shutil.rmtree(self.generator_path)

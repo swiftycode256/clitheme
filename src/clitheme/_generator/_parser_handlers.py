@@ -41,7 +41,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     # switch_options+=[subst_limiting_options[:3]]
     substvar_banphrases=['{', '}', '[', ']', '(', ')']
 
-    def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, silence_warn: bool):
+    def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str):
         # data to keep track of
         self.warnings: Dict[str, bool]={}
         self.parsed_lines=set() # For parse_content functions
@@ -61,7 +61,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         self.filename=filename
         self.file_content=file_content
         self.file_id=_globalvar.gen_uuid()
-        _data_handlers.DataHandlers.__init__(self, path, silence_warn)
+        _data_handlers.DataHandlers.__init__(self, path)
     def is_ignore_line(self) -> bool:
         return self.get_current_line().strip()=="" or self.get_current_line().strip().startswith('#')
     def goto_next_line(self) -> bool:
@@ -283,7 +283,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
             options_str: Optional[str]=match.group("options")
             return (text, options_str)
         else:
-            self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
+            if not silence_warn:
+                self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
             return (content, None)
     def handle_set_variable(self, var_names: List[str], var_content: str, really_really_global: bool=False):
         # Parse content without substesc (subst variable content)

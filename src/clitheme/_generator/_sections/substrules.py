@@ -44,7 +44,6 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
     else:
         # Initialize the database
         db_interface.init_db(self.path+"/"+_globalvar.db_filename)
-    db_interface.debug_mode=not self.silence_warn
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         subst_pat=re.fullmatch(r"\[(?P<name>subst(itute)?_(string|regex))(\]|>>)", phrases[0])

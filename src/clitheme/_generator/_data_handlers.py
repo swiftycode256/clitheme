@@ -16,23 +16,27 @@ from . import syntax_error
 class DataHandlers:
     frontend=frontend
 
-    def __init__(self, path: str, silence_warn: bool):
+    def __init__(self, path: str):
         self.path=path
-        self.silence_warn=silence_warn
+        self.success=True
+        self.messages: List[str]=[]
         if not os.path.exists(self.path): os.mkdir(self.path)
         self.datapath=self.path+"/"+_globalvar.generator_data_pathname
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
         self.fd=self.frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
         self.fmt=_globalvar.make_printable # alias for the make_printable function
-    def handle_error(self, message: str, not_syntax_error: bool=False):
-        output=message if not_syntax_error else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
-        raise syntax_error(output)
+    def handle_error(self, message: str):
+        output=self.fd.feof("error-prefix", "Error: {msg}", msg=message)
+        self.success=False
+        self.messages.append(output)
     def handle_syntax_error(self, message: str, no_prefix: bool=False):
-        output=message if no_prefix else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
+        output=message if no_prefix else self.fd.feof("syntax-error-prefix", "Syntax error: {msg}", msg=message)
+        self.success=False
+        self.messages.append(output)
         raise syntax_error(output)
     def handle_warning(self, message: str):
         output=self.fd.feof("warning-str", "Warning: {msg}", msg=message)
-        if not self.silence_warn: print(output)
+        self.messages.append(output)
     def recursive_mkdir(self, path: str, entry_name: str, line_number_debug: str) -> bool:
         # recursively generate directories (excluding file itself)
         current_path=path
@@ -86,7 +90,7 @@ class DataHandlers:
         # create the parent directory
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
         else:
             full_path=parent_path+"/"+file_path[-1]
             if os.path.isfile(full_path):
@@ -96,4 +100,4 @@ class DataHandlers:
                 open(full_path, "w", encoding="utf-8").write(content)
                 open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
             except IsADirectoryError:
-                self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)), not_syntax_error=True)
+                self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))

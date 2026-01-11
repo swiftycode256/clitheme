@@ -107,25 +107,23 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
         _generator.generate_custom_path() # prepare _generator.path
         if _alt_path_dirname!=None and overlay==True: # overlay
             shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
-        return_val: str
-        d_copy=(global_debugmode, _generator.silence_warn)
+        d_copy=global_debugmode
         for x in range(len(file_contents)):
             file_content=file_contents[x]
             if _get_setting("debugmode") and len(file_contents)>1:
                 print(f"[Debug] set_local_themedefs: Processing file {x+1} of {len(file_contents)}")
             try:
-                # Set this to prevent extra messages from being displayed
-                _generator.silence_warn=True
                 global_debugmode=False
                 return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+                assert return_val.success, '\n'.join(return_val.messages)
                 _alt_info_index+=1
-            except SyntaxError:
+            except AssertionError:
                 if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
                 return False
-            finally: global_debugmode, _generator.silence_warn=d_copy
+            finally: global_debugmode=d_copy
         if not os.path.exists(path_name):
-            shutil.copytree(return_val, path_name)
-        try: shutil.rmtree(return_val)
+            shutil.copytree(return_val.dir_path, path_name)
+        try: shutil.rmtree(return_val.dir_path)
         except: pass
     else:
         if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")

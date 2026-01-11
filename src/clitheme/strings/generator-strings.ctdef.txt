@@ -18,9 +18,13 @@
     <in_subsection> |generator|
         # 错误提示
         # error messages
-        [entry] |error-str|
+        [entry] |syntax-error-prefix|
             # default: |Syntax error: {msg}|
             locale[zh_CN]: |语法错误：{msg}|
+        [/entry]
+        [entry] |error-prefix|
+            # default: |Error: {msg}|
+            locale[zh_CN]: |错误：{msg}|
         [/entry]
         
         # 以下定义会是上方定义"{msg}"中的内容
