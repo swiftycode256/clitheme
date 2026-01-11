@@ -43,7 +43,7 @@
         [/entry]
         [entry] |repeated-section-err|
             # default: |Repeated {section} section at line {num}|
-            locale[zh_CN]: |第{num}行：重复的{phrase}段落|
+            locale[zh_CN]: |第{num}行：重复的{section}段落|
         [/entry]
         [entry] |invalid-phrase-err|
             # default: |Unexpected "{phrase}" on line {num}|
