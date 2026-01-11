@@ -126,11 +126,15 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
 
     success_msg=f.reof("apply-theme-success", "Theme applied successfully")
     ## Apply theme: move generated folder to data directory
-    # remove the current data, ignoring directory not found error
     try:
-        try: shutil.rmtree(_globalvar.clitheme_root_data_path)
-        except FileNotFoundError: pass
-        except: raise OSError(f"rmtree: {sys.exc_info()[1]}")
+        if os.path.exists(_globalvar.clitheme_root_data_path):
+            # remove the current data, ignoring directory not found error
+            try: shutil.rmtree(_globalvar.clitheme_root_data_path)
+            except: raise OSError(f"rmtree: {sys.exc_info()[1]}")
+        else:
+            # Create intermediate directories
+            try: os.makedirs(os.path.dirname(_globalvar.clitheme_root_data_path), exist_ok=True)
+            except: raise OSError(f"makedirs: {sys.exc_info()[1]}")
         if preserve_temp:
             shutil.copytree(final_path, _globalvar.clitheme_root_data_path) 
         else:
