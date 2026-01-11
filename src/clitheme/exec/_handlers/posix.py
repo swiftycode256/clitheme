@@ -105,9 +105,8 @@ class PosixHandler(BaseHandler):
 
         # Setup signal handlers
         self.handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
-        def signal_handler(*args): self._signal_handler_function(*args)
         for sig in self.handle_signals:
-            signal.signal(sig, signal_handler)
+            signal.signal(sig, self._signal_handler_function)
         def window_size_handler(*args): self.update_window_size(*args)
         signal.signal(signal.SIGWINCH, window_size_handler)
         
@@ -182,8 +181,7 @@ class PosixHandler(BaseHandler):
         if sig==signal.SIGCONT: # continue signal
             self.process.send_signal(sig)
             # Reset signal handler
-            def signal_handler(*args): self._signal_handler_function(*args)
-            signal.signal(signal.SIGTSTP, signal_handler)
+            signal.signal(signal.SIGTSTP, self._signal_handler_function)
             # Set term attributes after re-entering
             attrs=self.get_term_attrs(make_raw=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
