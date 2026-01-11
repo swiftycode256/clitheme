@@ -20,6 +20,7 @@ if os.name=="nt":
         console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
         assert ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)
     except: pass
+    del ctypes
 del os
 
 # Expose these modules when "clitheme" is imported
