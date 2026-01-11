@@ -11,6 +11,9 @@ import os
 import string
 import random
 import re
+
+class syntax_error(Exception): pass
+
 from ._sections import entries, header, manpages
 from .. import _globalvar
 from . import _parser_handlers

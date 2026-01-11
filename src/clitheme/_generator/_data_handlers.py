@@ -11,6 +11,7 @@ import os
 import gzip
 from typing import Optional, List
 from .. import _globalvar, frontend
+from . import syntax_error
 
 class DataHandlers:
     frontend=frontend
@@ -25,10 +26,10 @@ class DataHandlers:
         self.fmt=_globalvar.make_printable # alias for the make_printable function
     def handle_error(self, message: str, not_syntax_error: bool=False):
         output=message if not_syntax_error else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
-        raise SyntaxError(output)
+        raise syntax_error(output)
     def handle_syntax_error(self, message: str, no_prefix: bool=False):
         output=message if no_prefix else self.fd.feof("error-str", "Syntax error: {msg}", msg=message)
-        raise SyntaxError(output)
+        raise syntax_error(output)
     def handle_warning(self, message: str):
         output=self.fd.feof("warning-str", "Warning: {msg}", msg=message)
         if not self.silence_warn: print(output)
