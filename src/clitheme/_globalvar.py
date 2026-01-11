@@ -87,11 +87,11 @@ fd_app_name="clitheme"
 entry_banphrases=['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 startswith_banphrases=['.']
 banphrase_error_message="cannot contain '{char}'"
-banphrase_error_message_orig=copy(banphrase_error_message)
+banphrase_error_message_orig=banphrase_error_message
 startswith_error_message="cannot start with '{char}'"
-startswith_error_message_orig=copy(startswith_error_message)
+startswith_error_message_orig=startswith_error_message
 empty_error_message="cannot be empty"
-empty_error_message_orig=copy(empty_error_message)
+empty_error_message_orig=empty_error_message
 # function to check whether the pathname contains invalid phrases
 # - cannot start with .
 # - cannot contain banphrases
@@ -119,10 +119,16 @@ def sanity_check(path: str, use_orig: bool=False) -> bool:
                 sanity_check_error_message=startswith_error_message.format(char=b) if not use_orig else startswith_error_message_orig.format(char=b)
                 return False
         for b in entry_banphrases:
-            if p.find(b)!=-1:
+            if b in p:
                 sanity_check_error_message=banphrase_error_message.format(char=b) if not use_orig else banphrase_error_message_orig.format(char=b)
                 return False
     return True
+def sanitize_str(path: str) -> str:
+    for b in startswith_banphrases:
+        path=re.sub(r"(^|\s)"+re.escape(b), r"\g<1>_", path)
+    for b in entry_banphrases:
+        path=re.sub(re.escape(b), "_", path)
+    return path
 
 ## Convenience functions
 

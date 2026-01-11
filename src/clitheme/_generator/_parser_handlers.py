@@ -75,7 +75,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
     def handle_invalid_phrase(self, name: str):
-        self.handle_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
+        self.handle_syntax_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
     def handle_unterminated_section(self, name: str):
         self.handle_error(self.fd.feof("unterminated-section-err", "Unterminated {name} section at end of file", name=name))
     def check_enough_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
@@ -90,7 +90,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
         if not success:
             if disp==None: disp=phrases[0]
-            self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(disp), num=self.linenum()))
+            self.handle_syntax_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(disp), num=self.linenum()))
         
     def check_extra_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
@@ -104,12 +104,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
         if not success:
             if disp==None: disp=phrases[0]
-            self.handle_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(disp)))
+            self.handle_syntax_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(disp)))
     def check_version(self, version_str: str):
         # allow_bugfix is disabled to allow interoperability with other release variants
         allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
         match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+)){{,{int(allow_bugfix)}}}(-beta(?P<beta_release>\d+))?$", version_str)
-        def invalid_version(): self.handle_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=self.linenum()))
+        def invalid_version(): self.handle_syntax_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=self.linenum()))
         if match_result==None: invalid_version()
         elif int(match_result.groupdict()['major'])<2: invalid_version()
         else:
@@ -124,11 +124,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 version_ok=version_ok and _version.beta_release==None and not _version.release<0
 
             if not version_ok:
-                self.handle_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
+                self.handle_syntax_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_globalvar.clitheme_version+ \
                             # For "dev" versions: output corresponding beta milestone
                             (f" [beta{_version.beta_release}]" if _version.beta_release!=None and not "beta" in _globalvar.clitheme_version else ""),
-                        req_ver=self.fmt(version_str)), not_syntax_error=True)
+                        req_ver=self.fmt(version_str)), no_prefix=True)
     def parse_options(self, options_data: List[str], merge_global_options: int, allowed_options: Optional[List[str]]=None, ban_options: Optional[List[str]]=None) -> Dict[str, Union[int,bool]]:
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         # When allowed_options and ban_options specified at same time, ban_options overrides allowed_options
@@ -149,8 +149,9 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 else: 
                     try: value=int(results.groupdict()['value'])
                     except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
-                # set option
-                final_options[option_name]=value
+                    else:
+                        # set option
+                        final_options[option_name]=value
             elif option_name in self.bool_options:
                 # if starts with no, set to false; else, set to true
                 final_options[option_name]=not option_name_preserve_no.startswith("no")
@@ -167,6 +168,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                         break
                 else: # executed when no break occurs
                     self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
+                    continue
             if (allowed_options!=None and option_name not in allowed_options) or\
                (ban_options!=None and option_name in ban_options):
                 self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
@@ -282,18 +284,18 @@ class GeneratorObject(_data_handlers.DataHandlers):
             return (text, options_str)
         else:
             self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
+            return (content, None)
     def handle_set_variable(self, var_names: List[str], var_content: str, really_really_global: bool=False):
         # Parse content without substesc (subst variable content)
         var_content=self.parse_content(var_content, pure_name=True, preserve_indents=True)
         for name in var_names:
             # sanity check var_name
-            def bad_var(): self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(name), num=self.linenum()))
-            if name=='ESC': bad_var()
-            for char in self.substvar_banphrases:
-                if char in name: bad_var()
-            # set variable
-            if really_really_global: self.really_really_global_variables[name]=var_content
-            self.global_variables[name]=var_content
+            if name=='ESC' or True in (char in name for char in self.substvar_banphrases):
+                self.handle_error(self.fd.feof("bad-var-name-err", "Line {num}: \"{name}\" is not a valid variable name", name=self.fmt(name), num=self.linenum()))
+            else:
+                # set variable
+                if really_really_global: self.really_really_global_variables[name]=var_content
+                self.global_variables[name]=var_content
     def handle_begin_section(self, section_name: str):
         if section_name in self.parsed_sections: 
             self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=self.linenum(), section=section_name))
@@ -400,7 +402,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             # write to data
             blockinput_lines.append(line.rstrip())
         else: # File terminated without reaching end phrase
-            self.handle_error(self.fd.feof("unterminated-content-block-err", "Unterminated content block at line {num}", num=begin_line_number-1))
+            self.handle_syntax_error(self.fd.feof("unterminated-content-block-err", "Unterminated content block at line {num}", num=begin_line_number-1))
         # Return empty string if there are no lines
         if len(blockinput_lines)==0: return ""
 

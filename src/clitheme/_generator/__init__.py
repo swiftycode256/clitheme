@@ -69,7 +69,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             self.check_extra_args(phrases, 2)
             if not before_content_lines:
                 self.handle_error(self.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=self.linenum(), phrase=first_phrase))
-            self.check_version(phrases[1])
+            else: self.check_version(phrases[1])
         else: self.handle_invalid_phrase(first_phrase)
 
         if is_content: before_content_lines=False

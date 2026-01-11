@@ -40,7 +40,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
         # Connect to existing database
         try: db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
         except:
-            self.handle_error(self.fd.reof("db-compat-err", "The current substrules database version is incompatible; please run \"clitheme repair-theme\" and try again"))
+            self.handle_syntax_error(self.fd.reof("db-compat-err", "The current substrules database version is incompatible; please run \"clitheme repair-theme\" and try again"), no_prefix=True)
     else:
         # Initialize the database
         db_interface.init_db(self.path+"/"+_globalvar.db_filename)

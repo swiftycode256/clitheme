@@ -37,15 +37,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     def opt(name: str) -> bool: 
         assert got_options!=None
         return got_options.get(name)==True
-    def check_valid_pattern(pattern: str, debug_linenumber: Union[str, int]):
-        # check if patterns are valid
-        try: 
-            if len(pattern)==0:
-                raise ValueError("empty pattern")
-            re.compile(pattern)
-        except: self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(debug_linenumber), error_msg=self.fmt(str(sys.exc_info()[1]))))
     def add_entry(content: str, locales: List[str], line_number: Optional[str]=None):
-        assert len(locales)>0, "Empty locales array"
         assert len(entry_names)>0, "No entry names defined"
         for this_locale in locales:
             entry_items.append(Entry(
@@ -151,14 +143,19 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: return # Skip processing if entry block is unterminated
+    checked_entries=set() # Don't show multiple errors for same sub pattern
     for entry_name in entry_names:
         for entry in entry_items:
             # Check match pattern/entry path for validity
-            if is_substrules: check_valid_pattern(entry_name.value, entry_name.line_number)
+            if is_substrules: 
+                # check if patterns are valid
+                try: re.compile(entry_name.value)
+                except:
+                    self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
             else:
-                # Prevent leading . & prevent /,\ in entry name
                 if _globalvar.sanity_check(entry_name.value)==False:
                     self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    continue
             if is_substrules:
                 try: 
                     db_interface.add_subst_entry(
@@ -179,7 +176,10 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                             f"[{'default' if entry.locale==None else _globalvar.make_printable(entry.locale)}]",
                         file_id=self.file_id,
                         unique_id=entry_name.id)
-                except db_interface.bad_pattern: self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
+                except db_interface.bad_pattern:
+                    if entry.content_line_number not in checked_entries:
+                        self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
+                        checked_entries.add(entry.content_line_number)
             else:
                 target_entry=' '.join(entry_name.value.split()) # Remove extra spaces
                 if entry.locale!=None: target_entry+="__"+entry.locale
