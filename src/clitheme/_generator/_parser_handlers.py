@@ -76,7 +76,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def get_current_line(self) -> str:
         return self.lines_data[self.lineindex]
     def handle_invalid_phrase(self, name: str):
-        self.handle_syntax_error(self.fd.feof("invalid-phrase-err", "Unexpected \"{phrase}\" on line {num}", phrase=self.fmt(name), num=self.linenum()))
+        self.handle_syntax_error(self.fd.feof("invalid-phrase-err", "Line {num}: Unexpected \"{phrase}\"", phrase=self.fmt(name), num=self.linenum()))
     def handle_unterminated_section(self, name: str):
         self.handle_error(self.fd.feof("unterminated-section-err", "Unterminated {name} section at end of file", name=name))
     def check_enough_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
@@ -91,7 +91,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
         if not success:
             if disp==None: disp=phrases[0]
-            self.handle_syntax_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase=self.fmt(disp), num=self.linenum()))
+            self.handle_syntax_error(self.fd.feof("not-enough-args-err", "Line {num}: Not enough arguments for \"{phrase}\"", phrase=self.fmt(disp), num=self.linenum()))
         
     def check_extra_args(self, phrases: List[str], count: int, disp: Optional[str]=None, check_processed: bool=True):
         if check_processed:
@@ -105,12 +105,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
 
         if not success:
             if disp==None: disp=phrases[0]
-            self.handle_syntax_error(self.fd.feof("extra-arguments-err", "Extra arguments after \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(disp)))
+            self.handle_syntax_error(self.fd.feof("extra-arguments-err", "Line {num}: Extra arguments after \"{phrase}\"", num=self.linenum(), phrase=self.fmt(disp)))
     def check_version(self, version_str: str):
         # allow_bugfix is disabled to allow interoperability with other release variants
         allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
         match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+)){{,{int(allow_bugfix)}}}(-beta(?P<beta_release>\d+))?$", version_str)
-        def invalid_version(): self.handle_syntax_error(self.fd.feof("invalid-version-err", "Invalid version information \"{ver}\" on line {num}", ver=self.fmt(version_str), num=self.linenum()))
+        def invalid_version(): self.handle_syntax_error(self.fd.feof("invalid-version-err", "Line {num}: Invalid version information \"{ver}\"", ver=self.fmt(version_str), num=self.linenum()))
         if match_result==None: invalid_version()
         elif int(match_result.groupdict()['major'])<2: invalid_version()
         else:
@@ -155,10 +155,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)$", each_option)
                 value: int
                 if results==None: # no value specified
-                    handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                    handle_error(self.fd.feof("option-without-value-err", "Line {num}: No value specified for option \"{phrase}\"", num=self.linenum(), phrase=self.fmt(option_name)))
                 else: 
                     try: value=int(results.groupdict()['value'])
-                    except ValueError: handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                    except ValueError: handle_error(self.fd.feof("option-value-not-int-err", "Line {num}: The value specified for option \"{phrase}\" is not an integer", num=self.linenum(), phrase=self.fmt(option_name)))
                     else:
                         # set option
                         final_options[option_name]=value
@@ -170,18 +170,18 @@ class GeneratorObject(_data_handlers.DataHandlers):
                     if option_name_preserve_no in option_group:
                         for opt in options_data[:x]: # Check previous options only
                             if opt!=option_name_preserve_no and opt in option_group:
-                                handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=self.linenum(), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
+                                handle_error(self.fd.feof("option-conflict-err", "Line {num}: The option \"{option1}\" can't be set at the same time with \"{option2}\"", num=self.linenum(), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
                         # set all other options to false
                         for opt in option_group: final_options[opt]=False
                         # set the option
                         final_options[option_name_preserve_no]=True
                         break
                 else: # executed when no break occurs
-                    handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
+                    handle_error(self.fd.feof("unknown-option-err", "Line {num}: Unknown option \"{phrase}\"", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
                     continue
             if (allowed_options!=None and option_name not in allowed_options) or\
                (ban_options!=None and option_name in ban_options):
-                handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                handle_error(self.fd.feof("option-not-allowed-err", "Line {num}: Option \"{phrase}\" not allowed here", num=self.linenum(), phrase=self.fmt(option_name)))
         return final_options 
     def handle_set_global_options(self, options_data: List[str], really_really_global: bool=False):
         # set options globally
@@ -294,7 +294,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             return (text, options_str)
         else:
             if not silence_warn:
-                self.handle_error(self.fd.feof("linebounds-format-err", "Invalid line boundary format at line {num}", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
+                self.handle_error(self.fd.feof("linebounds-format-err", "Line {num}: Invalid line boundary format", num=str(self.linenum() if debug_linenumber==None else debug_linenumber)))
             return (content, None)
     def handle_set_variable(self, var_names: List[str], var_content: str, really_really_global: bool=False):
         # Parse content without substesc (subst variable content)
@@ -309,7 +309,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 self.global_variables[name]=var_content
     def handle_begin_section(self, section_name: str):
         if section_name in self.parsed_sections: 
-            self.handle_error(self.fd.feof("repeated-section-err", "Repeated {section} section at line {num}", num=self.linenum(), section=section_name))
+            self.handle_error(self.fd.feof("repeated-section-err", "Line {num}: Repeated {section} section", num=self.linenum(), section=section_name))
         self.section_parsing=True
         self.handle_setup_global_options()
     def handle_end_section(self, section_name: str):
@@ -363,7 +363,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 var_content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
                 self.handle_set_variable(setvar_match.group('names').split(), var_content, really_really_global)
             else:
-                self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="setvar", num=self.linenum()))
+                self.handle_error(self.fd.feof("phrase-format-err", "Line {num}: Invalid format for \"{phrase}\"", phrase="setvar", num=self.linenum()))
         elif setvar_match_old!=None:
             self.check_enough_args(phrases, 2, check_processed=False)
             var_name=setvar_match_old.group('name')
@@ -413,7 +413,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             # write to data
             blockinput_lines.append(line.rstrip())
         else: # File terminated without reaching end phrase
-            self.handle_syntax_error(self.fd.feof("unterminated-content-block-err", "Unterminated content block at line {num}", num=begin_line_number-1))
+            self.handle_syntax_error(self.fd.feof("unterminated-content-block-err", "Line {num}: Unterminated content block", num=begin_line_number-1))
         # Return empty string if there are no lines
         if len(blockinput_lines)==0: return ""
 

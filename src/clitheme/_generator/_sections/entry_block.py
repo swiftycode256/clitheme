@@ -90,11 +90,11 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 self.check_enough_args(phrases, argc+1, disp=locale_match.group(), check_processed=False)
                 locales=self.parse_content(locale_match.group('names').strip(), pure_name=True).split()
                 if len(locales)==0: # e.g. Empty variable content
-                    self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="<name> @ locale[<name>]:", num=self.linenum()))
+                    self.handle_error(self.fd.feof("not-enough-args-err", "Line {num}: Not enough arguments for \"{phrase}\"", phrase="<name> @ locale[<name>]:", num=self.linenum()))
                 content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
                 add_entry(self.parse_content(content), locales) 
             else: 
-                self.handle_error(self.fd.feof("phrase-format-err", "Invalid format for \"{phrase}\" on line {num}", phrase="locale", num=self.linenum()))
+                self.handle_error(self.fd.feof("phrase-format-err", "Line {num}: Invalid format for \"{phrase}\"", phrase="locale", num=self.linenum()))
         elif phrases[0]=="default:": # Shorthand for "locale[default]:"
             self.check_enough_args(phrases, 2, check_processed=False)
             content=_globalvar.extract_content(self.get_current_line())
@@ -113,7 +113,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 locale=phrases[1]
             locales=self.parse_content(locale, pure_name=True).split()
             if len(locales)==0: # e.g. Empty variable content
-                self.handle_error(self.fd.feof("not-enough-args-err", "Not enough arguments for \"{phrase}\" at line {num}", phrase="<name> @ locale:<name>", num=self.linenum()))
+                self.handle_error(self.fd.feof("not-enough-args-err", "Line {num}: Not enough arguments for \"{phrase}\"", phrase="<name> @ locale:<name>", num=self.linenum()))
             add_entry(self.parse_content(content), locales)
         ## Content blocks for entry contents/subst patterns
         elif phrases[0] in ("[locale]", "locale_block"):
@@ -151,7 +151,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 # check if patterns are valid
                 try: re.compile(entry_name.value)
                 except:
-                    self.handle_error(self.fd.feof("bad-match-pattern-err", "Bad match pattern at line {num} ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
+                    self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
             else:
                 if _globalvar.sanity_check(entry_name.value)==False:
                     self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
@@ -179,7 +179,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                         warning_handler=self.handle_warning)
                 except db_interface.bad_pattern:
                     if entry.content_line_number not in checked_entries:
-                        self.handle_error(self.fd.feof("bad-subst-pattern-err", "Bad substitute pattern at line {num} ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
+                        self.handle_error(self.fd.feof("bad-subst-pattern-err", "Line {num}: Bad substitute pattern ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
                         checked_entries.add(entry.content_line_number)
             else:
                 target_entry=' '.join(entry_name.value.split()) # Remove extra spaces

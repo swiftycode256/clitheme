@@ -114,7 +114,7 @@ def add_subst_entry(
         match_condition=f"match_pattern=? AND {cmd_condition} AND command_is_regex=? AND {strictness_condition} AND {locale_condition} AND stdout_stderr_only=? AND is_regex=?"
         match_params=(match_pattern, cmd, command_is_regex, effective_locale, stdout_stderr_matchoption, is_regex)
         if len(connection.execute(f"SELECT * FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params).fetchall())>0:
-            warning_handler(fd.feof("repeated-substrules-warn", "Repeated substrules entry at line {num}, overwriting", num=line_number_debug))
+            warning_handler(fd.feof("repeated-substrules-warn", "Line {num}: Repeated substrules entry, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))

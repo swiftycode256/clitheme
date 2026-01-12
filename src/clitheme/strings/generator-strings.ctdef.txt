@@ -38,19 +38,19 @@
             locale[zh_CN]: |第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在|
         [/entry]
         [entry] |extra-arguments-err|
-            # default: |Extra arguments after "{phrase}" on line {num}|
+            # default: |Line {num}: Extra arguments after "{phrase}"|
             locale[zh_CN]: |第{num}行："{phrase}"后的参数太多|
         [/entry]
         [entry] |repeated-section-err|
-            # default: |Repeated {section} section at line {num}|
+            # default: |Line {num}: Repeated {section} section|
             locale[zh_CN]: |第{num}行：重复的{section}段落|
         [/entry]
         [entry] |invalid-phrase-err|
-            # default: |Unexpected "{phrase}" on line {num}|
+            # default: |Line {num}: Unexpected "{phrase}"|
             locale[zh_CN]: |第{num}行：无效的"{phrase}"语句|
         [/entry]
         [entry] |not-enough-args-err|
-            # default: |Not enough arguments for "{phrase}" at line {num}|
+            # default: |Line {num}: Not enough arguments for "{phrase}"|
             locale[zh_CN]: |第{num}行："{phrase}"后参数不够|
         [/entry]
         [entry] |incomplete-section-err|
@@ -62,7 +62,7 @@
             locale[zh_CN]: |在文件结尾未结束{name}段落|
         [/entry]
         [entry] |unterminated-content-block-err|
-            # default: |Unterminated content block at line {num}|
+            # default: |Line {num}: Unterminated content block|
             locale[zh_CN]: |第{num}行：未结束的文本段落|
         [/entry]
         [entry] |db-compat-err|
@@ -70,7 +70,7 @@
             locale[zh_CN]: |当前的substrules数据库版本不兼容；请运行"clitheme repair-theme"后重试|
         [/entry]
         [entry] |invalid-version-err|
-            # default: |Invalid version information "{ver}" on line {num}|
+            # default: |Line {num}: Invalid version information "{ver}"|
             locale[zh_CN]: |第{num}行：无效版本信息"{ver}"|
         [/entry]
         [entry] |unsupported-version-err|
@@ -84,43 +84,43 @@
         # 选项错误提示信息
         # Options error messages
         [entry] |option-not-allowed-err|
-            # default: |Option "{phrase}" not allowed here at line {num}|
+            # default: |Line {num}: Option "{phrase}" not allowed here|
             locale[zh_CN]: |第{num}行：选项"{phrase}"不允许在这里指定|
         [/entry]
         [entry] |unknown-option-err|
-            # default: |Unknown option "{phrase}" on line {num}|
+            # default: |Line {num}: Unknown option "{phrase}"|
             locale[zh_CN]: |第{num}行：未知选项"{phrase}"|
         [/entry]
         [entry] |option-without-value-err|
-            # default: |No value specified for option "{phrase}" on line {num}|
+            # default: |Line {num}: No value specified for option "{phrase}"|
             locale[zh_CN]: |第{num}行：选项"{phrase}"未指定数值|
         [/entry]
         [entry] |optional-value-not-int-err|
-            # default: |The value specified for option "{phrase}" is not an integer on line {num}|
+            # default: |Line {num}: The value specified for option "{phrase}" is not an integer|
             locale[zh_CN]: |第{num}行：选项"{phrase}"指定的数值不是整数|
         [/entry]
         [entry] |option-conflict-err|
-            # default: |The option "{option1}" can't be set at the same time with "{option2}" on line {num}|
+            # default: |Line {num}: The option "{option1}" can't be set at the same time with "{option2}"|
             locale[zh_CN]: |第{num}行：选项"{option1}"和"{option2}"不能同时指定|
         [/entry]
         [entry] |bad-match-pattern-err|
-            # default: |Bad match pattern at line {num} ({error_msg})|
+            # default: |Line {num}: Bad match pattern ({error_msg})|
             locale[zh_CN]: |第{num}行：无效的匹配正则表达式（{error_msg}）|
         [/entry]
         [entry] |bad-cmd-filter-pattern-err|
-            # default: |Bad command filter pattern at line {num} ({error_msg})|
+            # default: |Line {num}: Bad command filter pattern ({error_msg})|
             locale[zh_CN]: |第{num}行：无效的命令限制正则表达式（{error_msg}）|
         [/entry]
         [entry] |bad-subst-pattern-err|
-            # default: |Bad substitute pattern at line {num} ({error_msg})|
+            # default: |Line {num}: Bad substitute pattern ({error_msg})|
             locale[zh_CN]: |第{num}行：无效的替换正则表达式（{error_msg}）|
         [/entry]
         [entry] |linebounds-format-err|
-            # default: |Invalid line boundary format at line {num}|
+            # default: |Line {num}: Invalid line boundary format|
             locale[zh_CN]: |第{num}行：无效的行边界格式|
         [/entry]
         [entry] |phrase-format-err|
-            # default: |Invalid format for "{phrase}" on line {num}|
+            # default: |Line {num}: Invalid format for "{phrase}"|
             locale[zh_CN]: |第{num}行：无效的"{phrase}"格式|
         [/entry]
         [entry] |bad-var-name-err|
@@ -142,7 +142,7 @@
             [/locale]
         [/entry]
         [entry] |include-file-missing-phrase-err|
-            # default: |Missing "as <filename>" phrase on next line of line {num}|
+            # default: |Line {num}: Missing "as <filename>" phrase on next line|
             locale[zh_CN]: |第{num}行：在下一行缺少"as <文件名>"语句|
         [/entry]
         [entry] |missing-info-err|
@@ -163,7 +163,7 @@
             locale[zh_CN]: |第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖|
         [/entry]
         [entry] |repeated-substrules-warn|
-            # default: |Repeated substrules entry at line {num}, overwriting|
+            # default: |Line {num}: Repeated substrules entry, overwriting|
             locale[zh_CN]: |第{num}行：重复的substrules定义；之前的定义内容将会被覆盖|
         [/entry]
         [entry] |repeated-header-warn|

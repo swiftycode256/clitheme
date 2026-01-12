@@ -78,7 +78,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
                     target_file=[_globalvar.sanitize_str(p) for p in target_file]
                 self.write_manpage_file(target_file, filecontent, self.linenum())
             else:
-                self.handle_error(self.fd.feof("include-file-missing-phrase-err", "Missing \"as <filename>\" phrase on next line of line {num}", num=str(self.linenum()-1)))
+                self.handle_error(self.fd.feof("include-file-missing-phrase-err", "Line {num}: Missing \"as <filename>\" phrase on next line", num=str(self.linenum()-1)))
                 self.lineindex-=1
         elif phrases[0]=="[include_file]":
             self.check_enough_args(phrases, 2)
