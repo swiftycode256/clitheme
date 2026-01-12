@@ -95,7 +95,7 @@
             # default: |Line {num}: No value specified for option "{phrase}"|
             locale[zh_CN]: |第{num}行：选项"{phrase}"未指定数值|
         [/entry]
-        [entry] |optional-value-not-int-err|
+        [entry] |option-value-not-int-err|
             # default: |Line {num}: The value specified for option "{phrase}" is not an integer|
             locale[zh_CN]: |第{num}行：选项"{phrase}"指定的数值不是整数|
         [/entry]
