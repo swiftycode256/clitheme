@@ -113,6 +113,11 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     print(line_prefix, end='')
     if err_count>0:
         print(f.feof("files-contain-error","==> Errors detected in {count} file(s)", count=err_count))
+        try:
+            # Remove the temp directory
+            assert final_path.startswith(_globalvar.clitheme_temp_root)
+            shutil.rmtree(final_path)
+        except: pass
         return 1
     else: print(f.reof("process-files-success", "==> Successfully processed files"))
     global last_data_path; last_data_path=final_path
