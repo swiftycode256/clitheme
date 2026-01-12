@@ -37,8 +37,19 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     def opt(name: str) -> bool: 
         assert got_options!=None
         return got_options.get(name)==True
+    def check_entry_name(name: str) -> bool:
+        if is_substrules: 
+            # check if patterns are valid
+            try: re.compile(name)
+            except:
+                self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=self.linenum(), error_msg=self.fmt(str(sys.exc_info()[1]))))
+                return False
+        else:
+            if _globalvar.sanity_check(name)==False:
+                self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: Entry subsections/names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                return False
+        return True
     def add_entry(content: str, locales: List[str], line_number: Optional[str]=None):
-        assert len(entry_names)>0, "No entry names defined"
         for this_locale in locales:
             entry_items.append(Entry(
                 content=content,
@@ -59,12 +70,14 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
         if phrases[0]==start_phrase and not names_processed:
             self.check_enough_args(phrases, 2, check_processed=not is_substrules)
             pattern=_globalvar.extract_content(line_content)
-            entry_names.append(EntryName(
-                value=self.parse_content(pattern, pure_name=not is_substrules),
-                is_multiline=False,
-                id=_globalvar.gen_uuid(),
-                line_number=str(self.linenum())
-            ))
+            pattern=self.parse_content(pattern, pure_name=not is_substrules)
+            if check_entry_name(pattern):
+                entry_names.append(EntryName(
+                    value=pattern,
+                    is_multiline=False,
+                    id=_globalvar.gen_uuid(),
+                    line_number=str(self.linenum())
+                ))
         elif phrases[0]==start_phrase.replace(']','>>') and not names_processed and is_substrules:
             # e.g. '[subst_regex>>' syntax
             assert re.match(r"^\[.+\]$", start_phrase)!=None, "Start phrase doesn't follow [<name>] format"
@@ -76,12 +89,13 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 preserve_empty_lines=True,
                 preserve_indents=True,
             )
-            entry_names.append(EntryName(
-                value=pattern,
-                is_multiline=True,
-                id=_globalvar.gen_uuid(),
-                line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
-            ))
+            if check_entry_name(pattern):
+                entry_names.append(EntryName(
+                    value=pattern,
+                    is_multiline=True,
+                    id=_globalvar.gen_uuid(),
+                    line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
+                ))
         ## Entry contents/Subst patterns
         elif phrases[0].startswith('locale['):
             locale_match=re.match(r"^locale\[(?P<names>.+?)\]:(?!\S+)", self.get_current_line().strip())
@@ -146,21 +160,6 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     checked_entries=set() # Don't show multiple errors for same sub pattern
     for entry_name in entry_names:
         for entry in entry_items:
-            # Check match pattern/entry path for validity
-            if is_substrules: 
-                # check if patterns are valid
-                try: re.compile(entry_name.value)
-                except:
-                    if entry_name.line_number not in checked_entries:
-                        self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
-                        checked_entries.add(entry_name.line_number)
-                    continue
-            else:
-                if _globalvar.sanity_check(entry_name.value)==False:
-                    if entry_name.line_number not in checked_entries:
-                        self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: Entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
-                        checked_entries.add(entry_name.line_number)
-                    continue
             if is_substrules:
                 try: 
                     db_interface.add_subst_entry(
