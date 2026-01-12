@@ -45,6 +45,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # data to keep track of
         self.warnings: Dict[str, bool]={}
         self.parsed_lines=set() # For parse_content functions
+        self.parsed_option_lines=set() # For parse_options functions
         self.section_parsing=False
         self.parsed_sections=[]
         self.lines_data=file_content.splitlines()
@@ -133,11 +134,20 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # merge_global_options: 0 - Don't merge; 1 - Merge self.global_options; 2 - Merge self.really_really_global_options
         # When allowed_options and ban_options specified at same time, ban_options overrides allowed_options
 
+        # Only show error messages once per line
+        if self.linenum() in self.parsed_option_lines:
+            show_warnings=False
+        else:
+            show_warnings=True
+            self.parsed_option_lines.add(self.linenum())
+        def handle_error(msg: str):
+            if show_warnings: self.handle_error(msg)
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
         options_data=self.parse_content(' '.join(options_data), pure_name=True).split()
-        for each_option in options_data:
+        for x in range(len(options_data)):
+            each_option=options_data[x]
             option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             option_name_preserve_no=re.sub(r"^(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
             if option_name_preserve_no in self.value_options: # must not begin with "no"
@@ -145,10 +155,10 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 results=re.search(r"^(?P<name>.+?):(?P<value>.+)$", each_option)
                 value: int
                 if results==None: # no value specified
-                    self.handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                    handle_error(self.fd.feof("option-without-value-err", "No value specified for option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
                 else: 
                     try: value=int(results.groupdict()['value'])
-                    except ValueError: self.handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                    except ValueError: handle_error(self.fd.feof("option-value-not-int-err", "The value specified for option \"{phrase}\" is not an integer on line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
                     else:
                         # set option
                         final_options[option_name]=value
@@ -158,20 +168,20 @@ class GeneratorObject(_data_handlers.DataHandlers):
             else:
                 for option_group in self.switch_options:
                     if option_name_preserve_no in option_group:
-                        for opt in options_data:
+                        for opt in options_data[:x]: # Check previous options only
                             if opt!=option_name_preserve_no and opt in option_group:
-                                self.handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=self.linenum(), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
+                                handle_error(self.fd.feof("option-conflict-err", "The option \"{option1}\" can't be set at the same time with \"{option2}\" on line {num}", num=self.linenum(), option1=self.fmt(option_name_preserve_no), option2=self.fmt(opt)))
                         # set all other options to false
                         for opt in option_group: final_options[opt]=False
                         # set the option
                         final_options[option_name_preserve_no]=True
                         break
                 else: # executed when no break occurs
-                    self.handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
+                    handle_error(self.fd.feof("unknown-option-err", "Unknown option \"{phrase}\" on line {num}", num=self.linenum(), phrase=self.fmt(option_name_preserve_no)))
                     continue
             if (allowed_options!=None and option_name not in allowed_options) or\
                (ban_options!=None and option_name in ban_options):
-                self.handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
+                handle_error(self.fd.feof("option-not-allowed-err", "Option \"{phrase}\" not allowed here at line {num}", num=self.linenum(), phrase=self.fmt(option_name)))
         return final_options 
     def handle_set_global_options(self, options_data: List[str], really_really_global: bool=False):
         # set options globally
