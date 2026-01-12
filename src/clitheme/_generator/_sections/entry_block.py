@@ -154,7 +154,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
             else:
                 if _globalvar.sanity_check(entry_name.value)==False:
-                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: Entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
                     continue
             if is_substrules:
                 try: 

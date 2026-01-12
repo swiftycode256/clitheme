@@ -74,7 +74,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
             elif re.fullmatch(r"\{entries(_section)?\}|begin_main", first_phrase)!=None:
                 self.check_extra_args(phrases, 1)
                 if first_phrase=="begin_main":
-                    self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="begin_main", new_phrase=r"{entries}"))
+                    self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: Phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="begin_main", new_phrase=r"{entries}"))
                 entries.handle_entries_section(self, end_phrase())
             elif re.fullmatch(r"\{substrules(_section)?\}", first_phrase)!=None:
                 self.check_extra_args(phrases, 1)
@@ -88,7 +88,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
                 self.check_enough_args(phrases, 2)
                 self.check_extra_args(phrases, 2)
                 if not before_content_lines:
-                    self.handle_error(self.fd.feof("phrase-precedence-err", "Line {num}: header macro \"{phrase}\" must be specified before other lines", num=self.linenum(), phrase=first_phrase))
+                    self.handle_error(self.fd.feof("phrase-precedence-err", "Line {num}: Header macro \"{phrase}\" must be specified before other lines", num=self.linenum(), phrase=first_phrase))
                 else: self.check_version(phrases[1])
             else: self.handle_invalid_phrase(first_phrase)
 

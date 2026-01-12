@@ -45,7 +45,7 @@ class DataHandlers:
             current_entry+=x+" "
             current_path+="/"+x
             if os.path.isfile(current_path): # conflict with entry file
-                self.handle_error(self.fd.feof("subsection-conflict-err", "Line {num}: cannot create subsection \"{name}\" because an entry with the same name already exists", \
+                self.handle_error(self.fd.feof("subsection-conflict-err", "Line {num}: Cannot create subsection \"{name}\" because an entry with the same name already exists", \
                     num=line_number_debug, name=self.fmt(current_entry.strip())))
                 return False
             elif os.path.isdir(str(current_path))==False: # directory does not exist
@@ -57,11 +57,11 @@ class DataHandlers:
         for x in entry_name.split():
             target_path+="/"+x
         if os.path.isdir(target_path):
-            self.handle_error(self.fd.feof("entry-conflict-err", "Line {num}: cannot create entry \"{name}\" because a subsection with the same name already exists", \
+            self.handle_error(self.fd.feof("entry-conflict-err", "Line {num}: Cannot create entry \"{name}\" because a subsection with the same name already exists", \
                 num=line_number_debug, name=self.fmt(entry_name)))
         else:
             if os.path.isfile(target_path):
-                self.handle_warning(self.fd.feof("repeated-entry-warn", "Line {num}: repeated entry \"{name}\", overwriting", \
+                self.handle_warning(self.fd.feof("repeated-entry-warn", "Line {num}: Repeated entry \"{name}\", overwriting", \
                     num=line_number_debug, name=self.fmt(entry_name)))
             f=open(target_path,'w', encoding="utf-8")
             f.write(entry_content+"\n")
@@ -70,7 +70,7 @@ class DataHandlers:
             os.makedirs(path)
         target_path=path+"/"+filename
         if os.path.isfile(target_path):
-            self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: repeated header info \"{name}\", overwriting", \
+            self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: Repeated header info \"{name}\", overwriting", \
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         f.write(content+'\n')
@@ -79,7 +79,7 @@ class DataHandlers:
             os.makedirs(path)
         target_path=path+"/"+filename
         if os.path.isfile(target_path):
-            self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: repeated header info \"{name}\", overwriting", \
+            self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: Repeated header info \"{name}\", overwriting", \
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
         f=open(target_path,'w', encoding="utf-8")
         for line in content_phrases:
@@ -90,14 +90,14 @@ class DataHandlers:
         # create the parent directory
         try: os.makedirs(parent_path, exist_ok=True)
         except (FileExistsError, NotADirectoryError):
-            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+            self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: Conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
         else:
             full_path=parent_path+"/"+file_path[-1]
             if os.path.isfile(full_path):
-                if line_number_debug!=-1: self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: repeated manpage file, overwriting", num=str(line_number_debug)))
+                if line_number_debug!=-1: self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: Repeated manpage file, overwriting", num=str(line_number_debug)))
             try:
                 # write the compressed and original version of the file
                 open(full_path, "w", encoding="utf-8").write(content)
                 open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
             except IsADirectoryError:
-                self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))
+                self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: Conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))

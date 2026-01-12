@@ -30,11 +30,11 @@
         # 以下定义会是上方定义"{msg}"中的内容
         # The following definitions are the contents of "{msg}" in the above definition
         [entry] |subsection-conflict-err|
-            # default: |Line {num}: cannot create subsection "{name}" because an entry with the same name already exists|
+            # default: |Line {num}: Cannot create subsection "{name}" because an entry with the same name already exists|
             locale[zh_CN]: |第{num}行：无法创建子路径"{name}"，因为拥有相同名称的定义已存在|
         [/entry]
         [entry] |entry-conflict-err|
-            # default: |Line {num}: cannot create entry "{name}" because a subsection with the same name already exists|
+            # default: |Line {num}: Cannot create entry "{name}" because a subsection with the same name already exists|
             locale[zh_CN]: |第{num}行：无法创建定义"{name}"，因为拥有相同名称的子路径已存在|
         [/entry]
         [entry] |extra-arguments-err|
@@ -78,7 +78,7 @@
             locale[zh_CN]: |当前版本的CLItheme（{cur_ver}）不支持此文件（需要 {req_ver} 或更高版本）|
         [/entry]
         [entry] |phrase-precedence-err|
-            # default: |Line {num}: header macro "{phrase}" must be specified before other lines|
+            # default: |Line {num}: Header macro "{phrase}" must be specified before other lines|
             locale[zh_CN]: |第{num}行：头定义"{phrase}"必须在其他行之前声明|
         [/entry]
         # 选项错误提示信息
@@ -128,12 +128,12 @@
             locale[zh_CN]: |第{num}行："{name}"不是一个有效的变量名称|
         [/entry]
         [entry] |manpage-subdir-file-conflict-err|
-            # default: |Line {num}: conflicting files and subdirectories; please check previous definitions|
+            # default: |Line {num}: Conflicting files and subdirectories; please check previous definitions|
             locale[zh_CN]: |第{num}行：子路径和文件有冲突；请检查之前的定义|
         [/entry]
         [entry] |include-file-read-err|
             # [default]
-            #     Line {num}: unable to read file "{filepath}":
+            #     Line {num}: Unable to read file "{filepath}":
             #     {error_msg}
             # [/default]
             [locale] zh_CN
@@ -159,7 +159,7 @@
         # 以下定义会是上方定义"{msg}"中的内容
         # The following definitions are the contents of "{msg}" in the above definition
         [entry] |repeated-entry-warn|
-            # default: |Line {num}: repeated entry "{name}", overwriting|
+            # default: |Line {num}: Repeated entry "{name}", overwriting|
             locale[zh_CN]: |第{num}行：重复的定义"{name}"；之前的定义内容将会被覆盖|
         [/entry]
         [entry] |repeated-substrules-warn|
@@ -167,62 +167,62 @@
             locale[zh_CN]: |第{num}行：重复的substrules定义；之前的定义内容将会被覆盖|
         [/entry]
         [entry] |repeated-header-warn|
-            # default: |Line {num}: repeated header info "{name}", overwriting|
+            # default: |Line {num}: Repeated header info "{name}", overwriting|
             locale[zh_CN]: |第{num}行：重复的header信息"{name}"；之前的定义内容将会被覆盖|
         [/entry]
         [entry] |syntax-phrase-deprecation-warn|
-            # default: |Line {num}: phrase "{old_phrase}" is deprecated in this version; please use "{new_phrase}" instead|
+            # default: |Line {num}: Phrase "{old_phrase}" is deprecated in this version; please use "{new_phrase}" instead|
             locale[zh_CN]: |第{num}行："{old_phrase}"在当前版本中已被弃用；请使用"{new_phrase}"|
         [/entry]
         [entry] |invalid-charcode-warn|
-            # default: |Line {num}: invalid character code "{name}", not performing substitution|
+            # default: |Line {num}: Invalid character code "{name}", not performing substitution|
             locale[zh_CN]: |第{num}行：无效字符代码"{name}"，不会进行替换|
         [/entry]
         [entry] |invalid-substchar-format-warn|
-            # default: |Line {num}: invalid substchar format "{name}", not performing substitution|
+            # default: |Line {num}: Invalid substchar format "{name}", not performing substitution|
             locale[zh_CN]: |第{num}行：无效的substchar格式"{name}"，不会进行替换|
         [/entry]
         [entry] |unknown-variable-warn|
-            # default: |Line {num}: unknown variable "{name}", not performing substitution|
+            # default: |Line {num}: Unknown variable "{name}", not performing substitution|
             locale[zh_CN]: |第{num}行：未知变量名称"{name}"，不会进行替换|
         [/entry]
         [entry] |repeated-manpage-warn|
-            # default: |Line {num}: repeated manpage file, overwriting|
+            # default: |Line {num}: Repeated manpage file, overwriting|
             locale[zh_CN]: |第{num}行：重复的manpage文件；之前的文件内容将会被覆盖|
         [/entry]
         [entry] |set-substvar-warn|
-            # default: |Line {num}: attempted to reference a defined variable, but "substvar" option is not enabled|
+            # default: |Line {num}: Attempted to reference a defined variable, but "substvar" option is not enabled|
             locale[zh_CN]: |第{num}行：尝试引用定义的变量，但"substvar"选项未被启用|
         [/entry]
         [entry] |set-substesc-warn|
             # Must use "{{{{ESC}}}}" to represent "{{ESC}}" in the message
-            # default: |Line {num}: attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled|
+            # default: |Line {num}: Attempted to use "{{{{ESC}}}}", but "substesc" option is not enabled|
             locale[zh_CN]: |第{num}行：尝试引用"{{{{ESC}}}}"，但"substesc"选项未被启用| nosubstesc
         [/entry]
         [entry] |set-substchar-warn|
-            # default: |Line {num}: attempted to use character substitution, but "substchar" option is not enabled|
+            # default: |Line {num}: Attempted to use character substitution, but "substchar" option is not enabled|
             locale[zh_CN]: |第{num}行：尝试使用字符替换，但"substchar"选项未被启用|
         [/entry]
         [entry] |set-linebounds-warn|
-            # default: |Line {num}: attempted to use line boundaries, but "linebounds" option is not enabled|
+            # default: |Line {num}: Attempted to use line boundaries, but "linebounds" option is not enabled|
             locale[zh_CN]: |第{num}行：尝试使用行边界，但"linebounds"选项未被启用|
         [/entry]
         # 路径检查功能提示
         # Sanity check feature messages
         [entry] |sanity-check-entry-err|
-            # default: |Line {num}: entry subsections/names {sanitycheck_msg}|
+            # default: |Line {num}: Entry subsections/names {sanitycheck_msg}|
             locale[zh_CN]: |第{num}行：定义路径名称{sanitycheck_msg}|
         [/entry]
         [entry] |sanity-check-domainapp-err|
-            # default: |Line {num}: domain and app names {sanitycheck_msg}|
+            # default: |Line {num}: Domain and app names {sanitycheck_msg}|
             locale[zh_CN]: |第{num}行：开发者和应用程序名称{sanitycheck_msg}|
         [/entry]
         [entry] |sanity-check-subsection-err|
-            # default: |Line {num}: subsection names {sanitycheck_msg}|
+            # default: |Line {num}: Subsection names {sanitycheck_msg}|
             locale[zh_CN]: |第{num}行：子路径名称{sanitycheck_msg}|
         [/entry]
         [entry] |sanity-check-manpage-err|
-            # default: |Line {num}: manpage paths {sanitycheck_msg}; use spaces to denote subdirectories|
+            # default: |Line {num}: Manpage paths {sanitycheck_msg}; use spaces to denote subdirectories|
             locale[zh_CN]: |第{num}行：manpage路径{sanitycheck_msg}；使用空格以指定子路径|
         [/entry]
         # 以下提示会是上方定义中"{sanitycheck_msg}"的内容

@@ -23,7 +23,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             assert len(this_phrases)==2
             self.in_domainapp=' '.join(this_phrases) # Remove extra spaces
             if _globalvar.sanity_check(self.in_domainapp)==False:
-                self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                self.handle_error(self.fd.feof("sanity-check-domainapp-err", "Line {num}: Domain and app names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 self.in_domainapp=_globalvar.sanitize_str(self.in_domainapp)
             self.in_subsection="" # clear subsection
         elif phrases[0] in ("<in_subsection>", "in_subsection"):
@@ -31,7 +31,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             self.in_subsection=self.parse_content(_globalvar.extract_content(self.get_current_line()), pure_name=True)
             self.in_subsection=' '.join(self.in_subsection.split()) # Remove extra spaces
             if _globalvar.sanity_check(self.in_subsection)==False:
-                self.handle_error(self.fd.feof("sanity-check-subsection-err", "Line {num}: subsection names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
+                self.handle_error(self.fd.feof("sanity-check-subsection-err", "Line {num}: Subsection names {sanitycheck_msg}", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                 self.in_subsection=_globalvar.sanitize_str(self.in_subsection)
         elif phrases[0] in ("<unset_domainapp>", "unset_domainapp"):
             self.check_extra_args(phrases, 1)
@@ -47,7 +47,7 @@ def handle_entries_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             self.handle_end_section("entries")
             # deprecation warning
             if phrases[0]=="end_main":
-                self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="end_main", new_phrase=r"{/entries}"))
+                self.handle_warning(self.fd.feof("syntax-phrase-deprecation-warn", "Line {num}: Phrase \"{old_phrase}\" is deprecated in this version; please use \"{new_phrase}\" instead", num=self.linenum(), old_phrase="end_main", new_phrase=r"{/entries}"))
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: self.handle_unterminated_section("entries")
