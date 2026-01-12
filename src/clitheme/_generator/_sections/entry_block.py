@@ -151,10 +151,15 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 # check if patterns are valid
                 try: re.compile(entry_name.value)
                 except:
-                    self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
+                    if entry_name.line_number not in checked_entries:
+                        self.handle_error(self.fd.feof("bad-match-pattern-err", "Line {num}: Bad match pattern ({error_msg})", num=str(entry_name.line_number), error_msg=self.fmt(str(sys.exc_info()[1]))))
+                        checked_entries.add(entry_name.line_number)
+                    continue
             else:
                 if _globalvar.sanity_check(entry_name.value)==False:
-                    self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: Entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
+                    if entry_name.line_number not in checked_entries:
+                        self.handle_error(self.fd.feof("sanity-check-entry-err", "Line {num}: Entry subsections/names {sanitycheck_msg}", num=entry_name.line_number, sanitycheck_msg=_globalvar.sanity_check_error_message))
+                        checked_entries.add(entry_name.line_number)
                     continue
             if is_substrules:
                 try: 
