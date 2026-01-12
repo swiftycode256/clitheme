@@ -14,7 +14,7 @@ from typing import Optional
 
 def handle_header_section(self: _parser_handlers.GeneratorObject, end_phrase: str):
     self.handle_begin_section("header")
-    name_specified=True
+    name_specified=False
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         last_match: Optional[re.Match]=None
