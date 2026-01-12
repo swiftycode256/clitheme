@@ -137,7 +137,7 @@ def _get_dir_name(hash: bytes, index: int) -> str:
 def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     """
     Sets a local theme definition file for the current frontend instance.
-    When set, the FetchDescriptor functions will try the local definition before falling back to global theme data.
+    When set, the FetchDescriptor functions will fall back to the local definition after trying global theme data.
 
     - Set overlay=True to overlay on top of existing local definition data (if exists)
     
@@ -167,7 +167,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
 def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     """
     Sets multiple local theme definition files for the current frontend instance.
-    When set, the FetchDescriptor functions will try the local definition before falling back to global theme data.
+    When set, the FetchDescriptor functions will fall back to the local definition after trying global theme data.
 
     - Set overlay=True to overlay on top of existing local definition data (if exists)
     
