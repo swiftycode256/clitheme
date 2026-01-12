@@ -19,7 +19,7 @@ from .._generator import db_interface
 from .. import _globalvar, frontend
 from . import _substrules_processor
 from ._handlers._base_template import BaseHandler, command_failed
-from .._globalvar import _direct_exit, make_printable as fmt
+from .._globalvar import direct_exit, make_printable as fmt
 from . import _labeled_print
 
 # spell-checker:ignore pgrp pids
@@ -279,7 +279,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if block_data[4]!=None: handler.set_host_term_attrs(block_data[4])
             # subst operation and print output
             handler.write_output(output, is_stderr=block_data[1])
-        except _direct_exit: break
+        except direct_exit: break
         except: 
             if not thread_exception_handled: handle_exception()
             else: raise # Handle "output read loop terminated expectedly" without re-printing the message

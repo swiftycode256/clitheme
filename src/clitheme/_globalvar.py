@@ -132,7 +132,7 @@ def sanitize_str(path: str) -> str:
 
 ## Convenience functions
 
-class _direct_exit(Exception):
+class direct_exit(Exception):
     def __init__(self, code):
         """
         Custom exception for handling return code inside another function callback

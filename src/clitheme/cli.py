@@ -19,7 +19,7 @@ import io
 import functools
 from . import _globalvar, frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
-from ._globalvar import _direct_exit
+from ._globalvar import direct_exit
 from typing import List, Optional, Tuple
 
 # spell-checker:ignore lsdir inpstr
@@ -43,7 +43,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     """
     if file_contents==None:
         try: file_contents=_get_file_contents(filenames)
-        except _direct_exit as exc: return exc.code
+        except direct_exit as exc: return exc.code
     if len(filenames)==0:
         raise ValueError("Empty filenames array")
     if len(file_contents)!=len(filenames):
@@ -421,7 +421,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             content_list.append(open(path, 'r', encoding="utf-8").read())
             if is_stdin: print() # Print an extra newline
         except KeyboardInterrupt: 
-            print();raise _direct_exit(130)
+            print();raise direct_exit(130)
         except Exception as exc:
             print(line_prefix+ \
                 fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
@@ -429,7 +429,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             _globalvar.handle_exception()
             has_error=True
     print(line_prefix, end='')
-    if has_error: raise _direct_exit(1)
+    if has_error: raise direct_exit(1)
     else: return content_list
 
 def main(cli_args: List[str]):
@@ -449,10 +449,10 @@ def main(cli_args: List[str]):
         for arg in cli_args:
             if not exclude_options or not _is_option(arg): c+=1
         if c<count:
-            raise _direct_exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
+            raise direct_exit(_handle_usage_error(f.reof("not-enough-arguments", "Error: not enough arguments"), arg_first))
     def check_extra_args(count: int):
         if len(cli_args)>count:
-            raise _direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
+            raise direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
 
     try:
         if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
@@ -504,7 +504,7 @@ def main(cli_args: List[str]):
                 _handle_help_message(full_help=True)
             else:
                 return _handle_usage_error(f.feof("unknown-command", "Error: unknown command \"{cmd}\"", cmd=fmt(cli_args[1])), arg_first)
-    except _direct_exit as exc: return exc.code
+    except direct_exit as exc: return exc.code
     return 0
 def _script_main(): # for script
     return main(sys.argv)

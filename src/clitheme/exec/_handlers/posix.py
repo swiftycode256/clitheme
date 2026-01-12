@@ -21,7 +21,7 @@ import copy
 import threading
 from typing import Optional
 from ... import frontend, _globalvar
-from ..._globalvar import _direct_exit
+from ..._globalvar import direct_exit
 from .. import _labeled_print
 from ._base_template import BaseHandler, command_failed
 
@@ -202,7 +202,7 @@ class PosixHandler(BaseHandler):
                 _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
                 # Prevent message being triggered multiple times
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
-                raise _direct_exit(130) # Will be raised in main processing loop
+                raise direct_exit(130) # Will be raised in main processing loop
         elif sig==signal.SIGQUIT:
             if self.process.poll()==None:
                 os.write(self.stdout_fd, b'\x1c') # '^\' character
