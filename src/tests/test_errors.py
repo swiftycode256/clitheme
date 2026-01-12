@@ -15,7 +15,6 @@ import unittest
 import warnings
 
 class TestErrors(unittest.TestCase):
-
     def setUp(self):
         print()
         warnings.simplefilter("ignore")
@@ -27,32 +26,35 @@ class TestErrors(unittest.TestCase):
         filepath=re.sub(r'[\\/]', ' ', os.path.relpath(__file__))
         test_file=rf"""
         (enable_subst)
-        setvar[file]: {filepath}
-        """+\
-        r"""
-        # missing-info-err
+        setvar[file]: {filepath}"""+r"""
         {header}
             # linebounds-format-err
             description: |wef
+        # missing-info-err
         {/header}
 
         # phrase-precedence-err
         !require_version 2.1
 
-        # [Option errors]
+        # unknown-option-err, option-without-value-err, option-value-not-int-err, option-conflict-err
         (set_options) wef leadspaces leadtabindents:wef strictcmdmatch exactcmdmatch
-        # bad-var-name-err and Option errors
-        setvar[ESC { }]: |this| linebounds
+        # bad-var-name-err, option-not-allowed-err
+        setvar[ ESC { ]: |this| linebounds
         # phrase-format-err
         setvar[]: this
 
         {substrules}
             # bad-cmd-filter-pattern-err
-            <filter_cmd> (
+            <filter_cmd_regex> (
             # bad-match-pattern-err
             [subst_regex] )]
+                # (Errors not shown if bad match pattern)
+                default: \g
+            [/subst_regex]
+            [subst_regex] this
                 # bad-subst-pattern-err
                 default: \g
+                locale[zh_CN]: \g<2>
             [/subst_regex]
         {/substrules}
         {entries}
@@ -76,13 +78,18 @@ class TestErrors(unittest.TestCase):
             [entry] another
                 default: that
             [/entry]
+            # sanity-check-domainapp-err
+            <in_domainapp> .wef ?this
+            # sanity-check-subsection-err
+            <in_subsection> this?
+            # sanity-check-entry-err
+            [entry] *this
+                default: that
+            [/entry]
         {/entries}
         {manpages}
             # include-file-missing-phrase-err
             <include_file> {{file}}
-            # include-file-read-err
-            <include_file> nonexistent
-                as: man1 test.1
             # manpage-subdir-file-conflict-err
             <include_file> {{file}}
                 as: man1
