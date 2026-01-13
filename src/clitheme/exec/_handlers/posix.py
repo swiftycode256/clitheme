@@ -107,8 +107,7 @@ class PosixHandler(BaseHandler):
         self.handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
         for sig in self.handle_signals:
             signal.signal(sig, self._signal_handler_function)
-        def window_size_handler(*args): self.update_window_size(*args)
-        signal.signal(signal.SIGWINCH, window_size_handler)
+        signal.signal(signal.SIGWINCH, self.update_window_size)
         
     def read_stdin(self) -> bytes:
         return os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
