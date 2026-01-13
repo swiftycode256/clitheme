@@ -160,6 +160,10 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     checked_entries=set() # Don't show multiple errors for same sub pattern
     for entry_name in entry_names:
         for entry in entry_items:
+            # Displayed line number: (entry name #)>(entry #)[(locale)] (e.g. 64>65[default])
+            line_number_debug=\
+                f"{entry_name.line_number}>{entry.content_line_number}"+\
+                f"[{'default' if entry.locale==None else _globalvar.make_printable(entry.locale)}]"
             if is_substrules:
                 try: 
                     db_interface.add_subst_entry(
@@ -175,9 +179,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                         stdout_stderr_matchoption=substrules_stdout_stderr_option,
                         foreground_only=opt('foregroundonly'),
                         # Displayed line number: (entry name #)>(entry #)[(locale)] (e.g. 64>65[default])
-                        line_number_debug=\
-                            f"{entry_name.line_number}>{entry.content_line_number}"
-                            f"[{'default' if entry.locale==None else _globalvar.make_printable(entry.locale)}]",
+                        line_number_debug=line_number_debug,
                         file_id=self.file_id,
                         unique_id=entry_name.id,
                         warning_handler=self.handle_warning)
@@ -190,4 +192,4 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 if entry.locale!=None: target_entry+="__"+entry.locale
                 if self.in_subsection!="": target_entry=self.in_subsection+" "+target_entry
                 if self.in_domainapp!="": target_entry=self.in_domainapp+" "+target_entry
-                self.add_entry(self.datapath, target_entry, entry.content, entry.content_line_number)
+                self.add_entry(self.datapath, target_entry, entry.content, line_number_debug)
