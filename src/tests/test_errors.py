@@ -21,7 +21,8 @@ class TestErrors(unittest.TestCase):
         warnings.simplefilter("ignore")
         # Ensure localization settings are correct
         _globalvar.handle_set_themedef("test")
-    def _run_test(self, test_file: str, expected_msgs: Dict[str, List[str]]):
+    def _run_test(self, test_file: str, expected_msgs: Dict[str, List[str]]) -> bool:
+        has_errors=False
         for lang, lines in expected_msgs.items():
             frontend.global_lang=lang
             _globalvar.msg_retrieved=False # For sanity check messages
@@ -34,8 +35,9 @@ class TestErrors(unittest.TestCase):
             print('\n'.join(return_val.messages))
             if return_val.messages!=lines:
                 print('\n'+'\n'.join(difflib.ndiff(lines, return_val.messages)))
-                self.fail("Messages not equal")
-    def test_errors(self):
+                has_errors=True
+        return not has_errors
+    def test1_errors(self):
         filepath=re.sub(r'[\\/]', ' ', os.path.relpath(__file__))
         test_file=rf"""
         (enable_subst)
@@ -174,15 +176,59 @@ class TestErrors(unittest.TestCase):
             f"错误：在文件结尾未结束header段落",
             f"错误：文件缺少或包含不完整的header或内容段落",
         ]
-        self._run_test(test_file, expected_msgs)
-
-# Syntax errors:
-# invalid-version-err
-# unterminated-content-block-err
-# unsupported-version-err
-# extra-arguments-err
-# not-enough-args-err
-# invalid-phrase-err
+        result=self._run_test(test_file, expected_msgs)
+        self.failIf(result==False, "Messages not equal")
+    def test2_syntax_errors(self):
+        sc=True
+        # invalid-phrase-err
+        sc=sc and self._run_test(
+            test_file="wef",
+            expected_msgs={
+                'en_US': ["Syntax error: Line 1: Unexpected \"wef\""],
+                'zh_CN': ["语法错误：第1行：无效的\"wef\"语句"]
+            }
+        )
+        # invalid-version-err
+        sc=sc and self._run_test(
+            test_file="!require_version wef",
+            expected_msgs={
+                'en_US': ["Syntax error: Line 1: Invalid version information \"wef\""],
+                'zh_CN': ["语法错误：第1行：无效版本信息\"wef\""]
+            }
+        )
+        # unsupported-version-err
+        sc=sc and self._run_test(
+            test_file="!require_version 123.0",
+            expected_msgs={
+                'en_US': [f"Current version of CLItheme ({_globalvar.clitheme_version}) does not support this file (requires 123.0 or higher)"],
+                'zh_CN': [f"当前版本的CLItheme（{_globalvar.clitheme_version}）不支持此文件（需要 123.0 或更高版本）"]
+            }
+        )
+        # unterminated-content-block-err
+        sc=sc and self._run_test(
+            test_file="{header}\n[description]",
+            expected_msgs={
+                'en_US': ["Syntax error: Line 2: Unterminated content block"],
+                'zh_CN': ["语法错误：第2行：未结束的文本段落"]
+            }
+        )
+        # extra-arguments-err
+        sc=sc and self._run_test(
+            test_file="{header} wef wef",
+            expected_msgs={
+                'en_US': ["Syntax error: Line 1: Extra arguments after \"{header}\""],
+                'zh_CN': ["语法错误：第1行：\"{header}\"后的参数太多"]
+            }
+        )
+        # not-enough-args-err
+        sc=sc and self._run_test(
+            test_file="{entries}\n[entry]",
+            expected_msgs={
+                'en_US': ["Syntax error: Line 2: Not enough arguments for \"[entry]\""],
+                'zh_CN': ["语法错误：第2行：\"[entry]\"后参数不够"]
+            }
+        )
+        self.failIf(not sc, "Message mismatch detected")
 
 if __name__ == "__main__":
     unittest.main()
