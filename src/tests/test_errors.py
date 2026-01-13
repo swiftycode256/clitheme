@@ -307,7 +307,29 @@ class TestErrors(unittest.TestCase):
             f"Warning: Line {next(6)}: Repeated header info \"name\", overwriting",
             f"Warning: Line {next(5)}: Unknown variable \"wef\", not performing substitution",
             f"Warning: Line {next(-1)}: Repeated manpage file, overwriting",
-            f"Syntax error: Line {next(4)}: Unexpected \"end\""
+            f"Syntax error: Line {next(4)}: Unexpected \"end\"",
+        ]
+        c=0
+        expected_msgs['zh_CN']=[
+            f"警告：第{next(5)}行：尝试使用行边界，但\"linebounds\"选项未被启用",
+            f"警告：第{next(0)}行：尝试引用定义的变量，但\"substvar\"选项未被启用",
+            f"警告：第{next(0)}行：尝试引用\"{{{{ESC}}}}\"，但\"substesc\"选项未被启用",
+            f"警告：第{next(0)}行：尝试使用字符替换，但\"substchar\"选项未被启用",
+            f"警告：第{next(4)}行：尝试引用\"{{{{ESC}}}}\"，但\"substesc\"选项未被启用",
+            f"警告：第{next(0)}行：尝试使用字符替换，但\"substchar\"选项未被启用",
+            f"警告：第{next(5)}行：未知变量名称\"nonexistent\"，不会进行替换",
+            f"警告：第{next(0)}行：无效的substchar格式\"invalid\"，不会进行替换",
+            f"警告：第{next(0)}行：无效字符代码\"gg\"，不会进行替换",
+            f"警告：第{next(10)}>{c+1}[default]行：重复的substrules定义；之前的定义内容将会被覆盖",
+            f"警告：第{next(0)}>{c+2}[zh_CN]行：重复的substrules定义；之前的定义内容将会被覆盖",
+            f"警告：第{next(0)}>{c+2}[zh]行：重复的substrules定义；之前的定义内容将会被覆盖",
+            f"警告：第{next(11)}>{c+1}[default]行：重复的定义\"this and that\"；之前的定义内容将会被覆盖",
+            f"警告：第{next(5)}>{c+2}[default]行：重复的定义\"this and that\"；之前的定义内容将会被覆盖",
+            f"警告：第{next(1)}>{c+1}[default]行：重复的定义\"this and that\"；之前的定义内容将会被覆盖",
+            f"警告：第{next(6)}行：重复的header信息\"name\"；之前的定义内容将会被覆盖",
+            f"警告：第{next(5)}行：未知变量名称\"wef\"，不会进行替换",
+            f"警告：第{next(-1)}行：重复的manpage文件；之前的文件内容将会被覆盖",
+            f"语法错误：第{next(4)}行：无效的\"end\"语句",
         ]
         self.assertTrue(self._run_test(test_file, expected_msgs), "Messages do not match")
 
