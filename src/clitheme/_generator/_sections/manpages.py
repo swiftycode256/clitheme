@@ -9,7 +9,7 @@ substrules_section parser function (internal module)
 """
 import os
 import sys
-from typing import List
+from typing import List, Tuple
 from ... import _globalvar
 from .. import _parser_handlers
 
@@ -40,14 +40,14 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
                 return filecontent
             finally: sys.stdout=orig_stdout
         if phrases[0]=="[file_content]":
-            def handle(p: List[str]) -> List[str]:
+            def handle(p: List[str]) -> Tuple[List[str], int]:
                 self.check_enough_args(p, 2)
                 filepath=self.parse_content(' '.join(p[1:]), pure_name=True).split()
                 # sanity check the file path
                 if _globalvar.sanity_check(' '.join(filepath))==False:
                     self.handle_error(self.fd.feof("sanity-check-manpage-err", "Line {num}: Manpage paths {sanitycheck_msg}; use spaces to denote subdirectories", num=self.linenum(), sanitycheck_msg=_globalvar.sanity_check_error_message))
                     filepath=[_globalvar.sanitize_str(p) for p in filepath]
-                return filepath
+                return (filepath, self.linenum())
             file_paths=[handle(phrases)]
             # handle additional [file_content] phrases
             prev_line_index=self.lineindex
@@ -60,8 +60,8 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
                     self.lineindex=prev_line_index
                     break
             content=self.handle_block_input(preserve_indents=True, preserve_empty_lines=True, end_phrase="[/file_content]")
-            for filepath in file_paths:
-                self.write_manpage_file(filepath, content, self.linenum())
+            for filepath, line_number in file_paths:
+                self.write_manpage_file(filepath, content, line_number)
         elif phrases[0] in ("<include_file>", "include_file"):
             self.check_enough_args(phrases, 2)
             filepath=self.parse_content(' '.join(phrases[1:]), pure_name=True).split()
