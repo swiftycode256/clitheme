@@ -21,7 +21,6 @@ connection=sqlite3.connect(":memory:") # placeholder
 __db_path__=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
 db_path=__db_path__
 debug_mode=False
-fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
 
 class need_db_regenerate(Exception): pass
 class bad_pattern(Exception): pass
@@ -95,6 +94,7 @@ def add_subst_entry(
     line_number_debug: str,
     warning_handler: Callable[[str], None],
 ):
+    fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
     cmdlist: List[Optional[str]]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
