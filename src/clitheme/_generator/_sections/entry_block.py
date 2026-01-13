@@ -178,11 +178,12 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                         end_match_here=opt('endmatchhere'),
                         stdout_stderr_matchoption=substrules_stdout_stderr_option,
                         foreground_only=opt('foregroundonly'),
-                        # Displayed line number: (entry name #)>(entry #)[(locale)] (e.g. 64>65[default])
                         line_number_debug=line_number_debug,
                         file_id=self.file_id,
                         unique_id=entry_name.id,
-                        warning_handler=self.handle_warning)
+                        warning_handler=self.handle_warning,
+                        warning_handler_fd=self.fd
+                    )
                 except db_interface.bad_pattern:
                     if entry.content_line_number not in checked_entries:
                         self.handle_error(self.fd.feof("bad-subst-pattern-err", "Line {num}: Bad substitute pattern ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
