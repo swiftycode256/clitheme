@@ -136,10 +136,10 @@ class TestErrors(unittest.TestCase):
             f"Error: Line {next(2)}: Invalid format for \"locale\"",
             f"Error: Line {next(6)}: Bad substitute pattern (missing < at position 2)",
             f"Error: Line {next(1)}: Bad substitute pattern (invalid group reference 2 at position 3)",
-            f"Error: Line {next(10)}: Cannot create subsection \"this\" because an entry with the same name already exists",
-            f"Error: Line {next(3)}: Cannot create subsection \"this\" because an entry with the same name already exists",
-            f"Error: Line {next(9)}: Cannot create entry \"another\" because a subsection with the same name already exists",
-            f"Error: Line {next(3)}: Domain and app names cannot start with '.'",
+            f"Error: Line {next(9)}>{c+1}[default]: Cannot create subsection \"this\" because an entry with the same name already exists",
+            f"Error: Line {next(3)}>{c+1}[default]: Cannot create subsection \"this\" because an entry with the same name already exists",
+            f"Error: Line {next(9)}>{c+1}[default]: Cannot create entry \"another\" because a subsection with the same name already exists",
+            f"Error: Line {next(4)}: Domain and app names cannot start with '.'",
             f"Error: Line {next(2)}: Subsection names cannot contain '?'",
             f"Error: Line {next(2)}: Entry subsections/names cannot contain '*'",
             f"Error: Line {next(7)}: Missing \"as <filename>\" phrase on next line",
@@ -165,10 +165,10 @@ class TestErrors(unittest.TestCase):
             f"错误：第{next(2)}行：无效的\"locale\"格式",
             f"错误：第{next(6)}行：无效的替换正则表达式（missing < at position 2）",
             f"错误：第{next(1)}行：无效的替换正则表达式（invalid group reference 2 at position 3）",
-            f"错误：第{next(10)}行：无法创建子路径\"this\"，因为拥有相同名称的定义已存在",
-            f"错误：第{next(3)}行：无法创建子路径\"this\"，因为拥有相同名称的定义已存在",
-            f"错误：第{next(9)}行：无法创建定义\"another\"，因为拥有相同名称的子路径已存在",
-            f"错误：第{next(3)}行：开发者和应用程序名称不能以'.'开头",
+            f"错误：第{next(9)}>{c+1}[default]行：无法创建子路径\"this\"，因为拥有相同名称的定义已存在",
+            f"错误：第{next(3)}>{c+1}[default]行：无法创建子路径\"this\"，因为拥有相同名称的定义已存在",
+            f"错误：第{next(9)}>{c+1}[default]行：无法创建定义\"another\"，因为拥有相同名称的子路径已存在",
+            f"错误：第{next(4)}行：开发者和应用程序名称不能以'.'开头",
             f"错误：第{next(2)}行：子路径名称不能包含'?'",
             f"错误：第{next(2)}行：定义路径名称不能包含'*'",
             f"错误：第{next(7)}行：在下一行缺少\"as <文件名>\"语句",
@@ -176,8 +176,7 @@ class TestErrors(unittest.TestCase):
             f"错误：在文件结尾未结束header段落",
             f"错误：文件缺少或包含不完整的header或内容段落",
         ]
-        result=self._run_test(test_file, expected_msgs)
-        self.failIf(result==False, "Messages not equal")
+        self.assertTrue(self._run_test(test_file, expected_msgs), "Messages do not match")
     def test2_syntax_errors(self):
         sc=True
         # invalid-phrase-err
@@ -228,7 +227,89 @@ class TestErrors(unittest.TestCase):
                 'zh_CN': ["语法错误：第2行：\"[entry]\"后参数不够"]
             }
         )
-        self.failIf(not sc, "Message mismatch detected")
+        self.assertTrue(sc, "Message mismatch detected")
+    def test3_warnings(self):
+        test_file=r"""
+        {substrules}
+            # Test "Option not enabled" warnings
+            setvar[_var]: {{[invalid]}} {{ESC}} 
+            [subst_string] |{{ESC}} {{[x1b]}} {{_var}}|
+                default: None
+            [/subst_string]
+            (set_options) substvar linebounds
+            [subst_string] |{{_var}}|
+                default: None
+            [/subst_string]
+            # Test subst warnings
+            (enable_subst)
+            [subst_string] |{{_var}} {{[xgg]}} {{nonexistent}}|
+                default: None
+            [/subst_string]
+
+            # testing repeated entry detection
+            setvar[shell shell2]: (?P<shell>.+)
+            [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
+                locale[default zh_CN zh]: (Error: Repeated entry detection failed)
+            [/subst_regex]
+            # {{shell}} should equal to {{shell2}} 
+            [subst_regex] {{shell2}}: unrecognized option '(?P<opt>.+)'
+                default: \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
+                locale[zh_CN zh]: \g<shell> 说：未知选项"\g<opt>"！(ToT)/~~~
+            [/subst_regex]
+        {/substrules}
+        # Test repeated entries detection
+        {entries}
+            [entry] this and that
+                default: that
+            [/entry]
+            <in_domainapp> this and
+            [entry] that
+                default: that
+            [/entry]
+            <unset_domainapp>
+            <in_subsection> this and
+            [entry] that
+            [entry] that
+                default: that
+            [/entry]
+        {/entries}
+        {header}
+            name: This
+            name: That
+        {/header}
+        {manpages}
+            [file_content] man1 this.1
+            [file_content] man1 this.1
+                {{wef}}
+            [/file_content] substvar
+        {/manpages}
+        end
+        """
+        c=0
+        def next(n: int): nonlocal c; c+=n; return c
+        expected_msgs={}
+        expected_msgs['en_US']=[
+            f"Warning: Line {next(5)}: Attempted to use line boundaries, but \"linebounds\" option is not enabled",
+            f"Warning: Line {next(0)}: Attempted to reference a defined variable, but \"substvar\" option is not enabled",
+            f"Warning: Line {next(0)}: Attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled",
+            f"Warning: Line {next(0)}: Attempted to use character substitution, but \"substchar\" option is not enabled",
+            f"Warning: Line {next(4)}: Attempted to use \"{{{{ESC}}}}\", but \"substesc\" option is not enabled",
+            f"Warning: Line {next(0)}: Attempted to use character substitution, but \"substchar\" option is not enabled",
+            f"Warning: Line {next(5)}: Unknown variable \"nonexistent\", not performing substitution",
+            f"Warning: Line {next(0)}: Invalid substchar format \"invalid\", not performing substitution",
+            f"Warning: Line {next(0)}: Invalid character code \"gg\", not performing substitution",
+            f"Warning: Line {next(10)}>{c+1}[default]: Repeated substrules entry, overwriting",
+            f"Warning: Line {next(0)}>{c+2}[zh_CN]: Repeated substrules entry, overwriting",
+            f"Warning: Line {next(0)}>{c+2}[zh]: Repeated substrules entry, overwriting",
+            f"Warning: Line {next(11)}>{c+1}[default]: Repeated entry \"this and that\", overwriting",
+            f"Warning: Line {next(5)}>{c+2}[default]: Repeated entry \"this and that\", overwriting",
+            f"Warning: Line {next(1)}>{c+1}[default]: Repeated entry \"this and that\", overwriting",
+            f"Warning: Line {next(6)}: Repeated header info \"name\", overwriting",
+            f"Warning: Line {next(5)}: Unknown variable \"wef\", not performing substitution",
+            f"Warning: Line {next(-1)}: Repeated manpage file, overwriting",
+            f"Syntax error: Line {next(4)}: Unexpected \"end\""
+        ]
+        self.assertTrue(self._run_test(test_file, expected_msgs), "Messages do not match")
 
 if __name__ == "__main__":
     unittest.main()

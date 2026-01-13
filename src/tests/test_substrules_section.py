@@ -71,21 +71,6 @@ substrules_file=r"""
     name: test
 {/header}
 {substrules}
-    # Test "Option not enabled" warnings
-    setvar[_var]: {{[invalid]}} {{ESC}} 
-    [subst_string] |{{ESC}} {{[x1b]}} {{_var}}|
-        default: None
-    [/subst_string]
-    (set_options) substvar linebounds
-    [subst_string] |{{_var}}|
-        default: None
-    [/subst_string]
-    # Test subst warnings
-    (enable_subst)
-    [subst_string] |{{_var}} {{nonexistent}}|
-        default: None
-    [/subst_string]
-    (disable_subst)
     <filter_cmd> rm
         # Single line pattern should not match multiple lines
         [subst_regex] rm: missing operand\r\ntype rm --help for more information
@@ -124,10 +109,6 @@ substrules_file=r"""
     # test substvar
     (set_options) substvar
     <filter_cmd> ls
-        # testing repeated entry detection
-        [subst_regex] {{shell}}: unrecognized option '(?P<opt>.+)'
-            locale[default zh_CN zh]: (Error: Repeated entry detection failed)
-        [/subst_regex]
         # {{shell}} should equal to {{shell2}} 
         [subst_regex] {{shell2}}: unrecognized option '(?P<opt>.+)'
             default: \g<shell> says: option "\g<opt>" not known! (ToT)/~~~
