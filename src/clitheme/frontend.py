@@ -226,14 +226,14 @@ class FetchDescriptor():
         else:
             self.domain_name=domain_name.strip()
         if len(self.domain_name.split())>1:
-            raise SyntaxError("Only one phrase is allowed for domain_name")
+            raise ValueError("Only one phrase is allowed for domain_name")
 
         if app_name==None:
             self.app_name: str=_get_setting("appname").strip() #type:ignore
         else:
             self.app_name=app_name.strip()
         if len(self.app_name.split())>1:
-            raise SyntaxError("Only one phrase is allowed for app_name")
+            raise ValueError("Only one phrase is allowed for app_name")
 
         if subsections==None:
             self.subsections: str=_get_setting("subsections").strip() #type:ignore
@@ -258,7 +258,7 @@ class FetchDescriptor():
 
         # sanity check the domain, app, and subsections
         if _globalvar.sanity_check(self.domain_name+"_"+self.app_name+"_"+self.subsections, use_orig=True)==False:
-            raise SyntaxError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
+            raise ValueError("Domain, app, or subsection names {}".format(_globalvar.sanity_check_error_message))
     def retrieve_entry_or_fallback(self, entry_path: str, fallback_string: str) -> str:
         """
         Attempt to retrieve the entry based on given entry path. 
@@ -268,9 +268,9 @@ class FetchDescriptor():
 
         # Sanity check the path
         if entry_path.strip()=="":
-            raise SyntaxError("Empty entry name")
+            raise ValueError("Empty entry name")
         if _globalvar.sanity_check(entry_path, use_orig=True)==False:
-            raise SyntaxError("Entry names and subsections {}".format(_globalvar.sanity_check_error_message))
+            raise ValueError("Entry names and subsections {}".format(_globalvar.sanity_check_error_message))
         lang=[]
         # Language handling: see https://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables for more information
         if not self.disable_lang:
