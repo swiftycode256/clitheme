@@ -38,21 +38,23 @@ _local_settings: Dict[str, Dict[str, Union[None,str,bool]]]={}
 for name in _setting_defs.keys():
     _local_settings[name]={}
 
-def _get_caller() -> str:
-    assert len(inspect.stack())>=4, "Cannot determine filename from call stack"
+def _get_caller(outer_level=3) -> str:
+    stack=inspect.stack()
+    assert len(stack)>=outer_level+1, "Cannot determine filename from call stack"
     # inspect.stack(): [0: this function, 1: update/get settings, 2: function in frontend module, 3: target calling function]
-    filename=inspect.stack()[3].filename
+    filename=stack[outer_level].filename
     # Find the first function in the stack OUTSIDE of frontend module
     # (The stack[3] may also be some function in frontend)
-    for s in inspect.stack()[3:]:
-        filename=s.filename
+    for x in range(outer_level,len(stack)):
+        filename=stack[x].filename
         if filename!=__file__: break
     return filename
 
 def _update_local_settings(key: str, value: Union[None,str,bool]):
-    _local_settings[key][_get_caller()]=value
-    if _get_setting("debugmode", _get_caller())==True:
-        print(f"[Debug] Set {key}={value} for file \"{_get_caller()}\"")
+    caller=_get_caller()
+    _local_settings[key][caller]=value
+    if _get_setting("debugmode", caller)==True:
+        print(f"[Debug] Set {key}={value} for file \"{caller}\"")
         
 
 _desc=\
@@ -221,38 +223,40 @@ class FetchDescriptor():
         """
         # Leave domain and app names blank for global reference
 
+        # stack: [0: get caller, 1: this function, 2: outer function]
+        caller=_get_caller(outer_level=2)
         if domain_name==None:
-            self.domain_name: str=_get_setting("domain").strip() #type:ignore
+            self.domain_name: str=_get_setting("domain", caller).strip() #type:ignore
         else:
             self.domain_name=domain_name.strip()
         if len(self.domain_name.split())>1:
             raise ValueError("Only one phrase is allowed for domain_name")
 
         if app_name==None:
-            self.app_name: str=_get_setting("appname").strip() #type:ignore
+            self.app_name: str=_get_setting("appname", caller).strip() #type:ignore
         else:
             self.app_name=app_name.strip()
         if len(self.app_name.split())>1:
             raise ValueError("Only one phrase is allowed for app_name")
 
         if subsections==None:
-            self.subsections: str=_get_setting("subsections").strip() #type:ignore
+            self.subsections: str=_get_setting("subsections", caller).strip() #type:ignore
         else:
             self.subsections=subsections.strip()
         self.subsections=re.sub(" {2,}", " ", self.subsections)
 
         if lang==None:
-            self.lang=_get_setting("lang").strip() #type:ignore
+            self.lang=_get_setting("lang", caller).strip() #type:ignore
         else:
             self.lang=lang.strip()
         
         if debug_mode==None:
-            self.debug_mode: bool=_get_setting("debugmode") #type:ignore
+            self.debug_mode: bool=_get_setting("debugmode", caller) #type:ignore
         else:
             self.debug_mode=debug_mode
 
         if disable_lang==None:
-            self.disable_lang: bool=_get_setting("disablelang") #type:ignore
+            self.disable_lang: bool=_get_setting("disablelang", caller) #type:ignore
         else:
             self.disable_lang=disable_lang
 
