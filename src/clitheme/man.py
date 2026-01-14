@@ -16,7 +16,7 @@ import subprocess
 import shutil
 import signal
 import time
-from . import _globalvar, frontend
+from . import _globalvar, _frontend_internal as frontend
 from typing import List
 def _labeled_print(msg: str):
     print("[clitheme-man] "+msg)

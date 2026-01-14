@@ -20,7 +20,7 @@ import struct
 import copy
 import threading
 from typing import Optional
-from ... import frontend, _globalvar
+from ... import _frontend_internal as frontend, _globalvar
 from ..._globalvar import direct_exit
 from .. import _labeled_print
 from ._base_template import BaseHandler, command_failed

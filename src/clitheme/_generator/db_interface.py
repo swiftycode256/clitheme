@@ -15,7 +15,7 @@ import re
 import uuid
 import gc
 from typing import Optional, List, Dict, NamedTuple, Callable
-from .. import _globalvar, frontend
+from .. import _globalvar, _frontend_internal as frontend
 
 connection=sqlite3.connect(":memory:") # placeholder
 __db_path__=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"

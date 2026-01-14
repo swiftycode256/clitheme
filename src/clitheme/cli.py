@@ -17,7 +17,7 @@ import shutil
 import re
 import io
 import functools
-from . import _globalvar, frontend
+from . import _globalvar, _frontend_internal as frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
 from ._globalvar import direct_exit
 from typing import List, Optional, Tuple

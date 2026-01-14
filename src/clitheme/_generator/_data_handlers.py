@@ -10,12 +10,10 @@ Functions for data processing and error handling (internal module)
 import os
 import gzip
 from typing import Optional, List
-from .. import _globalvar, frontend
+from .. import _globalvar, _frontend_internal as frontend
 from . import syntax_error
 
 class DataHandlers:
-    frontend=frontend
-
     def __init__(self, path: str):
         self.path=path
         self.success=True
@@ -23,7 +21,7 @@ class DataHandlers:
         if not os.path.exists(self.path): os.mkdir(self.path)
         self.datapath=self.path+"/"+_globalvar.generator_data_pathname
         if not os.path.exists(self.datapath): os.mkdir(self.datapath)
-        self.fd=self.frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
+        self.fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="generator")
         self.fmt=_globalvar.make_printable # alias for the make_printable function
     def handle_error(self, message: str):
         output=self.fd.feof("error-prefix", "Error: {msg}", msg=message)

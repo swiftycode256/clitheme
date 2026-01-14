@@ -17,7 +17,7 @@ def _labeled_print(msg: str):
     for line in msg.splitlines():
         print("[clitheme-exec] "+line)
 
-from .. import _globalvar, cli, frontend
+from .. import _globalvar, cli, _frontend_internal as frontend
 from .._globalvar import make_printable as fmt
 from .._generator import db_interface
 from . import _output_handler

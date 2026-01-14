@@ -11,7 +11,7 @@ import re
 import difflib
 from typing import Optional, Dict, List
 sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
-from clitheme import _generator, frontend, _globalvar
+from clitheme import _generator, _frontend_internal, _globalvar
 import unittest
 import warnings
 
@@ -24,7 +24,7 @@ class TestErrors(unittest.TestCase):
     def _run_test(self, test_file: str, expected_msgs: Dict[str, List[str]]) -> bool:
         has_errors=False
         for lang, lines in expected_msgs.items():
-            frontend.global_lang=lang
+            _frontend_internal.global_lang=lang
             _globalvar.msg_retrieved=False # For sanity check messages
             return_val=_generator.generate_data_hierarchy(test_file)
             generator_path=return_val.dir_path

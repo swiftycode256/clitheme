@@ -16,7 +16,7 @@ import threading
 import queue
 from typing import Optional, List, Set
 from .._generator import db_interface
-from .. import _globalvar, frontend
+from .. import _globalvar, _frontend_internal as frontend
 from . import _substrules_processor
 from ._handlers._base_template import BaseHandler, command_failed
 from .._globalvar import direct_exit, make_printable as fmt
