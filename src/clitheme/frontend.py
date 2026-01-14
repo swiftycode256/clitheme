@@ -105,8 +105,9 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
     if not os.path.exists(path_name):
         from . import _generator
         _generator.generate_custom_path() # prepare _generator.path
-        if _alt_path_dirname!=None and overlay==True: # overlay
+        if overlay==True and _alt_path_dirname!=None:
             shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
+        else: _alt_info_index=1
         d_copy=global_debugmode
         for x in range(len(file_contents)):
             file_content=file_contents[x]
@@ -145,7 +146,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     
     This function returns True if successful, otherwise returns False.
     """
-    global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index, global_debugmode
+    global _alt_path, _alt_path_hash, _alt_path_dirname, _alt_info_index
     h=hashlib.sha1(bytes(file_content, "utf-8")).digest()
     # File hash generation
     # if overlay, update hash with new contents of file
@@ -153,7 +154,7 @@ def set_local_themedef(file_content: str, overlay: bool=False) -> bool:
     if new_path_hash!=None and overlay==True:
         new_path_hash+=h # append
     else: new_path_hash=h # override
-    dir_name=_get_dir_name(new_path_hash, _alt_info_index)
+    dir_name=_get_dir_name(new_path_hash, _alt_info_index if overlay else 1)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
 
     if not _generate_data([file_content], path_name, overlay): return False
@@ -183,7 +184,7 @@ def set_local_themedefs(file_contents: List[str], overlay: bool=False):
     path_hash: bytes=_alt_path_hash if overlay and _alt_path_hash!=None else b""
     for file_content in file_contents:
         path_hash+=hashlib.sha1(bytes(file_content, 'utf-8')).digest()
-    dir_name=_get_dir_name(path_hash, _alt_info_index+len(file_contents)-1)
+    dir_name=_get_dir_name(path_hash, (_alt_info_index if overlay else 1)+len(file_contents)-1)
     path_name=_globalvar.clitheme_temp_root+"/"+dir_name
 
     if not _generate_data(file_contents, path_name, overlay): return False
