@@ -312,12 +312,11 @@ class FetchDescriptor():
         for p in possible_paths:
             if self.debug_mode: print("Trying "+p, end=" ...")
             try:
-                f=open(p,'r', encoding="utf-8")
                 # since the generator adds an extra newline in the entry data, we need to remove it
-                dat=re.sub(r"\n\Z", "", f.read())
+                dat=re.sub(r"\n\Z", "", _globalvar.read_file(p))
                 if self.debug_mode: print("Success:\n> "+dat)
                 return dat
-            except (FileNotFoundError, IsADirectoryError):
+            except:
                 if self.debug_mode: print("Failed")
         return fallback_string
     

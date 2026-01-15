@@ -61,8 +61,7 @@ class DataHandlers:
             if os.path.isfile(target_path):
                 self.handle_warning(self.fd.feof("repeated-entry-warn", "Line {num}: Repeated entry \"{name}\", overwriting", \
                     num=line_number_debug, name=self.fmt(entry_name)))
-            f=open(target_path,'w', encoding="utf-8")
-            f.write(entry_content+"\n")
+            _globalvar.write_file(target_path, entry_content+"\n")
     def write_infofile(self, path: str, filename: str, content: str, line_number_debug: int, header_name_debug: str):
         if not os.path.isdir(path):
             os.makedirs(path)
@@ -70,8 +69,7 @@ class DataHandlers:
         if os.path.isfile(target_path):
             self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: Repeated header info \"{name}\", overwriting", \
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
-        f=open(target_path,'w', encoding="utf-8")
-        f.write(content+'\n')
+        _globalvar.write_file(target_path, content+"\n")
     def write_infofile_newlines(self, path: str, filename: str, content_phrases: List[str], line_number_debug: int, header_name_debug: str):
         if not os.path.isdir(path):
             os.makedirs(path)
@@ -79,9 +77,10 @@ class DataHandlers:
         if os.path.isfile(target_path):
             self.handle_warning(self.fd.feof("repeated-header-warn", "Line {num}: Repeated header info \"{name}\", overwriting", \
                 num=str(line_number_debug), name=self.fmt(header_name_debug)))
-        f=open(target_path,'w', encoding="utf-8")
+        content=""
         for line in content_phrases:
-            f.write(line+"\n")
+            content+=line+"\n"
+        _globalvar.write_file(target_path, content)
     def write_manpage_file(self, file_path: List[str], content: str, line_number_debug: int, custom_parent_path: Optional[str]=None):
         parent_path=custom_parent_path if custom_parent_path!=None else self.path+"/"+_globalvar.generator_manpage_pathname
         parent_path+='/'+os.path.dirname(' '.join(file_path).replace(" ","/"))
@@ -95,7 +94,7 @@ class DataHandlers:
                 if line_number_debug!=-1: self.handle_warning(self.fd.feof("repeated-manpage-warn","Line {num}: Repeated manpage file, overwriting", num=str(line_number_debug)))
             try:
                 # write the compressed and original version of the file
-                open(full_path, "w", encoding="utf-8").write(content)
-                open(full_path+".gz", "wb").write(gzip.compress(bytes(content, "utf-8")))
+                _globalvar.write_file(full_path, content)
+                _globalvar.write_file(f"{full_path}.gz", gzip.compress(bytes(content, "utf-8")))
             except IsADirectoryError:
                 self.handle_error(self.fd.feof("manpage-subdir-file-conflict-err", "Line {num}: Conflicting files and subdirectories; please check previous definitions", num=str(line_number_debug)))

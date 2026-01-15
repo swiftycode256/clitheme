@@ -22,8 +22,8 @@ class TestEntriesSection(unittest.TestCase):
     def setUp(self):
         print()
         warnings.simplefilter("ignore")
-        self.mainfile_data=open(os.path.dirname(__file__)+"/entries_test_data/mainfile.ctdef.txt",'r', encoding="utf-8").read()
-        self.expected_data=open(os.path.dirname(__file__)+"/entries_test_data/expected.txt",'r', encoding="utf-8").read()
+        self.mainfile_data=_globalvar.read_file(os.path.dirname(__file__)+"/entries_test_data/mainfile.ctdef.txt")
+        self.expected_data=_globalvar.read_file(os.path.dirname(__file__)+"/entries_test_data/expected.txt")
         self.return_val=_generator.generate_data_hierarchy(self.mainfile_data)
         self.generator_path=self.return_val.dir_path
         global show_warnings
@@ -46,7 +46,7 @@ class TestEntriesSection(unittest.TestCase):
                 # read the file
                 contents=""
                 try:
-                    contents=open(self.rootpath+"/"+current_path, 'r', encoding="utf-8").read()
+                    contents=_globalvar.read_file(self.rootpath+"/"+current_path)
                     # print("File "+self.rootpath+"/"+current_path+" OK")
                 except FileNotFoundError:
                     print("[File] file "+self.rootpath+"/"+current_path+" does not exist")
@@ -62,7 +62,7 @@ class TestEntriesSection(unittest.TestCase):
         frontend.set_debugmode(True)
         frontend.set_lang("en_US.UTF-8")
         frontend.data_path=self.rootpath
-        expected_data_frontend=open(os.path.dirname(__file__)+"/entries_test_data/expected-frontend.txt", 'r', encoding="utf-8").read()
+        expected_data_frontend=_globalvar.read_file(os.path.dirname(__file__)+"/entries_test_data/expected-frontend.txt")
         current_path_frontend=""
         errorcount_frontend=0
         for line in expected_data_frontend.splitlines():

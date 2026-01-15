@@ -20,7 +20,7 @@ import uuid
 import hashlib
 from copy import copy
 from . import _version
-from typing import List
+from typing import List, Union
 
 # spell-checker:ignore lsdir
 
@@ -148,6 +148,16 @@ def extract_content(line_content: str, begin_phrase_count: int=1) -> str:
     results=re.match(r"^(?:\s*.+?\s+){"+str(begin_phrase_count)+r"}(?P<content>.+)", line_content.strip())
     if results==None: raise ValueError("Match content failed (no matches)")
     else: return results.groupdict()['content']
+def read_file(filename: str) -> str:
+    with open(filename, 'r', encoding='utf-8') as file:
+        return file.read()
+def write_file(filename: str, contents: Union[str, bytes]):
+    if type(contents)==str:
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(contents)
+    elif type(contents)==bytes:
+        with open(filename, 'wb') as file:
+            file.write(contents)
 def list_directory(dirname: str):
     lsdir_result=os.listdir(dirname)
     final_result=[]
@@ -238,7 +248,7 @@ def handle_set_themedef(debug_name: str): # type: ignore
     orig_stdout=sys.stdout
     try:
         files=["strings/generator-strings.ctdef.txt", "strings/cli-strings.ctdef.txt", "strings/exec-strings.ctdef.txt", "strings/man-strings.ctdef.txt"]
-        file_contents=list(map(lambda name: open(f"{os.path.dirname(__file__)}/{name}", encoding='utf-8').read(), files))
+        file_contents=list(map(lambda name: read_file(f"{os.path.dirname(__file__)}/{name}"), files))
         msg=io.StringIO()
         sys.stdout=msg
         frontend.set_debugmode(True)

@@ -29,7 +29,7 @@ def handle_manpage_section(self: _parser_handlers.GeneratorObject, end_phrase: s
             sys.stdout=sys.__stdout__
             is_stdin=_globalvar.handle_stdin_prompt(file_dir)
             filecontent: str
-            try: filecontent=open(file_dir, 'r', encoding="utf-8").read()
+            try: filecontent=_globalvar.read_file(file_dir)
             except:
                 self.handle_error(self.fd.feof("include-file-read-err", "Line {num}: Unable to read file \"{filepath}\":\n{error_msg}", num=self.linenum(), filepath=self.fmt(file_dir), error_msg=self.fmt(str(sys.exc_info()[1]))))
                 return ""

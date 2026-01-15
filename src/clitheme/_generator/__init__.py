@@ -49,8 +49,7 @@ def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_info
     # record *full* file path for update-themes feature
     self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, _globalvar.generator_info_filename.format(info="filepath"), os.path.abspath(filename), self.linenum(), "<filepath>")
     # Update current theme index
-    theme_index=open(self.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, 'w', encoding="utf-8")
-    theme_index.write(self.custom_infofile_name+"\n")
+    _globalvar.write_file(self.path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename, self.custom_infofile_name+"\n")
     path=self.path
 
     try:

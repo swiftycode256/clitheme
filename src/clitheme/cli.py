@@ -80,7 +80,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
                 "Error: no theme set or the current data is corrupt\nTry setting a theme first"))
             return 1
         # Get current index
-        try: index=int(open(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename,'r', encoding="utf-8").read().strip())+1
+        try: index=int(_globalvar.read_file(_globalvar.clitheme_root_data_path+"/"+_globalvar.generator_info_pathname+"/"+_globalvar.generator_index_filename).strip())+1
         except ValueError:
             print(f.reof("overlay-data-error", \
                 "Error: the current data is corrupt\nRemove the current theme, set the theme, and try again"))
@@ -209,49 +209,49 @@ def show_info(name: bool=False, file_path=False):
         if minimal_info==False or (minimal_info==True and name==True):
             theme_name="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="name")):
-                theme_name=open(target_path+"/"+_globalvar.generator_info_filename.format(info="name"), 'r', encoding="utf-8").read().strip()
+                theme_name=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="name")).strip()
             print("[{}]: {}".format(os.path.basename(target_path), fmt(theme_name)))
         if minimal_info==True and file_path==True:
             theme_filepath="(Unknown)"
             if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")):
-                theme_filepath=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), 'r', encoding="utf-8").read().strip()
+                theme_filepath=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")).strip()
             print(fmt(theme_filepath))
         if minimal_info==True: continue # --Stop here if either parameters are specified--
         # version
         version="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="version")):
-            version=open(target_path+"/"+_globalvar.generator_info_filename.format(info="version"), 'r', encoding="utf-8").read().strip()
+            version=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="version")).strip()
             print(f.feof("version-str", "Version: {ver}", ver=fmt(version)))
         # description
         description="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="description")):
-            description=open(target_path+"/"+_globalvar.generator_info_filename.format(info="description"), 'r', encoding="utf-8").read()
+            description=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="description"))
             print(f.reof("description-str", "Description:"))
             print(re.sub(r"\n\Z", "", fmt(description))) # remove the extra newline added by _generator
         # locales
         locales="(Unknown)"
         # version 2: items are separated by newlines instead of spaces
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_v2filename.format(info="locales")):
-            locales=open(target_path+"/"+_globalvar.generator_info_v2filename.format(info="locales"), 'r', encoding="utf-8").read().strip()
+            locales=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_v2filename.format(info="locales")).strip()
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.splitlines():
                 if locale.strip()!="":
                     print(f.feof("list-item", "• {content}", content=fmt(locale.strip())))
         elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="locales")):
-            locales=open(target_path+"/"+_globalvar.generator_info_filename.format(info="locales"), 'r', encoding="utf-8").read().strip()
+            locales=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="locales")).strip()
             print(f.reof("locales-str", "Supported locales:"))
             for locale in locales.split():
                 print(f.feof("list-item", "• {content}", content=fmt(locale.strip())))
         # supported_apps
         supported_apps="(Unknown)"
         if os.path.isfile(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps")):
-            supported_apps=open(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps"), 'r', encoding="utf-8").read().strip()
+            supported_apps=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_v2filename.format(info="supported_apps")).strip()
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.splitlines():
                 if app.strip()!="":
                     print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
         elif os.path.isfile(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps")):
-            supported_apps=open(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps"), 'r', encoding="utf-8").read().strip()
+            supported_apps=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="supported_apps")).strip()
             print(f.reof("supported-apps-str", "Supported apps:"))
             for app in supported_apps.split():
                 print(f.feof("list-item", "• {content}", content=fmt(app.strip())))
@@ -292,10 +292,10 @@ def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Option
         got_path: str
         try:
             if get_filepath:
-                got_path=open(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath"), encoding="utf-8").readline().strip()
+                got_path=_globalvar.read_file(target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")).strip()
                 file_paths.append(got_path)
             if get_file_contents:
-                content=open(target_path+"/file_content", encoding="utf-8").read()
+                content=_globalvar.read_file(target_path+"/file_content")
                 file_contents.append(content)
         except: raise _invalid_theme("Read error: "+str(sys.exc_info()[1]))
     return (file_paths if get_filepath else None, file_contents if get_file_contents else None)
@@ -358,7 +358,7 @@ def repair_theme():
         for x in range(len(lsdir_result)):
             target_path=lsdir_result[x]
             info_path=target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")
-            open(info_path, 'w').write(file_paths[x]+"\n")
+            _globalvar.write_file(info_path, file_paths[x]+"\n")
     except Exception as exc:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
         return 1
@@ -423,7 +423,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             if os.stat(path).st_ino==os.stat(sys.stdin.fileno()).st_ino and has_error:
                 continue
             is_stdin=_globalvar.handle_stdin_prompt(path)
-            content_list.append(open(path, 'r', encoding="utf-8").read())
+            content_list.append(_globalvar.read_file(path))
             if is_stdin: print() # Print an extra newline
         except KeyboardInterrupt: 
             print();raise direct_exit(130)
