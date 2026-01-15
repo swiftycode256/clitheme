@@ -143,6 +143,16 @@
                     {message}
                 [/locale]
             [/entry]
+            [entry] |apply-theme-error|
+                # [default]
+                #     An error occurred while applying the theme:
+                #     {message}
+                # [/default]
+                [locale] zh_CN
+                    应用主题时发生了错误：
+                    {message}
+                [/locale]
+            [/entry]
         # remove-theme 指令
         # remove-theme command
         <in_subsection> |cli remove-theme|
