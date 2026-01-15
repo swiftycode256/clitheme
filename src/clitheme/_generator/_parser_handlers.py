@@ -135,11 +135,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
         # When allowed_options and ban_options specified at same time, ban_options overrides allowed_options
 
         # Only show error messages once per line
-        if self.linenum() in self.parsed_option_lines:
+        h=hash((self.linenum(),tuple(options_data)))
+        if h in self.parsed_option_lines:
             show_warnings=False
         else:
             show_warnings=True
-            self.parsed_option_lines.add(self.linenum())
+            self.parsed_option_lines.add(h)
         def handle_error(msg: str):
             if show_warnings: self.handle_error(msg)
         final_options={}
@@ -325,11 +326,12 @@ class GeneratorObject(_data_handlers.DataHandlers):
         if preserve_indents==None: preserve_indents=not pure_name
         subst_options=self.content_subst_options if pure_name else self.subst_options
         # Don't show the same warnings for the same line
-        if self.linenum() in self.parsed_lines:
+        h=hash((self.linenum(), content))
+        if h in self.parsed_lines:
             no_warn=True
         else:
             no_warn=False
-            self.parsed_lines.add(self.linenum())
+            self.parsed_lines.add(h)
 
         target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents, silence_warn=no_warn)
         if options_str!=None:
