@@ -102,7 +102,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             if locale_match!=None and len(locale_match.group('names').split())>0:
                 argc=len(locale_match.group().split())
                 self.check_enough_args(phrases, argc+1, disp=locale_match.group(), check_processed=False)
-                locales=self.parse_content(locale_match.group('names').strip(), pure_name=True).split()
+                locales=self.parse_content(locale_match.group('names').strip(), pure_name=2).split()
                 if len(locales)==0: # e.g. Empty variable content
                     self.handle_error(self.fd.feof("not-enough-args-err", "Line {num}: Not enough arguments for \"{phrase}\"", phrase="<name> @ locale[<name>]:", num=self.linenum()))
                 content=_globalvar.extract_content(self.get_current_line(), begin_phrase_count=argc)
@@ -125,7 +125,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                 self.check_enough_args(phrases, 3, check_processed=False)
                 content=_globalvar.extract_content(line_content, begin_phrase_count=2)
                 locale=phrases[1]
-            locales=self.parse_content(locale, pure_name=True).split()
+            locales=self.parse_content(locale, pure_name=2).split()
             if len(locales)==0: # e.g. Empty variable content
                 self.handle_error(self.fd.feof("not-enough-args-err", "Line {num}: Not enough arguments for \"{phrase}\"", phrase="<name> @ locale:<name>", num=self.linenum()))
             add_entry(self.parse_content(content), locales)

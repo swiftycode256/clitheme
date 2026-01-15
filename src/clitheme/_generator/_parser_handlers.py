@@ -11,7 +11,7 @@ Functions used by various parsers (internal module)
 import re
 import math
 import copy
-from typing import Optional, Union, List, Dict, Tuple
+from typing import Optional, Union, List, Dict, Tuple, Literal
 
 from ._sections import entry_block
 from .. import _globalvar, _version
@@ -146,7 +146,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         final_options={}
         if merge_global_options!=0: final_options=copy.copy(self.global_options if merge_global_options==1 else self.really_really_global_options)
         if len(options_data)==0: return final_options # return either empty data or pre-existing global options
-        options_data=self.parse_content(' '.join(options_data), pure_name=True).split()
+        options_data=self.parse_content(' '.join(options_data), pure_name=2).split()
         for x in range(len(options_data)):
             each_option=options_data[x]
             option_name=re.sub(r"^(no)?(?P<name>.+?)(:.+)?$", r"\g<name>", each_option)
@@ -320,20 +320,23 @@ class GeneratorObject(_data_handlers.DataHandlers):
     def handle_linenumber_range(self, begin: int, end: int) -> str:
         if begin==end: return str(end)
         else: return f"{begin}-{end}"
-    def parse_content(self, content: str, pure_name: bool=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> str:
+    def parse_content(self, content: str, pure_name: Literal[False,True,2]=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> str:
         return self.parse_content_with_options(content, [], pure_name, preserve_indents, ignore_options)[0]
-    def parse_content_with_options(self, content: str, extra_options: List[str], pure_name: bool=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> Tuple[str, OptionsDict, OptionsDict]:
-        if preserve_indents==None: preserve_indents=not pure_name
+    def parse_content_with_options(self, content: str, extra_options: List[str], pure_name: Literal[False,True,2]=False, preserve_indents: Optional[bool]=None, ignore_options: bool=False) -> Tuple[str, OptionsDict, OptionsDict]:
+        if preserve_indents==None: preserve_indents=pure_name==False
         subst_options=self.content_subst_options if pure_name else self.subst_options
         # Don't show the same warnings for the same line
-        h=hash((self.linenum(), content))
+        h=hash((self.linenum(), content, pure_name))
         if h in self.parsed_lines:
             no_warn=True
         else:
             no_warn=False
             self.parsed_lines.add(h)
 
-        target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents, silence_warn=no_warn)
+        # pure_name=2 disables line boundaries
+        if pure_name!=2:
+            target_content, options_str=self.handle_linebounds(content, preserve_indents=preserve_indents, silence_warn=no_warn)
+        else: options_str=None; target_content=content
         if options_str!=None:
             options=self.parse_options(options_str.split(), merge_global_options=True,
                         allowed_options=subst_options+extra_options if not ignore_options else None,
@@ -349,7 +352,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
             subst_chars=pure_name==False and options.get("substchar")==True,
             subst_esc=pure_name==False and options.get("substesc")==True,
             # Don't show substchar/substesc warnings if not using char subst
-            silence_warnings=True if no_warn else (False, pure_name, pure_name)
+            silence_warnings=True if no_warn else (False, pure_name!=False, pure_name!=False)
         )
         if not preserve_indents: target_content=target_content.strip()
         return (target_content, options, inline_options)
