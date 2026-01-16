@@ -14,14 +14,12 @@ sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import frontend
 from clitheme import _generator, _globalvar
 import unittest
-import warnings
 
 show_warnings=True
 class TestEntriesSection(unittest.TestCase):
 
     def setUp(self):
         print()
-        warnings.simplefilter("ignore")
         self.mainfile_data=_globalvar.read_file(os.path.dirname(__file__)+"/entries_test_data/mainfile.ctdef.txt")
         self.expected_data=_globalvar.read_file(os.path.dirname(__file__)+"/entries_test_data/expected.txt")
         self.return_val=_generator.generate_data_hierarchy(self.mainfile_data)

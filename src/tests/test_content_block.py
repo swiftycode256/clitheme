@@ -13,7 +13,6 @@ import pathlib
 sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import frontend
 import unittest
-import warnings
 
 file_data=r"""
 begin_header
@@ -82,7 +81,6 @@ end_main
 class TestContentBlock(unittest.TestCase):
     def setUp(self):
         print()
-        warnings.simplefilter("ignore")
         # Remove cache folders
         for path in pathlib.Path(tempfile.gettempdir()).glob("clitheme-data-*"):
             print(f"Remove {path}")

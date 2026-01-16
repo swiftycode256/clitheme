@@ -12,7 +12,6 @@ from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
 from clitheme.exec import _substrules_processor
 import unittest
-import warnings
 
 # sample input for testing
 sample_inputs=[("rm: missing operand\r\n"
@@ -191,7 +190,6 @@ substrules_file=r"""
 class TestSubstrulesSection(unittest.TestCase):
     def setUp(self):
         print()
-        warnings.simplefilter("ignore")
         self.return_val=_generator.generate_data_hierarchy(substrules_file)
         self.generator_path=self.return_val.dir_path
         if len(self.return_val.messages)>0:

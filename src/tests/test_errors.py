@@ -13,12 +13,10 @@ from typing import Optional, Dict, List
 sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
 from clitheme import _generator, _frontend_internal, _globalvar
 import unittest
-import warnings
 
 class TestErrors(unittest.TestCase):
     def setUp(self):
         print()
-        warnings.simplefilter("ignore")
         # Ensure localization settings are correct
         _globalvar.handle_set_themedef("test")
     def _run_test(self, test_file: str, expected_msgs: Dict[str, List[str]]) -> bool:
