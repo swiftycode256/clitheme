@@ -125,9 +125,7 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
                 return False
             finally: global_debugmode=d_copy
         if not os.path.exists(path_name):
-            shutil.copytree(return_val.dir_path, path_name)
-        try: shutil.rmtree(return_val.dir_path)
-        except: pass
+            shutil.move(return_val.dir_path, path_name)
     else:
         if _get_setting("debugmode"): print("[Debug] NOTE: Data path already exists, not generating data")
     return True
