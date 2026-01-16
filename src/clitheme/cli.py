@@ -15,7 +15,7 @@ import os
 import sys
 import shutil
 import re
-import io
+import signal
 import functools
 from . import _globalvar, _frontend_internal as frontend
 from ._globalvar import make_printable as fmt # A shorter alias of the function
@@ -64,8 +64,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             if overlay:
                 print(f.reof("overlay-notice", "The definition files will be appended on top of the existing theme data."))
             inpstr=f.reof("confirm-prompt", "Do you want to continue? [y/n]")
-            try: inp=input(inpstr+" ").strip().lower()
-            except (KeyboardInterrupt, EOFError): print();return 1
+            inp=input(inpstr+" ").strip().lower()
             if not (inp=="y" or inp=="yes"):
                 return 1
     if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
@@ -172,8 +171,7 @@ def remove_theme(no_confirm=False):
         # Display names of currently applied themes
         show_info(name=True)
         inpstr=f.reof("confirm-prompt", "Do you want to remove the theme(s)? [y/n]")
-        try: proceed=input(inpstr+" ").strip().lower() in ('y', 'yes')
-        except (KeyboardInterrupt, EOFError): print();return 1
+        proceed=input(inpstr+" ").strip().lower() in ('y', 'yes')
     if proceed:
         try:
             shutil.rmtree(_globalvar.clitheme_root_data_path)
@@ -425,8 +423,6 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             is_stdin=_globalvar.handle_stdin_prompt(path)
             content_list.append(_globalvar.read_file(path))
             if is_stdin: print() # Print an extra newline
-        except KeyboardInterrupt: 
-            print();raise direct_exit(130)
         except Exception as exc:
             print(line_prefix+ \
                 fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
@@ -458,7 +454,10 @@ def main(cli_args: List[str]):
     def check_extra_args(count: int):
         if len(cli_args)>count:
             raise direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
-
+    try:
+        # Don't raise KeyboardInterrupt
+        signal.signal(signal.SIGINT if os.name=='posix' else signal.SIGBREAK, signal.SIG_DFL)
+    except: pass
     try:
         if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
             check_enough_args(3)
