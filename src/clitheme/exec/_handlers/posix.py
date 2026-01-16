@@ -58,6 +58,7 @@ class PosixHandler(BaseHandler):
             self.stderr_fd, self.stderr_child=pty.openpty()
         # Detect if stdin is piped (e.g. cat file|clitheme-exec grep content)
         stdin_fd=self.stdout_child
+        pipe_thread=None
         if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
             r,w=os.pipe()
             def pipe_forward():
@@ -72,8 +73,7 @@ class PosixHandler(BaseHandler):
                             os.dup2(sys.stdout.fileno(), sys.stdin.fileno())
                         break
                     os.write(w,d)
-            t=threading.Thread(target=pipe_forward, daemon=True)
-            t.start()
+            pipe_thread=threading.Thread(target=pipe_forward, daemon=True)
             stdin_fd=r
         # Initialize process
         def child_init():
@@ -91,6 +91,9 @@ class PosixHandler(BaseHandler):
             self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
         except:
             raise command_failed(str(sys.exc_info()[1]))
+        if pipe_thread!=None:
+            # Must start only after initiating process
+            pipe_thread.start()
         self.process_pid=self.process.pid
 
         # Terminal attributes
