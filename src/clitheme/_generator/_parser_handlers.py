@@ -107,23 +107,27 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if disp==None: disp=phrases[0]
             self.handle_syntax_error(self.fd.feof("extra-arguments-err", "Line {num}: Extra arguments after \"{phrase}\"", num=self.linenum(), phrase=self.fmt(disp)))
     def check_version(self, version_str: str):
-        # allow_bugfix is disabled to allow interoperability with other release variants
-        allow_bugfix: bool=False # Whether to allow specifying bugfix releases in version info
-        match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<bugfix>\d+)){{,{int(allow_bugfix)}}}(-beta(?P<beta_release>\d+))?$", version_str)
-        def invalid_version(): self.handle_syntax_error(self.fd.feof("invalid-version-err", "Line {num}: Invalid version information \"{ver}\"", ver=self.fmt(version_str), num=self.linenum()))
-        if match_result==None: invalid_version()
-        elif int(match_result.groupdict()['major'])<2: invalid_version()
+        match_result=re.match(rf"^(?P<major>\d+)\.(?P<minor>\d+)(-beta(?P<beta>\d+))?$", version_str)
+        if match_result==None or int(match_result.group('major'))<2:
+            self.handle_syntax_error(self.fd.feof("invalid-version-err", "Line {num}: Invalid version information \"{ver}\"", ver=self.fmt(version_str), num=self.linenum()))
         else:
-            version_ok= int(match_result.groupdict()['major'])<=_version.major \
-                        and int(match_result.groupdict()['minor'])<=_version.minor \
-                        and (int(match_result.groupdict()['bugfix'])<=_version.release if match_result.groupdict().get("bugfix")!=None else True)
-            if match_result.groupdict().get("beta_release")!=None:
+            major=int(match_result.group('major'))
+            minor=int(match_result.group('minor'))
+            version_ok= _version.major>major \
+                or (_version.major==major and _version.minor>minor)
+            # Process next if major and minor are equal
+            eq_cond=_version.major==major and _version.minor==minor
+            if match_result.group('beta')!=None:
                 if _version.beta_release!=None:
-                    version_ok=version_ok and int(match_result.groupdict()['beta_release'])<=_version.beta_release
+                    version_ok=version_ok \
+                        or (eq_cond and int(match_result.group('beta'))<=_version.beta_release)
+                else: version_ok=version_ok or eq_cond
             else:
+                # Same as _version.minor>=minor
+                version_ok=version_ok or eq_cond
                 # If did not specify beta, current version cannot be beta or dev
-                version_ok=version_ok and _version.beta_release==None and not _version.release<0
-
+                version_ok=version_ok \
+                    and _version.beta_release==None and not _version.release<0
             if not version_ok:
                 self.handle_syntax_error(self.fd.feof("unsupported-version-err", "Current version of CLItheme ({cur_ver}) does not support this file (requires {req_ver} or higher)", 
                         cur_ver=_globalvar.clitheme_version+ \
