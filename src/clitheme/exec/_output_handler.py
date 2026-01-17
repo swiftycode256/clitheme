@@ -30,8 +30,8 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
     final_output=b''
     for x in range(len(lines)):
         line=lines[x]
+        wrapper=b"\x1b[4;32m{}\x1b[0m"
         if do_subst and "showchars" in debug_mode:
-            wrapper=b"\x1b[4;32m{}\x1b[0m"
             if "color" in debug_mode: wrapper+=bytes(f"\x1b[{'31' if is_stderr else '33'}m", 'utf-8')
             line=line.replace(b'\x1b', wrapper.replace(b'{}', b'{{ESC}}')) # this must come before anything else
             line=re.sub(rb'\r(?!\n)', wrapper.replace(b'{}',rb'\\r'), line)
@@ -53,7 +53,18 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
             except UnicodeDecodeError: line=re.sub(bytes(match_pattern, 'utf-8'), bytes(sub_pattern, 'utf-8'), line)
             line+=b'\x1b[0m'
         if do_subst and "normal" in debug_mode:
-            line=bytes(f"\x1b[0;1;" # Bold
+            split_lines: List[bytes]=[]
+            if "showchars" in debug_mode:
+                # Further split lines by cursor positioning sequence (e.g. \x1b[5;1H)
+                total_len=0
+                seq=re.escape(wrapper.replace(b'{}', b'{{ESC}}'))
+                for match in re.finditer(rb"(.+?)("+seq+rb"\[\d+;\d+H|\Z)", line, flags=re.DOTALL):
+                    split_lines.append(match.group(0))
+                    total_len+=len(match.group(0))
+                assert total_len==len(line), f"Length mismatch: {total_len}!={len(line)}"
+            else: split_lines.append(line)
+            assert len(split_lines)>0, "Empty split_lines array"
+            final_line=bytes(f"\x1b[0;1;" # Bold
                        f"{'31' if is_stderr else '32'}" # Red/green
                        f"{';47;30' if x==0 else ''}" # White highlighting
                        f"{';44' if x in matched_lines else ''}" # Blue highlighting
@@ -61,11 +72,15 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
                        'm'
                        f"{'e' if is_stderr else 'o'}"
 
-                       f"\x1b[0;1;"
-                       f"{';47;30' if x==0 else ''}"
+                       f"\x1b[0;1;" # Bold
+                       f"{';47;30' if x==0 else ''}" # White highlighting
                        'm'
                        f"{'>' if x==0 else '['}\x1b[0m ",
-                       'utf-8')+line
+                       'utf-8')+split_lines[0]
+            for i in range(1,len(split_lines)):
+                final_line+=b'\r\n'+b'\x1b[0;1m'+b' ( '+b'\x1b[0m'+\
+                    split_lines[i]
+            line=final_line
         final_output+=line
     return final_output
 
