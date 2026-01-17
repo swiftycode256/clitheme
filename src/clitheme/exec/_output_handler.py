@@ -143,12 +143,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if thread_debug==1: raise Exception
                 elif thread_debug==2: break
 
-                if last_input_content!=None: 
-                    # Shorter timeout for inputs to reduce lag
-                    timeout=0.005
-                elif pending_output!=None:
-                    # Short timeout if there are pending outputs
-                    timeout=0.03
+                if pending_output!=None:
+                    timeout=handler.poll_interval
                 else:
                     # Wait longer to reduce CPU usage
                     timeout=0.1

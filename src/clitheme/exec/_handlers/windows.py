@@ -47,6 +47,9 @@ def w_assert(condition, msg: Optional[str]=None):
         raise OSError(errmsg() if msg==None else msg)
 
 class WindowsHandler(BaseHandler):
+    # Use a longer interal to capture a fuller block of output
+    poll_interval=0.02
+
     def __init__(self, command: List):
         """
         Perform init

@@ -12,6 +12,9 @@ class BaseHandler:
     """
     Template for handler class
     """
+    # Timeout value used in get_readable_descriptors
+    poll_interval: float
+
     def __init__(self, command: List):
         self.process_pid: int
         raise NotImplementedError

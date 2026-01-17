@@ -30,6 +30,8 @@ from ._base_template import BaseHandler, command_failed
 fd=frontend.FetchDescriptor(domain_name=_globalvar.fd_domain_name, app_name=_globalvar.fd_app_name, subsections="exec")
 
 class PosixHandler(BaseHandler):
+    poll_interval=0.01
+
     def __init__(self, command):
         """
         Perform init
