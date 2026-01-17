@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -eu
+dir=/usr/lib/python3/dist-packages/clitheme
+echo "Removing __pycache__ directories"
+find $dir -name __pycache__ -print -exec rm -r {} +
+echo "Done"
