@@ -273,7 +273,14 @@ class WindowsHandler(BaseHandler):
             stdin_handle=self._get_std_handles()[0]
             # Check stdin
             input_available = wintypes.DWORD()
-            w_assert(kernel32.GetNumberOfConsoleInputEvents(stdin_handle, ctypes.byref(input_available)))
+            try:
+                w_assert(kernel32.GetNumberOfConsoleInputEvents(stdin_handle, ctypes.byref(input_available)))
+            except OSError:
+                w_assert(kernel32.PeekNamedPipe(
+                    stdin_handle, None, 0, None,
+                    ctypes.byref(input_available), # Get available bytes
+                    None # lpBytesLeftThisMessage
+                ))
             if input_available.value>0:
                 avail_handles.add("stdin")
             # Check stdout
