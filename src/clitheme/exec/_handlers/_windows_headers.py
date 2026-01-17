@@ -12,9 +12,7 @@ import io
 
 kernel32 = ctypes.windll.kernel32
 
-# region: Prototypes/Headers
 HRESULT = wintypes.LONG
-HPCON = wintypes.HANDLE
 # Define PPROC_THREAD_ATTRIBUTE_LIST as a pointer to void (opaque type)
 LPPROC_THREAD_ATTRIBUTE_LIST = wintypes.LPVOID
 
@@ -29,8 +27,6 @@ FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100
 FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000
 FORMAT_MESSAGE_IGNORE_INSERTS=0x00000200
 STILL_ACTIVE=259
-WAIT_TIMEOUT=0x00000102
-WAIT_OBJECT_0=0x00000000
 STD_INPUT_HANDLE=-10
 STD_OUTPUT_HANDLE=-11
 STD_ERROR_HANDLE=-12
@@ -50,26 +46,6 @@ MOUSE_EVENT = 0x0002
 WINDOW_BUFFER_SIZE_EVENT = 0x0004
 MENU_EVENT = 0x0008
 FOCUS_EVENT = 0x0010
-
-# Key event flags
-CAPSLOCK_ON = 0x0080
-ENHANCED_KEY = 0x0100
-KEY_ACTION_DOWN = 0x0000
-KEY_ACTION_UP = 0x0002
-SCROLLLOCK_ON = 0x0040
-NUMLOCK_ON = 0x0020
-
-# Control key states
-RIGHT_ALT_PRESSED = 0x0001
-LEFT_ALT_PRESSED = 0x0002
-RIGHT_CTRL_PRESSED = 0x0004
-LEFT_CTRL_PRESSED = 0x0008
-SHIFT_PRESSED = 0x0010
-
-CP_UTF8=65001
-CP_UTF16=1200
-
-MAX_PATH=260
 
 class COORD(ctypes.Structure):
     _fields_ = [("X", wintypes.SHORT),
@@ -197,7 +173,6 @@ kernel32.ResizePseudoConsole.restype = HRESULT
 kernel32.ClosePseudoConsole.argtypes = [wintypes.HANDLE]
 kernel32.ClosePseudoConsole.restype = None
 
-# Define function prototypes
 kernel32.HeapAlloc.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.c_size_t]
 kernel32.HeapAlloc.restype = wintypes.LPVOID
 
@@ -284,20 +259,8 @@ kernel32.GetExitCodeProcess.argtypes=[
 ]
 kernel32.GetExitCodeProcess.restype=wintypes.BOOL
 
-kernel32.WaitForSingleObject.argtypes=[
-    wintypes.HANDLE, # hHandle
-    wintypes.DWORD, # dwMilliseconds
-]
-kernel32.WaitForSingleObject.restype=wintypes.DWORD
-
 kernel32.GetStdHandle.argtypes=[wintypes.DWORD] # nStdHandle
 kernel32.GetStdHandle.restype=wintypes.HANDLE
-
-kernel32.SetStdHandle.argtypes=[
-    wintypes.DWORD, # nStdHandle
-    wintypes.HANDLE, # hHandle
-]
-kernel32.SetStdHandle.restype=wintypes.BOOL
 
 kernel32.GetConsoleMode.argtypes=[
     wintypes.HANDLE, # hConsoleHandle
@@ -340,21 +303,8 @@ kernel32.WriteConsoleW.argtypes = [
 ]
 kernel32.WriteConsoleW.restype = wintypes.BOOL
 
-kernel32.SetConsoleOutputCP.argtypes = [wintypes.UINT] # wCodePageID
-kernel32.SetConsoleOutputCP.restype = wintypes.BOOL
-
-kernel32.SetConsoleCP.argtypes = [wintypes.UINT] # wCodePageID
-kernel32.SetConsoleCP.restype = wintypes.BOOL
-
-kernel32.GetWindowsDirectoryW.argtypes=[
-    wintypes.LPWSTR, # lpBuffer
-    wintypes.UINT, # uSize
-]
-kernel32.GetWindowsDirectoryW.restype=wintypes.UINT
-
 kernel32.LocaleNameToLCID.argtypes=[
     wintypes.LPCWSTR, # lpName
     wintypes.DWORD, # dwFlags
 ]
 kernel32.LocaleNameToLCID.restype=wintypes.LCID
-# endregion
