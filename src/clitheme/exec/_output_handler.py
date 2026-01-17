@@ -157,6 +157,25 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return False
 
+                    # region: Check if the output is user input
+                    do_subst_operation=True
+                    if last_input_content!=None:
+                        if pending_output!=None: cur_output=pending_output[0]+data
+                        else: cur_output=data
+                        # Replace Windows keystroke sequences with corresponding characters
+                        windows_input_expr=rb"\x1b\[\d+;\d+;(?P<char>\d+);(?P<pressed>\d+);\d+;\d+_"
+                        def subst_sequences(match_obj: re.Match) -> bytes:
+                            # Ignore char=0 and keystroke release
+                            if int(match_obj.group('char'))!=0 and int(match_obj.group('pressed'))!=0:
+                                return chr(int(match_obj.group('char'))).encode('utf-8')
+                            else: return b''
+                        target_input=re.sub(windows_input_expr, subst_sequences, last_input_content)
+
+                        expected_input=re.sub(rb"(\x7f|\x08)", rb"(\\x08 \\x08|\\x08\\x1b\\[K)", re.escape(target_input))
+                        # print(target_input, cur_output, re.fullmatch(expected_input, cur_output)!=None) # DEBUG
+                        if re.fullmatch(expected_input, cur_output)!=None:
+                            do_subst_operation=False
+                    # endregion
                     pending_output_time=time.perf_counter()
                     if pending_output!=None:
                         orig_data=pending_output[0]
@@ -181,36 +200,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                             push_output(pending_output)
                     # If all data was pushed, don't do anything
                     if data==b'': return True
-                    # region: Check if the output is user input
-                    do_subst_operation=True
-                    if last_input_content!=None:
-                        # Windows keystroke input: "\x1b[0;0;0;0;0;0_"
-                        windows_input_expr=rb"\x1b\[\d+?;\d+?;(?P<char>\d+?);(?P<pressed>\d+?);\d+?;\d+?_"
-                        if re.fullmatch(b'('+windows_input_expr+b')+', last_input_content)!=None:
-                            # Process input sequence: Discard parts with char=0
-                            target_input=b''
-                            remaining=last_input_content
-                            while len(remaining)>0:
-                                match_obj=re.match(b'^'+windows_input_expr, remaining)
-                                assert match_obj!=None, "Failed to match Windows keystroke input"
-                                if int(match_obj.groupdict()['char'])!=0:
-                                    target_input+=match_obj.group(0)
-                                remaining=remaining[len(match_obj.group(0)):]
-                            # Construct output match pattern
-                            target_output=b''
-                            for char_code in re.sub(rb"(\x08 \x08|\x08\x1b\[K)", b'\x08', data):
-                                target_output+=rb"\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";1;\d+?;\d+?_"
-                                target_output+=rb"(\x1b\[\d+?;\d+?;"+str(char_code).encode()+rb";0;\d+?;\d+?_)?"
-                            # print(target_input, target_output, re.fullmatch(target_output, target_input)!=None) # DEBUG
-                            if re.fullmatch(target_output, target_input)!=None: do_subst_operation=False
-                        else:
-                            # Unix keystroke: mostly same as output
-                            input_match_expression: bytes=re.escape(last_input_content).replace(b'\x7f', rb"(\x08 \x08|\x08\x1b\[K)") # type: ignore
-                            input_equals=b'^'+input_match_expression+b'$'
-                            # print(last_input_content, data, re.search(input_equals, data)!=None) # DEBUG
-                            if re.search(input_equals, data)!=None:
-                                do_subst_operation=False
-                    # endregion
                     
                     # Update pending output
                     pending_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, pending_output_time)
@@ -225,9 +214,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if no_io_available and pending_output!=None:
                     push_output(pending_output)
                     pending_output=None
-                # Reset last input content if no output is made within timeout
-                if not "stdin" in fds and pending_output==None:
-                    last_input_content=None
                 # End loop if process terminated and no input/output available for this round
                 if handler.get_proc_status()!=None \
                     and no_io_available and pending_output==None: 
