@@ -456,7 +456,7 @@ def main(cli_args: List[str]):
             raise direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
     try:
         # Don't raise KeyboardInterrupt
-        signal.signal(signal.SIGINT if os.name=='posix' else signal.SIGBREAK, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
     except: pass
     try:
         if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
