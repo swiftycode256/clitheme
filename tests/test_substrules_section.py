@@ -7,7 +7,7 @@
 import shutil
 import sys
 import os
-sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
+sys.path=[f"{os.path.dirname(__file__)}/../src"]+sys.path
 from clitheme._generator import db_interface
 from clitheme import _generator, _globalvar
 from clitheme.exec import _substrules_processor

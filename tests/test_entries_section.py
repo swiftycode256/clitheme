@@ -10,7 +10,7 @@ import string
 import os
 import io
 import sys
-sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
+sys.path=[f"{os.path.dirname(__file__)}/../src"]+sys.path
 from clitheme import frontend
 from clitheme import _generator, _globalvar
 import unittest

@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 import pathlib
-sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
+sys.path=[f"{os.path.dirname(__file__)}/../src"]+sys.path
 from clitheme import frontend
 import unittest
 

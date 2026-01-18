@@ -10,7 +10,7 @@ import shutil
 import re
 import difflib
 from typing import Optional, Dict, List
-sys.path=[f"{os.path.dirname(__file__)}/.."]+sys.path
+sys.path=[f"{os.path.dirname(__file__)}/../src"]+sys.path
 from clitheme import _generator, _frontend_internal, _globalvar
 import unittest
 
