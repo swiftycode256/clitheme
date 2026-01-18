@@ -450,6 +450,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
                 merge_global_options=True,
                 allowed_options=allowed_options, ban_options=ban_options)
 
+        line_offset=0
         for x in range(len(blockinput_lines)):
             line=blockinput_lines[x]
             # Process lead indent options
@@ -458,7 +459,6 @@ class GeneratorObject(_data_handlers.DataHandlers):
             if preserve_indents and opt("leadspaces")!=None:
                 line=re.sub(r"^", " "*int(got_options['leadspaces']), line)
             # Process linebounds
-            line_offset=0
             ws_match=re.match(r"^(?P<spc>\s*)", line)
             assert ws_match!=None
             leading_whitespace=ws_match.groupdict()['spc']
