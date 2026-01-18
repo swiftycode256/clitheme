@@ -110,8 +110,10 @@ class PosixHandler(BaseHandler):
 
         # Setup signal handlers
         self.handle_signals=[signal.SIGTSTP, signal.SIGCONT, signal.SIGINT, signal.SIGQUIT]
+        self.prev_handlers={}
         for sig in self.handle_signals:
-            signal.signal(sig, self._signal_handler_function)
+            # signal.signal returns the previous handler
+            self.prev_handlers[sig]=signal.signal(sig, self._signal_handler_function)
         signal.signal(signal.SIGWINCH, self.update_window_size)
         
     def read_stdin(self) -> bytes:
@@ -155,14 +157,13 @@ class PosixHandler(BaseHandler):
                 term_attrs[tty.CFLAG] |= termios.CS8
                 term_attrs[tty.LFLAG] &= ~(termios.ECHO | termios.ECHOE | termios.ECHOK | termios.ECHONL | termios.ICANON | termios.IEXTEN | termios.ISIG | termios.NOFLSH | termios.TOSTOP)
 
+                # Enable ISIG for proper signal handling
+                term_attrs[tty.LFLAG] |= termios.ISIG
                 try: child_attrs=termios.tcgetattr(self.stdout_fd)
                 except termios.error: pass
                 else:
-                    # Use character settings from child process
+                    # Use character settings from child process to avoid accidentally triggering signal
                     term_attrs[tty.CC]=child_attrs[tty.CC]
-                    # If not disabled by child process, enable ISIG for proper signal handling
-                    if child_attrs[tty.LFLAG] & termios.ISIG > 0:
-                        term_attrs[tty.LFLAG] |= termios.ISIG
                 # Ensure settings are correct for non-canonical input mode
                 term_attrs[tty.CC][termios.VMIN] = 1
                 term_attrs[tty.CC][termios.VTIME] = 0
@@ -170,8 +171,7 @@ class PosixHandler(BaseHandler):
             return term_attrs
         except termios.error: return None
     def set_host_term_attrs(self, term_attrs: list):
-        try:
-            termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
+        try: termios.tcsetattr(sys.stdout, termios.TCSADRAIN, term_attrs)
         except termios.error: pass
     def _reset_term_attrs(self):
         if self.prev_attrs!=None: self.set_host_term_attrs(self.prev_attrs) # restore previous attributes
@@ -190,20 +190,24 @@ class PosixHandler(BaseHandler):
             attrs=self.get_term_attrs(make_raw=True)
             if attrs!=None: self.set_host_term_attrs(attrs)
         elif sig==signal.SIGTSTP: # suspend signal
-            if self.get_foreground_pid()!=self.process_pid: # e.g. A shell running another process
-                if self.process.poll()==None: # Process is running
-                    self.write_pty(b'\x1a') # Send '^Z' character; don't suspend the entire shell
-            else: 
-                self._reset_term_attrs()
-                self.process.send_signal(signal.SIGSTOP) # Stop the process
-                signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
-                os.kill(os.getpid(), signal.SIGTSTP) # Suspend itself
+            if self.process.poll()==None: # Process is running
+                # Only suspend when signal processing enabled by child process
+                try: attrs=termios.tcgetattr(self.stdout_fd)
+                except termios.error: sig_enabled=True
+                else: sig_enabled=attrs[tty.LFLAG] & termios.ISIG > 0
+
+                if sig_enabled and self.get_foreground_pid()==self.process_pid:
+                    self._reset_term_attrs()
+                    self.process.send_signal(signal.SIGSTOP) # Stop the process
+                    signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
+                    os.kill(os.getpid(), signal.SIGTSTP) # Suspend itself
+                else: self.write_pty(b'\x1a') # Send '^Z' character instead of suspending the process
         elif sig==signal.SIGINT:
             if self.process.poll()==None:
                 self.write_pty(b'\x03') # '^C' character
             else:
                 self.reset_terminal()
-                _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after command exit"))
+                _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after process exit"))
                 # Prevent message being triggered multiple times
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
                 raise direct_exit(130) # Will be raised in main processing loop
@@ -219,13 +223,19 @@ class PosixHandler(BaseHandler):
     def handle_exit(self) -> int:
         self._reset_term_attrs()
         exit_code=self.get_proc_status()
-        try:
-            if exit_code!=None and exit_code<0: # Terminated by signal
-                # Reset signal handlers before the kill operation to prevent unexpected behavior
-                for sig in self.handle_signals+[signal.SIGUSR1, signal.SIGUSR2]:
-                    signal.signal(sig, signal.SIG_DFL)
-                os.kill(os.getpid(), abs(exit_code))
-                # Return exit code if os.kill doesn't terminate process
-                return 128+abs(exit_code)
-        except: pass
-        return exit_code if exit_code!=None else 0
+        # Reset signal handlers to before
+        for sig in self.handle_signals+[signal.SIGUSR1, signal.SIGUSR2, signal.SIGWINCH, signal.SIGALRM]:
+            if self.prev_handlers.get(sig)!=None:
+                signal.signal(sig, self.prev_handlers.get(sig))
+            else: signal.signal(sig, signal.SIG_DFL)
+        if exit_code!=None and exit_code<0: # Terminated by signal
+            for sig in signal.valid_signals():
+                if sig.value==abs(exit_code):
+                    name=f"{sig.name} ({signal.strsignal(sig.value)})"
+                    break
+            else: name=str(abs(exit_code))
+            self.write_output(b'\r\n')
+            if abs(exit_code)!=signal.SIGINT:
+                _labeled_print(fd.feof("signal-exit", "Process exited with signal {name}", name=name))
+            return 128+abs(exit_code)
+        else: return exit_code if exit_code!=None else 0

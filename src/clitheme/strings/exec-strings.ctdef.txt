@@ -104,7 +104,11 @@
             locale[zh_CN]: |发生内部错误（执行已终止）：|
         [/entry]
         [entry] |output-interrupted-exit|
-            # default: |Output interrupted after command exit|
-            locale[zh_CN]: |输出在命令退出后被中断|
+            # default: |Output interrupted after process exit|
+            locale[zh_CN]: |输出在进程退出后被中断|
+        [/entry]
+        [entry] |signal-exit|
+            # default: |Process exited with signal {name}|
+            locale[zh_CN]: |进程由信号退出：{name}|
         [/entry]
 {/entries}
