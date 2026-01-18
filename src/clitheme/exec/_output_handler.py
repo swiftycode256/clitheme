@@ -266,7 +266,6 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if do_subst and block_data[2]==True:
                 try: 
                     new_output, changed_lines=_substrules_processor.match_content(new_output, ' '.join(command), is_stderr=block_data[1], pids=(handler.process_pid, foreground_pid))
-                except db_interface.db_not_found: pass
                 except TimeoutError: failed=True
             new_output=_process_debug([m.group() for m in re.finditer(_globalvar.line_match_bytes, new_output)][:-1], debug_mode, is_stderr=block_data[1], matched_lines=changed_lines, failed=failed, do_subst=block_data[2])
             output+=new_output

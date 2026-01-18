@@ -141,14 +141,15 @@ def _is_db_updated() -> bool:
 def fetch_substrules(command: Optional[str]) -> List[Item]:
     global _substrules_cache
     updated=_is_db_updated()
-    if _db_last_state==None: raise db_not_found("file at db_path does not exist")
+    if _db_last_state==None: _substrules_cache[command]=[]
     elif updated or _substrules_cache.get(command)==None:
         if updated:
             _substrules_cache.clear()
             gc.collect() # Reduce memory leak
-        connect_db() # Connect database
-        _substrules_cache[command]=_get_matches(command)
-        connection.close() # Close the file
+        try: connect_db() # Connect database
+        except need_db_regenerate: _substrules_cache[command]=[]
+        else: _substrules_cache[command]=_get_matches(command)
+        finally: connection.close() # Close the file
     return _substrules_cache[command]
 
 def _get_matches(command: Optional[str]) -> List[Item]:
