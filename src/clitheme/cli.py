@@ -455,10 +455,6 @@ def main(cli_args: List[str]):
         if len(cli_args)>count:
             raise direct_exit(_handle_usage_error(f.reof("too-many-arguments", "Error: too many arguments"), arg_first))
     try:
-        # Don't raise KeyboardInterrupt
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-    except: pass
-    try:
         if cli_args[1] in ("apply-theme", "generate-data", "generate-data-hierarchy"):
             check_enough_args(3)
             generate_only=(cli_args[1] in ("generate-data", "generate-data-hierarchy"))
@@ -511,6 +507,10 @@ def main(cli_args: List[str]):
     except direct_exit as exc: return exc.code
     return 0
 def _script_main(): # for script
+    try:
+        # Don't raise KeyboardInterrupt
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+    except: pass
     return main(sys.argv)
 if __name__=="__main__":
     exit(main(sys.argv))
