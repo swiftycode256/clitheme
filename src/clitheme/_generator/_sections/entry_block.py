@@ -157,8 +157,8 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: return # Skip processing if entry block is unterminated
-    checked_entries=set() # Don't show multiple errors for same sub pattern
     for entry_name in entry_names:
+        checked_entries=set() # Don't show multiple errors for same sub pattern within a match pattern
         for entry in entry_items:
             # Displayed line number: (entry name #)>(entry #)[(locale)] (e.g. 64>65[default])
             line_number_debug=\
@@ -186,7 +186,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
                     )
                 except db_interface.bad_pattern:
                     if entry.content_line_number not in checked_entries:
-                        self.handle_error(self.fd.feof("bad-subst-pattern-err", "Line {num}: Bad substitute pattern ({error_msg})", num=entry.content_line_number, error_msg=self.fmt(str(sys.exc_info()[1]))))
+                        self.handle_error(self.fd.feof("bad-subst-pattern-err", "Line {num}: Bad substitute pattern ({error_msg})", num=f"{entry_name.line_number}>{entry.content_line_number}", error_msg=self.fmt(str(sys.exc_info()[1]))))
                         checked_entries.add(entry.content_line_number)
             else:
                 target_entry=' '.join(entry_name.value.split()) # Remove extra spaces
