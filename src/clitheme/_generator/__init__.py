@@ -11,7 +11,6 @@ import os
 import string
 import random
 import re
-import sys
 from typing import NamedTuple, List
 
 class syntax_error(Exception): pass

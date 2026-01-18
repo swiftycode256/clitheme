@@ -18,7 +18,6 @@ import tempfile
 import ctypes
 import uuid
 import hashlib
-from copy import copy
 from . import _version
 from typing import List, Union
 

@@ -7,7 +7,7 @@
 import sys
 import re
 import uuid
-from typing import Union, List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional
 from typing import NamedTuple
 from ... import _globalvar
 from .. import db_interface
