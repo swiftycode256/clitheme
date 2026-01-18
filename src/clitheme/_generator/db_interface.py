@@ -118,7 +118,7 @@ def add_subst_entry(
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
         connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
-    connection.commit()
+        # --Don't forget to call connection.commit with finished!--
 
 ## Database fetching and caching
 

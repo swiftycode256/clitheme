@@ -116,6 +116,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)
             self.handle_end_section("substrules")
+            db_interface.connection.commit()
             db_interface.connection.close()
             break
         else: self.handle_invalid_phrase(phrases[0])
