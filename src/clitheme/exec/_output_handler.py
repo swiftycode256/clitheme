@@ -42,7 +42,7 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
             line=line.replace(b'\a', wrapper.replace(b'{}',rb'\x07'))
         if do_subst and "newlines" in debug_mode:
             if not line.endswith(b'\n'):
-                line+=b"\n"
+                line+=b"\r\n"
         if "color" in debug_mode:
             match_pattern=r"(^|\x1b\[[\d;]*?m)"
             if do_subst:
@@ -108,7 +108,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
     def handle_debug_pgrp(foreground_pid: Optional[int]):
         nonlocal handler, last_tcgetpgrp
         if "foreground" in debug_mode and foreground_pid!=last_tcgetpgrp:
-            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process_pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process_pid else 'False'} ({foreground_pid})\x1b[0m\n"
+            message=f"\x1b[1m! \x1b[{'32' if foreground_pid==handler.process_pid else '31'}mForeground: \x1b[4m{'True' if foreground_pid==handler.process_pid else 'False'} ({foreground_pid})\x1b[0m\r\n"
             handler.write_output(bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
     thread_exception_handled=False

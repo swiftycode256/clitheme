@@ -215,7 +215,7 @@ class PosixHandler(BaseHandler):
     def reset_terminal(self):
         self._reset_term_attrs()
         if not stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
-            self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
+            self.write_output(b"\x1b[0m\x1b[?1;1000;1001;1002;1003;1005;1006;1015;1016l\r\n\x1b[J") # reset color, mouse reporting, and clear the rest of the screen
     def handle_exit(self) -> int:
         self._reset_term_attrs()
         exit_code=self.get_proc_status()
