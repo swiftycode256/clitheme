@@ -27,15 +27,10 @@ frontend.set_domain(_globalvar.fd_domain_name)
 frontend.set_appname(_globalvar.fd_app_name)
 fd=frontend.FetchDescriptor(subsections="exec")
 
-# Prevent recursion dead loops and accurately simulate that regeneration is only triggered once
-db_already_regenerated=False
-
 def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path) -> bool:
-    global db_already_regenerated
     try:
         # Support environment variable flag to force db regeneration (debug purposes)
-        if os.environ.get("CLITHEME_REGENERATE_DB")=="1" and not db_already_regenerated:
-            db_already_regenerated=True
+        if os.environ.get("CLITHEME_REGENERATE_DB")=="1":
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
         else: 
             db_interface.connect_db(f"{dest_root_path}/{_globalvar.db_filename}")
