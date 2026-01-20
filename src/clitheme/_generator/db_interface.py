@@ -17,7 +17,7 @@ import gc
 from typing import Optional, List, Dict, NamedTuple, Callable
 from .. import _globalvar, _frontend_internal as frontend
 
-connection=sqlite3.connect(":memory:") # placeholder
+connection: Optional[sqlite3.Connection]=None
 __db_path__=f"{_globalvar.clitheme_root_data_path}/{_globalvar.db_filename}"
 db_path=__db_path__
 debug_mode=False
@@ -45,6 +45,7 @@ class Item(NamedTuple):
     file_id: str
 
 def init_db(file_path: str):
+    assert not os.path.exists(file_path), "Database file already exists"
     global connection, db_path
     db_path=file_path
     connection=sqlite3.connect(file_path)
@@ -76,6 +77,12 @@ def connect_db(path: Optional[str]=None):
         version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
         assert version==_globalvar.db_version
     except: raise need_db_regenerate
+def close_db():
+    global connection
+    if connection!=None:
+        connection.commit()
+        connection.close()
+        connection=None
 
 def add_subst_entry(
     match_pattern: str,
@@ -95,6 +102,7 @@ def add_subst_entry(
     warning_handler: Callable[[str], None],
     warning_handler_fd: frontend.FetchDescriptor
 ):
+    assert connection!=None, "No active database connection"
     cmdlist: List[Optional[str]]=[]
     try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
     except: raise bad_pattern(str(sys.exc_info()[1]))
@@ -149,10 +157,12 @@ def fetch_substrules(command: Optional[str]) -> List[Item]:
         try: connect_db() # Connect database
         except need_db_regenerate: _substrules_cache[command]=[]
         else: _substrules_cache[command]=_get_matches(command)
-        finally: connection.close() # Close the file
+        finally: 
+            if connection!=None: close_db() # Close the file
     return _substrules_cache[command]
 
 def _get_matches(command: Optional[str]) -> List[Item]:
+    assert connection!=None, "No active database connection"
     # get locales
     locales=_globalvar.get_locale()
     # get all unique entry IDs

@@ -34,7 +34,7 @@ def _check_regenerate_db(dest_root_path: str=_globalvar.clitheme_root_data_path)
             raise db_interface.need_db_regenerate("Forced database regeneration with $CLITHEME_REGENERATE_DB=1")
         else: 
             db_interface.connect_db(f"{dest_root_path}/{_globalvar.db_filename}")
-            db_interface.connection.close()
+            db_interface.close_db()
     except db_interface.db_not_found: pass
     except:
         _labeled_print(fd.reof("substrules-update-msg", "Updating database..."))
