@@ -1,5 +1,5 @@
 """
-Command line customization toolkit
+Command line customization utility
 """
 # Copyright © 2023-2026 swiftycode
 

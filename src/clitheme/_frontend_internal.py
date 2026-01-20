@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Copy of frontend module for internal use (avoid data conflicts)
+Separate copy of frontend module for internal use
 """
 import inspect
 from .frontend import * # For type checking

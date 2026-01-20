@@ -5,7 +5,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Generator function used in applying themes (should not be invoked directly)
+Generator for processing theme definition files (internal module)
 """
 import os
 import string
