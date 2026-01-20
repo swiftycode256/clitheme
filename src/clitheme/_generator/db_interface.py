@@ -157,25 +157,30 @@ def _get_matches(command: Optional[str]) -> List[Item]:
     locales=_globalvar.get_locale()
     # get all unique entry IDs
     entry_ids=connection.execute(f"SELECT DISTINCT unique_id FROM {_globalvar.db_data_tablename}").fetchall()
-    # for each entry, fetch in locale order and then `default` locale
+    # for each entry, attempt to fetch in locale order and then `default` locale
     match_items=[]
     for eid in entry_ids:
+        fetched=False
         for locale in locales+[None]:
+            assert fetched==False, "Additional locales should not be fetched"
             locale_condition="effective_locale=?" if locale!=None else "typeof(effective_locale)=typeof(?)"
             fetches=[
                 Item(*data) for data in \
                     connection.execute(f"SELECT {','.join(Item._fields)} FROM {_globalvar.db_data_tablename} WHERE unique_id=? AND {locale_condition};", (eid[0], locale)).fetchall()
             ]
-            for match_item in fetches:
-                # Filter based on command condition
-                if command!=None and match_item.effective_command!=None and \
-                check_command(
-                    match_item.effective_command,
-                    match_item.command_match_strictness,
-                    command,
-                    match_item.command_is_regex
-                )==False: continue
-                match_items.append(match_item)
+            if len(fetches)>0:
+                for match_item in fetches:
+                    # Filter based on command condition
+                    if command!=None and match_item.effective_command!=None and \
+                    check_command(
+                        match_item.effective_command,
+                        match_item.command_match_strictness,
+                        command,
+                        match_item.command_is_regex
+                    )==False: continue
+                    match_items.append(match_item)
+                fetched=True
+                break # Don't need to fetch additional locales
     return match_items
 
 ## Output processing and matching
