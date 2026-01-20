@@ -134,22 +134,25 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
         if os.path.exists(_globalvar.clitheme_root_data_path):
             # remove the current data, ignoring directory not found error
             try: shutil.rmtree(_globalvar.clitheme_root_data_path)
-            except: raise OSError(f"rmtree: {sys.exc_info()[1]}")
+            except Exception as exc:
+                raise OSError(f"rmtree: {exc}") from exc
         else:
             # Create intermediate directories
             try: os.makedirs(os.path.dirname(_globalvar.clitheme_root_data_path), exist_ok=True)
-            except: raise OSError(f"makedirs: {sys.exc_info()[1]}")
+            except Exception as exc:
+                raise OSError(f"makedirs: {exc}") from exc
         if preserve_temp:
             shutil.copytree(final_path, _globalvar.clitheme_root_data_path) 
         else:
             assert not os.path.exists(_globalvar.clitheme_root_data_path), \
                 f"Path exists after rmtree: {_globalvar.clitheme_root_data_path}"
             shutil.move(final_path, _globalvar.clitheme_root_data_path) 
-    except:
-        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(sys.exc_info()[1]))))
-        _globalvar.handle_exception()
+    except Exception as exc:
+        print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(exc))))
+        if type(exc)==OSError: _globalvar.handle_exception()
+        else: raise
         return 1
-    print(success_msg)
+    else: print(success_msg)
     return 0
 
 def remove_theme(no_confirm=False):
@@ -318,8 +321,7 @@ def update_theme(no_confirm=False, preserve_temp=False):
         return 1
     except:
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        _globalvar.handle_exception()
-        return 1
+        raise
     return apply_theme(None, file_paths, overlay=False, preserve_temp=preserve_temp, no_confirm=no_confirm)
 
 def repair_theme():
@@ -343,8 +345,7 @@ def repair_theme():
         return 1
     except:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        _globalvar.handle_exception()
-        return 1
+        raise
     lsdir_result=_fetch_abs_lsdir()
     assert len(lsdir_result)==len(file_paths), f"{len(lsdir_result)}!={len(file_paths)}"
     # Run apply-theme to overwrite existing data
@@ -359,7 +360,7 @@ def repair_theme():
             _globalvar.write_file(info_path, file_paths[x]+"\n")
     except Exception as exc:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        return 1
+        raise
     return 0
 
 def _is_option(arg):

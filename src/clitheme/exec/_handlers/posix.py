@@ -91,8 +91,8 @@ class PosixHandler(BaseHandler):
                     os.close(tmp_fd)
         try:
             self.process=subprocess.Popen(command, stdin=stdin_fd, stdout=self.stdout_child, stderr=self.stdout_child, env=env, preexec_fn=child_init)
-        except:
-            raise command_failed(str(sys.exc_info()[1]))
+        except Exception as exc:
+            raise command_failed(str(exc)) from exc
         if pipe_thread!=None:
             # Must start only after initiating process
             pipe_thread.start()

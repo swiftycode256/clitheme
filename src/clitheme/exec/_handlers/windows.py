@@ -165,8 +165,8 @@ class WindowsHandler(BaseHandler):
                 ctypes.byref(si),  # lpStartupInfo
                 ctypes.byref(pi)  # lpProcessInformation
             ))
-        except:
-            raise command_failed(str(sys.exc_info()[1]))
+        except Exception as exc:
+            raise command_failed(str(exc)) from exc
         self.process_pid=int(pi.dwProcessId)
         self.process_handle=pi.hProcess
         ## Set terminal attributes
