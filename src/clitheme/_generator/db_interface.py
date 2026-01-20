@@ -10,7 +10,7 @@ import sqlite3
 import re
 import uuid
 import gc
-from typing import Optional, List, Dict, NamedTuple, Callable
+from typing import Optional, List, Dict, NamedTuple, Callable, Union
 from .. import _globalvar, _frontend_internal as frontend
 
 connection: Optional[sqlite3.Connection]=None
@@ -106,7 +106,6 @@ def add_subst_entry(
     except: raise bad_pattern(str(sys.exc_info()[1]))
     # handle condition where no effective_locale is specified ("default")
     locale_condition="effective_locale=?" if effective_locale!=None else "typeof(effective_locale)=typeof(?)"
-    insert_values=["match_pattern", "substitute_pattern", "is_regex", "match_is_multiline", "effective_command", "command_match_strictness", "command_is_regex", "end_match_here", "effective_locale", "stdout_stderr_only", "unique_id", "foreground_only", "file_id"]
     if effective_commands!=None and len(effective_commands)>0: 
         for cmd in effective_commands:
             # remove extra spaces in the command
@@ -123,7 +122,22 @@ def add_subst_entry(
             warning_handler(warning_handler_fd.feof("repeated-substrules-warn", "Line {num}: Repeated substrules entry, overwriting", num=line_number_debug))
             connection.execute(f"DELETE FROM {_globalvar.db_data_tablename} WHERE {match_condition};", match_params)
         # insert the entry into the main table
-        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(insert_values)}) VALUES ({','.join('?'*len(insert_values))});", (match_pattern, substitute_pattern, is_regex, match_is_multiline, cmd, command_match_strictness, command_is_regex, end_match_here, effective_locale, stdout_stderr_matchoption, str(unique_id), foreground_only, str(file_id)))
+        item_tuple=Item(
+            match_pattern=match_pattern,
+            substitute_pattern=substitute_pattern,
+            is_regex=is_regex,
+            match_is_multiline=match_is_multiline,
+            effective_command=cmd,
+            command_match_strictness=command_match_strictness,
+            command_is_regex=command_is_regex,
+            end_match_here=end_match_here,
+            effective_locale=effective_locale,
+            stdout_stderr_only=stdout_stderr_matchoption,
+            unique_id=str(unique_id),
+            foreground_only=foreground_only,
+            file_id=str(file_id)
+        )
+        connection.execute(f"INSERT INTO {_globalvar.db_data_tablename} ({','.join(item_tuple._fields)}) VALUES ({','.join('?'*len(item_tuple))});", item_tuple)
         # --Don't forget to call connection.commit with finished!--
 
 ## Database fetching and caching
