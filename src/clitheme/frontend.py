@@ -106,6 +106,7 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
     # Generate data hierarchy as needed
     if not os.path.exists(path_name):
         from . import _generator
+        from ._generator import db_interface
         _generator.generate_custom_path() # prepare _generator.path
         if overlay==True and _alt_path_dirname!=None:
             shutil.copytree(_globalvar.clitheme_temp_root+"/"+_alt_path_dirname, _generator.path)
@@ -117,13 +118,15 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
                 print(f"[Debug] set_local_themedefs: Processing file {x+1} of {len(file_contents)}")
             try:
                 global_debugmode=False
-                return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index))
+                return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index), close_db=False)
                 assert return_val.success, '\n'.join(return_val.messages)
                 _alt_info_index+=1
             except AssertionError:
+                db_interface.close_db()
                 if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
                 return False
             finally: global_debugmode=d_copy
+        db_interface.close_db()
         if not os.path.exists(path_name):
             shutil.move(return_val.dir_path, path_name)
     else:

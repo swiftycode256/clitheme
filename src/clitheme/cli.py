@@ -70,6 +70,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     if overlay and no_confirm: print(f.reof("overlay-msg", "Overlay specified"))
     ## Process files and generate data
     from . import _generator
+    from ._generator import db_interface
     index=1
     final_path=_generator.generate_custom_path()
     if overlay:
@@ -93,10 +94,10 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     for i in range(len(file_contents)):
         print(line_prefix+f.feof("processing-file", "> Processing file {filename}...", filename=f"({i+1}/{len(file_contents)})"), end='', flush=True)
         file_content=file_contents[i]
-        # Generate data hierarchy, erase current data, copy it to data path
+        # Generate data hierarchy
         try:
             # Output the warning messages correctly (make sure that they start on new line if any exists)
-            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "")
+            return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False,custom_infofile_name=str(index), filename=filenames[i] if len(filenames)>0 else "", close_db=False)
             index+=1
             if len(return_val.messages)>0:
                 print()
@@ -105,10 +106,12 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             assert return_val.dir_path==final_path, "Data path not the same"
         except:
             sys.stdout=orig_stdout
+            db_interface.close_db()
             print()
             print(f.feof("process-files-error", "[File {index}] An error occurred while processing the file:\n{message}", \
                 index=str(i+1), message=fmt(str(sys.exc_info()[1]))))
             raise
+    db_interface.close_db()
     print(line_prefix, end='')
     if err_count>0:
         print(f.feof("files-contain-error","==> Errors detected in {count} file(s)", count=err_count))

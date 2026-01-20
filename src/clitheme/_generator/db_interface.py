@@ -48,6 +48,7 @@ def init_db(file_path: str):
     assert not os.path.exists(file_path), "Database file already exists"
     global connection, db_path
     db_path=file_path
+    close_db() # Close previous connection
     connection=sqlite3.connect(file_path)
     # Create main table
     fields=[]
@@ -71,6 +72,7 @@ def connect_db(path: Optional[str]=None):
     if not os.path.exists(db_path):
         raise db_not_found("No theme set or theme does not contain substrules")
     global connection
+    close_db() # Close previous connection
     connection=sqlite3.connect(db_path)
     # check db version
     try:

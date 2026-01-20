@@ -35,13 +35,19 @@ def generate_custom_path() -> str:
         path+=random.choice(string.ascii_letters)
     return path
 
-def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_infofile_name="1", filename: str="") -> Result:
+def generate_data_hierarchy(file_content: str, custom_path_gen=True, custom_infofile_name="1", filename: str="", close_db: bool=True) -> Result:
     global path
     # make directories
     if custom_path_gen:
         generate_custom_path()
 
-    self=_parser_handlers.GeneratorObject(file_content=file_content, custom_infofile_name=custom_infofile_name, filename=filename, path=path)
+    self=_parser_handlers.GeneratorObject(
+        file_content=file_content,
+        custom_infofile_name=custom_infofile_name,
+        filename=filename,
+        path=path,
+        close_db=close_db
+    )
 
     # record file content for database migration/upgrade feature
     self.write_infofile(self.path+"/"+_globalvar.generator_info_pathname+"/"+self.custom_infofile_name, "file_content", self.file_content, self.linenum(), "<file_content>")

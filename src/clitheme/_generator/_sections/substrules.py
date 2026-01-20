@@ -38,7 +38,9 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
 
     if os.path.exists(self.path+"/"+_globalvar.db_filename):
         # Connect to existing database
-        try: db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
+        try: 
+            if db_interface.connection==None:
+                db_interface.connect_db(path=self.path+"/"+_globalvar.db_filename)
         except:
             self.handle_syntax_error(self.fd.reof("db-compat-err", "The current substrules database version is incompatible; please run \"clitheme repair-theme\" and try again"), no_prefix=True)
     else:
@@ -116,7 +118,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
         elif phrases[0]==end_phrase:
             self.check_extra_args(phrases, 1)
             self.handle_end_section("substrules")
-            db_interface.close_db()
+            if self.close_db: db_interface.close_db()
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: self.handle_unterminated_section("substrules")
