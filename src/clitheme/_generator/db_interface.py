@@ -102,8 +102,13 @@ def add_subst_entry(
 ):
     assert connection!=None, "No active database connection"
     cmdlist: List[Optional[str]]=[]
-    try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
-    except: raise bad_pattern(str(sys.exc_info()[1]))
+
+    try: re.compile(match_pattern)
+    except: raise AssertionError("Uncaught bad match pattern")
+    if is_regex:
+        try: re.sub(match_pattern, substitute_pattern, "") # test if patterns are valid
+        except: raise bad_pattern(str(sys.exc_info()[1]))
+
     # handle condition where no effective_locale is specified ("default")
     locale_condition="effective_locale=?" if effective_locale!=None else "typeof(effective_locale)=typeof(?)"
     if effective_commands!=None and len(effective_commands)>0: 
