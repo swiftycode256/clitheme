@@ -22,7 +22,8 @@ class GeneratorObject(_data_handlers.DataHandlers):
     char_subst_options=["substesc", "substchar"]
     subst_options=content_subst_options+char_subst_options
     command_filter_options=["strictcmdmatch", "exactcmdmatch", "smartcmdmatch", "normalcmdmatch"]+["foregroundonly"]
-    subst_limiting_options=["subststdoutonly", "subststderronly", "substallstreams"]+["endmatchhere", "foregroundonly"]
+    substrules_options=["subststdoutonly", "subststderronly", "substallstreams"] \
+                      +["endmatchhere", "foregroundonly", "nlmatchcurpos"]
     
     # options used in handle_block_input
     block_input_options=lead_indent_options+subst_options
@@ -30,11 +31,11 @@ class GeneratorObject(_data_handlers.DataHandlers):
     # value options: options requiring an integer value
     value_options=lead_indent_options
     # on/off options (use no<...> to disable)
-    bool_options=subst_options+["endmatchhere", "foregroundonly"]
+    bool_options=subst_options+substrules_options[3:]
     # only one of these options can be set to true at the same time (specific to groups)
     switch_options=[command_filter_options[:4]]
     # Disable these options for now (BETA)
-    # switch_options+=[subst_limiting_options[:3]]
+    # switch_options+=[substrules_options[:3]]
     substvar_banphrases=['{', '}', '[', ']', '(', ')']
 
     def __init__(self, file_content: str, custom_infofile_name: str, filename: str, path: str, close_db: bool):
@@ -390,7 +391,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
     
     ## sub-block processing functions
 
-    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, line_separator: str='\n', disallow_other_options: bool=True, disable_char_subst: bool=False) -> str:
+    def handle_block_input_splitlines(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, disallow_other_options: bool=True, disable_char_subst: bool=False) -> List[str]:
         minspaces=math.inf
         blockinput_lines=[]
         begin_line_number=self.linenum()+1
@@ -422,7 +423,7 @@ class GeneratorObject(_data_handlers.DataHandlers):
         else: # File terminated without reaching end phrase
             self.handle_syntax_error(self.fd.feof("unterminated-content-block-err", "Line {num}: Unterminated content block", num=begin_line_number-1))
         # Return empty string if there are no lines
-        if len(blockinput_lines)==0: return ""
+        if len(blockinput_lines)==0: return []
 
         # remove all whitespaces except common minspaces
         if preserve_indents:
@@ -462,18 +463,17 @@ class GeneratorObject(_data_handlers.DataHandlers):
             leading_whitespace=ws_match.groupdict()['spc']
             line=leading_whitespace+ \
                 self.handle_linebounds(line.strip(), condition=opt("linebounds")==True, preserve_indents=preserve_indents, allow_options=False, debug_linenumber=begin_line_number+line_offset)[0]
-            line_offset+=1
+            # Process subst options
+            line=self.handle_subst(line, 
+                    subst_var=opt("substvar")==True, 
+                    subst_esc=opt("substesc")==True and not disable_char_subst,
+                    subst_chars=opt("substchar")==True and not disable_char_subst,
+                    silence_warnings=(False, disable_char_subst, disable_char_subst),
+                    line_number_debug=str(begin_line_number+line_offset))
             blockinput_lines[x]=line
-        blockinput_data=line_separator.join(blockinput_lines)
-        
-        # Process subst options
-        debug_linenumber=self.handle_linenumber_range(begin_line_number, self.linenum()-1)
-        blockinput_data=self.handle_subst(blockinput_data, 
-                subst_var=opt("substvar")==True, 
-                subst_esc=opt("substesc")==True and not disable_char_subst,
-                subst_chars=opt("substchar")==True and not disable_char_subst,
-                silence_warnings=(False, disable_char_subst, disable_char_subst),
-                line_number_debug=debug_linenumber)
-
-        return blockinput_data
+            line_offset+=1
+        return blockinput_lines
+    def handle_block_input(self, preserve_indents: bool, preserve_empty_lines: bool, end_phrase: str, line_separator: str='\n', disallow_other_options: bool=True, disable_char_subst: bool=False) -> str:
+        blockinput_lines=self.handle_block_input_splitlines(preserve_indents, preserve_empty_lines, end_phrase, disallow_other_options, disable_char_subst)
+        return line_separator.join(blockinput_lines)
     handle_entry=entry_block.handle_entry

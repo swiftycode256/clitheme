@@ -34,9 +34,6 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
     substrules_stdout_stderr_option=0
     got_options=None
 
-    def opt(name: str) -> bool: 
-        assert got_options!=None
-        return got_options.get(name)==True
     def check_entry_name(name: str) -> bool:
         if is_substrules: 
             # check if patterns are valid
@@ -58,7 +55,23 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             ))
 
     names_processed=False # Set to True when no more entry names are allowed
-    self.lineindex-=1 # Process current line
+    start_index=self.lineindex-1 # Process current line
+    # Check for options first
+    while self.goto_next_line():
+        phrases=self.get_current_line().split()
+        if phrases[0]==end_phrase:
+            got_options=self.parse_options(phrases[1:], merge_global_options=True, \
+                    allowed_options=(self.substrules_options if is_substrules else []))
+            if got_options.get('subststdoutonly')==True:
+                substrules_stdout_stderr_option=1
+            if got_options.get('subststderronly')==True:
+                substrules_stdout_stderr_option=2
+            break
+    def opt(name: str) -> bool: 
+        assert got_options!=None
+        return got_options.get(name)==True
+    # Rewind back to start of block
+    self.lineindex=start_index
     while self.goto_next_line():
         phrases=self.get_current_line().split()
         line_content=self.get_current_line()
@@ -71,6 +84,8 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             self.check_enough_args(phrases, 2, check_processed=not is_substrules)
             pattern=_globalvar.extract_content(line_content)
             pattern=self.parse_content(pattern, pure_name=not is_substrules)
+            if is_substrules and substrules_options['is_regex']==False: 
+                pattern=re.escape(pattern)
             if check_entry_name(pattern):
                 entry_names.append(EntryName(
                     value=pattern,
@@ -83,13 +98,20 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             assert re.match(r"^\[.+\]$", start_phrase)!=None, "Start phrase doesn't follow [<name>] format"
             self.check_extra_args(phrases, 1)
             begin_line_number=self.linenum()+1
-            pattern=self.handle_block_input(
+            pattern_lines=self.handle_block_input_splitlines(
                 # e.g. '<<subst_regex]' syntax
                 end_phrase=start_phrase.replace('[', '<<'),
                 preserve_empty_lines=True,
                 preserve_indents=True,
             )
-            if check_entry_name(pattern):
+            if substrules_options['is_regex']==False:
+                pattern_lines=[re.escape(line) for line in pattern_lines]
+            if check_entry_name('\n'.join(pattern_lines)):
+                # Match newlines with different types of output newline characters
+                newline_sep=[s.decode('utf-8') for s in _globalvar.newlines] \
+                            +([r"\x1b\[\d+;\d+H"] if opt("nlmatchcurpos")==True else [])
+                line_separator=rf"(?:{'|'.join(newline_sep)})"
+                pattern=line_separator.join(pattern_lines)
                 entry_names.append(EntryName(
                     value=pattern,
                     is_multiline=True,
@@ -148,12 +170,7 @@ def handle_entry(obj, start_phrase: str, end_phrase: str, is_substrules: bool=Fa
             )
             add_entry(content, ['default'], line_number=self.handle_linenumber_range(begin_line_number, self.linenum()-1))
         elif phrases[0]==end_phrase:
-            got_options=self.parse_options(phrases[1:], merge_global_options=True, \
-                    allowed_options=(self.subst_limiting_options if is_substrules else []))
-            if got_options.get('subststdoutonly')==True:
-                substrules_stdout_stderr_option=1
-            if got_options.get('subststderronly')==True:
-                substrules_stdout_stderr_option=2
+            assert got_options!=None, "Options should be handled by previous loop"
             break
         else: self.handle_invalid_phrase(phrases[0])
     else: return # Skip processing if entry block is unterminated

@@ -23,6 +23,7 @@
         "strictcmdmatch", "normalcmdmatch", "exactcmdmatch", "smartcmdmatch",
         "subststdoutonly", "subststderronly", "substallstreams",
         "foregroundonly", "noforegroundonly",
+        "nlmatchcurpos",
         "substvar", "substesc", "substchar", "linebounds",
         "nosubstvar", "nosubstesc", "nosubstchar", "nolinebounds",
         "tcgetattr", "tcsetattr", "getpid", "setsid", "setitimer", "tcgetpgrp", "tcsetpgrp",

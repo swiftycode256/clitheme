@@ -62,8 +62,7 @@ def handle_substrules_section(self: _parser_handlers.GeneratorObject, end_phrase
 
             prev_linenum=self.linenum()
             # read commands
-            content=self.handle_block_input(preserve_indents=False, preserve_empty_lines=False, end_phrase=phrases[0].replace('[','[/'), disallow_other_options=False, disable_char_subst=True)
-            command_strings=content.splitlines()
+            command_strings=self.handle_block_input_splitlines(preserve_indents=False, preserve_empty_lines=False, end_phrase=phrases[0].replace('[','[/'), disallow_other_options=False, disable_char_subst=True)
             # If regex, check if pattern is valid
             if command_filter_is_regex:
                 for cmd in command_strings:

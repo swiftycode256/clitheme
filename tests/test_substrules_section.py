@@ -194,6 +194,7 @@ class TestSubstrulesSection(unittest.TestCase):
         self.generator_path=self.return_val.dir_path
         if len(self.return_val.messages)>0:
             print("\n".join(self.return_val.messages))
+        self.assertTrue(self.return_val.success)
         db_interface.db_path=self.generator_path+"/"+_globalvar.db_filename
     def tearDown(self):
         shutil.rmtree(self.generator_path)
@@ -209,6 +210,6 @@ class TestSubstrulesSection(unittest.TestCase):
             else:
                 print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+content)
                 errcount+=1
-        self.assertEqual(errcount, 0)
+        self.assertEqual(errcount, 0, msg=f"{errcount} output mismatch detected")
 if __name__=="__main__":
     unittest.main()

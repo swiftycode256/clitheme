@@ -69,11 +69,8 @@ def match_content(content: bytes, command: Optional[str]=None, is_stderr: bool=F
         # endregion
 
         # region: Match operation
-        match_pattern=rule.match_pattern if rule.is_regex else re.escape(rule.match_pattern)
-        # Replace newlines in multiline match pattern to match all possible newlines
-        match_pattern=re.sub(r'\n' if rule.is_regex else r'\\\n', # '\n' is escaped in re.escape
-               rf"(?:{'|'.join(s.decode('utf-8') for s in _globalvar.newlines)}|\\x1b\\[\\d+;\\d+H)",
-               match_pattern)
+        # For string only: re.escape already done when processing the file
+        match_pattern=rule.match_pattern
         if type(content_str)==bytes: match_pattern=match_pattern.encode('utf-8')
         sub_pattern=rule.substitute_pattern
 
