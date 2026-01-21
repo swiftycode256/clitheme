@@ -33,7 +33,7 @@ sample_inputs=[("rm: missing operand\r\n"
                ("Error: sample message", "app --wef install"),
                ("rm: file: Operation not permitted", "rm file.ban"), # test exactcmdmatch
                ("rm: file: Operation not permitted", "rm file.ban -r"), # should not match
-               ("example_app: using recursive directories\r\n"
+               ("example_app: using recursive directories\x1b[2;1H"
                 "example_app: using list options", "/usr/bin/example_app.exe -rlc"), # test smartcmdmatch and command basename handling
 ]
 expected_outputs=[
@@ -165,7 +165,7 @@ substrules_file=r"""
     <filter_cmd> example_app -rl
         [subst_regex>>
             ^example_app: using (.+) directories
-            ^example_app: using list (.+)
+            example_app: using list (.+)
         <<subst_regex]
             # \x21=!
             [default]
@@ -177,7 +177,7 @@ substrules_file=r"""
                 example_app: 正在使用\g<1>路径{{[uff01]}}(｡ì _ í｡)
                 example_app: 正在使用列表\g<2>！(⊙ω⊙)
             [/locale]
-        [/subst_regex]
+        [/subst_regex] nlmatchcurpos
     (set_options) normalcmdmatch
     <filter_cmd> example_app
         [subst_string] example_app:
@@ -205,10 +205,11 @@ class TestSubstrulesSection(unittest.TestCase):
             expected=expected_outputs[x]
             content, changed_lines=_substrules_processor.match_content(bytes(inp[0],'utf-8'),command=inp[1])
             content=content.decode('utf-8')
+            p_content=content.replace('\x1b',r'\x1b')
             if content in expected:
-                print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+content)
+                print("\x1b[1;32mOK\x1b[0;1m:\x1b[0m "+p_content)
             else:
-                print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+content)
+                print("\x1b[1;31mMismatch\x1b[0;1m:\x1b[0m "+p_content)
                 errcount+=1
         self.assertEqual(errcount, 0, msg=f"{errcount} output mismatch detected")
 if __name__=="__main__":
