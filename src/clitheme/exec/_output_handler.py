@@ -59,19 +59,20 @@ def _process_debug(lines: List[bytes], debug_mode: List[str], is_stderr: bool, m
                 assert total_len==len(line), f"Length mismatch: {total_len}!={len(line)}"
             else: split_lines.append(line)
             assert len(split_lines)>0, "Empty split_lines array"
-            final_line=bytes(f"\x1b[0;1;" # Bold
-                       f"{'31' if is_stderr else '32'}" # Red/green
-                       f"{';47;30' if x==0 else ''}" # White highlighting
-                       f"{';44' if x in matched_lines else ''}" # Blue highlighting
-                       f"{';37;41' if failed else ''}" # Red highlighting
-                       'm'
-                       f"{'e' if is_stderr else 'o'}"
+            final_line=bytes(
+                f"\x1b[0;1" # Bold
+                f"{';31' if is_stderr else ';32'}" # Red/green
+                f"{';30;47' if x==0 else ''}" # black on [white]
+                f"{';37;44' if x in matched_lines else ''}" # white on [blue]
+                f"{';37;41' if failed else ''}" # white on [red]
+                'm'
+                f"{'e' if is_stderr else 'o'}"
 
-                       f"\x1b[0;1;" # Bold
-                       f"{';47;30' if x==0 else ''}" # White highlighting
-                       'm'
-                       f"{'>' if x==0 else '['}\x1b[0m ",
-                       'utf-8')+split_lines[0]
+                f"\x1b[0;1" # Bold
+                f"{';47;30' if x==0 else ''}" # black on [white]
+                'm'
+                f"{'>' if x==0 else '['}\x1b[0m ",
+            'utf-8')+split_lines[0]
             for i in range(1,len(split_lines)):
                 final_line+=b'\r\n'+b'\x1b[0;1m'+b' ( '+b'\x1b[0m'+\
                     split_lines[i]
