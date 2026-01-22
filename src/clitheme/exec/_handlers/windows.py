@@ -11,6 +11,7 @@ import ctypes
 import io
 import stat
 import re
+import threading
 from ctypes import wintypes
 from typing import Optional, Any, List, Tuple, Union
 from ... import _globalvar
@@ -101,9 +102,25 @@ class WindowsHandler(BaseHandler):
         ## Set startup info
         si = STARTUPINFOEX()
         si.StartupInfo.cb = ctypes.sizeof(STARTUPINFOEX)
-        # Handle piped stdout
-        if stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
+        # Handle piped stdout/stdin
+        self.input_is_pipe=False
+        pipe_thread=None
+        if stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode) \
+        or stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
             # [Use regular pipe instead]
+            if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
+                self.input_is_pipe=True
+                def pipe_forward():
+                    # Forward stdin to subprocess pipe
+                    nonlocal inputWriteSide
+                    while True:
+                        data=self.read_stdin()
+                        if data==b'': # pipe is closed
+                            # Very important! Close the pipe when done
+                            w_assert(kernel32.CloseHandle(inputWriteSide))
+                            break
+                        self._write_data(inputWriteSide, data)
+                pipe_thread=threading.Thread(target=pipe_forward, daemon=True)
             si.StartupInfo.hStdInput=inputReadSide
             si.StartupInfo.hStdOutput=outputWriteSide
             si.StartupInfo.hStdError=outputWriteSide
@@ -171,6 +188,7 @@ class WindowsHandler(BaseHandler):
             raise command_failed(str(exc)) from exc
         self.process_pid=int(pi.dwProcessId)
         self.process_handle=pi.hProcess
+        if pipe_thread!=None: pipe_thread.start()
         ## Set terminal attributes
         # Save initial attributes
         self.prev_attrs=self.get_term_attrs()
@@ -293,7 +311,7 @@ class WindowsHandler(BaseHandler):
 
             stdin_handle=self._get_std_handles()[0]
             # Check stdin
-            if read_available(stdin_handle):
+            if not self.input_is_pipe and read_available(stdin_handle):
                 avail_handles.add("stdin")
             # Check stdout
             if read_available(self.stdout_fd):
@@ -347,7 +365,8 @@ class WindowsHandler(BaseHandler):
         if "stdin" in self.get_readable_descriptors(timeout=0.01):
             self.read_stdin()
         # Close handles when done
-        w_assert(kernel32.CloseHandle(self.stdin_fd))
+        try: w_assert(kernel32.CloseHandle(self.stdin_fd))
+        except OSError: pass # Might have already closed in pipe_forward loop
         w_assert(kernel32.CloseHandle(self.stdout_fd))
         w_assert(kernel32.ClosePseudoConsole(self.console_handle)==None)
         # Restore console mode
