@@ -52,8 +52,10 @@ class PosixHandler(BaseHandler):
         # Detect if stdout/stderr is piped (e.g. clitheme-exec curl --help|cat)
         if stat.S_ISFIFO(os.stat(sys.stdout.fileno()).st_mode):
             self.stdout_fd, self.stdout_child=os.pipe()
+            self.output_is_pipe=True
         else: 
             self.stdout_fd, self.stdout_child=pty.openpty()
+            self.output_is_pipe=False
         if stat.S_ISFIFO(os.stat(sys.stderr.fileno()).st_mode):
             self.stderr_fd, self.stderr_child=os.pipe()
         else:
@@ -117,13 +119,17 @@ class PosixHandler(BaseHandler):
         signal.signal(signal.SIGWINCH, self.update_window_size)
         
     def read_stdin(self) -> bytes:
-        return os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
+        try: return os.read(sys.stdin.fileno(), io.DEFAULT_BUFFER_SIZE)
+        except: return b''
     def write_output(self, data: bytes, is_stderr: bool=False):
-        os.write(sys.stderr.fileno() if is_stderr else sys.stdout.fileno(),data)
+        try: os.write(sys.stderr.fileno() if is_stderr else sys.stdout.fileno(),data)
+        except: pass
     def read_pty(self, is_stderr: bool=False) -> bytes:
-        return os.read(self.stderr_fd if is_stderr else self.stdout_fd, io.DEFAULT_BUFFER_SIZE)
+        try: return os.read(self.stderr_fd if is_stderr else self.stdout_fd, io.DEFAULT_BUFFER_SIZE)
+        except: return b''
     def write_pty(self, data: bytes):
-        os.write(self.stdout_fd, data)
+        try: os.write(self.stdout_fd, data)
+        except: pass
     def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
         try: fds=select.select([self.stdout_fd, sys.stdin, self.stderr_fd], [], [], timeout)[0]
@@ -196,7 +202,7 @@ class PosixHandler(BaseHandler):
                 except termios.error: sig_enabled=True
                 else: sig_enabled=attrs[tty.LFLAG] & termios.ISIG > 0
 
-                if sig_enabled and self.get_foreground_pid()==self.process_pid:
+                if self.output_is_pipe or (sig_enabled and self.get_foreground_pid()==self.process_pid):
                     self._reset_term_attrs()
                     self.process.send_signal(signal.SIGSTOP) # Stop the process
                     signal.signal(signal.SIGTSTP, signal.SIG_DFL) # Unset signal handler to prevent deadlock
@@ -204,7 +210,8 @@ class PosixHandler(BaseHandler):
                 else: self.write_pty(b'\x1a') # Send '^Z' character instead of suspending the process
         elif sig==signal.SIGINT:
             if self.process.poll()==None:
-                self.write_pty(b'\x03') # '^C' character
+                if self.output_is_pipe: self.process.send_signal(signal.SIGINT)
+                else: self.write_pty(b'\x03') # '^C' character
             else:
                 self.reset_terminal()
                 _labeled_print(fd.reof("output-interrupted-exit", "Output interrupted after process exit"))

@@ -11,7 +11,6 @@ import time
 import threading
 import queue
 from typing import Optional, List, Set
-from .._generator import db_interface
 from .. import _globalvar, _frontend_internal as frontend
 from . import _substrules_processor
 from ._handlers._base_template import BaseHandler, command_failed
@@ -152,8 +151,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         # if input from last iteration did not end with newlines, append new content
                         if last_input_content!=None: last_input_content+=data
                         else: last_input_content=data
-                        try: handler.write_pty(data)
-                        except OSError: pass # Handle input/output error that might occur after program terminates
+                        handler.write_pty(data)
                 # Handle output from stdout and stderr
                 def handle_output(is_stderr: bool) -> bool:
                     nonlocal pending_output, output_lines, last_input_content

@@ -17,7 +17,7 @@ from ... import _globalvar
 from ._base_template import BaseHandler, command_failed
 from ._windows_headers import *
 
-# spell-checker:ignoreRegExp [A-Z]+
+# spell-checker:ignore HPCON STARTF STARTUPINFOEX
 
 def errmsg() -> str:
     # Last error code
@@ -47,7 +47,7 @@ def w_assert(condition, msg: Optional[str]=None):
         raise OSError(errmsg() if msg==None else msg)
 
 class WindowsHandler(BaseHandler):
-    # Use a longer interal to capture a fuller block of output
+    # Use a longer interval to capture a fuller block of output
     poll_interval=0.02
 
     def __init__(self, command: List):
@@ -61,7 +61,6 @@ class WindowsHandler(BaseHandler):
         - Set term attributes for first time
         - Add signal handlers
         """
-        self.process_pid: int
         ## Create communication channels
         inputReadSide = wintypes.HANDLE()
         inputWriteSide = wintypes.HANDLE()
@@ -80,6 +79,9 @@ class WindowsHandler(BaseHandler):
         # [Optional] Disable inheritance for parent process handles to prevent issues
         w_assert(kernel32.SetHandleInformation(outputReadSide, HANDLE_FLAG_INHERIT, 0))
         w_assert(kernel32.SetHandleInformation(inputWriteSide, HANDLE_FLAG_INHERIT, 0))
+
+        self.stdin_fd=inputWriteSide
+        self.stdout_fd=outputReadSide
 
         try:
             host_size=os.get_terminal_size()
@@ -176,10 +178,6 @@ class WindowsHandler(BaseHandler):
         attrs=self.get_term_attrs(make_raw=True)
         if attrs!=None: self.set_host_term_attrs(attrs)
 
-        self.stdin_fd=inputWriteSide
-        self.stdout_fd=outputReadSide
-
-
         # The last line of console output might end with '\r'
         # In this case, output '\n' when exiting
         self.ends_with_R=False
@@ -193,27 +191,31 @@ class WindowsHandler(BaseHandler):
     def _read_data(self, handle: wintypes.HANDLE) -> bytes:
         buf=ctypes.create_string_buffer(io.DEFAULT_BUFFER_SIZE)
         bytes_read=wintypes.DWORD()
-        w_assert(kernel32.ReadFile(handle, ctypes.byref(buf), ctypes.sizeof(buf), ctypes.byref(bytes_read), None))
-        return buf.value[:bytes_read.value]
+        try: 
+            w_assert(kernel32.ReadFile(handle, ctypes.byref(buf), ctypes.sizeof(buf), ctypes.byref(bytes_read), None))
+            return buf.value[:bytes_read.value]
+        except OSError: return b''
     def _write_data(self, handle: wintypes.HANDLE, data: Union[bytes, str]):
         handle_type=kernel32.GetFileType(handle)
         w_assert(handle_type!=FILE_TYPE_UNKNOWN)
-        if handle_type==FILE_TYPE_CHAR: # str
-            try:
-                if type(data)==bytes: data=data.decode('utf-8')
-                buf=ctypes.create_unicode_buffer(data) # type: ignore
-                w_assert(kernel32.WriteConsoleW(handle,
-                        ctypes.byref(buf),
-                        ctypes.sizeof(buf) // ctypes.sizeof(wintypes.WCHAR),
-                        None, None))
-            except UnicodeDecodeError:
+        try:
+            if handle_type==FILE_TYPE_CHAR: # str
+                try:
+                    if type(data)==bytes: data=data.decode('utf-8')
+                    buf=ctypes.create_unicode_buffer(data) # type: ignore
+                    w_assert(kernel32.WriteConsoleW(handle,
+                            ctypes.byref(buf),
+                            ctypes.sizeof(buf) // ctypes.sizeof(wintypes.WCHAR),
+                            None, None))
+                except UnicodeDecodeError:
+                    buf=ctypes.create_string_buffer(data) # type: ignore
+                    w_assert(kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None))
+            elif handle_type==FILE_TYPE_PIPE: # bytes
+                if type(data)==str: data=data.encode('utf-8')
                 buf=ctypes.create_string_buffer(data) # type: ignore
                 w_assert(kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None))
-        elif handle_type==FILE_TYPE_PIPE: # bytes
-            if type(data)==str: data=data.encode('utf-8')
-            buf=ctypes.create_string_buffer(data) # type: ignore
-            w_assert(kernel32.WriteFile(handle, ctypes.byref(buf), len(data), None, None))
-        else: raise AssertionError("Unsupported handle type")
+            else: raise AssertionError("Unsupported handle type")
+        except OSError: pass
     def read_stdin(self) -> bytes:
         stdin_handle=self._get_std_handles()[0]
         stdin_type=kernel32.GetFileType(stdin_handle)
@@ -267,6 +269,22 @@ class WindowsHandler(BaseHandler):
         self._write_data(self.stdin_fd, data)
     def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
+        def read_available(handle: wintypes.HANDLE) -> bool:
+            handle_type=kernel32.GetFileType(handle)
+            w_assert(handle_type!=FILE_TYPE_UNKNOWN)
+            try:
+                input_available=wintypes.DWORD()
+                if handle_type==FILE_TYPE_PIPE:
+                    w_assert(kernel32.PeekNamedPipe(
+                        handle, None, 0, None,
+                        ctypes.byref(input_available), # Get available bytes
+                        None # lpBytesLeftThisMessage
+                    ))
+                elif handle_type==FILE_TYPE_CHAR:
+                    w_assert(kernel32.GetNumberOfConsoleInputEvents(handle, ctypes.byref(input_available)))
+                else: raise AssertionError("Unknown handle type") 
+                return input_available.value>0
+            except OSError: return False
         avail_handles=set()
         init_time=time.perf_counter()
         counter=0
@@ -275,25 +293,10 @@ class WindowsHandler(BaseHandler):
 
             stdin_handle=self._get_std_handles()[0]
             # Check stdin
-            input_available = wintypes.DWORD()
-            try:
-                w_assert(kernel32.GetNumberOfConsoleInputEvents(stdin_handle, ctypes.byref(input_available)))
-            except OSError:
-                w_assert(kernel32.PeekNamedPipe(
-                    stdin_handle, None, 0, None,
-                    ctypes.byref(input_available), # Get available bytes
-                    None # lpBytesLeftThisMessage
-                ))
-            if input_available.value>0:
+            if read_available(stdin_handle):
                 avail_handles.add("stdin")
             # Check stdout
-            output_available = wintypes.DWORD()
-            w_assert(kernel32.PeekNamedPipe(
-                self.stdout_fd, None, 0, None,
-                ctypes.byref(output_available), # Get available bytes
-                None # lpBytesLeftThisMessage
-            ))
-            if output_available.value>0:
+            if read_available(self.stdout_fd):
                 avail_handles.add("stdout")
             if len(avail_handles)>0: break
             time.sleep(0.001)
