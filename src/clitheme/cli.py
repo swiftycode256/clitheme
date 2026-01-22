@@ -110,7 +110,8 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             print()
             print(f.feof("process-files-error", "[File {index}] An error occurred while processing the file:\n{message}", \
                 index=str(i+1), message=fmt(str(sys.exc_info()[1]))))
-            raise
+            _globalvar.handle_exception(always_show=True)
+            return 1
     db_interface.close_db()
     print(line_prefix, end='')
     if err_count>0:
@@ -152,8 +153,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
             shutil.move(final_path, _globalvar.clitheme_root_data_path) 
     except Exception as exc:
         print(f.feof("apply-theme-error", "An error occurred while applying the theme:\n{message}", message=fmt(str(exc))))
-        if type(exc)==OSError: _globalvar.handle_exception()
-        else: raise
+        _globalvar.handle_exception(always_show=type(exc)!=OSError)
         return 1
     else: print(success_msg)
     return 0
@@ -324,7 +324,8 @@ def update_theme(no_confirm=False, preserve_temp=False):
         return 1
     except:
         print(fi.feof("other-err", "An error occurred while processing file path information: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        raise
+        _globalvar.handle_exception(always_show=True)
+        return 1
     return apply_theme(None, file_paths, overlay=False, preserve_temp=preserve_temp, no_confirm=no_confirm)
 
 def repair_theme():
@@ -348,7 +349,8 @@ def repair_theme():
         return 1
     except:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        raise
+        _globalvar.handle_exception(always_show=True)
+        return 1
     lsdir_result=_fetch_abs_lsdir()
     assert len(lsdir_result)==len(file_paths), f"{len(lsdir_result)}!={len(file_paths)}"
     # Run apply-theme to overwrite existing data
@@ -361,9 +363,10 @@ def repair_theme():
             target_path=lsdir_result[x]
             info_path=target_path+"/"+_globalvar.generator_info_filename.format(info="filepath")
             _globalvar.write_file(info_path, file_paths[x]+"\n")
-    except Exception as exc:
+    except:
         print(fi.feof("other-err", "An error occurred: {msg}\nPlease re-apply the current theme and try again", msg=fmt(str(sys.exc_info()[1]))))
-        raise
+        _globalvar.handle_exception(always_show=True)
+        return 1
     return 0
 
 def _is_option(arg):
@@ -427,7 +430,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
             is_stdin=_globalvar.handle_stdin_prompt(path)
             content_list.append(_globalvar.read_file(path))
             if is_stdin: print() # Print an extra newline
-        except Exception as exc:
+        except:
             print(line_prefix+ \
                 fi.feof("read-file-error", "[File {index}] An error occurred while reading the file: \n{message}", \
                     index=str(i+1), message=fmt(path+": "+str(sys.exc_info()[1]))))

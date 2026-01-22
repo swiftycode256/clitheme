@@ -95,7 +95,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             _globalvar.handle_exception()
         else:
             _labeled_print(fd.feof("init-fail-err", "Initialization failed: {msg}", msg=fmt(str(exc))))
-            raise # Always show full traceback
+            _globalvar.handle_exception(always_show=True)
         return 1
     output_lines=queue.Queue() # (line_content, is_stderr, do_subst_operation, foreground_pid, term_attrs)
     last_tcgetpgrp=handler.get_foreground_pid()
@@ -107,12 +107,11 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             handler.write_output(bytes(message, 'utf-8'))
             last_tcgetpgrp=foreground_pid
     thread_exception_handled=False
-    def handle_exception(exc: Optional[Exception]=None):
+    def handle_exception():
         nonlocal thread_exception_handled; thread_exception_handled=True
         handler.reset_terminal()
         _labeled_print(fd.reof("internal-error-err", "An internal error has occurred (process terminated):"))
-        if exc!=None: raise exc
-        else: raise
+        _globalvar.handle_exception(always_show=True)
 
     thread_debug=0
     if os.name=="posix":
@@ -232,12 +231,14 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
 
     # If had output on the previous run, use shorter timeout to minimize delay in --foreground-stat output
     had_output=False
+    exit_code=None
     while True:
         try:
-            if not thread.is_alive() and not handler.get_proc_status()!=None:
-                if not thread_exception_handled: handle_exception(RuntimeError("Output read loop terminated unexpectedly"))
-                else: return 1
-            if thread_exception_handled: break # Prevent conflict with setting terminal attributes
+            if not thread_exception_handled and not thread.is_alive() and not handler.get_proc_status()!=None:
+                raise RuntimeError("Output read loop terminated unexpectedly")
+            if thread_exception_handled: 
+                exit_code=1
+                break # Prevent conflict with setting terminal attributes
 
             # Process outputs
             if output_lines.empty():
@@ -269,8 +270,12 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
             if block_data[4]!=None: handler.set_host_term_attrs(block_data[4])
             # subst operation and print output
             handler.write_output(output, is_stderr=block_data[1])
-        except direct_exit: break
+        except direct_exit as exc: # Keyboard interrupt from posix handler
+            exit_code=exc.code
+            break
         except: 
-            if not thread_exception_handled: handle_exception()
-            else: raise # Handle "output read loop terminated expectedly" without re-printing the message
-    return handler.handle_exit()
+            exit_code=1
+            handle_exception()
+            break
+    c=handler.handle_exit()
+    return exit_code if exit_code!=None else c

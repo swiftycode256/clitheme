@@ -14,6 +14,7 @@ import tempfile
 import ctypes
 import uuid
 import hashlib
+import traceback
 from . import _version
 from typing import List, Union
 
@@ -128,7 +129,7 @@ def sanitize_str(path: str) -> str:
 ## Convenience functions
 
 class direct_exit(Exception):
-    def __init__(self, code):
+    def __init__(self, code: int):
         """
         Custom exception for handling return code inside another function callback
         """
@@ -220,10 +221,10 @@ def get_locale(debug_mode: bool=False) -> List[str]:
                 add_language(win_locale.replace('-','_')+".UTF-8")
     return lang
 
-def handle_exception():
+def handle_exception(always_show: bool=False):
     env_var="CLITHEME_SHOW_TRACEBACK"
-    if env_var in os.environ and os.environ[env_var]=="1":
-        raise
+    if always_show or os.environ.get(env_var)=='1':
+        traceback.print_exc(file=sys.stderr)
 
 def handle_stdin_prompt(path: str) -> bool:
     fi=frontend.FetchDescriptor(domain_name=fd_domain_name, app_name=fd_app_name, subsections="cli apply-theme")
@@ -254,10 +255,7 @@ def handle_set_themedef(debug_name: str): # type: ignore
     except:
         sys.stdout=orig_stdout
         frontend.set_debugmode(prev_mode)
-        # If pre-release build or manual environment variable flag set, display error
-        if _version.release<0 or os.environ.get("CLITHEME_SHOW_TRACEBACK")=='1':
-            print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.__stdout__)
-            handle_exception()
+        print(f"{debug_name} set_local_themedef failed: "+str(sys.exc_info()[1]), file=sys.stderr)
     finally: sys.stdout=orig_stdout
 def result_sort_cmp(obj1,obj2) -> int:
     cmp1='';cmp2=''

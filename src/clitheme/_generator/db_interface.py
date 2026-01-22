@@ -74,7 +74,8 @@ def connect_db(path: Optional[str]=None):
     try:
         version=int(connection.execute(f"SELECT value FROM {_globalvar.db_data_tablename}_version").fetchone()[0])
         assert version==_globalvar.db_version
-    except: raise need_db_regenerate
+    except Exception as exc:
+        raise need_db_regenerate from exc
 def close_db():
     global connection
     if connection!=None:

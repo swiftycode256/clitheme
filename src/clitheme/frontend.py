@@ -47,7 +47,7 @@ def _get_caller(outer_level=3) -> str:
     # (The stack[3] may also be some function in frontend)
     for x in range(outer_level,len(stack)):
         filename=stack[x].filename
-        if filename!=__file__: break
+        if filename not in (__file__, "<string>"): break
     return filename
 
 def _update_local_settings(key: str, value: Union[None,str,bool]):
@@ -119,11 +119,11 @@ def _generate_data(file_contents: List[str], path_name: str, overlay: bool) -> b
             try:
                 global_debugmode=False
                 return_val=_generator.generate_data_hierarchy(file_content, custom_path_gen=False, custom_infofile_name=str(_alt_info_index), close_db=False)
-                assert return_val.success, '\n'.join(return_val.messages)
+                assert return_val.success, '\n'+'\n'.join(return_val.messages)
                 _alt_info_index+=1
             except AssertionError:
                 db_interface.close_db()
-                if _get_setting("debugmode"): print("[Debug] Generator error: "+str(sys.exc_info()[1]))
+                if _get_setting("debugmode"): print("[Debug] Generator failed: "+str(sys.exc_info()[1]))
                 return False
             finally: global_debugmode=d_copy
         db_interface.close_db()
