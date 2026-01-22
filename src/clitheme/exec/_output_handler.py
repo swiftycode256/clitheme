@@ -215,6 +215,8 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if "stderr" in fds:
                     had_output=had_output or handle_output(is_stderr=True)
                 no_io_available=not "stdin" in fds and not had_output
+                # Reset last input content after some timeout
+                if no_io_available: last_input_content=None
                 # if no input and output available, push what we have right now
                 if no_io_available and pending_output!=None:
                     push_output(pending_output)
