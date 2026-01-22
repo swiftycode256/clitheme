@@ -212,7 +212,7 @@ def get_locale(debug_mode: bool=False) -> List[str]:
     if os.name=="nt":
         try:
             s=ctypes.create_unicode_buffer(85)
-            assert ctypes.windll.kernel32.GetUserDefaultLocaleName(s, 85)!=0
+            assert ctypes.windll.kernel32.GetSystemDefaultLocaleName(s, 85)!=0
             win_locale: str=s.value
         except: pass
         else:
