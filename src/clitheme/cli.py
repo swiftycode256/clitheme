@@ -29,7 +29,7 @@ frontend.set_appname(_globalvar.fd_app_name)
 frontend.set_subsections("cli")
 
 last_data_path=""
-def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False, no_confirm=False):
+def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overlay: bool=False, preserve_temp=False, generate_only=False, no_confirm=False) -> int:
     """
     Apply the theme using the provided definition file contents and file pathnames in a list object. 
     
@@ -158,7 +158,7 @@ def apply_theme(file_contents: Optional[List[str]], filenames: List[str], overla
     else: print(success_msg)
     return 0
 
-def remove_theme(no_confirm=False):
+def remove_theme(no_confirm=False) -> int:
     """
     Delete the current theme data hierarchy from the data path
 
@@ -191,7 +191,7 @@ def remove_theme(no_confirm=False):
     else: return 1
 unset_current_theme=remove_theme
 
-def show_info(name: bool=False, file_path=False):
+def show_info(name: bool=False, file_path=False) -> int:
     """
     Displays the current theme info
 
@@ -304,7 +304,7 @@ def _fetch_theme_data(get_filepath=True, get_file_contents=True) -> Tuple[Option
         except: raise _invalid_theme("Read error: "+str(sys.exc_info()[1]))
     return (file_paths if get_filepath else None, file_contents if get_file_contents else None)
 
-def update_theme(no_confirm=False, preserve_temp=False):
+def update_theme(no_confirm=False, preserve_temp=False) -> int:
     """
     Re-applies theme files from file paths specified in the previous apply-theme command (including all related apply-theme commands if --overlay is used)
 
@@ -328,7 +328,7 @@ def update_theme(no_confirm=False, preserve_temp=False):
         return 1
     return apply_theme(None, file_paths, overlay=False, preserve_temp=preserve_temp, no_confirm=no_confirm)
 
-def repair_theme():
+def repair_theme() -> int:
     """
     Re-applies theme files stored in the current theme data
 
@@ -371,7 +371,7 @@ def repair_theme():
 
 def _is_option(arg):
     return arg.strip()[0:1]=="-"
-def _handle_usage_error(message, cli_args_first):
+def _handle_usage_error(message, cli_args_first) -> int:
     f=frontend.FetchDescriptor()
     print(message)
     print(f.feof("help-usage-prompt", "Run \"{clitheme} --help\" for usage information", clitheme=cli_args_first))
@@ -440,7 +440,7 @@ def _get_file_contents(file_paths: List[str]) -> List[str]:
     if has_error: raise direct_exit(1)
     else: return content_list
 
-def main(cli_args: List[str]):
+def main(cli_args: List[str]) -> int:
     """
     Use this function invoke 'clitheme' with command line arguments
     

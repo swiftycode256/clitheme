@@ -25,7 +25,7 @@ frontend.set_domain(_globalvar.fd_domain_name)
 frontend.set_appname(_globalvar.fd_app_name)
 fd=frontend.FetchDescriptor(subsections="man")
 
-def main(args: List[str]):
+def main(args: List[str]) -> int:
     """
     Invoke clitheme-man using the given command line arguments
 

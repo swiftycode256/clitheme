@@ -58,12 +58,12 @@ def _handle_help_message(full_help: bool=False):
     print("\t"+fd2.reof("options-foreground-stat", "--foreground-stat: Display message when the foreground status of the process changes (value of tcgetpgrp)"))
     print("\t"+fd2.reof("options-nosubst", "--nosubst: Do not perform any output substitutions even if a theme is set"))
 
-def _handle_error(message: str):
+def _handle_error(message: str) -> int:
     print(message)
     print(fd.reof("help-usage-prompt", "Run \"clitheme-exec --help\" for usage information"))
     return 1
 
-def main(arguments: List[str]):
+def main(arguments: List[str]) -> int:
     """
     Invoke clitheme-exec using the given command line arguments
 
