@@ -15,7 +15,7 @@ import os
 import ctypes
 def _labeled_print(msg: str):
     for line in msg.splitlines():
-        print("[clitheme-exec] "+line)
+        print("[clitheme-exec] "+line, file=sys.stderr)
 
 from .. import _globalvar, cli, _frontend_internal as frontend
 from .._globalvar import make_printable as fmt

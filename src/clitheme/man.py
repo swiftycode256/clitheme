@@ -19,7 +19,7 @@ import time
 from . import _globalvar, _frontend_internal as frontend
 from typing import List
 def _labeled_print(msg: str):
-    print("[clitheme-man] "+msg)
+    print("[clitheme-man] "+msg, file=sys.stderr)
 
 frontend.set_domain(_globalvar.fd_domain_name)
 frontend.set_appname(_globalvar.fd_app_name)
