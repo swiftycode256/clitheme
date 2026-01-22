@@ -64,6 +64,7 @@ class PosixHandler(BaseHandler):
         stdin_fd=self.stdout_child
         pipe_thread=None
         if stat.S_ISFIFO(os.stat(sys.stdin.fileno()).st_mode):
+            self.input_is_pipe=True
             r,w=os.pipe()
             def pipe_forward():
                 # Background thread to forward stdin to subprocess pipe
@@ -74,11 +75,13 @@ class PosixHandler(BaseHandler):
                         os.close(w)
                         # Duplicate stdout terminal onto stdin to read user input
                         if os.isatty(sys.stdout.fileno()):
+                            self.input_is_pipe=False
                             os.dup2(sys.stdout.fileno(), sys.stdin.fileno())
                         break
                     os.write(w,d)
             pipe_thread=threading.Thread(target=pipe_forward, daemon=True)
             stdin_fd=r
+        else: self.input_is_pipe=False
         # Initialize process
         def child_init():
             # Must start new session or some programs might not work properly
@@ -132,8 +135,7 @@ class PosixHandler(BaseHandler):
         except: pass
     def get_readable_descriptors(self, timeout: float) -> set:
         # Possible values: ["stdin", "stdout", "stderr"]
-        try: fds=select.select([self.stdout_fd, sys.stdin, self.stderr_fd], [], [], timeout)[0]
-        except OSError: fds=select.select([self.stdout_fd, self.stderr_fd], [], [], timeout)[0]
+        fds=select.select([self.stdout_fd, self.stderr_fd]+([sys.stdin] if not self.input_is_pipe else []), [], [], timeout)[0]
         fd_names=set()
         for pair in [(sys.stdin, "stdin"), (self.stdout_fd, "stdout"), (self.stderr_fd, "stderr")]:
             if pair[0] in fds: fd_names.add(pair[1])
@@ -189,7 +191,7 @@ class PosixHandler(BaseHandler):
         except OSError: return None
     def _signal_handler_function(self, sig, frame):
         if sig==signal.SIGCONT: # continue signal
-            self.process.send_signal(sig)
+            self.process.send_signal(signal.SIGCONT)
             # Reset signal handler
             signal.signal(signal.SIGTSTP, self._signal_handler_function)
             # Set term attributes after re-entering
@@ -220,7 +222,8 @@ class PosixHandler(BaseHandler):
                 raise direct_exit(130) # Will be raised in main processing loop
         elif sig==signal.SIGQUIT:
             if self.process.poll()==None:
-                os.write(self.stdout_fd, b'\x1c') # '^\' character
+                if self.output_is_pipe: self.process.send_signal(signal.SIGQUIT)
+                else: self.write_pty(b'\x1c') # '^\' character
     def get_proc_status(self) -> Optional[int]:
         return self.process.poll()
     def reset_terminal(self):
