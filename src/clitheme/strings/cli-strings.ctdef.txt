@@ -53,7 +53,7 @@
             [/entry]
             [entry] |reading-stdin-note|
                 # default: |Reading from standard input|
-                locale[zh_CN]: |正在从stdin读取文件|
+                locale[zh_CN]: |正在从输入流读取文件|
             [/entry]
             [entry] |stdin-interactive-finish-prompt|
                 # default: |Input file content here and press {shortcut} to finish|
