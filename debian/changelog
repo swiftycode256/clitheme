@@ -1,8 +1,47 @@
-clitheme (2.1-dev20260122) unstable; urgency=low
+clitheme (2.1-1) unstable; urgency=medium
 
-  * In development; see commit logs for changes
+  New features
 
- -- swiftycode <closure_mops.9k@icloud.com>  Fri, 23 Jan 2026 01:03:00 +0800
+  * `clitheme-exec` now supports Windows systems (requires Windows 10 version 1809+)
+    - Known issue: Support for piped input and output is currently limited on Windows
+  * All error messages are shown when processing theme definition files
+  * Support multi-line match patterns in substitution rules
+    - The `nlmatchcurpos` option can be used to let newlines match cursor positioning sequences
+  * Command filters now support regex patterns
+
+  > New syntax features:
+  * Support specifying line boundaries (`|`) for leading/trailing spaces (enabled through separate option)
+    - Specifying options after line boundaries is also supported
+  * New `substchar` option for inserting special characters in content
+  * Support enabling/disabling all subst options with one phrase
+  
+  > Syntax changes:
+  * Important change: Specifying content subst options in substitution rules block is no longer supported; please specify these options through content block or line bounds
+  * Support specifying multiple names in `setvar` and `locale` phrases
+  * Support new `default:` and `[default]` phrases
+  * Revised the names of various syntax phrases
+  
+  Improvements and bug Fixes
+
+  * frontend module: if the custom specified locale contains encoding suffix, the locale name without the suffix will also be matched
+  * File reading procedure now shows error messages for all files
+  * `clitheme remove-theme` now shows a confirmation prompt before proceeding
+  * Support reading system locale from Windows language settings
+  * Improve performance when processing theme definition files
+  * `clitheme-exec` now properly handles piped standard output
+  * `clitheme-exec`: Fix unexpected timeout due to database query when processing outputs
+  * `clitheme-exec`: Fix potential deadlock when standard input is a pipe
+  * Fix incorrect temp file naming when using `frontend.set_local_themedef` with `overlay=False` set
+  * Fix some missing Chinese localizations of messages
+
+  > Theme definition file:
+  * Support displaying "option not enabled" warnings for char subst expressions in content variables
+  * Fix an issue where a warning message might be displayed multiple times
+  * Unterminated sections now properly return an error
+  * Fix missing extra argument check in section start phrases (e.g. `{substrules}`)
+  * Optimize error message for unterminated content blocks
+
+ -- swiftycode <closure_mops.9k@icloud.com>  Fri, 23 Jan 2026 17:31:00 +0800
 
 clitheme (2.0.1-1) unstable; urgency=medium
 
@@ -119,7 +158,7 @@ clitheme (2.0-beta1-1) unstable; urgency=low
 
   Other features
 
-  - Theme definition file -
+  > Theme definition file:
   * Support adding tabs and indents at the start of each line in multi-line content block
   * Support using \<end phrase> in multi-line content block to express the end phrase, preventing conflict with the command
   * Support using {{ESC}} in content to express the ASCII Escape terminal control character
@@ -127,7 +166,7 @@ clitheme (2.0-beta1-1) unstable; urgency=low
   * Support defining multiple entry names at once
   * New options system
 
-  - clitheme CLI utility -
+  > clitheme CLI utility:
   * New update-theme command: re-apply theme definition files recorded in the current theme setting
   * Add Chinese support for output messages
 

@@ -5,9 +5,9 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Version definition file; define the package version here
-version_disp="2.1-dev20260122"
+version_disp="2.1"
 # Build version: must be a literal string
-__version__="2.1_dev20260122"
+__version__="2.1"
 # For PKGBUILD
 version_buildnumber=1
 
