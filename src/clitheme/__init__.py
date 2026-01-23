@@ -12,15 +12,15 @@ __all__=["frontend"]
 # Enable processing of escape characters in Windows Command Prompt
 import os
 if os.name=="nt":
-    import ctypes
     try:
+        import ctypes
         handle=ctypes.windll.kernel32.GetStdHandle(-11) # standard output handle
         console_mode=ctypes.c_long()
         assert ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(console_mode))
         console_mode.value|=0x0004 # ENABLE_VIRTUAL_TERMINAL_PROCESSING
         assert ctypes.windll.kernel32.SetConsoleMode(handle, console_mode.value)
+        del ctypes, handle, console_mode
     except: pass
-    del ctypes, handle, console_mode
 del os
 
 # Expose these modules when "clitheme" is imported
