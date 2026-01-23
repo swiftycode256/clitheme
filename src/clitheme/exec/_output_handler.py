@@ -184,7 +184,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
 
                         target_input=last_input_content
                         # If last input content starts with output
-                        startswith_output=b'^'+re.sub(rb"(\x08\\ \x08|\\\r\\ \\\r|\x08\x1b\[K)", rb"(\\x7f|\\x08)", re.escape(cur_output))
+                        startswith_output=b'^'+re.sub(rb"(\x08\\ \x08|\\\r\\ \\\r|\x08\x1b\\\[K)", rb"(\\x7f|\\x08)", re.escape(cur_output))
                         # print(target_input, startswith_output, re.match(startswith_output, target_input)!=None) # DEBUG
 
                         # equals_input=b'^'+re.sub(rb"(\x7f|\x08)", rb"(\\x08 \\x08|\\x08\\x1b\\[K)", re.escape(target_input))+b'$'
