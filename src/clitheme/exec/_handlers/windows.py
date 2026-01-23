@@ -49,7 +49,7 @@ def w_assert(condition, msg: Optional[str]=None):
 
 class WindowsHandler(BaseHandler):
     # Use a longer interval to capture a fuller block of output
-    poll_interval=0.02
+    poll_interval=0.025
 
     def __init__(self, command: List):
         """
