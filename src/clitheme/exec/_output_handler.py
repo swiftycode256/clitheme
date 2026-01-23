@@ -123,13 +123,19 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
         signal.signal(signal.SIGUSR1, thread_debug_handle)
         signal.signal(signal.SIGUSR2, thread_debug_handle)
     def output_read_loop():
-        nonlocal output_lines
-        pending_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time)
+        pending_output=None # (line,is_stderr,do_subst_operation,foreground_pid,term_attrs,initial_time, line for comparing)
         # Just in case where input is read in multiple segments before output arrives
         last_input_content=None
+        last_output_time=time.perf_counter()
         def push_output(content):
-            nonlocal pending_output, last_input_content
-            pending_output=None; last_input_content=None
+            nonlocal pending_output, last_input_content, last_output_time, output_lines
+            if content!=None and last_input_content!=None \
+                and content[2]==False and len(content[6])<len(last_input_content):
+                inp=last_input_content[len(content[6]):]
+            else: inp=None
+            last_input_content=inp
+            pending_output=None
+            last_output_time=time.perf_counter()
             output_lines.put(content)
         try:
             while True:
@@ -148,13 +154,21 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 if "stdin" in fds:
                     data=handler.read_stdin()
                     if len(data)>0:
+                        # Replace Windows keystroke sequences with corresponding characters
+                        windows_input_expr=rb"\x1b\[\d+;\d+;(?P<char>\d+);(?P<pressed>\d+);\d+;\d+_"
+                        def subst_sequences(match_obj: re.Match) -> bytes:
+                            # Ignore char=0 and keystroke release
+                            if int(match_obj.group('char'))!=0 and int(match_obj.group('pressed'))!=0:
+                                return chr(int(match_obj.group('char'))).encode('utf-8')
+                            else: return b''
+                        target_input=re.sub(windows_input_expr, subst_sequences, data)
                         # if input from last iteration did not end with newlines, append new content
-                        if last_input_content!=None: last_input_content+=data
-                        else: last_input_content=data
+                        if last_input_content!=None: last_input_content+=target_input
+                        else: last_input_content=target_input
                         handler.write_pty(data)
                 # Handle output from stdout and stderr
                 def handle_output(is_stderr: bool) -> bool:
-                    nonlocal pending_output, output_lines, last_input_content
+                    nonlocal pending_output, last_input_content
 
                     term_attrs=handler.get_term_attrs(make_raw=True)
                     foreground_pid=handler.get_foreground_pid()
@@ -167,18 +181,15 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     if last_input_content!=None:
                         if pending_output!=None: cur_output=pending_output[0]+data
                         else: cur_output=data
-                        # Replace Windows keystroke sequences with corresponding characters
-                        windows_input_expr=rb"\x1b\[\d+;\d+;(?P<char>\d+);(?P<pressed>\d+);\d+;\d+_"
-                        def subst_sequences(match_obj: re.Match) -> bytes:
-                            # Ignore char=0 and keystroke release
-                            if int(match_obj.group('char'))!=0 and int(match_obj.group('pressed'))!=0:
-                                return chr(int(match_obj.group('char'))).encode('utf-8')
-                            else: return b''
-                        target_input=re.sub(windows_input_expr, subst_sequences, last_input_content)
 
-                        expected_input=re.sub(rb"(\x7f|\x08)", rb"(\\x08 \\x08|\\x08\\x1b\\[K)", re.escape(target_input))
-                        # print(target_input, cur_output, re.fullmatch(expected_input, cur_output)!=None) # DEBUG
-                        if re.fullmatch(expected_input, cur_output)!=None:
+                        target_input=last_input_content
+                        # If last input content starts with output
+                        startswith_output=b'^'+re.sub(rb"(\x08\\ \x08|\\\r\\ \\\r|\x08\x1b\[K)", rb"(\\x7f|\\x08)", re.escape(cur_output))
+                        # print(target_input, startswith_output, re.match(startswith_output, target_input)!=None) # DEBUG
+
+                        # equals_input=b'^'+re.sub(rb"(\x7f|\x08)", rb"(\\x08 \\x08|\\x08\\x1b\\[K)", re.escape(target_input))+b'$'
+                        # if re.match(equals_input, cur_output)!=None:
+                        if re.match(startswith_output, target_input)!=None: # Matches from start
                             do_subst_operation=False
                     # endregion
                     pending_output_time=time.perf_counter()
@@ -207,7 +218,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     if data==b'': return True
                     
                     # Update pending output
-                    pending_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, pending_output_time)
+                    pending_output=(data,is_stderr,do_subst_operation, foreground_pid, term_attrs, pending_output_time, re.sub(rb"(\x08 \x08|\r \r|\x08\x1b\[K)", b"\x08",data))
                     return True
                 had_output=False
                 if "stdout" in fds:
@@ -217,10 +228,10 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                 no_io_available=not "stdin" in fds and not had_output
                 # Reset last input content after some timeout
                 if no_io_available: last_input_content=None
-                # if no input and output available, push what we have right now
-                if no_io_available and pending_output!=None:
+                # if no output available and output delay exceeds poll interval, push the output directly
+                if not had_output and time.perf_counter()-last_output_time>=handler.poll_interval \
+                    and pending_output!=None:
                     push_output(pending_output)
-                    pending_output=None
                 # End loop if process terminated and no input/output available for this round
                 if handler.get_proc_status()!=None \
                     and no_io_available and pending_output==None: 
