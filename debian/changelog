@@ -1,4 +1,4 @@
-clitheme (2.1-1) unstable; urgency=medium
+clitheme (2.1-1) unstable; urgency=low
 
   New features
 
@@ -21,7 +21,7 @@ clitheme (2.1-1) unstable; urgency=medium
   * Support new `default:` and `[default]` phrases
   * Revised the names of various syntax phrases
   
-  Improvements and bug Fixes
+  Improvements and bug fixes
 
   * frontend module: if the custom specified locale contains encoding suffix, the locale name without the suffix will also be matched
   * File reading procedure now shows error messages for all files
@@ -43,7 +43,7 @@ clitheme (2.1-1) unstable; urgency=medium
 
  -- swiftycode <closure_mops.9k@icloud.com>  Fri, 23 Jan 2026 17:31:00 +0800
 
-clitheme (2.0.1-1) unstable; urgency=medium
+clitheme (2.0.1-1) unstable; urgency=low
 
   * Fix temporary directory mechanism
 
