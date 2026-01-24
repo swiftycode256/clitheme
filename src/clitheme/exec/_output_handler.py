@@ -150,6 +150,7 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                     # Wait longer to reduce CPU usage
                     timeout=0.1
                 fds=handler.get_readable_descriptors(timeout)
+                foreground_pid=handler.get_foreground_pid()
                 # Handle user input from stdin
                 if "stdin" in fds:
                     data=handler.read_stdin()
@@ -168,10 +169,9 @@ def handler_main(command: List[str], debug_mode: List[str]=[], subst: bool=True)
                         handler.write_pty(data)
                 # Handle output from stdout and stderr
                 def handle_output(is_stderr: bool) -> bool:
-                    nonlocal pending_output, last_input_content
+                    nonlocal pending_output, last_input_content, foreground_pid
 
                     term_attrs=handler.get_term_attrs(make_raw=True)
-                    foreground_pid=handler.get_foreground_pid()
                     data=handler.read_pty(is_stderr=is_stderr)
                     # If pipe closed and returns empty data, ignore
                     if data==b'': return False
